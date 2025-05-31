@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Livewire\Admin;
+
+use Livewire\Component;
+use App\Models\MainCashRegister;
+use App\Models\Transaction;
+use Illuminate\Support\Facades\Auth;
+use Livewire\WithPagination;
+
+class ManageCashRegister extends Component
+{
+    use WithPagination;
+
+    public $currency = 'USD';
+    public $type = 'in';
+    public $amount = 0;
+    public $description = '';
+    public $currencies = ['USD', 'CDF'];
+
+    public $search = '';
+    public $perPage = 10;
+
+    protected $updatesQueryString = ['search', 'perPage'];
+
+    protected $paginationTheme = 'bootstrap';
+
+    protected $rules = [
+        'currency' => 'required|in:USD,CDF',
+        'type' => 'required|in:in,out',
+        'amount' => 'required|numeric|min:0.01',
+        'description' => 'nullable|string|max:255',
+    ];
+
+    public function mount()
+    {
+        $user = Auth::user();
+        if (!$user->isCaissier() && !$user->isAdmin()) {
+            return redirect(route('dashboard'));
+        }
+    }
+
+    public function updatedCurrency()
+    {
+        $this->resetValidation();
+    }
+
+    public function submit()
+    {
+        $cashRegister = MainCashRegister::firstOrCreate(
+            ['currency' => $this->currency],
+            ['balance' => 0]
+        );
+
+        if ($this->type === 'in') {
+            $cashRegister->balance += $this->amount;
+        } else {
+            if ($cashRegister->balance < $this->amount) {
+                notyf()->error(__(key: 'Le solde de la caisse est insuffisant.'));
+                return;
+            }
+            $cashRegister->balance -= $this->amount;
+        }
+
+        $cashRegister->save();
+
+        // Enregistrer la transaction
+        Transaction::create([
+            'user_id' => Auth::id(),
+            'type' => $this->type === 'in' ? 'Entrée de fonds' : 'Sortie de fonds',
+            'currency' => $this->currency,
+            'amount' => $this->amount,
+            'balance_after' => $cashRegister->balance,
+            'description' => $this->description,
+        ]);
+
+        notyf()->success(message: __('Opération effectuée avec succès !'));
+
+        $this->reset(['amount', 'description']);
+        $this->dispatch('closeModal', name: 'modalCashRegister');
+    }
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function openModal()
+    {
+        $this->resetValidation();
+        $this->dispatch('openModal', name: 'modalCashRegister');
+    }
+
+    public function closeModal()
+    {
+        $this->resetValidation();
+        $this->dispatch('closeModal', name: 'modalCashRegister');
+    }
+
+    public function placeholder()
+    {
+        return view('livewire.placeholder');
+    }
+
+    public function render()
+    {
+        $registers = MainCashRegister::all();
+
+        $transactions = Transaction::where(function ($query) {
+                $query->where('type', 'like', '%fonds%')
+                    ->orWhere('type', 'like', '%sortie%')
+                    ->orWhere('type', 'like', '%virement vers caisse centrale%');
+
+            })
+            ->where(function ($query) {
+                $query->where('description', 'like', '%' . $this->search . '%')
+                    ->orWhere('currency', 'like', '%' . $this->search . '%')
+                    ->orWhere('type', 'like', '%' . $this->search . '%');
+            })
+            ->latest()
+            ->paginate($this->perPage);
+
+        return view('livewire.admin.manage-cash-register', compact('registers', 'transactions'));
+
+    }
+}
