@@ -83,7 +83,7 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
         notyf()->success( 'Dépôt effectué avec succès !');
         // Redirection vers le reçu
-        $this->redirect(route('receipt.generate', ['id' => $transaction->id]), navigate: false);
+        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
     }
 
     public function submitRetrait()
@@ -124,7 +124,8 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
         $this->reset(['amount', 'description']);
 
-        $this->redirect(route('receipt.generate', ['id' => $transaction->id]), navigate: false);
+        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+
     }
 
     public function closeDepositModal()

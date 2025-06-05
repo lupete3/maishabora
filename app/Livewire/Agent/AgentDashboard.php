@@ -25,21 +25,26 @@ class AgentDashboard extends Component
 
     }
 
+    protected function applyDateFilter($query, $filter)
+    {
+        $now = now();
+
+        return match ($filter) {
+            'day' => $query->whereDate('created_at', $now->toDateString()),
+            'month' => $query->whereMonth('created_at', $now->month)
+                            ->whereYear('created_at', $now->year),
+            'year' => $query->whereYear('created_at', $now->year),
+            default => $query,
+        };
+    }
+
     public function showTransactions($userId, $filter = 'day')
     {
         $this->user_id = $userId;
         $this->isShowTransaction = true;
 
         $query = Transaction::where('user_id', $this->user_id);
-
-        if ($filter === 'day') {
-            $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter === 'month') {
-            $query->whereMonth('created_at', now()->month)
-                ->whereYear('created_at', now()->year);
-        } elseif ($filter === 'year') {
-            $query->whereYear('created_at', now()->year);
-        }
+        $query = $this->applyDateFilter($query, $filter);
 
         $this->transactions = $query->orderByDesc('created_at')->get();
     }

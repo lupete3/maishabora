@@ -289,7 +289,7 @@
                                 <path d="m6 11 6 6 6-6"></path>
                                 <path d="M19 21H5"></path>
                             </svg> Dépôt</button>
-                            {{-- <button wire:click='openRetraitModal'
+                            <button wire:click='openRetraitModal'
                             class=" inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&amp;_svg]:pointer-events-none [&amp;_svg]:size-4 [&amp;_svg]:shrink-0 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"><svg
                                 xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
                                 fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
@@ -297,7 +297,7 @@
                                 <path d="m18 9-6-6-6 6"></path>
                                 <path d="M12 3v14"></path>
                                 <path d="M5 21h14"></path>
-                            </svg> Retrait</button> --}}
+                            </svg> Retrait</button>
                     </div>
                 </div>
             </div>
@@ -478,25 +478,22 @@
                                                 </td>
 
                                                 <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                    <a href="{{ route('receipt.generate', ['id' => $transaction->id]) }}"
-                                                        target="_blank" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                                                    <button type="button"
+                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
+                                                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
                                                             ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
                                                             focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
                                                             disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
                                                             h-9 rounded-md px-3">
                                                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
                                                             viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                                             class="lucide lucide-printer mr-2 h-4 w-4">
                                                             <path d="M6 9V2h12v7"></path>
-                                                            <path
-                                                                d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
-                                                            </path>
+                                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                                                             <path d="M6 14h12v4H6v-4z"></path>
                                                         </svg>
-
-                                                    </a>
+                                                    </button>
                                                 </td>
                                             </tr>
                                             @empty
@@ -531,4 +528,5 @@
             </div>
         </div>
     </main>
+
 </div>

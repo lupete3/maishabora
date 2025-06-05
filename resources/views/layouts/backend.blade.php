@@ -177,6 +177,25 @@
 
     </script>
 
+    <script>
+        function printFacture(url) {
+            const showprint = window.open(url, "height=900, width=800");
+
+            showprint.addEventListener("load", function () {
+                showprint.print();
+
+                showprint.addEventListener("afterprint", function () {
+                    showprint.close();
+                });
+            });
+        }
+
+        window.addEventListener('facture-validee', function (event) {
+            const url = event.detail.url;
+            printFacture(url);
+        });
+    </script>
+
     @livewireScripts
 </body>
 

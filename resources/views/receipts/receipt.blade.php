@@ -8,14 +8,14 @@
         @media print {
             @page {
                 margin: 0;
-                size: 80mm auto;
+                size: 58mm auto;
             }
 
             body {
                 margin: 0;
                 padding: 0;
                 font-family: 'Courier New', monospace;
-                font-size: 30px;
+                font-size: 12px;
             }
 
             .no-print {
@@ -24,11 +24,16 @@
         }
 
         body {
-            width: 200mm;
-            margin: 0 auto;
-            font-family: 'Courier New', monospace;
-            padding: 5px;
-            line-height: 1.2;
+            width: 50mm;
+            margin: -1px;
+            font-family: monospace, 'Courier New';
+            padding: 1px;
+            line-height: 1;
+        }
+        .img-center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .center {
@@ -41,7 +46,7 @@
 
         .line {
             border-top: 1px dashed #000;
-            margin: 6px 0;
+            margin: 4px 0;
         }
 
         .row {
@@ -50,14 +55,16 @@
         }
 
         .footer {
-            font-size: 30px;
+            font-size: 10px;
             text-align: center;
             margin-top: 10px;
+            margin-bottom: 30px;
         }
     </style>
 </head>
 <body>
 
+    <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset="">
     <!-- En-tête -->
     <div class="center bold">{{ config('app.name') }}</div>
     <div class="center">N° ID : 666-666-666</div>
@@ -89,7 +96,7 @@
         </div>
     </div>
     <div class="row">
-        <div>Solde après</div>
+        <div>Solde</div>
         <div>{{ number_format($transaction->balance_after, 2, ',', ' ') }} {{ $transaction->currency }}</div>
     </div>
     <div class="row">
@@ -100,6 +107,10 @@
         <div>Réf.</div>
         <div>#{{ $transaction->id }}</div>
     </div>
+    <div class="row">
+        <div>Agent</div>
+        <div>{{ $transaction->user->name }}</div>
+    </div>
 
     <div class="line"></div>
     <div class="center">Merci pour votre confiance</div>
@@ -107,19 +118,24 @@
     <!-- Pied de page -->
     <div class="footer">
         Ce reçu est valable comme preuve de transaction. Aucun remboursement ne sera effectué sans ce document.
-    </div>
+
     <!-- Ajout du QR Code -->
     <div class="center" style="margin-top: 10px;">
         {!! $qrCodeDataUri !!}
     </div>
 
+    <div class="row">
+        <div>Signature Client.</div>
+        <div>Signature Agent</div>
+    </div>
+
+    </div>
+
     <!-- Script d'impression -->
+
     <script>
-        window.onload = () => {
-            // Attendre que tout soit chargé
-            setTimeout(() => {
-                window.print();
-            }, 200); // délai léger pour éviter les problèmes d'affichage
+        window.onload = function() {
+            window.print();
         };
     </script>
 
