@@ -20,6 +20,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withSchedule(function (Schedule $schedule) {
+        // Notification retard paiement
+        $schedule->command('check:overdue-repayments')->dailyAt('08:00');
         // Rapport mensuel automatisé
         $schedule->command('reports:monthly-contribution')->monthly();
     })

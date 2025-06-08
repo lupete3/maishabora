@@ -4,10 +4,13 @@ use App\Exports\MemberFinancialHistoryExport;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\CreateSubscriptionController;
+use App\Http\Controllers\CreditReceiptController;
 use App\Http\Controllers\DepositForMemberController;
 use App\Http\Controllers\GlobalReportController;
+use App\Http\Controllers\GrantCreditController;
 use App\Http\Controllers\ManageCashRegisterController;
 use App\Http\Controllers\ManageContributionBookController;
+use App\Http\Controllers\ManageRepaymentsController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\MemberDetailsController;
 use App\Http\Controllers\MemberFinancialHistoryController;
@@ -16,6 +19,7 @@ use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
 use App\Http\Controllers\SellMembershipCardController;
 use App\Http\Controllers\TransferToCentralCashController;
+use App\Livewire\Credit\GrantCredit;
 use App\Livewire\Members\CreateMember;
 use App\Livewire\Members\SellMembershipCard;
 use Illuminate\Support\Facades\Auth;
@@ -56,6 +60,18 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/tableau-de-bord-agent', [AgentDashboardController::class, 'index'])->name('agent.dashboard');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/octroyer-credit', [GrantCreditController::class, 'index'])->name('credit.grant');
+});
+Route::middleware('auth')->group(function () {
+    Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
+});
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/receipt/credit/{id}', [CreditReceiptController::class, 'generate'])->name('credit.receipt.generate');
 });
 
 

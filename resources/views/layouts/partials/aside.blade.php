@@ -45,9 +45,18 @@
                     <div data-i18n="Analytics">Caisse Agents</div>
                 </a>
             </li>
-
-
-
+            <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
+                <a href="{{ route('credit.grant') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-wallet"></i>
+                    <div data-i18n="Analytics">Octroyer un Crédit</div>
+                </a>
+            </li>
+            <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
+                <a href="{{ route('repayments.manage') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-wallet"></i>
+                    <div data-i18n="Analytics">Gérer les Remboursements</div>
+                </a>
+            </li>
 
         @endcan
 
