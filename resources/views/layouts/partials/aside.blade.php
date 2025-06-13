@@ -60,6 +60,13 @@
                 <div data-i18n="Analytics">Gérer les Remboursements</div>
             </a>
         </li>
+
+        <li class="menu-item @if (request()->routeIs('report.credit.overview')) active @endif">
+            <a href="{{ route('report.credit.overview') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
+                <div data-i18n="Analytics">Rapport Crédits</div>
+            </a>
+        </li>
         @endcan
 
         @can('isRecouvreur', App\Models\User::class)

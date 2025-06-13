@@ -4,6 +4,7 @@ use App\Exports\MemberFinancialHistoryExport;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\CreateSubscriptionController;
+use App\Http\Controllers\CreditOverviewReportController;
 use App\Http\Controllers\CreditReceiptController;
 use App\Http\Controllers\DepositForMemberController;
 use App\Http\Controllers\GlobalReportController;
@@ -17,6 +18,7 @@ use App\Http\Controllers\MemberFinancialHistoryController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
+use App\Http\Controllers\RepaymentScheduleController;
 use App\Http\Controllers\SellMembershipCardController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Livewire\Credit\GrantCredit;
@@ -69,9 +71,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
 });
 
-
 Route::middleware('auth')->group(function () {
     Route::get('/receipt/credit/{id}', [CreditReceiptController::class, 'generate'])->name('credit.receipt.generate');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/plan-de-remboursement/{creditId}', [RepaymentScheduleController::class, 'generate'])
+        ->name('schedule.generate');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/rapport-global-crédits', [CreditOverviewReportController::class,'index'])->name('report.credit.overview');
 });
 
 

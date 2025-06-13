@@ -132,23 +132,29 @@
                             <th>Échéances</th>
                             <th>Date de début</th>
                             <th>Status</th>
+                            <th></th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse ($credits as $c)
+                        @forelse ($credits as $credit)
                             <tr>
-                                <td>{{ $c->user->name }}</td>
-                                <td>{{ $c->currency }}</td>
-                                <td>{{ number_format($c->amount, 2) }}</td>
-                                <td>{{ $c->interest_rate }}%</td>
-                                <td>{{ $c->installments }}</td>
-                                <td>{{ \Carbon\Carbon::parse($c->start_date)->format('d/m/Y') }}</td>
+                                <td>{{ $credit->user->name.' '.$credit->user->postnom }}</td>
+                                <td>{{ $credit->currency }}</td>
+                                <td>{{ number_format($credit->amount, 2) }}</td>
+                                <td>{{ $credit->interest_rate }}%</td>
+                                <td>{{ $credit->installments }}</td>
+                                <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
                                 <td>
-                                    @if ($c->is_paid)
+                                    @if ($credit->is_paid)
                                         <span class="badge bg-success">Remboursé</span>
                                     @else
                                         <span class="badge bg-warning">En cours</span>
                                     @endif
+                                </td>
+                                <td>
+                                    <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}" target="_blank" class="btn btn-sm btn-secondary">
+                                        Imprimer le plan
+                                    </a>
                                 </td>
                             </tr>
                         @empty

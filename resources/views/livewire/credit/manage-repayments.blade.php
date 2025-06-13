@@ -55,6 +55,9 @@
             @if($selectedCredit)
                 <div class="mt-4">
                     <h5>Calendrier de remboursement</h5>
+                    <a href="{{ route('schedule.generate', ['creditId' => $selectedCredit->id]) }}" target="_blank" class="btn btn-sm btn-secondary">
+                        Imprimer le plan
+                    </a>
                     <table class="table table-bordered">
                         <thead>
                             <tr>
