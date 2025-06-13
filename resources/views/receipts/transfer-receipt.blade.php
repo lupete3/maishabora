@@ -60,7 +60,7 @@
 
     <!-- En-tête -->
     <div class="header">
-        <h2>Institution Microfinance</h2>
+        <h2>{{ config('app.name') }}</h2>
         <p><strong>Reçu de Virement</strong></p>
         <p>Date : {{ now()->format('d/m/Y H:i') }}</p>
     </div>

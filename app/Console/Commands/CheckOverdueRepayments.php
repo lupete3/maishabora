@@ -40,7 +40,7 @@ class CheckOverdueRepayments extends Command
 
             // Calcul du montant dû + pénalité
             $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
-            $dailyPenaltyRate = 0.002; // 0.3% par jour
+            $dailyPenaltyRate = 0.002; // 0.2% par jour
             $expectedAmount = round((float)$repayment->expected_amount, 2);
             $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 2);
             $totalDue = round($expectedAmount + $penaltyAmount, 2);

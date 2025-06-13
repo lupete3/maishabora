@@ -136,6 +136,7 @@ class GrantCredit extends Component
             'currency' => $this->currency,
             'amount' => $this->amount,
             'balance_after' => $mainCash->balance,
+            'account_id' => $account->id,
             'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
         ]);
 

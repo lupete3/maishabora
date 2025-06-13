@@ -55,7 +55,7 @@
                             @forelse ($members as $member)
                                 <tr>
                                     <td>{{ $member->code }}</td>
-                                    <td>{{ $member->name }}</td>
+                                    <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
                                     <td>{{ $member->email }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>

@@ -96,10 +96,6 @@
         </div>
     </div>
     <div class="row">
-        <div>Solde</div>
-        <div>{{ number_format($transaction->balance_after, 2, ',', ' ') }} {{ $transaction->currency }}</div>
-    </div>
-    <div class="row">
         <div>Date</div>
         <div>{{ $transaction->created_at->format('d/m/Y H:i') }}</div>
     </div>
