@@ -6,6 +6,7 @@ use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\CreateSubscriptionController;
 use App\Http\Controllers\CreditOverviewReportController;
 use App\Http\Controllers\CreditReceiptController;
+use App\Http\Controllers\CreditReportPdfController;
 use App\Http\Controllers\DepositForMemberController;
 use App\Http\Controllers\GlobalReportController;
 use App\Http\Controllers\GrantCreditController;
@@ -83,6 +84,9 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class,'index'])->name('report.credit.overview');
 });
+
+Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
+
 
 
 

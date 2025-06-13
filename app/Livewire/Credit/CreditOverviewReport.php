@@ -76,8 +76,8 @@ class CreditOverviewReport extends Component
 
         // Calcul du jour de retard maximal
         $maxDaysLate = $unpaidRepayments
-            ->filter(fn($r) => \Carbon\Carbon::parse($r->due_date)->lt(now()))
-            ->max(fn($r) => \Carbon\Carbon::parse($r->due_date)->diffInDays(now()));
+            ->filter(fn($r) => Carbon::parse($r->due_date)->lt(now()))
+            ->max(fn($r) => Carbon::parse($r->due_date)->diffInDays(now()));
 
         $maxDaysLate = (int) $maxDaysLate ?? 0;
 
