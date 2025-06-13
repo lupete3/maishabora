@@ -49,9 +49,9 @@
     <!--? Config:  Mandatory theme config file contain global vars & default theme options, Set your preferred theme option in this file.  -->
     <script src="{{ asset('/') }}assets/js/config.js"></script>
 
+    <!-- ApexCharts -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-    {{--
-    <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/select2/dist/css/select2.min.css"> --}}
 
     <!-- Scripts -->
     @livewireStyles
@@ -195,6 +195,8 @@
             printFacture(url);
         });
     </script>
+
+    @stack('scripts')
 
     @livewireScripts
 </body>

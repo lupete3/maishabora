@@ -29,7 +29,7 @@ new class extends Component
 
 
 <div class="card">
-    <h2 class="card-header text-lg font-medium text-gray-900">Suppression du compte</h2>
+    {{-- <h2 class="card-header text-lg font-medium text-gray-900">Suppression du compte</h2>
 
     <div class="card-body">
         <div class="mb-3 col-12 mb-0">
@@ -83,6 +83,6 @@ new class extends Component
                 </button>
             </div>
         </form>
-    </div>
+    </div> --}}
 </div>
 

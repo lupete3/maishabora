@@ -17,6 +17,7 @@
         "vite": "^6.2.4"
     },
     "dependencies": {
+        "apexcharts": "^4.7.0",
         "chart.js": "^4.4.9",
         "sweetalert2": "^11.21.0"
     }

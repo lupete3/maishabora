@@ -2,64 +2,50 @@
 
 namespace App\Livewire\Members;
 
-use App\Models\CashRegister;
-use App\Models\ContributionBook;
 use Livewire\Component;
+use Livewire\WithPagination;
+use App\Models\User;
+use App\Models\Account;
+use App\Models\Credit;
+use App\Models\Repayment;
+use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 
 class MemberDashboard extends Component
 {
-    public $user;
-    public $membershipCards;
-    public $subscriptions;
-    public $contributionBooks;
-    public $totalDeposited = 0;
-    public $totalWithdrawn = 0;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
 
-    public $contributionLabels = [];
-    public $contributionData = [];
+    public $memberId;
+    public $member;
+    public $accounts = [];
+    public $credits = [];
+    public $overdueRepayments = [];
+    public $transactions = [];
 
     public function mount()
     {
-        $this->user = Auth::user();
+        // if (!auth()->check() || auth()->user()->role !== 'agent_de_terrain') {
+        //     abort(403);
+        // }
+        $id = Auth::user()->id;
 
-        // Carnets d'adhésion
-        $this->membershipCards = $this->user->membershipCards;
+        $this->member = User::findOrFail($id);
 
-        // Souscriptions + carnets
-        $this->subscriptions = $this->user->subscriptions()->with('contributionBooks.lines')->get();
+        $this->accounts = Account::where('user_id', $this->member->id)->get();
+        $this->credits = Credit::where('user_id', $this->member->id)->with('repayments')->get();
 
-        // Calcul des dépôts totaux
-        foreach ($this->subscriptions as $subscription) {
-            $this->totalDeposited += $subscription->contributionBooks?->lines->sum('montant') ?? 0;
-        }
-
-        // Rechercher les retraits (via cash_register)
-        $this->totalWithdrawn = CashRegister::where('reference_type', ContributionBook::class)
-            ->whereHasMorph('reference', ContributionBook::class, fn($q) => $q->whereHas('subscription', fn($q2) => $q2->where('user_id', $this->user->id)))
-            ->sum('montant');
-
-        // Récupère les dépôts mensuels
-        $data = CashRegister::where('reference_type', 'App\Models\ContributionLine')
-            ->join('contribution_lines', 'cash_registers.reference_id', '=', 'contribution_lines.id')
-            ->whereHasMorph('reference', 'App\Models\ContributionLine', function ($query) {
-                $query->whereHas('contributionBook.subscription', function ($subQuery) {
-                    $subQuery->where('user_id', $this->user->id);
-                });
-            })
-            ->selectRaw("DATE_FORMAT(contribution_lines.date_contribution, '%Y-%m') as mois")
-            ->selectRaw("SUM(cash_registers.montant) as total")
-            ->groupBy('mois')
-            ->orderBy('mois')
+        // Échéances en retard
+        $this->overdueRepayments = Repayment::whereIn('credit_id', $this->credits->pluck('id'))
+            ->where('due_date', '<', now())
+            ->where('is_paid', false)
             ->get();
 
-        foreach ($data as $row) {
-            $this->contributionLabels[] = $row->mois;
-            $this->contributionData[] = $row->total;
-        }
-
-        // Passe les données au front
-        $this->dispatch('loadChart', labels: $this->contributionLabels, data: $this->contributionData);
+        // Dernières transactions
+        $this->transactions = Transaction::whereIn('account_id', $this->accounts->pluck('id'))
+            ->latest()
+            ->take(50)
+            ->get();
     }
 
     public function render()

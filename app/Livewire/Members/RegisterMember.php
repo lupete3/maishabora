@@ -173,7 +173,8 @@ class RegisterMember extends Component
     {
         do {
             $lastAccount = User::whereNotNull('code')->orderByDesc('id')->first();
-            $number = $lastAccount ? intval(substr($lastAccount->code, 3)) + 1 : 1;
+            // Si aucun code n'existe encore, on commence à 100
+            $number = $lastAccount ? intval(substr($lastAccount->code, 3)) + 1 : 100;
             $code = 'IMF' . str_pad($number, 3, '0', STR_PAD_LEFT);
         } while (User::where('code', $code)->exists());
 

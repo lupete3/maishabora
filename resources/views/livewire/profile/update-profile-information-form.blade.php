@@ -98,56 +98,56 @@ new class extends Component
                 <!-- Nom -->
                 <div class="col-md-3">
                     <label for="name" class="form-label">Nom</label>
-                    <input wire:model.defer="name" type="text" class="form-control @error('name') is-invalid @enderror" id="name" required autofocus>
+                    <input wire:model.defer="name" type="text" class="form-control @error('name') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="name" required autofocus>
                     @error('name') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Postnom -->
                 <div class="col-md-3">
                     <label for="postnom" class="form-label">Postnom</label>
-                    <input wire:model.defer="postnom" type="text" class="form-control @error('postnom') is-invalid @enderror" id="postnom" required>
+                    <input wire:model.defer="postnom" type="text" class="form-control @error('postnom') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="postnom" required>
                     @error('postnom') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Prenom -->
                 <div class="col-md-3">
                     <label for="prenom" class="form-label">Prénom</label>
-                    <input wire:model.defer="prenom" type="text" class="form-control @error('prenom') is-invalid @enderror" id="prenom">
+                    <input wire:model.defer="prenom" type="text" class="form-control @error('prenom') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="prenom">
                     @error('prenom') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Date de naissance -->
                 <div class="col-md-3">
                     <label for="date_naissance" class="form-label">Date de naissance</label>
-                    <input wire:model.defer="date_naissance" type="date" class="form-control @error('date_naissance') is-invalid @enderror" id="date_naissance" required>
+                    <input wire:model.defer="date_naissance" type="date" class="form-control @error('date_naissance') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="date_naissance" required>
                     @error('date_naissance') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Téléphone -->
                 <div class="col-md-3">
                     <label for="telephone" class="form-label">Téléphone</label>
-                    <input wire:model.defer="telephone" type="text" class="form-control @error('telephone') is-invalid @enderror" id="telephone" required>
+                    <input wire:model.defer="telephone" type="text" class="form-control @error('telephone') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="telephone" required>
                     @error('telephone') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Profession -->
                 <div class="col-md-3">
                     <label for="profession" class="form-label">Profession</label>
-                    <input wire:model.defer="profession" type="text" class="form-control @error('profession') is-invalid @enderror" id="profession">
+                    <input wire:model.defer="profession" type="text" class="form-control @error('profession') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="profession">
                     @error('profession') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Email -->
                 <div class="col-md-6">
                     <label for="email" class="form-label">Adresse e-mail</label>
-                    <input wire:model.defer="email" type="email" class="form-control @error('email') is-invalid @enderror" id="email" required autocomplete="username">
+                    <input wire:model.defer="email" type="email" class="form-control @error('email') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="email" required autocomplete="username">
                     @error('email') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
                 <!-- Adresse physique -->
                 <div class="col-md-12">
                     <label for="adresse_physique" class="form-label">Adresse physique</label>
-                    <textarea wire:model.defer="adresse_physique" class="form-control @error('adresse_physique') is-invalid @enderror" id="adresse_physique" rows="2"></textarea>
+                    <textarea wire:model.defer="adresse_physique" class="form-control @error('adresse_physique') is-invalid @enderror" {{ auth()->user()->role == 'membre' ? 'disabled' : '' }} id="adresse_physique" rows="2"></textarea>
                     @error('adresse_physique') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
 
@@ -171,6 +171,7 @@ new class extends Component
 
                 <!-- Bouton Enregistrer -->
                 <div class="col-md-12 mt-3">
+                    @if (auth()->user()->role != 'membre')
                     <button type="submit" class="btn btn-primary me-3" wire:loading.attr="disabled">
                         <span wire:loading wire:target="updateProfileInformation" class="spinner-border spinner-border-sm me-2" role="status"></span>
                         Enregistrer
@@ -181,6 +182,7 @@ new class extends Component
                             Informations mises à jour avec succès.
                         @endif
                     </span>
+                    @endif
                 </div>
 
             </div>

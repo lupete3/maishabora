@@ -20,7 +20,7 @@ class GrantCredit extends Component
     public $interest_rate = 5.0; // %
     public $installments = 6;
     public $start_date;
-    public $frequency = 'daily'; // ou 'monthly'
+    public $frequency = 'daily'; // 'daily', 'monthly', 'weekly'
 
     public $description = '';
 
@@ -35,7 +35,7 @@ class GrantCredit extends Component
         'interest_rate' => 'required|numeric|min:0|max:100',
         'installments' => 'required|integer|min:1',
         'start_date' => 'required|date',
-        'frequency' => 'required|in:daily,monthly',
+        'frequency' => 'required|in:daily,monthly,weekly',
     ];
 
     public function mount()
@@ -48,7 +48,6 @@ class GrantCredit extends Component
         $this->members = User::where('role', 'membre')->get();
         $this->start_date = now()->format('Y-m-d');
     }
-
 
     public function updatedSearch()
     {
@@ -89,45 +88,39 @@ class GrantCredit extends Component
 
         $member = User::find($this->member_id);
 
-        // Récupérer ou créer le compte du membre
         $account = Account::firstOrCreate([
             'user_id' => $member->id,
             'currency' => $this->currency
         ], ['balance' => 0]);
 
-        // Vérifier que la caisse centrale a assez
         $mainCash = MainCashRegister::firstOrCreate(
             ['currency' => $this->currency],
             ['balance' => 0]
         );
 
         if ($mainCash->balance < $this->amount) {
-            notyf()->error(message: __('Solde insuffisant dans la caisse centrale.'));
+            notyf()->error(__('Solde insuffisant dans la caisse centrale.'));
             return;
         }
 
-        // Mise à jour des soldes
         $account->balance += $this->amount;
         $mainCash->balance -= $this->amount;
 
         $account->save();
         $mainCash->save();
 
-        // Enregistrer le crédit (due_date temporairement null)
-        $days = (int) $this->installments;
         $credit = Credit::create([
             'user_id' => $member->id,
             'account_id' => $account->id,
             'currency' => $this->currency,
             'amount' => $this->amount,
             'interest_rate' => $this->interest_rate,
-            'installments' => $days,
+            'installments' => $this->installments,
             'start_date' => $this->start_date,
-            'due_date' => Carbon::parse($this->start_date)->addDays($days), // sera mis à jour après génération
+            'due_date' => Carbon::parse($this->start_date),
             'is_paid' => false,
         ]);
 
-        // Enregistrer la transaction
         Transaction::create([
             'user_id' => $member->id,
             'type' => 'octroi_de_credit',
@@ -137,7 +130,6 @@ class GrantCredit extends Component
             'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
         ]);
 
-        // Enregistrer la pour le caissier
         Transaction::create([
             'user_id' => Auth::id(),
             'type' => 'octroi_de_credit',
@@ -147,9 +139,8 @@ class GrantCredit extends Component
             'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
         ]);
 
-        // Générer les échéances
         $totalWithInterest = $this->amount * (1 + $this->interest_rate / 100);
-        $dailyAmount = round($totalWithInterest / $days, 2);
+        $installmentAmount = round($totalWithInterest / $this->installments, 2);
 
         $startDate = Carbon::parse($this->start_date);
         $currentDate = $startDate->copy();
@@ -162,19 +153,33 @@ class GrantCredit extends Component
                     Repayment::create([
                         'credit_id' => $credit->id,
                         'due_date' => $currentDate->toDateString(),
-                        'expected_amount' => $dailyAmount,
-                        'total_due' => $dailyAmount,
+                        'expected_amount' => $installmentAmount,
+                        'total_due' => $installmentAmount,
                     ]);
                     $lastDueDate = $currentDate->copy();
                     $installmentsAdded++;
                 }
                 $currentDate->addDay();
+            } elseif ($this->frequency === 'weekly') {
+                $currentDate = $installmentsAdded === 0 ? $startDate : $currentDate->addWeek();
+                if (!$currentDate->isSunday()) {
+                    Repayment::create([
+                        'credit_id' => $credit->id,
+                        'due_date' => $currentDate->toDateString(),
+                        'expected_amount' => $installmentAmount,
+                        'total_due' => $installmentAmount,
+                    ]);
+                    $lastDueDate = $currentDate->copy();
+                    $installmentsAdded++;
+                } else {
+                    $currentDate->addDay(); // évite le dimanche
+                }
             } else { // monthly
                 Repayment::create([
                     'credit_id' => $credit->id,
                     'due_date' => $currentDate->toDateString(),
-                    'expected_amount' => $dailyAmount,
-                    'total_due' => $dailyAmount,
+                    'expected_amount' => $installmentAmount,
+                    'total_due' => $installmentAmount,
                 ]);
                 $lastDueDate = $currentDate->copy();
                 $installmentsAdded++;
@@ -182,20 +187,15 @@ class GrantCredit extends Component
             }
         }
 
-        // Mise à jour de la date d'échéance finale dans le crédit
         $credit->due_date = $lastDueDate ? $lastDueDate->toDateString() : $credit->start_date;
         $credit->save();
 
-        // Notification
-        notyf()->success(message: __('Crédit octroyé avec succès !'));
+        notyf()->success(__('Crédit octroyé avec succès !'));
 
-        // Réinitialiser certains champs du formulaire
         $this->reset(['amount', 'description']);
 
-        // Redirection vers le reçu
         $this->dispatch('facture-validee', url: route('credit.receipt.generate', ['id' => $credit->id]));
     }
-
 
     public function render()
     {

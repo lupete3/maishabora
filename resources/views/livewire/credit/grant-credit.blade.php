@@ -4,7 +4,7 @@
         <div class="alert alert-success">{{ session('message') }}</div>
     @endif
 
-    <div class="card">
+    <div class="card" wire:ignore.self>
         <div class="card-header bg-primary text-white">Octroyer un Crédit</div>
         <div class="card-body">
             <form wire:submit.prevent="submit">
@@ -56,6 +56,7 @@
                         <label>Fréquence des échéances</label>
                         <select wire:model="frequency" class="form-control">
                             <option value="daily">Quotidienne</option>
+                            <option value="weekly">Hebdomadaire</option> <!-- AJOUT -->
                             <option value="monthly">Mensuelle</option>
                         </select>
                     </div>
@@ -84,4 +85,5 @@
             </form>
         </div>
     </div>
+
 </div>

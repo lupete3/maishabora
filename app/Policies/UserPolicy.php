@@ -32,7 +32,7 @@ class UserPolicy
      */
     public function isMembre(User $user): bool
     {
-        return $user->isAdmin() || $user->isCaissier() || $user->isRecouvreur() || $user->isMembre();
+        return $user->isMembre();
     }
 
     /**

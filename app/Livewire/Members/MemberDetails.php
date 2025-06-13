@@ -89,9 +89,8 @@ class MemberDetails extends Component
     public function submitRetrait()
     {
         $this->validate();
-
         $user = User::find($this->memberId);
-
+        
         // Récupérer ou créer le compte du membre
         $account = Account::firstOrCreate(
             ['user_id' => $user->id, 'currency' => $this->currency],
@@ -103,9 +102,18 @@ class MemberDetails extends Component
             return;
         }
 
+        // Récupérer la caisse de l'agent
+        $agentAccount = AgentAccount::firstOrCreate(
+            ['user_id' => Auth::id(), 'currency' => $this->currency],
+            ['balance' => 0]
+        );
+
         // Retirer le montant
         $account->balance -= $this->amount;
+        $agentAccount->balance -= $this->amount;
+
         $account->save();
+        $agentAccount->save();
 
         // Enregistrer la transaction
         $transaction = Transaction::create([
@@ -122,9 +130,9 @@ class MemberDetails extends Component
         $this->dispatch('closeModal', name: 'modalRetraitMembre');
         notyf()->success( 'Retrait effectué avec succès !');
         $this->dispatch('$refresh');
+        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
         $this->reset(['amount', 'description']);
 
-        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
 
     }
 

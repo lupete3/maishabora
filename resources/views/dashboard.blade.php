@@ -4,7 +4,15 @@
 
 @section('content')
 
-<div class="container-xxl flex-grow-1 container-p-y">
+@can('isMembre', App\Models\User::class)
+    <livewire:members.member-dashboard />
+@endcan
+
+@can('isCaissier', App\Models\User::class)
+
+    <livewire:admin.global-credit-dashboard />
+
+{{-- <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
         <div class="col-lg-8 mb-4 order-0">
             <div class="card">
@@ -17,7 +25,7 @@
                                 your profile.
                             </p>
 
-                            
+
                             <a href="javascript:;" class="btn btn-sm btn-outline-primary">View Badges</a>
                         </div>
                     </div>
@@ -480,6 +488,8 @@
         </div>
         <!--/ Transactions -->
     </div>
-</div>
+</div> --}}
+
+@endcan
 
 @endsection

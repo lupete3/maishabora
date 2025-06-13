@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "afbf3bb990aaa78e734697cd982bcbf0",
+    "content-hash": "3f0469c4a6eaef3b3df92ac2e7983896",
     "packages": [
         {
             "name": "bacon/bacon-qr-code",
@@ -2011,6 +2011,50 @@
                 "source": "https://github.com/laravel/tinker/tree/v2.10.1"
             },
             "time": "2025-01-27T14:24:01+00:00"
+        },
+        {
+            "name": "larawire-garage/larapex-livewire",
+            "version": "v2.0.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/LarawireGarage/larapex-livewire.git",
+                "reference": "64fab7e3824fb80b67d16f1b3b122ed5b6d1c77d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/LarawireGarage/larapex-livewire/zipball/64fab7e3824fb80b67d16f1b3b122ed5b6d1c77d",
+                "reference": "64fab7e3824fb80b67d16f1b3b122ed5b6d1c77d",
+                "shasum": ""
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "LarawireGarage\\LarapexLivewire\\LarapexLivewireServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "LarawireGarage\\LarapexLivewire\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Nirmal Pradeepa",
+                    "email": "88931913+LarawireGarage@users.noreply.github.com"
+                }
+            ],
+            "description": "Laravel wrapper for ApexCharts javascript plugin advanced features with livewire",
+            "support": {
+                "issues": "https://github.com/LarawireGarage/larapex-livewire/issues",
+                "source": "https://github.com/LarawireGarage/larapex-livewire/tree/v2.0.0"
+            },
+            "time": "2025-01-05T22:42:43+00:00"
         },
         {
             "name": "league/commonmark",
