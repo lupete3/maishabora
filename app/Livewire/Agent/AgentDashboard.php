@@ -19,7 +19,7 @@ class AgentDashboard extends Component
     public function mount()
     {
         $user = Auth::user();
-        if (!$user->isCaissier() && !$user->isAdmin()) {
+        if (!$user->isCaissier() && !$user->isAdmin() && !$user->isRecouvreur()) {
             return redirect(route('dashboard'));
         }
 
@@ -56,12 +56,26 @@ class AgentDashboard extends Component
 
     public function render()
     {
-        $agentAccounts = User::whereHas('agentAccounts')
-            ->with(['agentAccounts' => function ($query) {
-                $query->orderBy('currency'); // Facultatif, juste pour l'ordre
-            }])
-            ->get();
+        $user = Auth::user();
 
-        return view('livewire.agent.agent-dashboard', ['agentAccounts' => $agentAccounts]);
+        if ($user->isRecouvreur()) {
+            // Récupère uniquement le recouvreur connecté avec ses comptes
+            $agentAccounts = User::where('id', $user->id)
+                ->with(['agentAccounts' => function ($query) {
+                    $query->orderBy('currency');
+                }])
+                ->get();
+        } else {
+            // Récupère tous les utilisateurs ayant des comptes liés
+            $agentAccounts = User::whereHas('agentAccounts')
+                ->with(['agentAccounts' => function ($query) {
+                    $query->orderBy('currency');
+                }])
+                ->get();
+        }
+
+        return view('livewire.agent.agent-dashboard', [
+            'agentAccounts' => $agentAccounts
+        ]);
     }
 }

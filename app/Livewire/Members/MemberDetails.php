@@ -9,6 +9,8 @@ use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
+
 
 class MemberDetails extends Component
 {
@@ -32,17 +34,14 @@ class MemberDetails extends Component
 
     public function mount($id)
     {
-        $user = Auth::user();
-        if (!$user->isRecouvreur() && !$user->isAdmin()) {
-            abort(403, 'Accès interdit');
-        }
-
         $this->memberId = $id;
     }
 
     //Make Deposit to customer Account
     public function submit()
     {
+        Gate::authorize('depotMembers', User::class);
+
         $this->validate();
 
         $user = User::find($this->memberId);
@@ -88,9 +87,11 @@ class MemberDetails extends Component
 
     public function submitRetrait()
     {
+        Gate::authorize('depotMembers', User::class);
+
         $this->validate();
         $user = User::find($this->memberId);
-        
+
         // Récupérer ou créer le compte du membre
         $account = Account::firstOrCreate(
             ['user_id' => $user->id, 'currency' => $this->currency],
@@ -107,6 +108,11 @@ class MemberDetails extends Component
             ['user_id' => Auth::id(), 'currency' => $this->currency],
             ['balance' => 0]
         );
+
+        if ($agentAccount->balance < $this->amount) {
+            notyf()->error( 'Le solde de la caisse est insuffisant.');
+            return;
+        }
 
         // Retirer le montant
         $account->balance -= $this->amount;

@@ -14,17 +14,19 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string(column: 'code')->unique()->nullable();
+            $table->string(column: 'code_manuel')->unique()->nullable();
             $table->string(column: 'name');
             $table->string('postnom');
             $table->string('prenom')->nullable();
             $table->date('date_naissance');
             $table->string('telephone');
+            $table->enum('sexe', ['masculin', 'féminin'])->nullable();
             $table->text('adresse_physique')->nullable();
             $table->string('profession')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->enum('role', ['admin', 'caissier', 'recouvreur', 'membre'])->default('membre');
+            $table->enum('role', ['admin', 'caissier', 'recouvreur', 'comptable', 'receptionniste', 'membre'])->default('membre');
             $table->boolean('status')->default(false);
             $table->rememberToken();
             $table->timestamps();

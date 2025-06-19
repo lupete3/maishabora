@@ -8,10 +8,8 @@
     <livewire:members.member-dashboard />
 @endcan
 
-@can('isCaissier', App\Models\User::class)
-
+@can('viewDashBoardAdmin', App\Models\User::class)
     <livewire:admin.global-credit-dashboard />
-
 {{-- <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
         <div class="col-lg-8 mb-4 order-0">
@@ -490,6 +488,16 @@
     </div>
 </div> --}}
 
+@endcan
+
+@can('isReceptionniste', App\Models\User::class)
+    <livewire:receptionist.receptionist-dashboard />
+@endcan
+
+@can('isRecouvreur', App\Models\User::class)
+    <div class="container">
+        <livewire:agent.agent-dashboard />
+    </div>
 @endcan
 
 @endsection

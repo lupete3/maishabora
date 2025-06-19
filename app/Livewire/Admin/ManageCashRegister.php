@@ -109,7 +109,8 @@ class ManageCashRegister extends Component
         $transactions = Transaction::where(function ($query) {
                 $query->where('type', 'like', '%fonds%')
                     ->orWhere('type', 'like', '%sortie%')
-                    ->orWhere('type', 'like', '%virement vers caisse centrale%');
+                    ->orWhere('type', 'like', '%virement vers caisse centrale%')
+                    ->orWhere('type', 'like', '%octroi_de_credit_client%');
 
             })
             ->where(function ($query) {

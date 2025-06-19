@@ -1,9 +1,11 @@
 <div class="mt-4">
     <div class="card">
-        <div class="card-header">📊 Rapport Global - Retard de Remboursement des Crédits <a href="{{ route('credits-retard.pdf') }}" class="btn btn-danger mb-3" target="_blank">
-    📄 Exporter en PDF
-</a>
-</div>
+        <div class="card-header justify-content-between d-flex flex-wrap">
+            <p>📊 Rapport Global - Retard de Remboursement des Crédits</p>
+            <a href="{{ route('credits-retard.pdf') }}" class="btn btn-primary btn-sm mb-3" target="_blank">
+                📄 Exporter en PDF
+            </a>
+        </div>
         <div class="card-body table-responsive">
             <table class="table table-bordered table-hover table-sm">
                 <thead class="table-light text-center">

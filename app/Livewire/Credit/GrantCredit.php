@@ -11,6 +11,7 @@ use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class GrantCredit extends Component
 {
@@ -86,116 +87,122 @@ class GrantCredit extends Component
     {
         $this->validate();
 
-        $member = User::find($this->member_id);
+        DB::beginTransaction();
+        try {
+            $member = User::findOrFail($this->member_id);
 
-        $account = Account::firstOrCreate([
-            'user_id' => $member->id,
-            'currency' => $this->currency
-        ], ['balance' => 0]);
+            $account = Account::where('user_id', $this->member_id)
+                ->where('currency', $this->currency)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-        $mainCash = MainCashRegister::firstOrCreate(
-            ['currency' => $this->currency],
-            ['balance' => 0]
-        );
+            $mainCash = MainCashRegister::where('currency', $this->currency)
+                ->lockForUpdate()
+                ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);
 
-        if ($mainCash->balance < $this->amount) {
-            notyf()->error(__('Solde insuffisant dans la caisse centrale.'));
-            return;
-        }
-
-        $account->balance += $this->amount;
-        $mainCash->balance -= $this->amount;
-
-        $account->save();
-        $mainCash->save();
-
-        $credit = Credit::create([
-            'user_id' => $member->id,
-            'account_id' => $account->id,
-            'currency' => $this->currency,
-            'amount' => $this->amount,
-            'interest_rate' => $this->interest_rate,
-            'installments' => $this->installments,
-            'start_date' => $this->start_date,
-            'due_date' => Carbon::parse($this->start_date),
-            'is_paid' => false,
-        ]);
-
-        Transaction::create([
-            'user_id' => $member->id,
-            'type' => 'octroi_de_credit',
-            'currency' => $this->currency,
-            'amount' => $this->amount,
-            'balance_after' => $account->balance,
-            'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
-        ]);
-
-        Transaction::create([
-            'user_id' => Auth::id(),
-            'type' => 'octroi_de_credit',
-            'currency' => $this->currency,
-            'amount' => $this->amount,
-            'balance_after' => $mainCash->balance,
-            'account_id' => $account->id,
-            'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
-        ]);
-
-        $totalWithInterest = $this->amount * (1 + $this->interest_rate / 100);
-        $installmentAmount = round($totalWithInterest / $this->installments, 2);
-
-        $startDate = Carbon::parse($this->start_date);
-        $currentDate = $startDate->copy();
-        $installmentsAdded = 0;
-        $lastDueDate = null;
-
-        while ($installmentsAdded < $this->installments) {
-            if ($this->frequency === 'daily') {
-                if (!$currentDate->isSunday()) {
-                    Repayment::create([
-                        'credit_id' => $credit->id,
-                        'due_date' => $currentDate->toDateString(),
-                        'expected_amount' => $installmentAmount,
-                        'total_due' => $installmentAmount,
-                    ]);
-                    $lastDueDate = $currentDate->copy();
-                    $installmentsAdded++;
-                }
-                $currentDate->addDay();
-            } elseif ($this->frequency === 'weekly') {
-                $currentDate = $installmentsAdded === 0 ? $startDate : $currentDate->addWeek();
-                if (!$currentDate->isSunday()) {
-                    Repayment::create([
-                        'credit_id' => $credit->id,
-                        'due_date' => $currentDate->toDateString(),
-                        'expected_amount' => $installmentAmount,
-                        'total_due' => $installmentAmount,
-                    ]);
-                    $lastDueDate = $currentDate->copy();
-                    $installmentsAdded++;
-                } else {
-                    $currentDate->addDay(); // évite le dimanche
-                }
-            } else { // monthly
-                Repayment::create([
-                    'credit_id' => $credit->id,
-                    'due_date' => $currentDate->toDateString(),
-                    'expected_amount' => $installmentAmount,
-                    'total_due' => $installmentAmount,
-                ]);
-                $lastDueDate = $currentDate->copy();
-                $installmentsAdded++;
-                $currentDate->addMonth();
+            if ($mainCash->balance < $this->amount) {
+                DB::rollBack();
+                notyf()->error(__('Solde insuffisant dans la caisse centrale.'));
+                return;
             }
+
+            $mainCash->balance -= $this->amount;
+            $mainCash->save();
+
+            $credit = Credit::create([
+                'user_id' => $member->id,
+                'account_id' => $account->id,
+                'currency' => $this->currency,
+                'amount' => $this->amount,
+                'interest_rate' => $this->interest_rate,
+                'installments' => $this->installments,
+                'start_date' => $this->start_date,
+                'due_date' => Carbon::parse($this->start_date),
+                'is_paid' => false,
+            ]);
+
+            Transaction::create([
+                'user_id' => $member->id,
+                'type' => 'octroi_de_credit',
+                'currency' => $this->currency,
+                'amount' => $this->amount,
+                'balance_after' => $account->balance,
+                'account_id' => $account->id,
+                'description' => $this->description ?: "Crédit octroyé à votre compte: {$member->code} du client {$member->name} {$member->postnom}",
+            ]);
+
+            Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $member->id,
+                'type' => 'octroi_de_credit_client',
+                'currency' => $credit->currency,
+                'amount' => $this->amount,
+                'balance_after' => $mainCash->balance,
+                'description' => $this->description ?: "Crédit octroyé au compte: {$member->code} du client {$member->name} {$member->postnom}",
+            ]);
+
+            // Échéancier
+            $totalWithInterest = $this->amount * (1 + $this->interest_rate / 100);
+            $installmentAmount = round($totalWithInterest / $this->installments, 2);
+            $startDate = Carbon::parse($this->start_date);
+            $currentDate = $startDate->copy();
+            $installmentsAdded = 0;
+            $lastDueDate = null;
+
+            while ($installmentsAdded < $this->installments) {
+                if ($this->frequency === 'daily') {
+                    if (!$currentDate->isSunday()) {
+                        Repayment::create([
+                            'credit_id' => $credit->id,
+                            'due_date' => $currentDate->toDateString(),
+                            'expected_amount' => $installmentAmount,
+                            'total_due' => $installmentAmount,
+                        ]);
+                        $lastDueDate = $currentDate->copy();
+                        $installmentsAdded++;
+                    }
+                    $currentDate->addDay();
+                } elseif ($this->frequency === 'weekly') {
+                    $currentDate = $installmentsAdded === 0 ? $startDate : $currentDate->addWeek();
+                    if (!$currentDate->isSunday()) {
+                        Repayment::create([
+                            'credit_id' => $credit->id,
+                            'due_date' => $currentDate->toDateString(),
+                            'expected_amount' => $installmentAmount,
+                            'total_due' => $installmentAmount,
+                        ]);
+                        $lastDueDate = $currentDate->copy();
+                        $installmentsAdded++;
+                    } else {
+                        $currentDate->addDay(); // éviter le dimanche
+                    }
+                } else { // monthly
+                    Repayment::create([
+                        'credit_id' => $credit->id,
+                        'due_date' => $currentDate->toDateString(),
+                        'expected_amount' => $installmentAmount,
+                        'total_due' => $installmentAmount,
+                    ]);
+                    $lastDueDate = $currentDate->copy();
+                    $installmentsAdded++;
+                    $currentDate->addMonth();
+                }
+            }
+
+            $credit->due_date = $lastDueDate ? $lastDueDate->toDateString() : $credit->start_date;
+            $credit->save();
+
+            DB::commit();
+
+            notyf()->success(__('Crédit octroyé avec succès !'));
+
+            $this->reset(['amount', 'description']);
+            $this->dispatch('facture-validee', url: route('credit.receipt.generate', ['id' => $credit->id]));
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            report($th);
+            notyf()->error(__('Une erreur est survenue lors de l’octroi du crédit.'));
         }
-
-        $credit->due_date = $lastDueDate ? $lastDueDate->toDateString() : $credit->start_date;
-        $credit->save();
-
-        notyf()->success(__('Crédit octroyé avec succès !'));
-
-        $this->reset(['amount', 'description']);
-
-        $this->dispatch('facture-validee', url: route('credit.receipt.generate', ['id' => $credit->id]));
     }
 
     public function render()

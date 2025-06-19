@@ -40,7 +40,7 @@ class CheckOverdueRepayments extends Command
 
             // Calcul du montant dû + pénalité
             $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
-            $dailyPenaltyRate = 0.002; // 0.2% par jour
+            $dailyPenaltyRate = 0.003; // 0.3% par jour
             $expectedAmount = round((float)$repayment->expected_amount, 2);
             $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 2);
             $totalDue = round($expectedAmount + $penaltyAmount, 2);
@@ -67,6 +67,17 @@ class CheckOverdueRepayments extends Command
                     'currency' => $credit->currency,
                     'amount' => $expectedAmount,
                     'balance_after' => $account->balance,
+                    'description' => "Remboursement automatique de l'échéance n°{$repayment->id}",
+                ]);
+
+
+                Transaction::create([
+                    'account_id' => $mainCash->id,
+                    'user_id' => $member->id,
+                    'type' => 'Entrée de fonds',
+                    'currency' => $credit->currency,
+                    'amount' => $expectedAmount,
+                    'balance_after' => $mainCash->balance,
                     'description' => "Remboursement automatique de l'échéance n°{$repayment->id}",
                 ]);
 

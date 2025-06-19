@@ -64,31 +64,21 @@
                     </div>
 
                     <!-- Email -->
-                    <div class="col-md-4 mb-1">
+                    <div class="col-md-8 mb-1">
                         <label for="email" class="form-label">Email</label>
                         <input type="email" wire:model.defer="email" id="email" class="form-control"
                             placeholder="exemple@domaine.com" required />
                         @error('email') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
-                    <!-- Mot de passe -->
-                    <div class="col-md-4 mb-1 form-password-toggle">
-                        <label class="form-label" for="password">Mot de passe</label>
-                        <div class="input-group input-group-merge">
-                            <input type="password" wire:model.defer="password" id="password" class="form-control"
-                                placeholder="••••••••" />
+                    <!-- Status physique -->
+                    <div class="col-md-4 mb-1">
+                        <label for="adresse_physique" class="form-label">Status</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="status" wire:model.defer="status">
+                            <label class="form-check-label" for="status">Actif</label>
                         </div>
-                        @error('password') <span class="text-danger">{{ $message }}</span> @enderror
-                    </div>
-
-                    <!-- Confirmer mot de passe -->
-                    <div class="col-md-4 mb-1 form-password-toggle">
-                        <label class="form-label" for="password_confirmation">Confirmer le mot de passe</label>
-                        <div class="input-group input-group-merge">
-                            <input type="password" wire:model.defer="password_confirmation" id="password_confirmation"
-                                class="form-control" placeholder="••••••••" />
-                        </div>
-                        @error('password_confirmation') <span class="text-danger">{{ $message }}</span> @enderror
+                        @error('adresse_physique') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Adresse physique -->

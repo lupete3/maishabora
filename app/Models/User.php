@@ -28,7 +28,8 @@ class User extends Authenticatable
         'profession',
         'email',
         'password',
-        'role'
+        'role',
+        'status'
     ];
 
     /**
@@ -64,9 +65,14 @@ class User extends Authenticatable
         return $this->hasMany(Subscription::class);
     }
 
-    public function isAdmin()
+    public function isAdmin(): bool
     {
         return $this->role === 'admin';
+    }
+
+    public function isComptable()
+    {
+        return $this->role === 'comptable';
     }
 
     public function isCaissier()
@@ -79,14 +85,18 @@ class User extends Authenticatable
         return $this->role === 'recouvreur';
     }
 
+    public function isReceptionniste()
+    {
+        return $this->role === 'receptionniste';
+    }
+
     public function isMembre()
     {
         return $this->role === 'membre';
     }
-
-    public function isMembres()
+    public function isActive()
     {
-        return $this->role === 'membr';
+        return $this->status == true;
     }
 
     // Relations
@@ -118,5 +128,31 @@ class User extends Authenticatable
     public function transactions()
     {
         return $this->hasMany(Transaction::class);
+    }
+
+    protected static function booted()
+    {
+        static::creating(function ($user) {
+            $exists = static::where('name', $user->name)
+                ->where('postnom', $user->postnom)
+                ->where('telephone', $user->telephone)
+                ->exists();
+
+            if ($exists) {
+                throw new \Exception("Un membre avec le même nom, post-nom et numéro de téléphone existe déjà.");
+            }
+        });
+
+        static::updating(function ($user) {
+            $exists = static::where('id', '!=', $user->id)
+                ->where('name', $user->name)
+                ->where('postnom', $user->postnom)
+                ->where('telephone', $user->telephone)
+                ->exists();
+
+            if ($exists) {
+                notyf()->error("Un autre membre possède déjà ces informations (nom, post-nom, téléphone).");
+            }
+        });
     }
 }

@@ -4,14 +4,25 @@
 
         <!-- Soldes -->
         @foreach($agentAccounts as $agent)
-            <div class="col-md-4 order-2">
-                <div class="card h-100">
+            <div class="col-md-3 order-2">
+                <div class="card ">
                     <div class="card-header d-flex align-items-center justify-content-between">
-                        <h5 class="card-title m-0 me-2">Agent : {{ $agent->name.' '.$agent->postnom }}</h5>
+                        <h6 class="card-title m-0 me-2">Agent : {{ $agent->name.' '.$agent->postnom }}</h6>
                         <div class="dropdown">
                             <button class="btn p-0" type="button" id="transactionID" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <i class="bx bx-dots-vertical-rounded"></i>
                             </button>
+                            {{-- <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
+                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "day")'>
+                                    Voir les opérations (Aujourd'hui)
+                                </a>
+                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "month")'>
+                                    Ce Mois
+                                </a>
+                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "year")'>
+                                    Cette Année
+                                </a>
+                            </div> --}}
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
                                 <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "day")'>
                                     Voir les opérations (Aujourd'hui)
@@ -22,6 +33,16 @@
                                 <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "year")'>
                                     Cette Année
                                 </a>
+                                <div class="dropdown-divider"></div>
+                                <a class="dropdown-item" href="{{ route('agent.transactions.export', [$agent->id, 'day']) }}" target="_blank">
+                                    📄 Export PDF (Jour)
+                                </a>
+                                <a class="dropdown-item" href="{{ route('agent.transactions.export', [$agent->id, 'month']) }}" target="_blank">
+                                    📄 Export PDF (Mois)
+                                </a>
+                                <a class="dropdown-item" href="{{ route('agent.transactions.export', [$agent->id, 'year']) }}" target="_blank">
+                                    📄 Export PDF (Année)
+                                </a>
                             </div>
 
                         </div>
@@ -29,7 +50,7 @@
                     <div class="card-body">
                         <ul class="p-0 m-0">
                             @foreach($agent->agentAccounts as $index => $acc)
-                            <li class="d-flex mb-4 pb-1">
+                            <li class="d-flex mb-1 pb-1">
                                 <div class="avatar flex-shrink-0 me-3">
                                     <img src="../assets/img/icons/unicons/{{ $index == 0 ? 'wallet' : 'cc-warning' }}.png" alt="User" class="rounded">
                                 </div>
@@ -55,7 +76,7 @@
 
     <div class="row">
         <!-- Opérations du jour -->
-        <div class="col-md-6 mt-4">
+        <div class="col-md-12 mt-4">
             <div class="card">
                 <div class="card-header">
                     <h5 class="card-title m-0 me-2">{{ __('Historique des opérations du compte du jour') }}</h5>

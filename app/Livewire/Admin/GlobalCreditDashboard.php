@@ -6,7 +6,9 @@ use Livewire\Component;
 use App\Models\Credit;
 use App\Models\Repayment;
 use App\Models\MainCashRegister;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\WithPagination;
 
 class GlobalCreditDashboard extends Component
@@ -23,10 +25,7 @@ class GlobalCreditDashboard extends Component
     public function mount()
     {
         // Vérifier que seul un agent de terrain peut accéder
-        $user = Auth::user();
-        if (!$user->isRecouvreur() && !$user->isAdmin()) {
-            abort(403, 'Accès interdit');
-        }
+        Gate::authorize('viewDashBoardAdmin', User::class);
 
         // Caisse centrale
         $this->cashRegisters = MainCashRegister::all();
@@ -34,7 +33,17 @@ class GlobalCreditDashboard extends Component
         // Statistiques générales
         $this->totalCredits = Credit::count();
         $this->creditsInProgress = Credit::where('is_paid', false)->count();
-        $this->totalPenalties = Repayment::where('penalty', '>', 0)->sum('penalty');
+        // $this->totalPenalties = Repayment::whereHas('credit')->where('penalty', '>', 0)->sum('penalty');
+        $this->totalPenalties = [
+            'CDF' => Repayment::whereHas('credit', fn($q) => $q->where('currency', 'CDF'))
+                            ->where('penalty', '>', 0)
+                            ->sum('penalty'),
+
+            'USD' => Repayment::whereHas('credit', fn($q) => $q->where('currency', 'USD'))
+                            ->where('penalty', '>', 0)
+                            ->sum('penalty'),
+        ];
+
 
         // Crédits en retard
         $this->overdueCreditsCount = Repayment::where('due_date', '<', now())

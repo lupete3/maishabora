@@ -14,17 +14,30 @@ class UserPolicy
     /**
      * Determine whether the user can view any models.
      */
-    public function isRecouvreur(User $user): bool
+    public function isComptable(User $user): bool
     {
-        return $user->isAdmin() || $user->isRecouvreur();
+        return $user->isAdmin() || $user->isComptable();
     }
-
     /**
      * Determine whether the user can view the model.
      */
     public function isCaissier(User $user): bool
     {
         return $user->isAdmin() || $user->isCaissier();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function isRecouvreur(User $user): bool
+    {
+        return $user->isAdmin() || $user->isRecouvreur();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function isReceptionniste(User $user): bool
+    {
+        return $user->isReceptionniste();
     }
 
     /**
@@ -33,6 +46,45 @@ class UserPolicy
     public function isMembre(User $user): bool
     {
         return $user->isMembre();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function viewMembers(User $user): bool
+    {
+        return $user->isAdmin() || $user->isReceptionniste() || $user->isRecouvreur() || $user->isCaissier();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function depotMembers(User $user): bool
+    {
+        return $user->isRecouvreur() || $user->isCaissier();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function transfertVersCaisse(User $user): bool
+    {
+        return $user->isRecouvreur() || $user->isCaissier();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function retraitCaisseCentrale(User $user): bool
+    {
+        return $user->isCaissier();
+    }
+    /**
+     * Determine whether the user can view any models.
+     */
+    public function octroitCredit(User $user): bool
+    {
+        return $user->isCaissier();
+    }
+    public function viewDashBoardAdmin(User $user): bool
+    {
+        return $user->isAdmin() || $user->isCaissier() || $user->isComptable();
     }
 
     /**

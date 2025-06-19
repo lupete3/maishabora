@@ -4,6 +4,7 @@ use App\Exports\MemberFinancialHistoryExport;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\CreateSubscriptionController;
+use App\Http\Controllers\CreditFollowUpReportController;
 use App\Http\Controllers\CreditOverviewReportController;
 use App\Http\Controllers\CreditReceiptController;
 use App\Http\Controllers\CreditReportPdfController;
@@ -28,6 +29,7 @@ use App\Livewire\Members\SellMembershipCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
+use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -63,6 +65,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/tableau-de-bord-agent', [AgentDashboardController::class, 'index'])->name('agent.dashboard');
+    Route::get('/agent/transactions/export/{user}/{filter}', [AgentDashboardController::class, 'exportTransactions'])->name('agent.transactions.export');
+
 });
 
 Route::middleware('auth')->group(function () {
@@ -86,6 +90,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
+Route::middleware('auth')->group(function () {
+    Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
+});
 
 
 
@@ -139,13 +146,12 @@ Route::get('/admin/reports/annual/pdf', [GlobalReportController::class, 'generat
     ->middleware(['auth'])
     ->name('admin.reports.annual.pdf');
 
-
 Route::get('/recouvreur/enregistrer-membre', [RegisterMemberByRecouvreurCOntroller::class, 'index'])
     ->middleware(['auth', 'role:admin,recouvreur'])
     ->name('recouvreur.member.register');
 
 
-Route::view('dashboard', 'dashboard')
+Route::get('dashboard', [DashboardController::class,'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
@@ -153,7 +159,7 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-Route::post('/logout', function () {
+Route::post('/logout', function (): RedirectResponse {
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();

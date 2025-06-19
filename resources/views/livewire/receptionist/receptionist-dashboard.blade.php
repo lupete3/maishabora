@@ -3,22 +3,50 @@
 <div class="container mt-4">
 
     <!-- Statistiques des crédits -->
-    <div class="row g-2">
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+    <div class="row">
+        <div class="col-md-3 col-sm-6 mb-4">
             <div class="card card-border-shadow border-start-primary">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Crédits totaux</h6>
-                        <h4 class="mb-0">{{ $totalCredits }}</h4>
+                        <h6 class="text-muted mb-1">Totals Clients</h6>
+                        <h4 class="mb-0">{{ $totalUsers }}</h4>
                     </div>
                     <div class="avatar bg-primary text-white rounded-circle shadow">
-                        <i class="bx bx-money fs-4 m-2"></i>
+                        <i class="bx bx-user fs-4 m-2"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card card-border-shadow border-start-success">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Totals Clients Actifs</h6>
+                        <h4 class="mb-0">{{ $totalUsersActifs }}</h4>
+                    </div>
+                    <div class="avatar bg-success text-white rounded-circle shadow">
+                        <i class="bx bx-user fs-4 m-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-4">
+            <div class="card card-border-shadow border-start-danger">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-muted mb-1">Totals Clients Bloqués</h6>
+                        <h4 class="mb-0">{{ $totalUsersInactifs }}</h4>
+                    </div>
+                    <div class="avatar bg-danger text-white rounded-circle shadow">
+                        <i class="bx bx-user fs-4 m-2"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- <div class="col-md-3 col-sm-6 mb-4">
             <div class="card card-border-shadow border-start-success">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
@@ -26,13 +54,13 @@
                         <h4 class="mb-0">{{ $creditsInProgress }}</h4>
                     </div>
                     <div class="avatar bg-success text-white rounded-circle shadow">
-                        <i class="bx bx-hourglass fs-4 m-2"></i>
+                        <i class="bx bx-hourglass fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 mb-4">
             <div class="card card-border-shadow border-start-danger">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
@@ -40,43 +68,29 @@
                         <h4 class="mb-0">{{ $overdueCreditsCount }}</h4>
                     </div>
                     <div class="avatar bg-danger text-white rounded-circle shadow">
-                        <i class="bx bx-error fs-4 m-2"></i>
+                        <i class="bx bx-error fs-4"></i>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-6 col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 col-sm-6 mb-4">
             <div class="card card-border-shadow border-start-warning">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
-                        <h6 class="text-muted mb-1">Pénalités cumulées USD</h6>
-                        <h4 class="mb-0">{{ number_format($totalPenalties['USD'], 2) }}</h4>
+                        <h6 class="text-muted mb-1">Pénalités cumulées</h6>
+                        <h4 class="mb-0">{{ number_format($totalPenalties, 2) }}</h4>
                     </div>
                     <div class="avatar bg-warning text-white rounded-circle shadow">
-                        <i class="bx bx-dollar fs-4 m-2"></i>
+                        <i class="bx bx-dollar fs-4"></i>
                     </div>
                 </div>
             </div>
-        </div>
-
-        <div class="col-6 col-md-3 col-sm-6 mb-4">
-            <div class="card card-border-shadow border-start-info">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Pénalités cumulées CDF</h6>
-                        <h4 class="mb-0">{{ number_format($totalPenalties['CDF'], 2) }}</h4>
-                    </div>
-                    <div class="avatar bg-info text-white rounded-circle shadow">
-                        <i class="bx bx-wallet fs-4 m-2"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </div> --}}
     </div>
 
     <!-- Section Caisse Centrale & Échéances en retard -->
-    <div class="row">
+    {{-- <div class="row">
         <div class="col-md-6 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-label-primary fw-bold">
@@ -184,113 +198,6 @@
                 {{ $credits->links() }}
             </div>
         </div>
-    </div>
+    </div> --}}
 
-    {{-- <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header bg-dark text-white">Crédits par mois</div>
-            <div class="card-body">
-                <div id="creditsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header bg-dark text-white">Répartition par devise</div>
-            <div class="card-body">
-                <div id="creditsByCurrencyChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">Montant remboursé par mois</div>
-            <div class="card-body">
-                <div id="repaymentsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-
-
-    <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">Crédits par mois</div>
-            <div class="card-body">
-                <div id="creditsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">Crédits par devise</div>
-            <div class="card-body">
-                <div id="creditsByCurrencyChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-warning text-dark">Remboursements mensuels</div>
-            <div class="card-body">
-                <div id="repaymentsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-</div>--}}
-
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-<script>
-    document.addEventListener('livewire:load', function () {
-
-
-        // Crédits par mois
-        new ApexCharts(document.querySelector("#creditsByMonthChart"), {
-            chart: {
-                type: 'bar',
-                height: 300
-            },
-            series: [{
-                name: 'Crédits',
-                data: @json($creditsCounts)
-            }],
-            xaxis: {
-                categories: @json($creditsMonths)
-            },
-            colors: ['#0d6efd']
-        }).render();
-
-        // Crédits par devise
-        new ApexCharts(document.querySelector("#creditsByCurrencyChart"), {
-            chart: {
-                type: 'pie',
-                height: 300
-            },
-            series: @json($currencyCounts),
-            labels: @json($currencyLabels),
-            colors: ['#198754', '#ffc107', '#dc3545', '#0dcaf0']
-        }).render();
-
-        // Remboursements par mois
-        new ApexCharts(document.querySelector("#repaymentsByMonthChart"), {
-            chart: {
-                type: 'line',
-                height: 300
-            },
-            series: [{
-                name: 'Montant remboursé',
-                data: @json($repaymentAmounts)
-            }],
-            xaxis: {
-                categories: @json($repaymentMonths)
-            },
-            colors: ['#fd7e14']
-        }).render();
-    });
-</script>
 </div>

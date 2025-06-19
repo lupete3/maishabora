@@ -60,7 +60,7 @@ new #[Layout('layouts.guest')] class extends Component
                             autofocus
                             autocomplete="off"
                         />
-                        <x-input-error :messages="$errors->get('form.email')" class="mt-2" />
+                        <x-input-error :messages="$errors->get('form.email')" class="mt-2 text-danger" />
                     </div>
 
                     <!-- Password -->
@@ -84,7 +84,7 @@ new #[Layout('layouts.guest')] class extends Component
                                 autocomplete="current-password"
                             />
                         </div>
-                        <x-input-error :messages="$errors->get('form.password')" class="mt-2" />
+                        <x-input-error :messages="$errors->get('form.password')" class="mt-2 text-danger" />
                     </div>
 
                     <!-- Remember Me -->
@@ -111,12 +111,12 @@ new #[Layout('layouts.guest')] class extends Component
 
                 </form>
 
-                <p class="text-center">
+                {{-- <p class="text-center">
                     <span>Nouveau ?</span>
                     <a href="{{ route('register') }}" wire:navigate>
                         <span class="text-primary">Créer un compte</span>
                     </a>
-                </p>
+                </p> --}}
             </div>
         </div>
     </div>

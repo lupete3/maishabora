@@ -9,7 +9,9 @@ use App\Models\AgentAccount;
 use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use App\Models\Transfert;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class TransferToCentralCash extends Component
 {
@@ -24,10 +26,7 @@ class TransferToCentralCash extends Component
 
     public function mount()
     {
-        $user = Auth::user();
-        if (!$user->isRecouvreur() && !$user->isAdmin()) {
-            abort(403, 'Accès interdit');
-        }
+        Gate::authorize('transfertVersCaisse', User::class);
     }
 
     public function submit()
@@ -74,7 +73,7 @@ class TransferToCentralCash extends Component
             'currency' => $this->currency,
             'amount' => $this->amount,
             'balance_after' => $agentAccount->balance,
-            'description' => "Virement de {$this->amount} {$this->currency} vers la caisse centrale",
+            'description' => "Virement de ".$this->amount." ".$this->currency." du compte de ".Auth::user()->name." vers la caisse centrale. #REF".$transfer->id,
             ]);
 
         notyf()->success( 'Virement effectué avec succès !');

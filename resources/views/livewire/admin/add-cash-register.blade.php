@@ -25,7 +25,7 @@
                         <div class="col-md-6 mt-2">
                             <label for="type">Type d'opération</label>
                             <select wire:model="type" id="type" class="form-control">
-                                <option value="in">Entrée</option>
+                                {{-- <option value="in">Entrée</option> --}}
                                 <option value="out">Sortie</option>
                             </select>
                         </div>

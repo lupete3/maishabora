@@ -95,12 +95,13 @@
                             </label>
                         </div>
                     </div>
-
+                    @can('retraitCaisseCentrale', App\Models\User::class)
                     <div class="d-flex align-items-center gap-1">
                         <button wire:click="openModal" class="btn btn-primary">
                             + Ajouter
                         </button>
                     </div>
+                    @endcan
                 </div>
             </div>
 
@@ -125,6 +126,8 @@
                                 <td>
                                     @if ($transaction->type === 'Entrée de fonds')
                                         <span class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
+                                    @elseif ($transaction->type === 'virement vers caisse centrale')
+                                        <span class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
                                     @else
                                         <span class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
                                     @endif

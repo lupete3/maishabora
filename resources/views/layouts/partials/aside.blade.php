@@ -33,24 +33,10 @@
             </a>
         </li>
 
-        {{-- <li class="menu-item @if (request()->routeIs('transfer.to.central')) active @endif">
-            <a href="{{ route('transfer.to.central') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Virement -->
-                <div data-i18n="Analytics">Virement Caisse Centrale</div>
-            </a>
-        </li> --}}
-
         <li class="menu-item @if (request()->routeIs('agent.dashboard')) active @endif">
             <a href="{{ route('agent.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-briefcase-alt-2"></i> <!-- Caisse agents -->
                 <div data-i18n="Analytics">Caisse Agents</div>
-            </a>
-        </li>
-
-        <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
-            <a href="{{ route('credit.grant') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-credit-card"></i> <!-- Crédit -->
-                <div data-i18n="Analytics">Octroyer un Crédit</div>
             </a>
         </li>
 
@@ -63,13 +49,41 @@
 
         <li class="menu-item @if (request()->routeIs('report.credit.overview')) active @endif">
             <a href="{{ route('report.credit.overview') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
-                <div data-i18n="Analytics">Rapport Crédits</div>
+                <i class="menu-icon tf-icons bx bx-time-five"></i> <!-- Remboursements -->
+                <div data-i18n="Analytics">Rapport Crédits En Cours</div>
+            </a>
+        </li>
+
+        <li class="menu-item @if (request()->routeIs('report.credit.followup')) active @endif">
+            <a href="{{ route('report.credit.followup') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i></i> <!-- Remboursements -->
+                <div data-i18n="Analytics">Rapport Total Crédits</div>
+            </a>
+        </li>
+
+        @endcan
+
+        @can('octroitCredit', App\Models\User::class)
+        <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
+            <a href="{{ route('credit.grant') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-credit-card"></i> <!-- Crédit -->
+                <div data-i18n="Analytics">Octroyer un Crédit</div>
             </a>
         </li>
         @endcan
 
-        @can('isRecouvreur', App\Models\User::class)
+
+        @can('transfertVersCaisse', App\Models\User::class)
+        <li class="menu-item @if (request()->routeIs('transfer.to.central')) active @endif">
+            <a href="{{ route('transfer.to.central') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Virement -->
+                <div data-i18n="Analytics">Virement Caisse Centrale</div>
+            </a>
+        </li>
+        @endcan
+
+        @can('viewMembers', App\Models\User::class)
+
         <li
             class="menu-item @if (request()->routeIs('member.register','member.details','receipt.generate')) active @endif">
             <a href="{{ route('member.register') }}" class="menu-link">

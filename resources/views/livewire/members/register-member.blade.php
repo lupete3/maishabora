@@ -15,7 +15,7 @@
 
                         <div class="table-search-input">
                             <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
+                                <input type="search" wire:model.lazy="search" class="form-control input-sm"
                                     placeholder="Rechercher..." style="min-width: 120px">
                             </label>
                         </div>
@@ -29,9 +29,11 @@
                             <option value="100">100</option>
                             <option value="999999">Tous</option>
                         </select>
-                        <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
-                            {{ __("Ajouter") }}
-                        </button>
+                        @if (Auth::user()->isReceptionniste())
+                            <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
+                                {{ __("Ajouter") }}
+                            </button>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -48,6 +50,7 @@
                                 <th>Téléphone</th>
                                 <th>Solde USD</th>
                                 <th>Solde CDF</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -65,18 +68,29 @@
                                         {{ number_format($member->accounts->firstWhere('currency', 'CDF')?->balance ?? 0, 2) }}
                                     </td>
                                     <td>
+                                        @if ($member->status)
+                                            <span class="badge bg-success">Actif</span>
+                                        @else
+                                            <span class="badge bg-danger">Inactif</span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <div class="d-flex align-items-center gap-1">
-                                            <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">Compte Client</a>
-                                            <button wire:click='edit({{ $member->id }})'
-                                                class="btn btn-sm btn-info">{{ __('Modifier') }}</button>
+                                            @can('depotMembers', App\Models\User::class)
+                                                <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">Compte Client</a>
+                                            @endcan
+                                            @if (Auth::user()->isReceptionniste())
+                                                <button wire:click='edit({{ $member->id }})'
+                                                    class="btn btn-sm btn-info">{{ __('Modifier') }}</button>
+                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="8" class="text-center">
                                         <div class="alert alert-danger" role="alert">
-                                            Aucun membre trouvé.
+                                            Rechercher un client dans le système.
                                         </div>
                                     </td>
                                 </tr>
@@ -99,15 +113,19 @@
                             </select>
                         </label>
                     </div>
-                    <div class="text-muted">
-                        Affichage de {{ $members->firstItem() }} à {{ $members->lastItem() }} sur
-                        <span class="badge bg-primary">{{ $members->total() }}</span> membres
-                    </div>
-                </div>
+                    @if ($members)
+                        <div class="text-muted">
+                            Affichage de {{ $members->firstItem() }} à {{ $members->lastItem() }} sur
+                            <span class="badge bg-primary">{{ $members->total() }}</span> membres
+                        </div>
+                    @endif
 
+                </div>
+                @if ($members)
                 <div class="d-flex justify-content-center">
                     {{ $members->links() }}
                 </div>
+                @endif
             </div>
 
         </div>
