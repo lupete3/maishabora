@@ -17,6 +17,7 @@ use App\Http\Controllers\ManageRepaymentsController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\MemberDetailsController;
 use App\Http\Controllers\MemberFinancialHistoryController;
+use App\Http\Controllers\MemberTransactionReportController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
@@ -37,6 +38,8 @@ Route::get('/', function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/caisse-centrale', [ManageCashRegisterController::class, 'index'])->name('cash.register');
+    Route::get('/caisse-centrale/export-transactions', [ManageCashRegisterController::class, 'generate'])
+        ->name('cash.register.export.pdf');
 });
 
 Route::middleware('auth')->group(function () {
@@ -49,6 +52,8 @@ Route::middleware('auth')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::get('/membre/{id}', [MemberDetailsController::class, 'index'])->name('member.details');
+    Route::get('/membre/{id}/export-transactions', [MemberTransactionReportController::class, 'generate'])
+        ->name('member.transactions.export');
 });
 
 Route::middleware('auth')->group(function () {
@@ -95,19 +100,22 @@ Route::middleware('auth')->group(function () {
 });
 
 
-
-
-
-
-
-
-
-
-
-
 Route::get('/membres/vendre-carnet', [SellMembershipCardController::class, 'index'])
     ->middleware('auth')
     ->name('members.sell-card');
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Route::get('/membres/souscrire', [CreateSubscriptionController::class, 'index'])
     ->middleware('auth')
@@ -159,10 +167,11 @@ Route::view('profile', 'profile')
     ->middleware(['auth'])
     ->name('profile');
 
-Route::post('/logout', function (): RedirectResponse {
+Route::post('/logout', function () {
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
+
     return redirect('/login');
 })->name('logout');
 

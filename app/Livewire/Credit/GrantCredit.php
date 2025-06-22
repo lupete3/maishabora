@@ -11,6 +11,7 @@ use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
 
 class GrantCredit extends Component
@@ -107,7 +108,10 @@ class GrantCredit extends Component
             }
 
             $mainCash->balance -= $this->amount;
+            $account->balance += $this->amount;
+
             $mainCash->save();
+            $account->save();
 
             $credit = Credit::create([
                 'user_id' => $member->id,
@@ -133,7 +137,7 @@ class GrantCredit extends Component
 
             Transaction::create([
                 'account_id' => $account->id,
-                'user_id' => $member->id,
+                'user_id' => Auth::user()->id,
                 'type' => 'octroi_de_credit_client',
                 'currency' => $credit->currency,
                 'amount' => $this->amount,

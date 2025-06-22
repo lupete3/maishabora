@@ -15,7 +15,7 @@
 
                         <div class="table-search-input">
                             <label>
-                                <input type="search" wire:model.lazy="search" class="form-control input-sm"
+                                <input type="search" wire:model.live="search" class="form-control input-sm"
                                     placeholder="Rechercher..." style="min-width: 120px">
                             </label>
                         </div>

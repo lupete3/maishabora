@@ -21,6 +21,7 @@
                 <th>Type</th>
                 <th>Montant</th>
                 <th>Devise</th>
+                <th>Description</th>
             </tr>
         </thead>
         <tbody>
@@ -30,6 +31,7 @@
                     <td>{{ ucfirst($t->type) }}</td>
                     <td>{{ number_format($t->amount, 2) }}</td>
                     <td>{{ $t->currency }}</td>
+                    <td>{{ $t->description }}</td>
                 </tr>
             @endforeach
         </tbody>

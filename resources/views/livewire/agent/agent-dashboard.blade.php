@@ -88,6 +88,9 @@
                                         <strong>{{ ucfirst($t->type) }}</strong><br>
                                         <small>{{ $t->currency }} - {{ number_format($t->amount, 2) }}</small>
                                     </div>
+                                    <div>
+                                        <small>{{ $t->description }}</small>
+                                    </div>
                                     <span class="badge bg-secondary">
                                         {{ \Carbon\Carbon::parse($t->created_at)->format('d-m-Y H:i') }}
                                     </span>
