@@ -66,7 +66,7 @@ class UserPolicy
      */
     public function transfertVersCaisse(User $user): bool
     {
-        return $user->isRecouvreur() || $user->isCaissier();
+        return $user->isRecouvreur() || $user->isCaissier() || $user->isReceptionniste();
     }
     /**
      * Determine whether the user can view any models.
@@ -85,6 +85,16 @@ class UserPolicy
     public function viewDashBoardAdmin(User $user): bool
     {
         return $user->isAdmin() || $user->isCaissier() || $user->isComptable();
+    }
+
+    public function sellMemberShipCard(User $user): bool
+    {
+        return $user->isCaissier() || $user->isRecouvreur() || $user->isReceptionniste();
+    }
+
+    public function simulationLoan(User $user): bool
+    {
+        return $user->isAdmin() || $user->isComptable() || $user->isCaissier() || $user->isRecouvreur() || $user->isReceptionniste();
     }
 
     /**

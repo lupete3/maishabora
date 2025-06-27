@@ -13,10 +13,14 @@ return new class extends Migration
     {
         Schema::create('membership_cards', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('user_id')->constrained('users');
-            $table->string('code')->unique(); // ex: CARN001
-            $table->decimal('prix', 10, 2)->default(1000);
-            $table->timestamp('vendu_a')->useCurrent();
+            $table->string('code')->unique();
+            $table->foreignId('member_id')->constrained('users');
+            $table->string('currency')->default('CDF'); // USD ou CDF
+            $table->decimal('price', 15, 2); // prix de la carte
+            $table->decimal('subscription_amount', 15, 2); // montant quotidien à verser
+            $table->date('start_date')->default(now());
+            $table->date('end_date')->default(now()->addDays(30)); // 31 jours = 0 à 30
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
         });
     }

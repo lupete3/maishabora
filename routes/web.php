@@ -17,6 +17,7 @@ use App\Http\Controllers\ManageRepaymentsController;
 use App\Http\Controllers\MemberDashboardController;
 use App\Http\Controllers\MemberDetailsController;
 use App\Http\Controllers\MemberFinancialHistoryController;
+use App\Http\Controllers\MembershipCardController;
 use App\Http\Controllers\MemberTransactionReportController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
@@ -88,6 +89,8 @@ Route::middleware('auth')->group(function () {
 Route::middleware('auth')->group(function () {
     Route::get('/plan-de-remboursement/{creditId}', [RepaymentScheduleController::class, 'generate'])
         ->name('schedule.generate');
+    Route::get('/smulation-credit', [RepaymentScheduleController::class, 'simulation'])->name('repayments.simulation');
+
 });
 
 Route::middleware('auth')->group(function () {
@@ -100,9 +103,15 @@ Route::middleware('auth')->group(function () {
 });
 
 
-Route::get('/membres/vendre-carnet', [SellMembershipCardController::class, 'index'])
+Route::get('/membres/vendre-carnet', [MembershipCardController::class, 'index'])
     ->middleware('auth')
     ->name('members.sell-card');
+Route::get('/membres/depot-carnet', [MembershipCardController::class, 'depot'])
+    ->middleware('auth')
+    ->name('members.deposit-card');
+Route::get('/membres/retrait-carnet', [MembershipCardController::class, 'withdrawfromcard'])
+    ->middleware('auth')
+    ->name('members.withdrawfrom-card');
 
 
 

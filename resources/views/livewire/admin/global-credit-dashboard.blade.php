@@ -77,27 +77,34 @@
 
     <!-- Section Caisse Centrale & Échéances en retard -->
     <div class="row">
-        <div class="col-md-6 mb-4">
-            <div class="card h-100">
-                <div class="card-header bg-label-primary fw-bold">
-                    Soldes Caisse Centrale
+        <div class="col-md-7 mb-4">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card h-100">
+                        <div class="card-header bg-label-primary fw-bold">
+                            Soldes Caisse Centrale
+                        </div>
+                        <div class="card-body p-0">
+                            <ul class="list-group list-group-flush" style="font-size: 24px">
+                                @foreach($cashRegisters as $cr)
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        {{ $cr->currency }}
+                                        <span class="badge bg-primary">
+                                            {{ number_format($cr->balance, 2) }} {{ $cr->currency }}
+                                        </span>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body p-0">
-                    <ul class="list-group list-group-flush">
-                        @foreach($cashRegisters as $cr)
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                {{ $cr->currency }}
-                                <span class="badge bg-primary">
-                                    {{ number_format($cr->balance, 2) }} {{ $cr->currency }}
-                                </span>
-                            </li>
-                        @endforeach
-                    </ul>
+                <div class="col-md-12 mt-4">
+                    <livewire:membership-card-stats>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 mb-4">
+        <div class="col-md-5 mb-4">
             <div class="card h-100">
                 <div class="card-header bg-label-danger fw-bold">
                     Échéances en retard

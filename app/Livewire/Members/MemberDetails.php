@@ -4,10 +4,14 @@ namespace App\Livewire\Members;
 
 use App\Models\Account;
 use App\Models\AgentAccount;
+use App\Models\DailyContribution;
+use App\Models\MainCashRegister;
+use App\Models\MembershipCard;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -23,19 +27,25 @@ class MemberDetails extends Component
     public $perPage = 10;
 
     public $currency;
-    public $amount = 0;
     public $description = '';
 
-    protected $rules = [
-        'memberId' => 'required|exists:users,id',
-        'currency' => 'required|in:USD,CDF',
-        'amount' => 'required|numeric|min:0.01',
-    ];
+    public $card_id;
+    public $cards = [];
+    public $selectedCard;
+    public $contribution_date;
+    public $amount = 0;
+    public $operation_type;
 
+    public $type;
 
     public function mount($id)
     {
         $this->memberId = $id;
+
+        $this->cards = MembershipCard::where('member_id', $this->memberId)
+            ->where('is_active', true)
+            ->with(['contributions'])
+            ->get();
     }
 
     //Make Deposit to customer Account
@@ -43,7 +53,11 @@ class MemberDetails extends Component
     {
         Gate::authorize('depotMembers', User::class);
 
-        $this->validate();
+        $this->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'memberId' => 'required|exists:users,id',
+            'currency' => 'required|in:USD,CDF',
+        ]);
 
         DB::beginTransaction();
         try {
@@ -75,8 +89,19 @@ class MemberDetails extends Component
                 'type'           => 'dépôt',
                 'currency'       => $this->currency,
                 'amount'         => $this->amount,
-                'balance_after'  => $account->balance,
+                'balance_after'  => $agentAccount->balance,
                 'description'    => $this->description ?: "DEPOT du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
+            ]);
+
+            // Création de la transaction
+            $transaction = Transaction::create([
+                'account_id'     => $account->id,
+                'user_id'        => $user->id,
+                'type'           => 'dépôt',
+                'currency'       => $this->currency,
+                'amount'         => $this->amount,
+                'balance_after'  => $account->balance,
+                'description'    => $this->description ?: "DEPOT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
             ]);
 
             // Finalisation de la transaction
@@ -95,11 +120,132 @@ class MemberDetails extends Component
         }
     }
 
+    public function updatedCardId()
+    {
+        $this->selectedCard = MembershipCard::find($this->card_id);
+        $amount = $this->selectedCard;
+        $this->amount = $amount->subscription_amount;
+    }
+
+    public function updatedType()
+    {
+        $this->operation_type = $this->type;
+    }
+
+    public function contribute()
+    {
+        Gate::authorize('depotMembers', User::class);
+
+        $this->validate([
+            'card_id' => 'required|exists:membership_cards,id',
+            'amount' => 'required|numeric|min:0.01',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $card = MembershipCard::findOrFail($this->card_id);
+
+            // Montant d'une mise quotidienne
+            $dailyAmount = $card->subscription_amount;
+
+            // Nombre de mises à payer selon le montant entré
+            $numberOfDaysToPay = floor($this->amount / $dailyAmount);
+
+            if ($numberOfDaysToPay <= 0) {
+                notyf()->error("Le montant doit être au moins égal à {$dailyAmount}.");
+                return;
+            }
+
+            // Trouver les prochaines X contributions non payées
+            $contributionsToPay = $card->contributions()
+                ->where('is_paid', false)
+                ->orderBy('contribution_date', 'asc')
+                ->take($numberOfDaysToPay)
+                ->get();
+
+            if ($contributionsToPay->isEmpty()) {
+                notyf()->error("Toutes les mises ont déjà été effectuées pour cette carte.");
+                return;
+            }
+
+            if ($contributionsToPay->count() < $numberOfDaysToPay) {
+                $remaining = $numberOfDaysToPay - $contributionsToPay->count();
+                notyf()->warning("Seulement {$contributionsToPay->count()} mises restantes. Paiement partiel effectué.");
+            }
+
+            // Mettre à jour les mises sélectionnées
+            foreach ($contributionsToPay as $contribution) {
+                $contribution->is_paid = true;
+                $contribution->save();
+            }
+
+            // Calculer le montant réel utilisé
+            $totalPaid = $contributionsToPay->count() * $dailyAmount;
+
+            // Créditer le compte du membre et de l'agent
+            $account = Account::firstOrCreate(
+                ['user_id' => $card->member_id, 'currency' => $card->currency],
+                ['balance' => 0]
+            );
+
+            $agentAccount = AgentAccount::firstOrCreate(
+                ['user_id' => Auth::id(), 'currency' => $card->currency],
+                ['balance' => 0]
+            );
+
+            $agentAccount->balance += $totalPaid;
+            $account->balance += $totalPaid;
+            $agentAccount->save();
+            $account->save();
+
+            // Enregistrer la transaction
+            $transaction = Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $card->member_id,
+                'type' => 'mise_quotidienne',
+                'currency' => $card->currency,
+                'amount' => $totalPaid,
+                'balance_after' => $account->balance,
+                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
+                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name,
+            ]);
+
+            // Création de la transaction
+            $transaction = Transaction::create([
+                'account_id'     => $account->id,
+                'user_id'        => Auth::id(),
+                'type'           => 'mise_quotidienne',
+                'currency'       => $card->currency,
+                'amount'         => $this->amount,
+                'balance_after'  => $agentAccount->balance,
+                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
+                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name,
+            ]);
+
+            DB::commit();
+
+            $this->reset(['contribution_date', 'amount']);
+            $this->dispatch('closeModal', name: 'modalDepositMembre');
+            $this->dispatch('$refresh');
+            notyf()->success("Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
+            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            report($th);
+            notyf()->error('Une erreur est survenue lors du dépôt. Veuillez réessayer.');
+        }
+    }
+
     public function submitRetrait()
     {
         Gate::authorize('depotMembers', User::class);
 
-        $this->validate();
+        $this->validate([
+            'amount' => 'required|numeric|min:0.01',
+            'memberId' => 'required|exists:users,id',
+            'currency' => 'required|in:USD,CDF',
+        ]);
 
         DB::beginTransaction();
         try {
@@ -163,9 +309,97 @@ class MemberDetails extends Component
         }
     }
 
+    public function submitRetraitCarte()
+    {
+        Gate::authorize('depotMembers', User::class);
+
+        $this->validate([
+            'card_id' => 'required|exists:membership_cards,id',
+        ]);
+
+        DB::beginTransaction();
+        try {
+
+            $card = MembershipCard::findOrFail($this->card_id);
+
+            if ($card->is_active == 0) {
+                notyf()->error( 'Retrait déjà effectué.');
+                return;
+            }
+
+            $aretenir = $card->subscription_amount;
+
+            // Retirer la mise totale
+            $total = $card->contributions->where('is_paid', true)->sum('amount');
+
+            // Ajouter au compte du membre
+            $account = Account::where('user_id', $card->member_id)
+                ->where('currency', $card->currency)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $mainCash = MainCashRegister::where('currency', $card->currency)
+                ->lockForUpdate()
+                ->firstOrCreate(['currency' => $card->currency], ['balance' => 0]);
+
+            if ($mainCash->balance < $total) {
+                DB::rollBack();
+                notyf()->error(__('Solde insuffisant dans la caisse.'));
+                return;
+            }
+
+            $mainCash->balance += $aretenir;
+            $account->balance -= $total;
+
+            $mainCash->save();
+            $account->save();
+
+            // Marquer comme retiré
+            $card->is_active = 0;
+            $card->save();
+
+            // Enregistrer la transaction
+            $transaction = Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $card->member_id,
+                'type' => 'retrait_carte_adhesion',
+                'currency' => $card->currency,
+                'amount' => $total - $aretenir,
+                'balance_after' => $account->balance,
+                'description' => "Retrait de la carte #{$card->id}"
+            ]);
+
+            // Enregistrer la transaction
+            Transaction::create([
+                'account_id' => $mainCash->id,
+                'user_id' => $card->member_id,
+                'type' => 'frais_retrait_carte_adhesion',
+                'currency' => $card->currency,
+                'amount' => $aretenir,
+                'balance_after' => $mainCash->balance,
+                'description' => "Retrait de la carte #{$card->id}"
+            ]);
+
+            DB::commit();
+
+            $this->reset(['type','amount', 'description']);
+            $this->dispatch('closeModal', name: 'modalRetraitMembre');
+            $this->dispatch('$refresh');
+            notyf()->success('Retrait effectué avec succès !');
+            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            report($th);
+            notyf()->error('Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.');
+        }
+    }
+
     public function closeDepositModal()
     {
         $this->dispatch('closeModal', name: 'modalDepositMembre');
+        $this->reset(['type']);
+
     }
 
     public function closeRetraitModal()
@@ -175,7 +409,9 @@ class MemberDetails extends Component
 
     public function openDepositModal()
     {
+        $this->type = '';
         $this->dispatch('openModal', name: 'modalDepositMembre');
+
     }
     public function openRetraitModal()
     {
@@ -204,7 +440,11 @@ class MemberDetails extends Component
             ->latest()
             ->paginate($this->perPage);
 
-        return view('livewire.members.member-details', compact('member', 'transactions'));
+        return view('livewire.members.member-details',[
+            'member' => $member,
+            'transactions' => $transactions,
+            'cards' => $this->cards
+        ]);
     }
 
 }
