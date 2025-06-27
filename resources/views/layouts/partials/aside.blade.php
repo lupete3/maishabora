@@ -93,7 +93,53 @@
         </li>
         @endcan
 
-    
+        @can('sellMemberShipCard', App\Models\User::class)
+
+        <!-- Vente de cartes membres -->
+        <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">
+            <a href="{{ route('members.sell-card') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-id-card"></i> <!-- Icône de carte membre -->
+                <div data-i18n="Analytics">Vente Cartes Membres</div>
+            </a>
+        </li>
+        @endcan
+
+        @can('simulationLoan', App\Models\User::class)
+        <!-- Simulation de crédit -->
+        <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
+            <a href="{{ route('repayments.simulation') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
+                <div data-i18n="Analytics">Simulation Crédit</div>
+            </a>
+        </li>
+        @endcan
+
+
+
+
+        {{-- <li
+            class="menu-item @if (request()->routeIs('members.deposit-card')) active @endif">
+            <a href="{{ route('members.deposit-card') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
+                <div data-i18n="Analytics">Depot Cartes Membres</div>
+            </a>
+        </li>
+
+        <li
+            class="menu-item @if (request()->routeIs('members.withdrawfrom-card')) active @endif">
+            <a href="{{ route('members.withdrawfrom-card') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
+                <div data-i18n="Analytics">Retrait Cartes Membres</div>
+            </a>
+        </li> --}}
+
+
+
+
+
+
+
+
         {{-- @can('isRecouvreur', App\Models\User::class)
 
         <li class="menu-item @if (request()->routeIs('recouvreur.member.register')) active @endif">
