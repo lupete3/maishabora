@@ -117,6 +117,9 @@ class GrantCredit extends Component
                 return;
             }
 
+            $account->balance -= $creditFris;
+            $account->save();
+
             $mainCash->balance -= $this->amount;
             $account->balance += $this->amount;
 

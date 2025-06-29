@@ -294,6 +294,17 @@ class MemberDetails extends Component
                 'description' => $this->description ?: "RETRAIT du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
             ]);
 
+            // Création de la transaction
+            $transaction = Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $user->id,
+                'type' => 'retrait',
+                'currency' => $this->currency,
+                'amount' => $this->amount,
+                'balance_after' => $account->balance,
+                'description' => $this->description ?: "RETRAIT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
+            ]);
+
             DB::commit();
 
             $this->reset(['amount', 'description']);
@@ -436,7 +447,7 @@ class MemberDetails extends Component
                     $q->where('type', 'like', $searchTerm)
                     ->orWhere('currency', 'like', $searchTerm);
                 });
-            })->where('user_id', $this->memberId)
+            })
             ->latest()
             ->paginate($this->perPage);
 

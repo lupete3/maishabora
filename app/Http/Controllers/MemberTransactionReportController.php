@@ -14,7 +14,9 @@ class MemberTransactionReportController extends Controller
     {
         $member = User::findOrFail($memberId);
         $accountIds = $member->accounts->pluck('id')->toArray();
-        $transactions = Transaction::whereIn('account_id', $accountIds)->orderBy('created_at', 'DESC')->get();
+        $transactions = Transaction::whereIn('account_id', $accountIds)
+
+        ->orderBy('created_at', 'DESC')->get();
 
         // Récupérer les soldes actuels par devise
         $balances = Account::where('user_id', $member->id)
