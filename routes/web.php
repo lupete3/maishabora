@@ -25,6 +25,7 @@ use App\Http\Controllers\RegisterMemberController;
 use App\Http\Controllers\RepaymentScheduleController;
 use App\Http\Controllers\SellMembershipCardController;
 use App\Http\Controllers\TransferToCentralCashController;
+use App\Http\Controllers\UserController;
 use App\Livewire\Credit\GrantCredit;
 use App\Livewire\Members\CreateMember;
 use App\Livewire\Members\SellMembershipCard;
@@ -100,6 +101,7 @@ Route::middleware('auth')->group(function () {
 Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
 Route::middleware('auth')->group(function () {
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
+    Route::get('/users', [UserController::class, 'index'])->name('user.management');
 });
 
 

@@ -112,6 +112,13 @@
                 <div data-i18n="Analytics">Simulation Crédit</div>
             </a>
         </li>
+        <!-- Gestion Utilisateurs -->
+        <li class="menu-item @if (request()->routeIs('user.management')) active @endif">
+            <a href="{{ route('user.management') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
+                <div data-i18n="Analytics">Gestion Utilisateurs</div>
+            </a>
+        </li>
         @endcan
 
 
