@@ -152,7 +152,7 @@ class CheckOverdueRepayments extends Command
         $today = Carbon::today();
 
         // Trouver toutes les échéances non payées avec date < aujourd'hui
-        $overdue = Repayment::where('due_date', '<', $today)
+        $overdue = Repayment::where('due_date', '<=', $today)
             ->where('is_paid', false)
             ->get();
 
@@ -172,10 +172,10 @@ class CheckOverdueRepayments extends Command
             // Calcul du montant dû + pénalité
             $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
             $dailyPenaltyRate = 0.003; // 0.3% par jour
-            $expectedAmount = round((float)$repayment->expected_amount, 2);
-            $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 2);
-            $totalDue = round($expectedAmount + $penaltyAmount, 2);
-            $interestPart = round($credit->amount * ($credit->interest_rate / 100), 2);
+            $expectedAmount = round((float)$repayment->expected_amount, 3);
+            $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 3);
+            $totalDue = round($expectedAmount + $penaltyAmount, 3);
+            $interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
             $interestAfter = $interestPart+$penaltyAmount;
 
 
@@ -197,8 +197,8 @@ class CheckOverdueRepayments extends Command
                     ['balance' => 0]
                 );
 
-                $mainCash->balance += ($expectedAmount - $interestPart);
-                $agentAccount->balance += ($interestAfter);
+                // $mainCash->balance += ($expectedAmount - $interestPart);
+                $agentAccount->balance += $interestAfter;
 
                 $mainCash->save();
                 $agentAccount->save();

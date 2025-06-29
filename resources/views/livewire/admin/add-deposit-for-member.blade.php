@@ -36,6 +36,11 @@
                             <input type="number" step="0.01" wire:model="amount" class="form-control" />
                             @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
+
+                        <div class="col-md-12 mb-3">
+                            <label>Description (facultatif)</label>
+                            <input type="text" wire:model="description" class="form-control" />
+                        </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" wire:click='closeDepositModal'>{{ __('Fermer')
