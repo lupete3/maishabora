@@ -11,7 +11,7 @@ class GrantCreditController extends Controller
     public function index()
     {
 
-        Gate::authorize('octroitCredit', User::class);
+        Gate::authorize('ajouter-credit', User::class);
 
         return view('credit');
     }

@@ -10,4 +10,8 @@ class UserController extends Controller
     {
         return view('user');
     }
+    public function roles()
+    {
+        return view('role');
+    }
 }

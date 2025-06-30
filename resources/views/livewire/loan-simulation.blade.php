@@ -1,6 +1,6 @@
 <div class="p-4 space-y-4">
     <div id="simulation-form">
-        <h2 class="text-xl font-bold">Simulation de Crédit Dégressif</h2>
+        <h2 class="text-xl font-bold">Simulation de Crédit</h2>
         <div class="flex space-x-4">
             <div>
                 <label>Montant du prêt :</label>

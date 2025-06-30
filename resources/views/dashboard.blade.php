@@ -4,11 +4,11 @@
 
 @section('content')
 
-@can('isMembre', App\Models\User::class)
+@can('afficher-tableaudebord-client', App\Models\User::class)
     <livewire:members.member-dashboard />
 @endcan
 
-@can('viewDashBoardAdmin', App\Models\User::class)
+@can('afficher-tableaudebord-admin', App\Models\User::class)
     <livewire:admin.global-credit-dashboard />
 {{-- <div class="container-xxl flex-grow-1 container-p-y">
     <div class="row">
@@ -490,11 +490,11 @@
 
 @endcan
 
-@can('isReceptionniste', App\Models\User::class)
+@can('afficher-tableaudebord-receptionist', App\Models\User::class)
     <livewire:receptionist.receptionist-dashboard />
 @endcan
 
-@can('isRecouvreur', App\Models\User::class)
+@can('afficher-tableaudebord-recouvreur', App\Models\User::class)
     <div class="container">
         <livewire:agent.agent-dashboard />
     </div>

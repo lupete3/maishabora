@@ -29,11 +29,11 @@
                             <option value="100">100</option>
                             <option value="999999">Tous</option>
                         </select>
-                        @if (Auth::user()->isReceptionniste())
+                        @can('ajouter-client')
                             <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
                                 {{ __("Ajouter") }}
                             </button>
-                        @endif
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -48,8 +48,6 @@
                                 <th>Nom</th>
                                 <th>Email</th>
                                 <th>Téléphone</th>
-                                <th>Solde USD</th>
-                                <th>Solde CDF</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -62,12 +60,6 @@
                                     <td>{{ $member->email }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>
-                                        {{ number_format($member->accounts->firstWhere('currency', 'USD')?->balance ?? 0, 2) }}
-                                    </td>
-                                    <td>
-                                        {{ number_format($member->accounts->firstWhere('currency', 'CDF')?->balance ?? 0, 2) }}
-                                    </td>
-                                    <td>
                                         @if ($member->status)
                                             <span class="badge bg-success">Actif</span>
                                         @else
@@ -76,19 +68,23 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-1">
-                                            @can('depotMembers', App\Models\User::class)
-                                                <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">Compte Client</a>
+                                            @canany(['depot-compte-membre', 'retrait-compte-membre'])
+                                                <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">
+                                                    Compte Client
+                                                </a>
+                                            @endcanany
+
+                                            @can('modifier-client')
+                                                <button wire:click='edit({{ $member->id }})' class="btn btn-sm btn-info">
+                                                    {{ __('Modifier') }}
+                                                </button>
                                             @endcan
-                                            @if (Auth::user()->isReceptionniste())
-                                                <button wire:click='edit({{ $member->id }})'
-                                                    class="btn btn-sm btn-info">{{ __('Modifier') }}</button>
-                                            @endif
                                         </div>
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="8" class="text-center">
+                                    <td colspan="6" class="text-center">
                                         <div class="alert alert-danger" role="alert">
                                             Rechercher un client dans le système.
                                         </div>

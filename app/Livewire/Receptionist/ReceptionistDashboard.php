@@ -4,6 +4,7 @@ namespace App\Livewire\Receptionist;
 
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 
 class ReceptionistDashboard extends Component
@@ -11,9 +12,8 @@ class ReceptionistDashboard extends Component
     public function render()
     {
         $user = Auth::user();
-        if (!$user->isReceptionniste()) {
-            abort(403, 'Accès interdit');
-        }
+        Gate::authorize('afficher-tableaudebord-receptionist', User::class);
+
 
         // Tous les clients dans le systeme
         $totalUsers = User::where('role', 'membre')->count();

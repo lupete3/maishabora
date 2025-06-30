@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/transfer-to-central-cash.blade.php -->
-<div class="container mt-4">
+<div class="mt-4">
     @if (session()->has('message'))
         <div class="alert alert-success">{{ session('message') }}</div>
     @endif

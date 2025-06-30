@@ -288,13 +288,20 @@
                     <div
                         class="card-footer d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
                         <div class="d-flex justify-content-between align-items-center gap-3">
-
+                            <div class="text-muted">
+                                Affichage de {{ $transactions->firstItem() }} à {{ $transactions->lastItem() }} sur
+                                <span class="badge bg-primary">{{ $transactions->total() }}</span> transactions
+                            </div>
                         </div>
 
-
+                        <div class="d-flex justify-content-center">
+                            {{ $transactions->links() }}
+                        </div>
                     </div>
                 </div>
+                <livewire:membership-card-stats>
             </div>
+
 
         </div>
 
@@ -302,7 +309,7 @@
 
     <div class="row mb-4">
 
-        <div class="col-md-4 mt-4">
+        <div class="col-md-4 mt-2">
             <div class="card ">
                 <div class="card-header">
                     <h6 class="mb-0">Crédits</h6>
@@ -326,7 +333,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-8">
+        <div class="col-md-8">
             <div class="card mt-4">
                 <div class="card-header bg-label-danger">
                     <h6 class="mb-0 text-danger">Échéances en retard</h6>

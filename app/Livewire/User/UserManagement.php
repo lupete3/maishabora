@@ -10,6 +10,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Spatie\Permission\Models\Role;
 use Throwable;
 
 class UserManagement extends Component
@@ -26,6 +27,7 @@ class UserManagement extends Component
     public ?string $profession = null;
     public string $email = '';
     public string|null $password = null;
+    public $roles = [];
 
     public string $role = 'membre'; // Valeur par défaut
     public bool $status = false;
@@ -83,6 +85,13 @@ class UserManagement extends Component
 
             $user = User::create($validated);
 
+            //  ➜ Ici on attache les rôles sélectionnés :
+            if (!empty($this->roles)) {
+                $user->syncRoles($this->roles);
+            } else {
+                $user->assignRole($this->role ?? 'Membre');
+            }
+
             // Créer les deux comptes (USD et CDF)
             foreach (['USD', 'CDF'] as $currency) {
                 Account::create([
@@ -131,6 +140,9 @@ class UserManagement extends Component
             $this->password = null;
             $this->editModal = true;
 
+            // ➜ Charger les rôles actuels :
+            $this->roles = $user->roles()->pluck('name')->toArray();
+
             $this->dispatch('openModal', name: 'modalMembre');
 
         } catch (ModelNotFoundException $e) {
@@ -141,67 +153,71 @@ class UserManagement extends Component
     }
 
     public function update()
-{
-    try {
-        $status = (int) $this->status;
+    {
+        try {
+            $status = (int) $this->status;
 
-        $rules = [
-            'name' => ['required', 'string', 'max:255'],
-            'postnom' => ['required', 'string', 'max:255'],
-            'prenom' => ['nullable', 'string', 'max:255'],
-            'date_naissance' => ['required', 'date'],
-            'telephone' => [
-                'required',
-                'string',
-                'max:20',
-                'regex:/^\\+243\\d{9}$/',
-                Rule::unique('users')
-                    ->ignore($this->userId)
-                    ->where(function ($query) {
-                        return $query->where('name', $this->name)
-                            ->where('postnom', $this->postnom)
-                            ->where('telephone', $this->telephone);
-                    }),
-            ],
-            'adresse_physique' => ['nullable', 'string'],
-            'profession' => ['nullable', 'string'],
-            'email' => [
-                'required', 'string', 'lowercase', 'email', 'max:255',
-                Rule::unique('users')->ignore($this->userId),
-            ],
-            'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
-        ];
+            $rules = [
+                'name' => ['required', 'string', 'max:255'],
+                'postnom' => ['required', 'string', 'max:255'],
+                'prenom' => ['nullable', 'string', 'max:255'],
+                'date_naissance' => ['required', 'date'],
+                'telephone' => [
+                    'required',
+                    'string',
+                    'max:20',
+                    'regex:/^\\+243\\d{9}$/',
+                    Rule::unique('users')
+                        ->ignore($this->userId)
+                        ->where(function ($query) {
+                            return $query->where('name', $this->name)
+                                ->where('postnom', $this->postnom)
+                                ->where('telephone', $this->telephone);
+                        }),
+                ],
+                'adresse_physique' => ['nullable', 'string'],
+                'profession' => ['nullable', 'string'],
+                'email' => [
+                    'required', 'string', 'lowercase', 'email', 'max:255',
+                    Rule::unique('users')->ignore($this->userId),
+                ],
+                'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
+            ];
 
-        // Si mot de passe est fourni on l'ajoute aux règles
-        if ($this->password !== null && trim($this->password) !== '') {
-            $rules['password'] = ['min:4'];
+            // Si mot de passe est fourni on l'ajoute aux règles
+            if ($this->password !== null && trim($this->password) !== '') {
+                $rules['password'] = ['min:4'];
+            }
+
+            $validated = $this->validate($rules);
+
+            $validated['status'] = $status;
+
+            if ($this->password !== null && trim($this->password) !== '') {
+                $validated['password'] = Hash::make($this->password);
+            } else {
+                unset($validated['password']);
+            }
+
+            // $user = User::findOrFail($this->userId)->update($validated);
+            $user = User::findOrFail($this->userId);
+            $user->update($validated);
+
+            // ➜ Synchroniser les rôles :
+            $user->syncRoles($this->roles);
+
+
+            $this->dispatch('closeModal', name: 'modalMembre');
+            $this->dispatch('$refresh');
+            $this->resetPage();
+            notyf()->success('Mise à jour effectuée avec succès.');
+
+        } catch (ModelNotFoundException $e) {
+            notyf()->error('Membre non trouvé.');
+        } catch (Throwable $th) {
+            notyf()->error('Une erreur est survenue lors de la mise à jour.');
         }
-
-        $validated = $this->validate($rules);
-
-        $validated['status'] = $status;
-
-        if ($this->password !== null && trim($this->password) !== '') {
-            $validated['password'] = Hash::make($this->password);
-        } else {
-            unset($validated['password']);
-        }
-
-        User::findOrFail($this->userId)->update($validated);
-
-        $this->dispatch('closeModal', name: 'modalMembre');
-        $this->dispatch('$refresh');
-        $this->resetPage();
-        notyf()->success('Mise à jour effectuée avec succès.');
-
-    } catch (ModelNotFoundException $e) {
-        notyf()->error('Membre non trouvé.');
-    } catch (Throwable $th) {
-        notyf()->error('Une erreur est survenue lors de la mise à jour.');
     }
-}
-
-
 
     private function generateUniqueAccountCode()
     {
@@ -255,23 +271,22 @@ class UserManagement extends Component
     {
         try {
             if ($this->search) {
-                $members = User::where('role', 'membre')
-                    ->where(function ($query) {
-                        $query->where('code', 'like', "%{$this->search}%")
-                            ->orWhere('name', 'like', "%{$this->search}%")
-                            ->orWhere('postnom', 'like', "%{$this->search}%")
-                            ->orWhere('prenom', 'like', "%{$this->search}%")
-                            ->orWhere('date_naissance', 'like', "%{$this->search}%")
-                            ->orWhere('telephone', 'like', "%{$this->search}%")
-                            ->orWhere('adresse_physique', 'like', "%{$this->search}%")
-                            ->orWhere('profession', 'like', "%{$this->search}%");
-                    })
+                $members = User::where('code', 'like', "%{$this->search}%")
+                    ->orWhere('name', 'like', "%{$this->search}%")
+                    ->orWhere('postnom', 'like', "%{$this->search}%")
+                    ->orWhere('prenom', 'like', "%{$this->search}%")
+                    ->orWhere('date_naissance', 'like', "%{$this->search}%")
+                    ->orWhere('telephone', 'like', "%{$this->search}%")
+                    ->orWhere('adresse_physique', 'like', "%{$this->search}%")
+                    ->orWhere('profession', 'like', "%{$this->search}%")
                     ->paginate($this->perPage);
             } else {
                 $members = User::where('role', 'membre')->paginate($this->perPage);
             }
 
-            return view('livewire.user.user-management', ['members' => $members]);
+            $roles_user = Role::all();
+
+            return view('livewire.user.user-management', ['members' => $members, 'roles_user' => $roles_user]);
 
         } catch (Throwable $th) {
             notyf()->error('Erreur lors du chargement des membres.');

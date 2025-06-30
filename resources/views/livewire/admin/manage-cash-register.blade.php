@@ -95,7 +95,7 @@
                             </label>
                         </div>
                     </div>
-                    @can('retraitCaisseCentrale', App\Models\User::class)
+                    @can('ajouter-sortie-caisse')
                     <div class="d-flex align-items-center gap-1">
                         <button wire:click="openModal" class="btn btn-primary">
                             + Ajouter

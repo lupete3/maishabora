@@ -1,5 +1,5 @@
 <div class="mt-4">
-
+    @can('ajouter-carnet')
     <div class="card">
         <div class="card-header bg-primary text-white">Achat de Carte d'Adhésion</div>
         <div class="card-body">
@@ -64,6 +64,7 @@
             </form>
         </div>
     </div>
+    @endcan
 
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">

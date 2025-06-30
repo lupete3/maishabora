@@ -20,23 +20,35 @@ class MembershipCardStats extends Component
 
     public function mount()
     {
-        // Filtrer selon rôle utilisateur
-        if (Auth::user()->role === 'caissier') {
+        $user = Auth::user();
+
+        if ($user->can('afficher-tableaudebord-admin')) {
+            // ADMIN : voir tous les membres
             $cardsUsd = MembershipCard::where('currency', 'USD')
                 ->whereHas('member', fn($q) => $q->where('role', 'membre'))
-                ->withCount('contributions')->get();
+                ->withCount('contributions')
+                ->get();
 
             $cardsCdf = MembershipCard::where('currency', 'CDF')
                 ->whereHas('member', fn($q) => $q->where('role', 'membre'))
-                ->withCount('contributions')->get();
+                ->withCount('contributions')
+                ->get();
+
+        } elseif ($user->can('afficher-tableaudebord-client')) {
+            // CLIENT : voir ses propres cartes
+            $cardsUsd = MembershipCard::where('currency', 'USD')
+                ->where('member_id', $user->id)
+                ->withCount('contributions')
+                ->get();
+
+            $cardsCdf = MembershipCard::where('currency', 'CDF')
+                ->where('member_id', $user->id)
+                ->withCount('contributions')
+                ->get();
         } else {
-            $cardsUsd = MembershipCard::where('currency', 'USD')
-                ->where('member_id', Auth::user()->id)
-                ->withCount('contributions')->get();
-
-            $cardsCdf = MembershipCard::where('currency', 'CDF')
-                ->where('member_id', Auth::user()->id)
-                ->withCount('contributions')->get();
+            // PAS DE PERMISSION : vider ou bloquer
+            $cardsUsd = collect();
+            $cardsCdf = collect();
         }
 
         // Statistiques USD

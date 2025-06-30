@@ -51,7 +51,7 @@
                     <div class="col-md-4 mb-1">
                         <label for="telephone" class="form-label">Téléphone</label>
                         <input type="text" wire:model.defer="telephone" id="telephone" class="form-control"
-                            placeholder="+243..." required />
+                            placeholder="+243........" required />
                         @error('telephone') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
@@ -90,6 +90,18 @@
                             @error('password') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
                     @endif
+
+                    <div class="col-md-6 mb-1">
+                        <label for="password" class="form-label">Rôles</label>
+
+                        <div class="form-check">
+                            @foreach ($roles_user as $role)
+                                <input class="form-check-input" type="checkbox" wire:model.defer="roles" value="{{ $role->name }}" id="role_{{ $role->id }}">
+                                <label class="form-check-label" for="role_{{ $role->id }}">{{ $role->name }}</label><br>
+                            @endforeach
+                        </div>
+                        @error('roles') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
 
                     <!-- Adresse physique -->
                     <div class="col-md-12 mb-1">

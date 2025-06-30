@@ -19,9 +19,7 @@ class AgentDashboard extends Component
     public function mount()
     {
         $user = Auth::user();
-        if (!$user->isCaissier() && !$user->isAdmin() && !$user->isRecouvreur()) {
-            return redirect(route('dashboard'));
-        }
+
 
     }
 
@@ -58,16 +56,16 @@ class AgentDashboard extends Component
     {
         $user = Auth::user();
 
-        if ($user->isRecouvreur()) {
-            // Récupère uniquement le recouvreur connecté avec ses comptes
-            $agentAccounts = User::where('id', $user->id)
+        if ($user->can('afficher-caisse-agent')) {
+            // Récupère tous les utilisateurs ayant des comptes liés
+            $agentAccounts = User::whereHas('agentAccounts')
                 ->with(['agentAccounts' => function ($query) {
                     $query->orderBy('currency');
                 }])
                 ->get();
         } else {
-            // Récupère tous les utilisateurs ayant des comptes liés
-            $agentAccounts = User::whereHas('agentAccounts')
+            // Récupère uniquement le recouvreur connecté avec ses comptes
+            $agentAccounts = User::where('id', $user->id)
                 ->with(['agentAccounts' => function ($query) {
                     $query->orderBy('currency');
                 }])

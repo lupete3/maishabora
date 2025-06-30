@@ -20,7 +20,7 @@ class PurchaseMembershipCard extends Component
 
     public $perPage = 10;
     public $search = '';
-    public $searchCard = '';
+    public $searchCard;
     public $member_id;
     public $currency = 'CDF';
     public $price = 0;
@@ -40,7 +40,7 @@ class PurchaseMembershipCard extends Component
 
     public function mount()
     {
-        Gate::authorize('sellMemberShipCard', User::class);
+        Gate::authorize('afficher-carnet', User::class);
 
         $this->members = User::where('role', 'membre')->get();
     }
@@ -80,6 +80,8 @@ class PurchaseMembershipCard extends Component
 
     public function submit()
     {
+        Gate::authorize('ajouter-carnet', User::class);
+
         $this->validate();
 
         try {
@@ -98,15 +100,16 @@ class PurchaseMembershipCard extends Component
             ]);
 
             // Génération des 31 mises
+            $startDate = now();
+
             for ($i = 0; $i < 31; $i++) {
                 $card->contributions()->create([
                     'membership_card_id' => $card->id,
-                    'contribution_date' => now()->addDays($i),
+                    'contribution_date' => $startDate->copy()->addDays($i),
                     'amount' => $this->subscription_amount,
                     'is_paid' => false,
                 ]);
             }
-
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
                 ['user_id' => Auth::user()->id, 'currency' => 'CDF'],
@@ -150,8 +153,10 @@ class PurchaseMembershipCard extends Component
 
             DB::commit();
 
+            $this->reset(['code','member_id','currency','price','subscription_amount']);
+            $this->dispatch('$refresh');
+            $this->resetPage();
             notyf()->success('Carte achetée avec succès !');
-            $this->reset(['price', 'subscription_amount']);
         } catch (\Exception $e) {
             DB::rollBack();
             notyf()->error("Cette carte existe déjà");
@@ -161,16 +166,18 @@ class PurchaseMembershipCard extends Component
     public function render()
     {
         // Si l'utilisateur est un agent, il voit toutes les cartes des membres qu'il gère
-        $cards = MembershipCard::with('member');
 
-        if ($this->search) {
-            $cards->whereHas('member', function ($q) {
-                $q->where('code', 'like', "%{$this->searchCard}%");
-                $q->where('name', 'like', "%{$this->searchCard}%");
-                $q->where('postnom', 'like', "%{$this->searchCard}%");
-                $q->where('prenom', 'like', "%{$this->searchCard}%");
+        $cards = MembershipCard::with('member')
+            ->when($this->searchCard, function ($query) {
+                $query->where('code', 'like', "%{$this->searchCard}%")
+                    ->orWhereHas('member', function ($q) {
+                        $q->where('code', 'like', "%{$this->searchCard}%")
+                            ->orWhere('name', 'like', "%{$this->searchCard}%")
+                            ->orWhere('postnom', 'like', "%{$this->searchCard}%")
+                            ->orWhere('prenom', 'like', "%{$this->searchCard}%");
+                    });
             });
-        }
+
             // Sinon, c’est un membre qui voit ses propres cartes
             // $cards = MembershipCard::where('member_id', auth()->id());
 

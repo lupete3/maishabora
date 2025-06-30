@@ -40,6 +40,8 @@ class MemberDetails extends Component
 
     public function mount($id)
     {
+        Gate::authorize('afficher-client', User::class);
+
         $this->memberId = $id;
 
         $this->cards = MembershipCard::where('member_id', $this->memberId)
@@ -51,7 +53,7 @@ class MemberDetails extends Component
     //Make Deposit to customer Account
     public function submit()
     {
-        Gate::authorize('depotMembers', User::class);
+        Gate::authorize('depot-compte-membre', User::class);
 
         $this->validate([
             'amount' => 'required|numeric|min:0.01',
@@ -134,7 +136,7 @@ class MemberDetails extends Component
 
     public function contribute()
     {
-        Gate::authorize('depotMembers', User::class);
+        Gate::authorize('depot-compte-membre', User::class);
 
         $this->validate([
             'card_id' => 'required|exists:membership_cards,id',
@@ -212,7 +214,7 @@ class MemberDetails extends Component
 
             // Création de la transaction
             $transaction = Transaction::create([
-                'account_id'     => $account->id,
+                'account_id'     => $agentAccount->id,
                 'user_id'        => Auth::id(),
                 'type'           => 'mise_quotidienne',
                 'currency'       => $card->currency,
@@ -239,7 +241,7 @@ class MemberDetails extends Component
 
     public function submitRetrait()
     {
-        Gate::authorize('depotMembers', User::class);
+        Gate::authorize('retrait-compte-membre', User::class);
 
         $this->validate([
             'amount' => 'required|numeric|min:0.01',
@@ -285,7 +287,7 @@ class MemberDetails extends Component
 
             // Création de la transaction
             $transaction = Transaction::create([
-                'account_id' => $account->id,
+                'account_id' => $agentAccount->id,
                 'user_id' => Auth::id(),
                 'type' => 'retrait',
                 'currency' => $this->currency,
@@ -322,7 +324,7 @@ class MemberDetails extends Component
 
     public function submitRetraitCarte()
     {
-        Gate::authorize('depotMembers', User::class);
+        Gate::authorize('retrait-compte-membre', User::class);
 
         $this->validate([
             'card_id' => 'required|exists:membership_cards,id',

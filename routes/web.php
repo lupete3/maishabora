@@ -38,88 +38,77 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','permission:afficher-role|afficher-utilisateur'])->group( function () {
+    Route::get('/users', [UserController::class, 'index'])->name('user.management');
+    Route::get('/roles', [UserController::class, 'roles'])->name('role.management');
+});
+
+Route::middleware(['auth','permission:afficher-caisse-centrale'])->group(function () {
     Route::get('/caisse-centrale', [ManageCashRegisterController::class, 'index'])->name('cash.register');
     Route::get('/caisse-centrale/export-transactions', [ManageCashRegisterController::class, 'generate'])
         ->name('cash.register.export.pdf');
 });
 
-Route::middleware('auth')->group(function () {
+
+Route::middleware(['auth','permission:afficher-client'])->group(function () {
     Route::get('/enregistrer-membre', [RegisterMemberController::class, 'index'])->name('member.register');
-});
-
-Route::middleware('auth')->group(function () {
-    Route::get('/depot-membre', [DepositForMemberController::class, 'index'])->name('deposit.member');
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/membre/{id}', [MemberDetailsController::class, 'index'])->name('member.details');
+    Route::get('/membre/{id}/export-transactions', [MemberTransactionReportController::class, 'generate'])
+        ->name('member.transactions.export');
+    Route::get('/receipt/transaction/{id}', [ReceiptController::class, 'generate'])->name('receipt.generate');
+});
+
+Route::middleware(['auth'])->group(function () {
     Route::get('/membre/{id}/export-transactions', [MemberTransactionReportController::class, 'generate'])
         ->name('member.transactions.export');
 });
 
-Route::middleware('auth')->group(function () {
-    Route::get('/receipt/transaction/{id}', [ReceiptController::class, 'generate'])->name('receipt.generate');
+Route::middleware(['auth','permission:depot-compte-membre'])->group(function () {
+    Route::get('/depot-membre', [DepositForMemberController::class, 'index'])->name('deposit.member');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','permission:afficher-transfert-caisse'])->group(function () {
     Route::get('/virement-caisse-centrale', [TransferToCentralCashController::class, 'index'])->name('transfer.to.central');
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/receipt/virement/{id}', [TransferToCentralCashController::class, 'generate'])->name('transfer.receipt.generate');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','permission:afficher-caisse-agent'])->group(function () {
     Route::get('/tableau-de-bord-agent', [AgentDashboardController::class, 'index'])->name('agent.dashboard');
+});
+
+Route::middleware(['auth'])->group(function () {
     Route::get('/agent/transactions/export/{user}/{filter}', [AgentDashboardController::class, 'exportTransactions'])->name('agent.transactions.export');
-
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','permission:ajouter-credit'])->group(function () {
     Route::get('/octroyer-credit', [GrantCreditController::class, 'index'])->name('credit.grant');
-});
-Route::middleware('auth')->group(function () {
-    Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/receipt/credit/{id}', [CreditReceiptController::class, 'generate'])->name('credit.receipt.generate');
 });
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth','permission:afficher-credit'])->group(function () {
+    Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
     Route::get('/plan-de-remboursement/{creditId}', [RepaymentScheduleController::class, 'generate'])
         ->name('schedule.generate');
-    Route::get('/smulation-credit', [RepaymentScheduleController::class, 'simulation'])->name('repayments.simulation');
-
-});
-
-Route::middleware('auth')->group(function () {
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class,'index'])->name('report.credit.overview');
-});
-
-Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
-Route::middleware('auth')->group(function () {
+    Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
-    Route::get('/users', [UserController::class, 'index'])->name('user.management');
 });
 
+Route::middleware(['auth','permission:afficher-simulation-credit'])->group(function () {
+    Route::get('/smulation-credit', [RepaymentScheduleController::class, 'simulation'])->name('repayments.simulation');
+});
 
-Route::get('/membres/vendre-carnet', [MembershipCardController::class, 'index'])
-    ->middleware('auth')
-    ->name('members.sell-card');
-Route::get('/membres/depot-carnet', [MembershipCardController::class, 'depot'])
-    ->middleware('auth')
-    ->name('members.deposit-card');
-Route::get('/membres/retrait-carnet', [MembershipCardController::class, 'withdrawfromcard'])
-    ->middleware('auth')
-    ->name('members.withdrawfrom-card');
+Route::middleware(['auth','permission:afficher-carnet'])->group(function () {
+    Route::get('/membres/vendre-carnet', [MembershipCardController::class, 'index'])->name('members.sell-card');
+});
 
+Route::middleware(['auth','permission:depot-compte-membre'])->group(function () {
+    Route::get('/membres/depot-carnet', [MembershipCardController::class, 'depot'])->name('members.deposit-card');
+});
 
-
-
-
-
+Route::middleware(['auth','permission:retrait-compte-membre'])->group(function () {
+    Route::get('/membres/retrait-carnet', [MembershipCardController::class, 'withdrawfromcard'])->name('members.withdrawfrom-card');
+});
 
 
 

@@ -26,7 +26,7 @@ class TransferToCentralCash extends Component
 
     public function mount()
     {
-        Gate::authorize('transfertVersCaisse', User::class);
+        Gate::authorize('ajouter-transfert-caisse', User::class);
     }
 
     public function submit()

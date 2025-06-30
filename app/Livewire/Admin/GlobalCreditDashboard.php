@@ -25,7 +25,7 @@ class GlobalCreditDashboard extends Component
     public function mount()
     {
         // Vérifier que seul un agent de terrain peut accéder
-        Gate::authorize('viewDashBoardAdmin', User::class);
+        Gate::authorize('afficher-tableaudebord-admin', User::class);
 
         // Caisse centrale
         $this->cashRegisters = MainCashRegister::all();

@@ -5,7 +5,9 @@ namespace App\Livewire\Admin;
 use Livewire\Component;
 use App\Models\MainCashRegister;
 use App\Models\Transaction;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 use Livewire\WithPagination;
 
 class ManageCashRegister extends Component
@@ -34,10 +36,7 @@ class ManageCashRegister extends Component
 
     public function mount()
     {
-        $user = Auth::user();
-        if (!$user->isCaissier() && !$user->isAdmin()) {
-            return redirect(route('dashboard'));
-        }
+        Gate::authorize('afficher-caisse-centrale', User::class);
     }
 
     public function updatedCurrency()

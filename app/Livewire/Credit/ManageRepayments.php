@@ -10,6 +10,7 @@ use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ManageRepayments extends Component
 {
@@ -30,12 +31,11 @@ class ManageRepayments extends Component
     public function mount()
     {
         $user = Auth::user();
-        if (!$user->isCaissier() && !$user->isAdmin()) {
-            return redirect(route('dashboard'));
-        }
+        Gate::authorize('afficher-credit', User::class);
+
         $this->members = User::where('role', 'membre')->get();
     }
-    
+
     public function updatedSearch()
     {
         $query = trim($this->search);
@@ -80,7 +80,7 @@ class ManageRepayments extends Component
     }
 
     public function payRepayment($repaymentId)
-    {        
+    {
         $repayment = Repayment::findOrFail($repaymentId);
 
         if ($repayment->is_paid) return;

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth as FacadesAuth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class GrantCredit extends Component
 {
@@ -44,9 +45,7 @@ class GrantCredit extends Component
     public function mount()
     {
         $user = Auth::user();
-        if (!$user->isCaissier() && !$user->isAdmin()) {
-            return redirect(route('dashboard'));
-        }
+        Gate::authorize('ajouter-credit', User::class);
 
         $this->members = User::where('role', 'membre')->get();
         $this->start_date = now()->format('Y-m-d');

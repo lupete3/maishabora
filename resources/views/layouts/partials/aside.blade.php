@@ -25,28 +25,34 @@
         </li>
 
         <!-- Liens Comptable -->
-        @can('isCaissier', App\Models\User::class)
+        @can('afficher-caisse-centrale')
         <li class="menu-item @if (request()->routeIs('cash.register')) active @endif">
             <a href="{{ route('cash.register') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->
                 <div data-i18n="Analytics">Caisse Centrale</div>
             </a>
         </li>
+        @endcan
 
+        @can('afficher-caisse-agent')
         <li class="menu-item @if (request()->routeIs('agent.dashboard')) active @endif">
             <a href="{{ route('agent.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-briefcase-alt-2"></i> <!-- Caisse agents -->
                 <div data-i18n="Analytics">Caisse Agents</div>
             </a>
         </li>
+        @endcan
 
+        @can('afficher-credit')
         <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
             <a href="{{ route('repayments.manage') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
                 <div data-i18n="Analytics">Gérer les Remboursements</div>
             </a>
         </li>
+        @endcan
 
+        @can('afficher-rapport-credit')
         <li class="menu-item @if (request()->routeIs('report.credit.overview')) active @endif">
             <a href="{{ route('report.credit.overview') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-time-five"></i> <!-- Remboursements -->
@@ -63,7 +69,7 @@
 
         @endcan
 
-        @can('octroitCredit', App\Models\User::class)
+        @can('ajouter-credit', App\Models\User::class)
         <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
             <a href="{{ route('credit.grant') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-credit-card"></i> <!-- Crédit -->
@@ -73,7 +79,7 @@
         @endcan
 
 
-        @can('transfertVersCaisse', App\Models\User::class)
+        @can('ajouter-transfert-caisse', App\Models\User::class)
         <li class="menu-item @if (request()->routeIs('transfer.to.central')) active @endif">
             <a href="{{ route('transfer.to.central') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Virement -->
@@ -82,8 +88,7 @@
         </li>
         @endcan
 
-        @can('viewMembers', App\Models\User::class)
-
+        @can('afficher-client', App\Models\User::class)
         <li
             class="menu-item @if (request()->routeIs('member.register','member.details','receipt.generate')) active @endif">
             <a href="{{ route('member.register') }}" class="menu-link">
@@ -93,8 +98,7 @@
         </li>
         @endcan
 
-        @can('sellMemberShipCard', App\Models\User::class)
-
+        @can('afficher-carnet', App\Models\User::class)
         <!-- Vente de cartes membres -->
         <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">
             <a href="{{ route('members.sell-card') }}" class="menu-link">
@@ -104,7 +108,7 @@
         </li>
         @endcan
 
-        @can('simulationLoan', App\Models\User::class)
+        @can('afficher-simulation-credit', App\Models\User::class)
         <!-- Simulation de crédit -->
         <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
             <a href="{{ route('repayments.simulation') }}" class="menu-link">
@@ -112,6 +116,19 @@
                 <div data-i18n="Analytics">Simulation Crédit</div>
             </a>
         </li>
+        @endcan
+
+        @can('afficher-role')
+        <!-- Gestion Utilisateurs -->
+        <li class="menu-item @if (request()->routeIs('role.management')) active @endif">
+            <a href="{{ route('role.management') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
+                <div data-i18n="Analytics">Gestion Rôles Utilisateurs</div>
+            </a>
+        </li>
+        @endcan
+
+        @can('afficher-utilisateur')
         <!-- Gestion Utilisateurs -->
         <li class="menu-item @if (request()->routeIs('user.management')) active @endif">
             <a href="{{ route('user.management') }}" class="menu-link">
@@ -120,8 +137,6 @@
             </a>
         </li>
         @endcan
-
-
 
 
         {{-- <li
