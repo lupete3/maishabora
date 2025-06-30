@@ -216,7 +216,7 @@ class CheckOverdueRepayments extends Command
 
                 Transaction::create([
                     'account_id' => $mainCash->id,
-                    'user_id' => $member->id,
+                    'user_id' => $agentAccount->id,
                     'type' => 'Entrée de fonds',
                     'currency' => $credit->currency,
                     'amount' => ($expectedAmount - $interestPart),
