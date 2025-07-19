@@ -6,19 +6,19 @@
     <style>
         body {
             font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-            margin: 20px;
+            font-size: 8px;
+            margin: 10px;
             color: #222;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .header h2 {
             margin: 0;
-            font-size: 16px;
+            font-size: 12px;
         }
 
         .header p {
@@ -28,21 +28,13 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 12px;
+            margin-top: 8px;
         }
 
-        th, td {
-            border: 1px solid #aaa;
-            padding: 6px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f4f4f4;
-        }
-
+        th, td { border: 1px solid #aaa; padding: 2px; font-size: 7px; text-align: left;}
+        th { background-color: #f1c206; }
         .totals {
-            margin-top: 20px;
+            margin-top: 10px;
         }
 
         .totals table {
@@ -52,10 +44,10 @@
 
         .footer {
             position: fixed;
-            bottom: 10px;
+            bottom: 5px;
             width: 100%;
             text-align: center;
-            font-size: 10px;
+            font-size: 8px;
             color: #888;
         }
 

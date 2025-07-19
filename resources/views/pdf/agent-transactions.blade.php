@@ -6,13 +6,14 @@
     <style>
         body { font-family: sans-serif; font-size: 14px; }
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #000; padding: 8px; }
-        th { background-color: #f0f0f0; }
+        th, td { border: 1px solid #000; padding: 2px; font-size: 8px;}
+        th { background-color: #f1c206; }
     </style>
 </head>
 <body>
-    <h2>Transactions de {{ $user->name }} {{ $user->postnom }} ({{ ucfirst($filter) }})</h2>
-    <p>Date : {{ now()->format('d/m/Y H:i') }}</p>
+    <h4>Transactions de {{ $user->name }} {{ $user->postnom }} ({{ ucfirst($filter) }})</h4>
+    <p>Date du rapport : {{ now()->format('d/m/Y H:i') }}<br>
+    Nombre total de transactions : <strong>{{ $transactionCount }}</strong></p>
 
     <table>
         <thead>
@@ -36,7 +37,8 @@
             @endforeach
         </tbody>
     </table>
-    <h3 style="margin-top: 30px;">Récapitulatif</h3>
+
+    <h3 style="margin-top: 30px;">Récapitulatif des totaux par devise</h3>
     <table>
         <thead>
             <tr>
@@ -53,6 +55,5 @@
             @endforeach
         </tbody>
     </table>
-
 </body>
 </html>

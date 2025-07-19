@@ -194,4 +194,12 @@
 
     @include('livewire.admin.add-cash-register')
 
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <livewire:currency-conversion />
+        </div>
+        <div class="col-md-6">
+            <livewire:admin.exchange-rate-manager />
+        </div>
+    </div>
 </div>

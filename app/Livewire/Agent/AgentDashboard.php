@@ -19,8 +19,6 @@ class AgentDashboard extends Component
     public function mount()
     {
         $user = Auth::user();
-
-
     }
 
     protected function applyDateFilter($query, $filter)
@@ -30,7 +28,7 @@ class AgentDashboard extends Component
         return match ($filter) {
             'day' => $query->whereDate('created_at', $now->toDateString()),
             'month' => $query->whereMonth('created_at', $now->month)
-                            ->whereYear('created_at', $now->year),
+                        ->whereYear('created_at', $now->year),
             'year' => $query->whereYear('created_at', $now->year),
             default => $query,
         };

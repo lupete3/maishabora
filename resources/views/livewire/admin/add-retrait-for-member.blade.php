@@ -3,7 +3,7 @@
     aria-hidden="true" data-focus="false" wire:ignore.self>
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
-            
+
                 <div class="modal-header">
                     <h5 class="modal-title" id="modalRetraitMembreLabel">{{ __("Effectuer un retrait") }}</h5>
                     <button type="button" class="btn-close" aria-label="Close" wire:click='closeRetraitModal'></button>
@@ -41,6 +41,13 @@
                                 @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
 
+
+                            <div class="col-md-6 mb-3">
+                                <label>Montant à retenir</label>
+                                <input type="number" step="0.00" wire:model="a_retenir" class="form-control" />
+                                @error('a_retenir') <span class="text-danger">{{ $message }}</span> @enderror
+                            </div>
+
                             {{-- <div class="col-md-12 mb-3">
                                 <label>Description (facultatif)</label>
                                 <input type="text" wire:model="description" class="form-control" />
@@ -59,7 +66,7 @@
                     </form>
                 @endif
 
-                @if ($operation_type == 'carte') 
+                @if ($operation_type == 'carte')
                     <form wire:submit.prevent="submitRetraitCarte">
 
                         <div class="modal-body row">

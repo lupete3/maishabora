@@ -76,7 +76,7 @@
             <td style="border: none; padding: 0;">
                 <strong>Montant du prêt :</strong> {{ number_format($credit->amount, 2) }} {{ $credit->currency }}<br>
                 <strong>Taux d'intérêt :</strong> {{ $credit->interest_rate }}%<br>
-                <strong>Type de remboursement :</strong> Mensuel<br>
+                <strong>Frais du dossier :</strong> {{ number_format(($credit->amount * 5) / 100, 2) }} {{ $credit->currency }}<br>
                 <strong>Date de début :</strong> {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}
             </td>
         </tr>
@@ -255,7 +255,7 @@
             </td>
             <td style="border: none; padding: 0;">
                 Signature Agent<br><br><br><br>
-                <strong>{{ $agent->name.' '.$agent->name }}</strong>
+                <strong>{{ $agent->name.' '.$agent->postnom }}</strong>
             </td>
         </tr>
     </table>

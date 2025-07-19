@@ -105,7 +105,7 @@
     </div>
     <div class="row">
         <div>Agent</div>
-        <div>{{ $transaction->user->name }}</div>
+        <div>{{ $agent->name }}</div>
     </div>
 
     <div class="line"></div>

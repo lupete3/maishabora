@@ -26,6 +26,7 @@
                             <label for="type">Type d'opération</label>
                             <select wire:model="type" id="type" class="form-control">
                                 {{-- <option value="in">Entrée</option> --}}
+                                <option value="">Choisir un type d'opération</option>
                                 <option value="out">Sortie</option>
                             </select>
                         </div>

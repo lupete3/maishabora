@@ -94,7 +94,7 @@ class PurchaseMembershipCard extends Component
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
-                'currency' => $this->currency,
+                'currency' => 'CDF',
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
             ]);
@@ -132,10 +132,10 @@ class PurchaseMembershipCard extends Component
                 'agent_account_id' => $agentAccount->id,
                 'user_id' => Auth::user()->id,
                 'type' => 'vente_carte_adhesion',
-                'currency' => $this->currency,
+                'currency' => 'CDF',
                 'amount' => $this->price,
                 'balance_after' => $agentAccount->balance,
-                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} {$this->currency}",
+                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} CDF",
             ]);
 
 
@@ -145,10 +145,10 @@ class PurchaseMembershipCard extends Component
                 'agent_account_id' => $membershipCardAccount->id,
                 'user_id' => 97,
                 'type' => 'vente_carte_adhesion',
-                'currency' => $this->currency,
+                'currency' => 'CDF',
                 'amount' => $this->price,
                 'balance_after' => $membershipCardAccount->balance,
-                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} {$this->currency}",
+                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} CDF",
             ]);
 
             DB::commit();

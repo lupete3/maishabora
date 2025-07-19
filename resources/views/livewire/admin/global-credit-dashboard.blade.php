@@ -3,13 +3,13 @@
 <div class="container mt-4">
 
     <!-- Statistiques des crédits -->
-    <div class="row g-2">
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+    <div class="row g-2 mb-4">
+        <div class="col-md-2 ">
             <div class="card card-border-shadow border-start-primary">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Crédits totaux</h6>
-                        <h4 class="mb-0">{{ $totalCredits }}</h4>
+                        <h5 class="mb-0">{{ $totalCredits }}</h5>
                     </div>
                     <div class="avatar bg-primary text-white rounded-circle shadow">
                         <i class="bx bx-money fs-4 m-2"></i>
@@ -18,12 +18,12 @@
             </div>
         </div>
 
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+        <div class="col-md-2 ">
             <div class="card card-border-shadow border-start-success">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">En cours</h6>
-                        <h4 class="mb-0">{{ $creditsInProgress }}</h4>
+                        <h5 class="mb-0">{{ $creditsInProgress }}</h5>
                     </div>
                     <div class="avatar bg-success text-white rounded-circle shadow">
                         <i class="bx bx-hourglass fs-4 m-2"></i>
@@ -32,12 +32,12 @@
             </div>
         </div>
 
-        <div class="col-6 col-md-2 col-sm-6 mb-4">
+        <div class="col-md-2 ">
             <div class="card card-border-shadow border-start-danger">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">En retard</h6>
-                        <h4 class="mb-0">{{ $overdueCreditsCount }}</h4>
+                        <h5 class="mb-0">{{ $overdueCreditsCount }}</h5>
                     </div>
                     <div class="avatar bg-danger text-white rounded-circle shadow">
                         <i class="bx bx-error fs-4 m-2"></i>
@@ -46,12 +46,12 @@
             </div>
         </div>
 
-        <div class="col-6 col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 ">
             <div class="card card-border-shadow border-start-warning">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Pénalités cumulées USD</h6>
-                        <h4 class="mb-0">{{ number_format($totalPenalties['USD'], 2) }}</h4>
+                        <h5 class="mb-0">{{ number_format($totalPenalties['USD'], 2) }}</h5>
                     </div>
                     <div class="avatar bg-warning text-white rounded-circle shadow">
                         <i class="bx bx-dollar fs-4 m-2"></i>
@@ -60,12 +60,12 @@
             </div>
         </div>
 
-        <div class="col-6 col-md-3 col-sm-6 mb-4">
+        <div class="col-md-3 ">
             <div class="card card-border-shadow border-start-info">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Pénalités cumulées CDF</h6>
-                        <h4 class="mb-0">{{ number_format($totalPenalties['CDF'], 2) }}</h4>
+                        <h5 class="mb-0">{{ number_format($totalPenalties['CDF'], 2) }}</h5>
                     </div>
                     <div class="avatar bg-info text-white rounded-circle shadow">
                         <i class="bx bx-wallet fs-4 m-2"></i>

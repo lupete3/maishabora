@@ -28,4 +28,11 @@ class MemberTransactionReportController extends Controller
 
         return $pdf->stream("rapport_transactions_{$member->id}_" . now()->format('Ymd_His') . ".pdf");
     }
+
+    public function print($id)
+    {
+        $member = User::findOrFail($id);
+
+        return view('livewire.members.fiche-member', compact('member'));
+    }
 }

@@ -8,108 +8,231 @@ use App\Models\Account;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Validator;
 use Throwable;
 
 class RegisterMember extends Component
 {
+    use WithFileUploads;
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
+    // Infos de base
     public string $name = '';
     public string $postnom = '';
     public ?string $prenom = null;
+    public ?string $sexe;
     public ?string $date_naissance = null;
+    public ?string $lieu_naissance = null;
     public string $telephone = '';
     public ?string $adresse_physique = null;
+    public ?string $province = null;
+    public ?string $ville = null;
+    public ?string $commune = null;
+    public ?string $quartier = null;
+
+    // Profession & économique
     public ?string $profession = null;
+    public ?float $revenu_mensuel = null;
+    public ?string $source_revenu = null;
+    public ?string $nom_employeur = null;
+
+    // Pièce d’identité
+    public ?string $type_piece = null;
+    public ?string $numero_piece = null;
+    public ?string $date_expiration_piece = null;
+
+    // État civil
+    public ?string $etat_civil = null;
+    public ?int $nombre_dependants = null;
+
+    // Conjoint
+    public ?string $nom_conjoint = null;
+    public ?string $telephone_conjoint = null;
+
+    // Référence
+    public ?string $nom_reference = null;
+    public ?string $telephone_reference = null;
+    public ?string $lien_reference = null;
+
+    // Infos institutionnelles
+    public ?string $date_adhesion = null;
+    // Divers
+    public ?string $nationalite = null;
+    public ?string $niveau_etude = null;
+    public ?string $remarque = null;
+
+    // Compte
     public string $email = '';
-    public string $role = 'membre'; // Valeur par défaut
+    public string $role = 'membre';
     public bool $status = false;
+
+    // Fichiers (si tu les utilises)
+    public $photo_profil = null;
+    public $scan_piece = null;
+    public ?string $photo_profil_url = null;
+    public ?string $scan_piece_url = null;
+
+    // Utilitaires Livewire
     public $search = '';
-    public $perPage = 10; // Corrigé: généralement 10 par page
+    public $perPage = 10;
     public $editModal = false;
     public $userId;
     public $selectedMemberId = null;
 
+
     public function submit()
     {
-        try {
-            $validated = $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'postnom' => ['required', 'string', 'max:255'],
-                'prenom' => ['nullable', 'string', 'max:255'],
-                'date_naissance' => ['required', 'date'],
-                'telephone' => [
-                    'required',
-                    'string',
-                    'max:20',
-                    'regex:/^\+243\d{9}$/',
-                    Rule::unique('users')->where(function ($query) {
-                        return $query->where('name', $this->name)
-                                    ->where('postnom', $this->postnom)
-                                    ->where('telephone', $this->telephone);
-                    }),
-                ],
-                'adresse_physique' => ['nullable', 'string'],
-                'profession' => ['nullable', 'string'],
-                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-                'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
-                'status' => ['required','in:0,1'],
-            ],[
-                'name.required' => 'Le nom est obligatoire.',
-                'postnom.required' => 'Le post-nom est obligatoire.',
-                'prenom.string' => 'Le prénom doit être une chaîne de caractères.',
-                'date_naissance.required' => 'La date de naissance est obligatoire.',
-                'date_naissance.date' => 'La date de naissance doit être une date valide.',
-                'telephone.regex' => 'Le numéro de téléphone doit commencer par +243 et contenir 9 chiffres après.',
-                'telephone.unique' => 'Un membre avec le même nom, post-nom et numéro existe déjà.',
-                'adresse_physique.string' => 'L’adresse physique doit être une chaîne de caractères.',
-                'profession.string' => 'La profession doit être une chaîne de caractères.',
-                'email.required' => 'L’adresse e-mail est obligatoire.',
-                'email.email' => 'L’adresse e-mail doit être valide.',
-                'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-                'role.in' => 'Le rôle sélectionné est invalide.',
-                'status.required' => 'Choisir le status du membre.',
-                'status.in' => 'Le status sélectionné est invalide.',
-            ]);
+        $validator = Validator::make([
+            'name' => $this->name,
+            'postnom' => $this->postnom,
+            'prenom' => $this->prenom,
+            'date_naissance' => $this->date_naissance,
+            'lieu_naissance' => $this->lieu_naissance,
+            'telephone' => $this->telephone,
+            'adresse_physique' => $this->adresse_physique,
+            'province' => $this->province,
+            'ville' => $this->ville,
+            'commune' => $this->commune,
+            'quartier' => $this->quartier,
+            'profession' => $this->profession,
+            'type_piece' => $this->type_piece,
+            'numero_piece' => $this->numero_piece,
+            'date_expiration_piece' => $this->date_expiration_piece,
+            'etat_civil' => $this->etat_civil,
+            'nombre_dependants' => $this->nombre_dependants,
+            'revenu_mensuel' => $this->revenu_mensuel,
+            'source_revenu' => $this->source_revenu,
+            'nom_employeur' => $this->nom_employeur,
+            'nom_conjoint' => $this->nom_conjoint,
+            'telephone_conjoint' => $this->telephone_conjoint,
+            'nom_reference' => $this->nom_reference,
+            'telephone_reference' => $this->telephone_reference,
+            'lien_reference' => $this->lien_reference,
+            'date_adhesion' => $this->date_adhesion,
+            'nationalite' => $this->nationalite,
+            'niveau_etude' => $this->niveau_etude,
+            'remarque' => $this->remarque,
+            'email' => $this->email,
+            'role' => $this->role,
+            'status' => $this->status,
+        ], [
+            'name' => ['required', 'string', 'max:255'],
+            'postnom' => ['required', 'string', 'max:255'],
+            'prenom' => ['nullable', 'string', 'max:255'],
+            'sexe' => ['nullable', 'string', 'max:255'],
+            'date_naissance' => ['required', 'date'],
+            'lieu_naissance' => ['nullable', 'string', 'max:255'],
+            'telephone' => [
+                'required',
+                'string',
+                'max:20',
+                'regex:/^\+243\d{9}$/',
+                Rule::unique('users')->where(fn ($query) => $query
+                    ->where('name', $this->name)
+                    ->where('postnom', $this->postnom)
+                    ->where('telephone', $this->telephone)),
+            ],
+            'adresse_physique' => ['nullable', 'string'],
+            'province' => ['nullable', 'string', 'max:255'],
+            'ville' => ['nullable', 'string', 'max:255'],
+            'commune' => ['nullable', 'string', 'max:255'],
+            'quartier' => ['nullable', 'string', 'max:255'],
+            'profession' => ['nullable', 'string', 'max:255'],
+            'type_piece' => ['nullable', 'string', 'max:100'],
+            'numero_piece' => ['nullable', 'string', 'max:100'],
+            'date_expiration_piece' => ['nullable', 'date'],
+            'etat_civil' => ['nullable', 'in:célibataire,marié,divorcé,veuf'],
+            'nombre_dependants' => ['nullable', 'integer', 'min:0'],
+            'revenu_mensuel' => ['nullable', 'numeric', 'min:0'],
+            'source_revenu' => ['nullable', 'string', 'max:255'],
+            'nom_employeur' => ['nullable', 'string', 'max:255'],
+            'nom_conjoint' => ['nullable', 'string', 'max:255'],
+            'telephone_conjoint' => ['nullable', 'string', 'max:20'],
+            'nom_reference' => ['nullable', 'string', 'max:255'],
+            'telephone_reference' => ['nullable', 'string', 'max:20'],
+            'lien_reference' => ['nullable', 'string', 'max:255'],
+            'date_adhesion' => ['nullable', 'date'],
+            'nationalite' => ['nullable', 'string', 'max:255'],
+            'niveau_etude' => ['nullable', 'string', 'max:255'],
+            'remarque' => ['nullable', 'string'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'role' => ['nullable', 'in:admin,caissier,recouvreur,comptable,receptionniste,membre'],
+            'status' => ['required', 'in:0,1'],
+            'photo_profil' => ['nullable', 'image', 'max:4048'], // max 2MB
+            'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
+        ], [
+            'name.required' => 'Le nom est obligatoire.',
+            'postnom.required' => 'Le post-nom est obligatoire.',
+            'prenom.string' => 'Le prénom doit être une chaîne.',
+            'date_naissance.required' => 'La date de naissance est obligatoire.',
+            'date_naissance.date' => 'La date doit être valide.',
+            'lieu_naissance.string' => 'Le lieu de naissance doit être une chaîne.',
+            'telephone.regex' => 'Le numéro doit commencer par +243 et contenir 9 chiffres.',
+            'telephone.unique' => 'Ce membre existe déjà (nom, post-nom, téléphone).',
+            'adresse_physique.string' => 'L’adresse doit être une chaîne.',
+            'email.required' => 'L’email est obligatoire.',
+            'email.email' => 'L’email doit être valide.',
+            'email.unique' => 'Cet email est déjà utilisé.',
+            'role.in' => 'Le rôle sélectionné est invalide.',
+            'status.required' => 'Choisir le statut.',
+            'status.in' => 'Le statut est invalide.',
+        ]);
 
-            $validated['password'] = Hash::make('1234');
-            $validated['status'] = (int) $this->status;
-            $validated['code'] = $this->generateUniqueAccountCode();
-
-            $user = User::create($validated);
-
-            // Créer les deux comptes (USD et CDF)
-            foreach (['USD', 'CDF'] as $currency) {
-                Account::create([
-                    'user_id' => $user->id,
-                    'currency' => $currency,
-                    'balance' => 0,
-                ]);
-            }
-
-            $this->reset([
-                'name',
-                'postnom',
-                'prenom',
-                'date_naissance',
-                'telephone',
-                'adresse_physique',
-                'profession',
-                'email',
-                'role',
-                'status'
-            ]);
-            $this->dispatch('closeModal', name: 'modalMembre');
-            $this->dispatch('$refresh');
-            notyf()->success('Membre enregistré avec succès !');
-
-        } catch (Throwable $th) {
-            notyf()->error('Erreur lors de l\'enregistrement du membre.');
+        if ($validator->fails()) {
+            $this->setErrorBag($validator->errors());
+            notyf()->error('Veuillez corriger les erreurs dans le formulaire.');
+            return;
         }
+
+        $validated = $validator->validated();
+        $validated['password'] = Hash::make('1234');
+        $validated['status'] = (int) $this->status;
+        $validated['code'] = $this->generateUniqueAccountCode();
+
+        if ($this->photo_profil) {
+            $photoPath = $this->photo_profil->store('photos_profil', 'public');
+            $validated['photo_profil'] = $photoPath;
+        }
+
+        if ($this->scan_piece) {
+            $scanPath = $this->scan_piece->store('scans_pieces', 'public');
+            $validated['scan_piece'] = $scanPath;
+        }
+
+        $user = User::create($validated);
+
+        foreach (['USD', 'CDF'] as $currency) {
+            Account::create([
+                'user_id' => $user->id,
+                'currency' => $currency,
+                'balance' => 0,
+            ]);
+        }
+
+        $this->reset([
+            'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
+            'telephone', 'adresse_physique', 'province', 'ville', 'commune', 'quartier',
+            'profession', 'revenu_mensuel', 'source_revenu', 'nom_employeur',
+            'type_piece', 'numero_piece', 'date_expiration_piece',
+            'etat_civil', 'nombre_dependants',
+            'nom_conjoint', 'telephone_conjoint',
+            'nom_reference', 'telephone_reference', 'lien_reference',
+            'date_adhesion', 'nationalite', 'niveau_etude', 'remarque',
+            'email', 'role', 'status',
+            'photo_profil', 'scan_piece'
+        ]);
+
+        $this->dispatch('closeModal', name: 'modalMembre');
+        $this->dispatch('$refresh');
+
+        notyf()->success('Membre enregistré avec succès !');
     }
+
+
 
     public function edit($idUser)
     {
@@ -120,14 +243,49 @@ class RegisterMember extends Component
             $this->name = $user->name;
             $this->postnom = $user->postnom;
             $this->prenom = $user->prenom;
+            $this->sexe = $user->sexe;
             $this->date_naissance = $user->date_naissance;
+            $this->lieu_naissance = $user->lieu_naissance;
             $this->telephone = $user->telephone;
             $this->adresse_physique = $user->adresse_physique;
-            $this->profession = $user->profession;
-            $this->email = $user->email;
-            $this->status = $user->status;
-            $this->editModal = true;
+            $this->province = $user->province;
+            $this->ville = $user->ville;
+            $this->commune = $user->commune;
+            $this->quartier = $user->quartier;
 
+            $this->profession = $user->profession;
+            $this->revenu_mensuel = $user->revenu_mensuel;
+            $this->source_revenu = $user->source_revenu;
+            $this->nom_employeur = $user->nom_employeur;
+
+            $this->type_piece = $user->type_piece;
+            $this->numero_piece = $user->numero_piece;
+            $this->date_expiration_piece = $user->date_expiration_piece;
+
+            $this->etat_civil = $user->etat_civil;
+            $this->nombre_dependants = $user->nombre_dependants;
+
+            $this->nom_conjoint = $user->nom_conjoint;
+            $this->telephone_conjoint = $user->telephone_conjoint;
+
+            $this->nom_reference = $user->nom_reference;
+            $this->telephone_reference = $user->telephone_reference;
+            $this->lien_reference = $user->lien_reference;
+
+            $this->date_adhesion = $user->date_adhesion;
+            $this->nationalite = $user->nationalite;
+            $this->niveau_etude = $user->niveau_etude;
+            $this->remarque = $user->remarque;
+
+            $this->email = $user->email;
+            $this->role = $user->role ?? 'membre';
+            $this->status = (bool) $user->status;
+
+            $this->photo_profil_url = $user->photo_profil;
+            $this->scan_piece_url = $user->scan_piece;
+
+
+            $this->editModal = true;
             $this->dispatch('openModal', name: 'modalMembre');
 
         } catch (ModelNotFoundException $e) {
@@ -146,7 +304,9 @@ class RegisterMember extends Component
                 'name' => ['required', 'string', 'max:255'],
                 'postnom' => ['required', 'string', 'max:255'],
                 'prenom' => ['nullable', 'string', 'max:255'],
+                'sexe' => ['nullable', 'string', 'max:255'],
                 'date_naissance' => ['required', 'date'],
+                'lieu_naissance' => ['nullable', 'string', 'max:255'],
                 'telephone' => [
                     'required',
                     'string',
@@ -154,42 +314,73 @@ class RegisterMember extends Component
                     'regex:/^\+243\d{9}$/',
                     Rule::unique('users')
                         ->ignore($this->userId)
-                        ->where(function ($query) {
-                            return $query->where('name', $this->name)
-                                ->where('postnom', $this->postnom)
-                                ->where('telephone', $this->telephone);
-                        }),
+                        ->where(fn($query) => $query
+                            ->where('name', $this->name)
+                            ->where('postnom', $this->postnom)
+                            ->where('telephone', $this->telephone)),
                 ],
                 'adresse_physique' => ['nullable', 'string'],
-                'profession' => ['nullable', 'string'],
+                'province' => ['nullable', 'string', 'max:255'],
+                'ville' => ['nullable', 'string', 'max:255'],
+                'commune' => ['nullable', 'string', 'max:255'],
+                'quartier' => ['nullable', 'string', 'max:255'],
+
+                'profession' => ['nullable', 'string', 'max:255'],
+                'revenu_mensuel' => ['nullable', 'numeric', 'min:0'],
+                'source_revenu' => ['nullable', 'string', 'max:255'],
+                'nom_employeur' => ['nullable', 'string', 'max:255'],
+
+                'type_piece' => ['nullable', 'string', 'max:100'],
+                'numero_piece' => ['nullable', 'string', 'max:100'],
+                'date_expiration_piece' => ['nullable', 'date'],
+
+                'etat_civil' => ['nullable', 'in:célibataire,marié,divorcé,veuf'],
+                'nombre_dependants' => ['nullable', 'integer', 'min:0'],
+
+                'nom_conjoint' => ['nullable', 'string', 'max:255'],
+                'telephone_conjoint' => ['nullable', 'string', 'max:20'],
+
+                'nom_reference' => ['nullable', 'string', 'max:255'],
+                'telephone_reference' => ['nullable', 'string', 'max:20'],
+                'lien_reference' => ['nullable', 'string', 'max:255'],
+
+                'date_adhesion' => ['nullable', 'date'],
+
+                'nationalite' => ['nullable', 'string', 'max:255'],
+                'niveau_etude' => ['nullable', 'string', 'max:255'],
+                'remarque' => ['nullable', 'string'],
+
                 'email' => [
                     'required', 'string', 'lowercase', 'email', 'max:255',
                     Rule::unique('users')->ignore($this->userId),
                 ],
-                'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
-            ], [
-                'name.required' => 'Le nom est obligatoire.',
-                'postnom.required' => 'Le post-nom est obligatoire.',
-                'prenom.string' => 'Le prénom doit être une chaîne de caractères.',
-                'date_naissance.required' => 'La date de naissance est obligatoire.',
-                'date_naissance.date' => 'La date de naissance doit être une date valide.',
-                'telephone.required' => 'Le numéro de téléphone est obligatoire.',
-                'telephone.max' => 'Le numéro de téléphone ne peut pas dépasser :max caractères.',
-                'adresse_physique.string' => 'L’adresse physique doit être une chaîne de caractères.',
-                'profession.string' => 'La profession doit être une chaîne de caractères.',
-                'email.required' => 'L’adresse e-mail est obligatoire.',
-                'email.email' => 'L’adresse e-mail doit être valide.',
-                'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-                'role.in' => 'Le rôle sélectionné est invalide.',
+                'role' => ['nullable', 'in:admin,caissier,recouvreur,comptable,receptionniste,membre'],
+                'photo_profil' => ['nullable', 'image', 'max:4048'], // max 2MB
+                'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
             ]);
 
             $validated['status'] = $status;
+
+            if ($this->photo_profil) {
+                $photoPath = $this->photo_profil->store('photos_profil', 'public');
+                $validated['photo_profil'] = $photoPath;
+            } else {
+                $validated['photo_profil'] = $this->photo_profil_url; // conserver l'ancien
+            }
+
+            if ($this->scan_piece) {
+                $scanPath = $this->scan_piece->store('scans_pieces', 'public');
+                $validated['scan_piece'] = $scanPath;
+            } else {
+                $validated['scan_piece'] = $this->scan_piece_url; // conserver l'ancien
+            }
 
             User::findOrFail($this->userId)->update($validated);
 
             $this->dispatch('closeModal', name: 'modalMembre');
             $this->dispatch('$refresh');
             $this->resetPage();
+
             notyf()->success('Mise à jour effectuée avec succès.');
 
         } catch (ModelNotFoundException $e) {
@@ -198,6 +389,7 @@ class RegisterMember extends Component
             notyf()->error('Une erreur est survenue lors de la mise à jour.');
         }
     }
+
 
     private function generateUniqueAccountCode()
     {
@@ -229,16 +421,16 @@ class RegisterMember extends Component
     {
         try {
             $this->reset([
-                'name',
-                'postnom',
-                'prenom',
-                'date_naissance',
-                'telephone',
-                'adresse_physique',
-                'profession',
-                'email',
-                'role',
-                'status'
+                'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
+                'telephone', 'adresse_physique', 'province', 'ville', 'commune', 'quartier',
+                'profession', 'revenu_mensuel', 'source_revenu', 'nom_employeur',
+                'type_piece', 'numero_piece', 'date_expiration_piece',
+                'etat_civil', 'nombre_dependants',
+                'nom_conjoint', 'telephone_conjoint',
+                'nom_reference', 'telephone_reference', 'lien_reference',
+                'date_adhesion', 'nationalite', 'niveau_etude', 'remarque',
+                'email', 'role', 'status',
+                'photo_profil', 'scan_piece'
             ]);
             $this->dispatch('openModal', name: 'modalMembre');
 

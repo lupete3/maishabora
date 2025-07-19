@@ -7,7 +7,7 @@
         body {
             font-family: DejaVu Sans, sans-serif;
             font-size: 11px;
-            margin: 20px;
+            margin: 10px;
             color: #222;
         }
 
@@ -18,7 +18,7 @@
 
         .header h2 {
             margin: 0;
-            font-size: 16px;
+            font-size: 12px;
         }
 
         .header p {
@@ -31,15 +31,9 @@
             margin-top: 12px;
         }
 
-        th, td {
-            border: 1px solid #aaa;
-            padding: 6px;
-            text-align: left;
-        }
-
-        th {
-            background-color: #f4f4f4;
-        }
+        body { font-family: sans-serif; font-size: 14px; }
+        th, td { border: 1px solid #000; padding: 2px; font-size: 8px;}
+        th { background-color: #f1c206; }
 
         .footer {
             position: fixed;
@@ -60,7 +54,7 @@
         }
 
         .title-section {
-            margin-top: 20px;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -86,7 +80,7 @@
                 @foreach(['USD', 'CDF'] as $curr)
                     <tr>
                         <td>{{ $curr }}</td>
-                        <td>{{ number_format($balances[$curr] ?? 0, 2) }} {{ $curr }}</td>
+                        <td>{{ number_format($balances[$curr] ?? 0, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -107,8 +101,8 @@
                 @foreach(['USD', 'CDF'] as $curr)
                     <tr>
                         <td>{{ $curr }}</td>
-                        <td>{{ number_format($totaux['entrées'][$curr] ?? 0, 2) }} {{ $curr }}</td>
-                        <td>{{ number_format($totaux['sorties'][$curr] ?? 0, 2) }} {{ $curr }}</td>
+                        <td>{{ number_format($totaux['entrées'][$curr] ?? 0, 2) }}</td>
+                        <td>{{ number_format($totaux['sorties'][$curr] ?? 0, 2) }}</td>
                     </tr>
                 @endforeach
             </tbody>
@@ -149,7 +143,7 @@
     </div>
 
     <div class="footer">
-        Généré par {{ auth()->user()->name }} – {{ config('app.name') }}
+        Généré par {{ auth()->user()->name. ' '.auth()->user()->postnom }} – {{ config('app.name') }}
     </div>
 
 </body>

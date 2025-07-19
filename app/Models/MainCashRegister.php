@@ -21,4 +21,9 @@ class MainCashRegister extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public static function getByCurrency($currency)
+    {
+        return static::where('currency', $currency)->firstOrFail();
+    }
 }

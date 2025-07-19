@@ -238,6 +238,10 @@
                             </svg>
                             <p><strong class="font-medium">ID Client:</strong> {{ $member->code }}</p>
                         </div>
+                        <div class="flex items-center gap-3">
+                            <a href="{{ route('member.print', $member->id) }}" wire:navigate
+                                class="btn btn-primary btn-sm"> Imprimer Fiche Client</a>
+                        </div>
                     </div>
                 </div>
                 <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
@@ -482,7 +486,7 @@
 
                                                 <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
                                                     <button type="button"
-                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
+                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate_pos', ['id' => $transaction->id]) }}' })"
                                                         class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
                                                             ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
                                                             focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none

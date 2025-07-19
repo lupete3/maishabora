@@ -1,6 +1,6 @@
 <aside id="layout-menu" class="layout-menu menu-vertical menu bg-menu-theme">
     <div class="app-brand demo">
-        <a href="{{ route('dashboard') }}" class="app-brand-link">
+        <a wire:navigate href="{{ route('dashboard') }}" class="app-brand-link">
             <span class="app-brand-logo demo ">
                 <img src="{{ asset('assets/img/logo.jpg') }}" width="50px" alt="" class="mr-2">
             </span>
@@ -8,7 +8,7 @@
 
         </a>
 
-        <a href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
+        <a wire:navigate href="javascript:void(0);" class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
             <i class="bx bx-chevron-left bx-sm align-middle"></i>
         </a>
     </div>
@@ -18,7 +18,7 @@
     <ul class="menu-inner py-1">
         <!-- Dashboard -->
         <li class="menu-item @if (request()->routeIs('dashboard')) active @endif">
-            <a href="{{ route('dashboard') }}" class="menu-link">
+            <a wire:navigate href="{{ route('dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-grid-alt"></i> <!-- Tableau de bord -->
                 <div data-i18n="Analytics">Tableau de bord</div>
             </a>
@@ -27,16 +27,28 @@
         <!-- Liens Comptable -->
         @can('afficher-caisse-centrale')
         <li class="menu-item @if (request()->routeIs('cash.register')) active @endif">
-            <a href="{{ route('cash.register') }}" class="menu-link">
+            <a wire:navigate href="{{ route('cash.register') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->
                 <div data-i18n="Analytics">Caisse Centrale</div>
             </a>
         </li>
         @endcan
 
+        <!-- Liens Comptable -->
+        @can('depot-compte-membre')
+        <li class="menu-item @if (request()->routeIs(' agent.cloture')) active @endif">
+            <a wire:navigate href="{{ route('agent.cloture') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->
+                <div data-i18n="Analytics">Clôture Caisse Agent</div>
+            </a>
+        </li>
+        @endcan
+
+
+
         @can('afficher-caisse-agent')
         <li class="menu-item @if (request()->routeIs('agent.dashboard')) active @endif">
-            <a href="{{ route('agent.dashboard') }}" class="menu-link">
+            <a wire:navigate href="{{ route('agent.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-briefcase-alt-2"></i> <!-- Caisse agents -->
                 <div data-i18n="Analytics">Caisse Agents</div>
             </a>
@@ -45,7 +57,7 @@
 
         @can('afficher-credit')
         <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
-            <a href="{{ route('repayments.manage') }}" class="menu-link">
+            <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
                 <div data-i18n="Analytics">Gérer les Remboursements</div>
             </a>
@@ -54,14 +66,14 @@
 
         @can('afficher-rapport-credit')
         <li class="menu-item @if (request()->routeIs('report.credit.overview')) active @endif">
-            <a href="{{ route('report.credit.overview') }}" class="menu-link">
+            <a wire:navigate href="{{ route('report.credit.overview') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-time-five"></i> <!-- Remboursements -->
                 <div data-i18n="Analytics">Rapport Crédits En Cours</div>
             </a>
         </li>
 
         <li class="menu-item @if (request()->routeIs('report.credit.followup')) active @endif">
-            <a href="{{ route('report.credit.followup') }}" class="menu-link">
+            <a wire:navigate href="{{ route('report.credit.followup') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i></i> <!-- Remboursements -->
                 <div data-i18n="Analytics">Rapport Total Crédits</div>
             </a>
@@ -71,7 +83,7 @@
 
         @can('ajouter-credit', App\Models\User::class)
         <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
-            <a href="{{ route('credit.grant') }}" class="menu-link">
+            <a wire:navigate href="{{ route('credit.grant') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-credit-card"></i> <!-- Crédit -->
                 <div data-i18n="Analytics">Octroyer un Crédit</div>
             </a>
@@ -81,7 +93,7 @@
 
         @can('ajouter-transfert-caisse', App\Models\User::class)
         <li class="menu-item @if (request()->routeIs('transfer.to.central')) active @endif">
-            <a href="{{ route('transfer.to.central') }}" class="menu-link">
+            <a wire:navigate href="{{ route('transfer.to.central') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Virement -->
                 <div data-i18n="Analytics">Virement Caisse Centrale</div>
             </a>
@@ -91,7 +103,7 @@
         @can('afficher-client', App\Models\User::class)
         <li
             class="menu-item @if (request()->routeIs('member.register','member.details','receipt.generate')) active @endif">
-            <a href="{{ route('member.register') }}" class="menu-link">
+            <a wire:navigate href="{{ route('member.register') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
                 <div data-i18n="Analytics">Gestion des membres</div>
             </a>
@@ -101,7 +113,7 @@
         @can('afficher-carnet', App\Models\User::class)
         <!-- Vente de cartes membres -->
         <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">
-            <a href="{{ route('members.sell-card') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.sell-card') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-id-card"></i> <!-- Icône de carte membre -->
                 <div data-i18n="Analytics">Vente Cartes Membres</div>
             </a>
@@ -111,7 +123,7 @@
         @can('afficher-simulation-credit', App\Models\User::class)
         <!-- Simulation de crédit -->
         <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
-            <a href="{{ route('repayments.simulation') }}" class="menu-link">
+            <a wire:navigate href="{{ route('repayments.simulation') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
                 <div data-i18n="Analytics">Simulation Crédit</div>
             </a>
@@ -121,7 +133,7 @@
         @can('afficher-role')
         <!-- Gestion Utilisateurs -->
         <li class="menu-item @if (request()->routeIs('role.management')) active @endif">
-            <a href="{{ route('role.management') }}" class="menu-link">
+            <a wire:navigate href="{{ route('role.management') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
                 <div data-i18n="Analytics">Gestion Rôles Utilisateurs</div>
             </a>
@@ -131,7 +143,7 @@
         @can('afficher-utilisateur')
         <!-- Gestion Utilisateurs -->
         <li class="menu-item @if (request()->routeIs('user.management')) active @endif">
-            <a href="{{ route('user.management') }}" class="menu-link">
+            <a wire:navigate href="{{ route('user.management') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
                 <div data-i18n="Analytics">Gestion Utilisateurs</div>
             </a>
@@ -141,7 +153,7 @@
 
         {{-- <li
             class="menu-item @if (request()->routeIs('members.deposit-card')) active @endif">
-            <a href="{{ route('members.deposit-card') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.deposit-card') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
                 <div data-i18n="Analytics">Depot Cartes Membres</div>
             </a>
@@ -149,7 +161,7 @@
 
         <li
             class="menu-item @if (request()->routeIs('members.withdrawfrom-card')) active @endif">
-            <a href="{{ route('members.withdrawfrom-card') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.withdrawfrom-card') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
                 <div data-i18n="Analytics">Retrait Cartes Membres</div>
             </a>
@@ -165,25 +177,25 @@
         {{-- @can('isRecouvreur', App\Models\User::class)
 
         <li class="menu-item @if (request()->routeIs('recouvreur.member.register')) active @endif">
-            <a href="{{ route('recouvreur.member.register') }}" class="menu-link">
+            <a wire:navigate href="{{ route('recouvreur.member.register') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Enregistrement Membres</div>
             </a>
         </li>
         <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">
-            <a href="{{ route('members.sell-card') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.sell-card') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Adhesion Membres</div>
             </a>
         </li>
         <li class="menu-item @if (request()->routeIs('members.subscribe')) active @endif">
-            <a href="{{ route('members.subscribe') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.subscribe') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Souscription</div>
             </a>
         </li>
         <li class="menu-item @if (request()->routeIs('members.books')) active @endif">
-            <a href="{{ route('members.books') }}" class="menu-link">
+            <a wire:navigate href="{{ route('members.books') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Dépôt Membres</div>
             </a>
@@ -193,13 +205,13 @@
 
 
         {{-- <li class="menu-item @if (request()->routeIs('member.dashboard')) active @endif">
-            <a href="{{ route('member.dashboard') }}" class="menu-link">
+            <a wire:navigate href="{{ route('member.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Tableau de bord Membre</div>
             </a>
         </li> --}}
         {{-- <li class="menu-item @if (request()->routeIs('member.history')) active @endif">
-            <a href="{{ route('member.history') }}" class="menu-link">
+            <a wire:navigate href="{{ route('member.history') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Relévé de compte</div>
             </a>
@@ -207,7 +219,7 @@
 
         {{-- @can('isAdmin', App\Models\User::class)
         <li class="menu-item @if (request()->routeIs('admin.dashboard')) active @endif">
-            <a href="{{ route('admin.dashboard') }}" class="menu-link">
+            <a wire:navigate href="{{ route('admin.dashboard') }}" class="menu-link">
                 <i class="menu-icon tf-icons bx bx-home-circle"></i>
                 <div data-i18n="Analytics">Tableau de bord Admin</div>
             </a>

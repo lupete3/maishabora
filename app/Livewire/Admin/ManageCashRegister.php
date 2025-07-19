@@ -15,7 +15,7 @@ class ManageCashRegister extends Component
     use WithPagination;
 
     public $currency = 'USD';
-    public $type = 'in';
+    public $type;
     public $amount = 0;
     public $description = '';
     public $currencies = ['USD', 'CDF'];

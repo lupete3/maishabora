@@ -3,6 +3,7 @@
 use App\Exports\MemberFinancialHistoryExport;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
+use App\Http\Controllers\ClotureController;
 use App\Http\Controllers\CreateSubscriptionController;
 use App\Http\Controllers\CreditFollowUpReportController;
 use App\Http\Controllers\CreditOverviewReportController;
@@ -56,11 +57,15 @@ Route::middleware(['auth','permission:afficher-client'])->group(function () {
     Route::get('/membre/{id}/export-transactions', [MemberTransactionReportController::class, 'generate'])
         ->name('member.transactions.export');
     Route::get('/receipt/transaction/{id}', [ReceiptController::class, 'generate'])->name('receipt.generate');
+    Route::get('/receipt/transactionpos/{id}', [ReceiptController::class, 'generatePos'])->name('receipt.generate_pos');
+
 });
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/membre/{id}/export-transactions', [MemberTransactionReportController::class, 'generate'])
         ->name('member.transactions.export');
+    Route::get('/membre/{id}/fiche-client', [MemberTransactionReportController::class, 'print'])
+        ->name('member.print');
 });
 
 Route::middleware(['auth','permission:depot-compte-membre'])->group(function () {
@@ -108,6 +113,11 @@ Route::middleware(['auth','permission:depot-compte-membre'])->group(function () 
 
 Route::middleware(['auth','permission:retrait-compte-membre'])->group(function () {
     Route::get('/membres/retrait-carnet', [MembershipCardController::class, 'withdrawfromcard'])->name('members.withdrawfrom-card');
+});
+
+Route::middleware(['auth','permission:depot-compte-membre'])->group(function () {
+    Route::get('/cloture-caisse', [ClotureController::class, 'index'])->name('agent.cloture');
+    Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');
 });
 
 

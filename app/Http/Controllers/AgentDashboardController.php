@@ -18,6 +18,7 @@ class AgentDashboardController extends Controller
     {
         $user = User::findOrFail($userId);
         $now = now();
+
         $query = Transaction::where('user_id', $userId);
 
         switch ($filter) {
@@ -25,7 +26,8 @@ class AgentDashboardController extends Controller
                 $query->whereDate('created_at', $now->toDateString());
                 break;
             case 'month':
-                $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year);
+                $query->whereMonth('created_at', $now->month)
+                    ->whereYear('created_at', $now->year);
                 break;
             case 'year':
                 $query->whereYear('created_at', $now->year);
@@ -34,11 +36,23 @@ class AgentDashboardController extends Controller
 
         $transactions = $query->orderByDesc('created_at')->get();
 
+        // Compter le nombre de transactions filtrées
+        $transactionCount = $transactions->count();
+
+        // Totaux par devise
         $totalByCurrency = $transactions->groupBy('currency')->map(function ($group) {
             return $group->sum('amount');
         });
 
-        $pdf = Pdf::loadView('pdf.agent-transactions', compact('user', 'transactions', 'filter', 'totalByCurrency'));
+        // Génération PDF avec tous les paramètres
+        $pdf = Pdf::loadView('pdf.agent-transactions', compact(
+            'user',
+            'transactions',
+            'filter',
+            'totalByCurrency',
+            'transactionCount'
+        ));
+
         return $pdf->download("transactions_{$user->id}_{$filter}.pdf");
     }
 }

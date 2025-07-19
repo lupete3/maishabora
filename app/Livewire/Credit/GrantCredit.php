@@ -101,10 +101,10 @@ class GrantCredit extends Component
                 ->lockForUpdate()
                 ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);
 
-            $creditFris = round($this->amount * ($this->interest_rate / 100), 2);
+            $creditFrisFix = round($this->amount * (5 / 100), 2);
+            //$creditFris = round($this->amount * ($this->interest_rate / 100), 2);
 
-
-            if ($account->balance < $creditFris) {
+            if ($account->balance < $creditFrisFix) {
                 DB::rollBack();
                 notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier'));
                 return;
@@ -116,7 +116,7 @@ class GrantCredit extends Component
                 return;
             }
 
-            $account->balance -= $creditFris;
+            $account->balance -= $creditFrisFix;
             $account->save();
 
             $mainCash->balance -= $this->amount;
@@ -149,7 +149,7 @@ class GrantCredit extends Component
             ]);
 
             Transaction::create([
-                'account_id'    => $account->id,
+                'account_id'    => NULL,
                 'user_id'       => Auth::user()->id,
                 'type'           => 'octroi_de_credit_client',
                 'currency'       => $credit->currency,
