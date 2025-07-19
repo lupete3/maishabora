@@ -89,12 +89,13 @@ class PurchaseMembershipCard extends Component
 
             // Récupération du membre
             $member = User::findOrFail($this->member_id);
+          
 
             // Création de la carte
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
-                'currency' => 'CDF',
+                'currency' => $this->currency,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
             ]);

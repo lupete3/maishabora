@@ -72,7 +72,7 @@
                                 <button wire:click="editClosing({{ $closing->id }})" class="btn btn-primary btn-sm">Modifier</button>
                             @endif
 
-                            @if($closing->status === 'validated')
+                            @if($closing->status !== 'pending')
                                 <a href="{{ route('cloture.print', $closing->id) }}"
                                     class="btn btn-primary btn-sm">
                                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>Imprimer</button>
