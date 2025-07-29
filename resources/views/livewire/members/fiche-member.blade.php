@@ -6,7 +6,6 @@
 
 <div class="container-xxl flex-grow-1 container-p-y">
 
-    <!-- resources/views/livewire/member-details.blade.php -->
     <div class="mt-4">
 
         <style>
