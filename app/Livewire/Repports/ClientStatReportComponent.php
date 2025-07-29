@@ -19,7 +19,6 @@ class ClientStatReportComponent extends Component
 
     public $periodFilter = '';
 
-
     protected $queryString = ['sexe', 'status', 'startDate', 'endDate', 'periodFilter'];
 
     public function exportPdf()
