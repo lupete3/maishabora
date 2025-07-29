@@ -36,15 +36,20 @@
 
         <!-- Liens Comptable -->
         @can('depot-compte-membre')
-        <li class="menu-item @if (request()->routeIs(' agent.cloture')) active @endif">
-            <a wire:navigate href="{{ route('agent.cloture') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->
-                <div data-i18n="Analytics">Clôture Caisse Agent</div>
-            </a>
-        </li>
+            <li class="menu-item @if (request()->routeIs('agent.cloture')) active @endif">
+                <a wire:navigate href="{{ route('agent.cloture') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-money"></i> <!-- Meilleure icône pour la caisse -->
+                    <div data-i18n="Analytics">Clôture Caisse Agent</div>
+                </a>
+            </li>
+            
+            <li class="menu-item @if (request()->routeIs('transfert.ajouter')) active @endif">
+                <a wire:navigate href="{{ route('transfert.ajouter') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Icône spécifique pour transfert -->
+                    <div data-i18n="Analytics">Transfert Compte</div>
+                </a>
+            </li>
         @endcan
-
-
 
         @can('afficher-caisse-agent')
         <li class="menu-item @if (request()->routeIs('agent.dashboard')) active @endif">
@@ -55,39 +60,33 @@
         </li>
         @endcan
 
-        @can('afficher-credit')
-        <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
-            <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
-                <div data-i18n="Analytics">Gérer les Remboursements</div>
-            </a>
-        </li>
-        @endcan
-
         @can('afficher-rapport-credit')
-        <li class="menu-item @if (request()->routeIs('report.credit.overview')) active @endif">
-            <a wire:navigate href="{{ route('report.credit.overview') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-time-five"></i> <!-- Remboursements -->
-                <div data-i18n="Analytics">Rapport Crédits En Cours</div>
-            </a>
-        </li>
-
-        <li class="menu-item @if (request()->routeIs('report.credit.followup')) active @endif">
-            <a wire:navigate href="{{ route('report.credit.followup') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i></i> <!-- Remboursements -->
-                <div data-i18n="Analytics">Rapport Total Crédits</div>
-            </a>
-        </li>
-
-        @endcan
-
-        @can('ajouter-credit', App\Models\User::class)
-        <li class="menu-item @if (request()->routeIs('credit.grant')) active @endif">
-            <a wire:navigate href="{{ route('credit.grant') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-credit-card"></i> <!-- Crédit -->
-                <div data-i18n="Analytics">Octroyer un Crédit</div>
-            </a>
-        </li>
+            <li class="menu-item @if (request()->routeIs('report.credit.overview','report.credit.followup','credit.grant')) 
+                active @endif" wire:ignore.self>
+                <a class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bx-credit-card"></i>
+                    <div data-i18n="Misc">Crédits</div>
+                </a>
+                <ul class="menu-sub">
+                    
+                    @can('ajouter-credit', App\Models\User::class)
+                        <li class="menu-item">
+                            <a wire:navigate href="{{ route('credit.grant') }}" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-plus-circle"></i> <!-- Plus pour ajouter -->
+                                <div data-i18n="Analytics">Octroyer un Crédit</div>
+                            </a>
+                        </li>
+                    @endcan
+                    @can('afficher-credit')
+                    <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
+                        <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
+                            <div data-i18n="Analytics">Gérer les Remboursements</div>
+                        </a>
+                    </li>
+                    @endcan
+                </ul>
+            </li>
         @endcan
 
 
@@ -130,102 +129,77 @@
         </li>
         @endcan
 
+
+        <li class="menu-item @if (request()->routeIs('rapports.clients','rapports.carnets')) 
+            active @endif" wire:ignore.self>
+            <a class="menu-link menu-toggle">
+                <i class="menu-icon tf-icons bx bx-file"></i> <!-- Icône générale pour rapports -->
+                <div data-i18n="Misc">Rapports</div>
+            </a>
+            <ul class="menu-sub">
+                <li class="menu-item @if (request()->routeIs('rapports.clients')) active @endif">
+                    <a wire:navigate href="{{ route('rapports.clients') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user"></i> <!-- Utilisateurs -->
+                        <div data-i18n="Analytics">Rapports Clients</div>
+                    </a>
+                </li>
+                <li class="menu-item @if (request()->routeIs('rapports.carnets')) active @endif">
+                    <a wire:navigate href="{{ route('rapports.carnets') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-book"></i> <!-- Livre/carnet -->
+                        <div data-i18n="Analytics">Rapports Carnets</div>
+                    </a>
+                </li>
+                @can('afficher-rapport-credit')
+                <li class="menu-item">
+                    <a wire:navigate href="{{ route('report.credit.overview') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-time"></i> <!-- Horloge pour "en cours" -->
+                        <div data-i18n="Analytics">Rapport Crédits En Cours</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a wire:navigate href="{{ route('report.credit.followup') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-bar-chart"></i> <!-- Graphique pour rapports -->
+                        <div data-i18n="Analytics">Rapport Total Crédits</div>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a wire:navigate href="{{ route('rapports.transactions') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-bar-chart"></i> <!-- Graphique pour rapports -->
+                        <div data-i18n="Analytics">Rapport Transactions</div>
+                    </a>
+                </li>
+                @endcan
+            </ul>
+        </li>
+
         @can('afficher-role')
-        <!-- Gestion Utilisateurs -->
-        <li class="menu-item @if (request()->routeIs('role.management')) active @endif">
-            <a wire:navigate href="{{ route('role.management') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
-                <div data-i18n="Analytics">Gestion Rôles Utilisateurs</div>
+        <li class="menu-item @if (request()->routeIs('role.management','user.management')) 
+            active @endif" wire:ignore.self>
+            <a class="menu-link menu-toggle">
+            <i class="menu-icon tf-icons bx bx-group"></i>
+            <div data-i18n="Misc">Rôles et Utilisateurs</div>
             </a>
+            <ul class="menu-sub">
+                @can('afficher-role')
+                    <!-- Gestion Utilisateurs -->
+                    <li class="menu-item @if (request()->routeIs('role.management')) active @endif">
+                        <a wire:navigate href="{{ route('role.management') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
+                            <div data-i18n="Analytics">Gestion Rôles</div>
+                        </a>
+                    </li>
+                @endcan
+                @can('afficher-utilisateur')
+                    <!-- Gestion Utilisateurs -->
+                    <li class="menu-item @if (request()->routeIs('user.management')) active @endif">
+                        <a wire:navigate href="{{ route('user.management') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
+                            <div data-i18n="Analytics">Gestion Utilisateurs</div>
+                        </a>
+                    </li>
+                @endcan
+            </ul>
         </li>
         @endcan
-
-        @can('afficher-utilisateur')
-        <!-- Gestion Utilisateurs -->
-        <li class="menu-item @if (request()->routeIs('user.management')) active @endif">
-            <a wire:navigate href="{{ route('user.management') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Users -->
-                <div data-i18n="Analytics">Gestion Utilisateurs</div>
-            </a>
-        </li>
-        @endcan
-
-
-        {{-- <li
-            class="menu-item @if (request()->routeIs('members.deposit-card')) active @endif">
-            <a wire:navigate href="{{ route('members.deposit-card') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
-                <div data-i18n="Analytics">Depot Cartes Membres</div>
-            </a>
-        </li>
-
-        <li
-            class="menu-item @if (request()->routeIs('members.withdrawfrom-card')) active @endif">
-            <a wire:navigate href="{{ route('members.withdrawfrom-card') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
-                <div data-i18n="Analytics">Retrait Cartes Membres</div>
-            </a>
-        </li> --}}
-
-
-
-
-
-
-
-
-        {{-- @can('isRecouvreur', App\Models\User::class)
-
-        <li class="menu-item @if (request()->routeIs('recouvreur.member.register')) active @endif">
-            <a wire:navigate href="{{ route('recouvreur.member.register') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Enregistrement Membres</div>
-            </a>
-        </li>
-        <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">
-            <a wire:navigate href="{{ route('members.sell-card') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Adhesion Membres</div>
-            </a>
-        </li>
-        <li class="menu-item @if (request()->routeIs('members.subscribe')) active @endif">
-            <a wire:navigate href="{{ route('members.subscribe') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Souscription</div>
-            </a>
-        </li>
-        <li class="menu-item @if (request()->routeIs('members.books')) active @endif">
-            <a wire:navigate href="{{ route('members.books') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Dépôt Membres</div>
-            </a>
-        </li>
-        @endcan --}}
-
-
-
-        {{-- <li class="menu-item @if (request()->routeIs('member.dashboard')) active @endif">
-            <a wire:navigate href="{{ route('member.dashboard') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Tableau de bord Membre</div>
-            </a>
-        </li> --}}
-        {{-- <li class="menu-item @if (request()->routeIs('member.history')) active @endif">
-            <a wire:navigate href="{{ route('member.history') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Relévé de compte</div>
-            </a>
-        </li> --}}
-
-        {{-- @can('isAdmin', App\Models\User::class)
-        <li class="menu-item @if (request()->routeIs('admin.dashboard')) active @endif">
-            <a wire:navigate href="{{ route('admin.dashboard') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-home-circle"></i>
-                <div data-i18n="Analytics">Tableau de bord Admin</div>
-            </a>
-        </li>
-        @endcan --}}
-
-
     </ul>
 </aside>

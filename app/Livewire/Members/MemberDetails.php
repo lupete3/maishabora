@@ -286,11 +286,17 @@ class MemberDetails extends Component
             // Débit du compte du membre
             $account->balance -= ($this->amount + $this->a_retenir);
             $agentAccount->balance -= $this->amount;
-            $retenuMiseAccount->balance += $this->a_retenir;
+            if (
+                $this->a_retenir > 0
+            ) {
+                $retenuMiseAccount->balance += $this->a_retenir;
+                $retenuMiseAccount->save();
+            }
+            
 
             $account->save();
             $agentAccount->save();
-            $retenuMiseAccount->save();
+            
 
             // Création de la transaction
             $transaction = Transaction::create([
@@ -314,16 +320,22 @@ class MemberDetails extends Component
                 'description' => $this->description ?: "RETRAIT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " Retenu de ". $this->a_retenir. " ".$this->currency." par " . Auth::user()->name,
             ]);
 
-            // Création de la transaction
-            $retenuMiseAccount = Transaction::create([
-                'account_id' => $retenuMiseAccount->id,
-                'user_id' => 195,
-                'type' => 'depot',
-                'currency' => $this->currency,
-                'amount' => $this->a_retenir,
-                'balance_after' => $retenuMiseAccount->balance,
-                'description' => $this->description ?: "Entree Retenu du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
-            ]);
+            if (
+                $this->a_retenir > 0
+            ) {
+                
+                // Création de la transaction
+                $retenuMiseAccount = Transaction::create([
+                    'account_id' => null,
+                    'user_id' => 195,
+                    'type' => 'depot',
+                    'currency' => $this->currency,
+                    'amount' => $this->a_retenir,
+                    'balance_after' => $retenuMiseAccount->balance,
+                    'description' => $this->description ?: "Entree Retenu du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
+                ]);
+
+            }   
 
             DB::commit();
 
@@ -377,7 +389,7 @@ class MemberDetails extends Component
 
             // Récupération de la caisse de l'agent
             $retenuMiseAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 2, 'currency' => $card->currency],
+                ['user_id' => 195, 'currency' => $card->currency],
                 ['balance' => 0]
             );
 
@@ -413,7 +425,7 @@ class MemberDetails extends Component
 
             // Enregistrer la transaction
             Transaction::create([
-                'account_id' => $agentAccount->id,
+                'account_id' => NULL,
                 'user_id' => Auth::user()->id,
                 'type' => 'retrait_carte_adhesion',
                 'currency' => $card->currency,
@@ -424,8 +436,8 @@ class MemberDetails extends Component
             ]);
 
             Transaction::create([
-                'account_id' => $retenuMiseAccount->id,
-                'user_id' => Auth::user()->id,
+                'account_id' => null,
+                'user_id' => 195,
                 'type' => 'depot',
                 'currency' => $card->currency,
                 'amount' => $aretenir,

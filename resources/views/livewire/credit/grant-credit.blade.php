@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/grant-credit.blade.php -->
-<div class="mt-4">
+<div class="mt-0">
     @if (session()->has('message'))
         <div class="alert alert-success">{{ session('message') }}</div>
     @endif
@@ -8,7 +8,7 @@
         <div class="card-header bg-primary text-white">Octroyer un Crédit</div>
         <div class="card-body">
             <form wire:submit.prevent="submit">
-                <div class="row">
+                <div class="row mt-3">
                     <div class="col-md-6 mb-3">
                         <div class="position-relative">
                             <label>Membre</label>
@@ -79,7 +79,9 @@
                     </div>
 
                     <div class="col-md-12">
-                        <button type="submit" class="btn btn-success w-100">Valider le Crédit</button>
+                        <button type="submit" class="btn btn-success w-100">
+                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            Valider le Crédit</button>
                     </div>
                 </div>
             </form>

@@ -1,6 +1,10 @@
 <div class="card mt-4">
-    <div class="card-header">
+    <div class="card-header d-flex justify-between">
         <h5 class="card-title mb-0">Historique des Clôtures de Caisse</h5>
+        <button wire:click="exportPdf" class="btn btn-primary btn-sm">
+            <span wire:loading wire:target="exportPdf" class="spinner-border spinner-border-sm me-2" role="status"></span>
+            Exporter PDF
+        </button>
     </div>
 
     <div class="card-body">
@@ -68,9 +72,9 @@
                                 </div>
                             @endif
 
-                            @if(auth()->id() == $closing->user_id && $closing->status === 'pending')
+                            {{-- @if(auth()->id() == $closing->user_id && $closing->status === 'pending')
                                 <button wire:click="editClosing({{ $closing->id }})" class="btn btn-primary btn-sm">Modifier</button>
-                            @endif
+                            @endif --}}
 
                             @if($closing->status !== 'pending')
                                 <a href="{{ route('cloture.print', $closing->id) }}"
@@ -84,48 +88,48 @@
 
             {{-- Modal de rejet --}}
             <!-- Modal Bootstrap -->
-<div wire:ignore.self class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Modifier la clôture</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
+        <div wire:ignore.self class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Modifier la clôture</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
 
-            <div class="modal-body">
-                <h6>Billetage USD</h6>
-                <div class="row mb-3">
-                    @foreach ($editBilletageUSD as $valeur => $nombre)
-                        <div class="col-md-2">
-                            <label class="form-label">${{ $valeur }}</label>
-                            <input type="number" wire:model.defer="editBilletageUSD.{{ $valeur }}" class="form-control" min="0">
+                    <div class="modal-body">
+                        <h6>Billetage USD</h6>
+                        <div class="row mb-3">
+                            @foreach ($editBilletageUSD as $valeur => $nombre)
+                                <div class="col-md-2">
+                                    <label class="form-label">${{ $valeur }}</label>
+                                    <input type="number" wire:model.defer="editBilletageUSD.{{ $valeur }}" class="form-control" min="0">
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                </div>
 
-                <h6>Billetage CDF</h6>
-                <div class="row mb-3">
-                    @foreach ($editBilletageCDF as $valeur => $nombre)
-                        <div class="col-md-2">
-                            <label class="form-label">{{ $valeur }} Fc</label>
-                            <input type="number" wire:model.defer="editBilletageCDF.{{ $valeur }}" class="form-control" min="0">
+                        <h6>Billetage CDF</h6>
+                        <div class="row mb-3">
+                            @foreach ($editBilletageCDF as $valeur => $nombre)
+                                <div class="col-md-2">
+                                    <label class="form-label">{{ $valeur }} Fc</label>
+                                    <input type="number" wire:model.defer="editBilletageCDF.{{ $valeur }}" class="form-control" min="0">
+                                </div>
+                            @endforeach
                         </div>
-                    @endforeach
-                </div>
 
-                <div class="mb-3">
-                    <label for="editNote" class="form-label">Note</label>
-                    <textarea class="form-control" wire:model.defer="editNote" rows="3"></textarea>
-                </div>
-            </div>
+                        <div class="mb-3">
+                            <label for="editNote" class="form-label">Note</label>
+                            <textarea class="form-control" wire:model.defer="editNote" rows="3"></textarea>
+                        </div>
+                    </div>
 
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button class="btn btn-primary" wire:click="updateCloture">Enregistrer</button>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                        <button class="btn btn-primary" wire:click="updateCloture">Enregistrer</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div>
-</div>
 
         </table>
     </div>

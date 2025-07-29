@@ -25,9 +25,9 @@
 <body>
     <img src="{{ asset('assets/img/logo.jpg') }}" width="80px" alt="logo" class="img-center">
     <div class="center bold">{{ config('app.name') }}</div>
-    <div class="center">N° ID : {{ config('app.tax_id', '000-000-000') }}</div>
-    <div class="center">Adresse : {{ config('app.address', 'Adresse non définie') }}</div>
-    <div class="center">Tél : {{ config('app.phone', '+243 000 000 000') }}</div>
+    <div class="center">N° ID : {{ env('APP_RCCM', '000-000-000') }}</div>
+    <div class="center">Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}</div>
+    <div class="center">Tél : {{ env('APP_PHONE', '+243 000 000 000') }}</div>
     <div class="line"></div>
 
     <div class="center bold">REÇU D'OCTROI DE CRÉDIT</div>

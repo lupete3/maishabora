@@ -58,18 +58,18 @@
 <body>
 
   <!-- Logo -->
-  <div class="center">
+  {{-- <div class="center">
     <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
         width="100px" alt="" />
-  </div>
+  </div>}}
       {{-- <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset=""> --}}
 
 
   <!-- En-tête -->
   <div class="center bold" style="font-size: 50px;">{{ config('app.name') }}</div>
-  <div class="center">ID : 666-666-666</div>
-  <div class="center">123 Av. Kasa-Vubu, Kinshasa</div>
-  <div class="center">+243 999 999 999</div>
+  <div class="center">N° ID : {{ env('APP_RCCM', '000-000-000') }}</div>
+  <div class="center">Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}</div>
+  <div class="center">Tél : {{ env('APP_PHONE', '+243 000 000 000') }}</div>
   <div class="line"></div>
 
   <!-- Titre -->

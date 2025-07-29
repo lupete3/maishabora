@@ -63,6 +63,9 @@ class PermissionSeeder extends Seeder
 
             "depot-compte-membre",
             "retrait-compte-membre",
+
+            "afficher-rapport-client",
+            "afficher-rapport-carnet",
         ];
 
         foreach ($permissions as $key => $permission) {

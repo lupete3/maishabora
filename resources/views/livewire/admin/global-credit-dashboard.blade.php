@@ -1,7 +1,6 @@
 <!-- resources/views/livewire/global-credit-dashboard.blade.php -->
 
 <div class="container mt-4">
-
     <!-- Statistiques des crédits -->
     <div class="row g-2 mb-4">
         <div class="col-md-2 ">

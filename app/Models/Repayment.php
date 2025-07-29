@@ -16,6 +16,10 @@ class Repayment extends Model
         'paid_amount', 'is_paid'
     ];
 
+    protected $casts = [
+        'due_date' => 'date',
+    ];
+
     public function credit()
     {
         return $this->belongsTo(Credit::class);

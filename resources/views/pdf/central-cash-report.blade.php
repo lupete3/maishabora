@@ -5,36 +5,46 @@
     <title>Rapport Caisse Centrale</title>
     <style>
         body {
-            font-family: DejaVu Sans, sans-serif;
-            font-size: 11px;
-            margin: 10px;
-            color: #222;
+            font-family: Arial, sans-serif;
+            font-size: 10px;
+            margin: 5px;
+            color: #000;
         }
-
-        .header {
+        .footer { text-align: center; margin-top: 50px }
+        .text-center { text-align: center; }
+        .text-end { text-align: right; }
+        .text-start { text-align: left; }
+        .table {
+            width: 100%; border-collapse: collapse; margin-top: 20px;
+        }
+        .table td, .table th {
+            border: 1px solid #000; padding: 2px; font-size: 8px;
+        }
+        .signature {
+            margin-top: 30px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+        }
+        .signature-block {
+            width: 45%;
             text-align: center;
-            margin-bottom: 10px;
         }
-
-        .header h2 {
-            margin: 0;
-            font-size: 12px;
+        th {
+            background-color: #f1c206;
         }
-
-        .header p {
+        .section-title {
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 11px;
+        }
+        .totals p {
             margin: 2px 0;
         }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 12px;
+        .logo {
+            width: 80px;
         }
-
-        body { font-family: sans-serif; font-size: 14px; }
-        th, td { border: 1px solid #000; padding: 2px; font-size: 8px;}
-        th { background-color: #f1c206; }
-
         .footer {
             position: fixed;
             bottom: 10px;
@@ -43,33 +53,37 @@
             font-size: 10px;
             color: #888;
         }
-
-        .balances {
-            width: 50%;
-            margin: 10px auto;
-        }
-
-        .balances td {
-            padding: 6px 10px;
-        }
-
-        .title-section {
-            margin-top: 8px;
-        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h2>RAPPORT DE LA CAISSE CENTRALE</h2>
-        <p><strong>{{ config('app.name') }}</strong></p>
-        <p><strong>Date d'impression :</strong> {{ now()->format('d/m/Y H:i') }}</p>
+    <div class="header" style="padding-bottom: 5px;">
+        <table style="width:100%;">
+            <tr>
+                <td style="width: 15%;">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" class="logo" alt="Logo">
+                </td>
+                <td style="width: 60%; text-align:center;">
+                    <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
+                    <p style="margin: 0;">Adresse : {{ env('APP_ADRESS') }}</p>
+                    <p style="margin: 0;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
+                </td>
+                <td style="width: 25%; text-align:right; font-size: 9px;">
+                    <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
+                    <strong>Heure :</strong> {{ now()->format('H:i') }}<br>
+                    <strong>Agent :</strong><br>
+                    {{ Auth::user()->name ?? 'N/A' }} {{ Auth::user()->postnom ?? '' }} {{ Auth::user()->prenom ?? '' }}
+                </td>
+            </tr>
+        </table>
+        <hr style="margin: 10px 0; border-bottom: 2px solid #ed8d0f;">
+        <h3 class="text-center" style="text-decoration: underline; margin-bottom: 2px;">RAPPORT DE LA CAISSE CENTRALE</h3>
     </div>
 
     <!-- Soldes actuels -->
     <div class="title-section">
         <h4 style="text-align:center;">Soldes Actuels</h4>
-        <table class="balances">
+        <table class="table">
             <thead>
                 <tr>
                     <th>Devise</th>
@@ -89,7 +103,7 @@
 
     <div class="title-section" style="margin-top: 30px;">
         <h4 style="text-align:center;">Totaux des mouvements par devise</h4>
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Devise</th>
@@ -112,7 +126,7 @@
     <!-- Transactions -->
     <div class="title-section">
         <h4 style="text-align:center;">Dernières Transactions</h4>
-        <table>
+        <table class="table">
             <thead>
                 <tr>
                     <th>Date</th>

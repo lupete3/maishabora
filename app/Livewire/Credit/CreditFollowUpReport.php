@@ -162,7 +162,7 @@ class CreditFollowUpReport extends Component
         $credits = $query->get();
         $totals = $this->calculateTotals($credits);
 
-        $pdf = Pdf::loadView('pdf.credits-report', compact('credits', 'totals'));
+        $pdf = Pdf::loadView('pdf.credits-report', compact('credits', 'totals'))->setPaper('A4', 'landscape');
 
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->stream();

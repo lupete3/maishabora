@@ -1,7 +1,9 @@
 <!-- resources/views/livewire/register-member.blade.php -->
-<div class="mt-4">
+<div class="mt-0">
 
     @include('livewire.members.add-member')
+
+    <h3>Gestion des clients</h3>
 
     <!-- resources/views/livewire/view-registered-members.blade.php -->
     <div class="table-wrapper">
@@ -46,6 +48,7 @@
                             <tr>
                                 <th>Code</th>
                                 <th>Nom</th>
+                                <th>Sexe</th>
                                 <th>Email</th>
                                 <th>Téléphone</th>
                                 <th>Status</th>
@@ -57,6 +60,7 @@
                                 <tr>
                                     <td>{{ $member->code }}</td>
                                     <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
+                                    <td>{{ $member->sexe }}</td>
                                     <td>{{ $member->email }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>
@@ -70,7 +74,7 @@
                                         <div class="d-flex align-items-center gap-1">
                                             @canany(['depot-compte-membre', 'retrait-compte-membre'])
                                                 <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">
-                                                    Compte Client
+                                                    Afficher
                                                 </a>
                                             @endcanany
 
@@ -84,9 +88,9 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center">
+                                    <td colspan="7" class="text-center">
                                         <div class="alert alert-danger" role="alert">
-                                            Rechercher un client dans le système.
+                                            Aucun client correspondant trouvé dans le système.
                                         </div>
                                     </td>
                                 </tr>

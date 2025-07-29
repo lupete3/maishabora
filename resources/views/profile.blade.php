@@ -43,6 +43,8 @@
     <livewire:profile.update-password-form />
 
     <livewire:profile.delete-user-form />
+
+    <livewire:user-log-history />
 </div>
 
 

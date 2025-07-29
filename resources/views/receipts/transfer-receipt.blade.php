@@ -99,7 +99,7 @@
 
     <!-- Pied de page -->
     <div class="footer">
-        <p>Fait par : {{ $agent->name }}</p>
+        <p>Fait par : {{ $agent->name.' '.$agent->postnom }}</p>
         <p class="center">Merci pour votre travail diligent !</p>
     </div>
 

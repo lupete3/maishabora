@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use Livewire\Volt\Component;
+use App\Helpers\UserLogHelper;
 
 new class extends Component
 {
@@ -33,6 +34,8 @@ new class extends Component
         ]);
 
         $this->reset('current_password', 'password', 'password_confirmation');
+
+        UserLogHelper::log_user_activity('Modification Mot de passe', 'Modification du Mot de passe');
 
         $this->dispatch('password-updated');
         notyf()->success('Informations mises à jour');

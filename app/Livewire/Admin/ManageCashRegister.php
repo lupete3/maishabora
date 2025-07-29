@@ -111,7 +111,8 @@ class ManageCashRegister extends Component
                     ->orWhere('type', 'like', '%virement vers caisse centrale%')
                     ->orWhere('type', 'like', '%octroi_de_credit_client%')
                     ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
-                    ->orWhere('type', 'like', '%octroi_de_credit_client%');
+                    ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                    ->orWhere('type', 'like', '%virement_caisse_sortant%');
 
             })
             ->where(function ($query) {

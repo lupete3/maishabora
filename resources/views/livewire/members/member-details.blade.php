@@ -177,11 +177,12 @@
             <div class="lg:col-span-1 space-y-6">
                 <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
                     <div class="flex flex-col space-y-1.5 p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-user h-6 w-6 text-primary">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl">
+                            @if ($member->photo_profil)
+                                <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" class="rounded-circle" width="100">
+                            @else
+                                <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="rounded-circle" width="100">
+                            @endif
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>Informations du client</div>
                     </div>

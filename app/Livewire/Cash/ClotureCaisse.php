@@ -139,7 +139,6 @@ class ClotureCaisse extends Component
         }
 
         notyf()->success("Clôture enregistrée avec succès !");
-        $this->redirect('/dashboard'); // ou une autre route
     }
 
     public function render()

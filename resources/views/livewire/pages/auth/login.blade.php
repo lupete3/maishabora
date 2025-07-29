@@ -4,6 +4,8 @@ use App\Livewire\Forms\LoginForm;
 use Illuminate\Support\Facades\Session;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
+use App\Helpers\UserLogHelper;
+
 
 new #[Layout('layouts.guest')] class extends Component
 {
@@ -19,6 +21,8 @@ new #[Layout('layouts.guest')] class extends Component
         $this->form->authenticate();
 
         Session::regenerate();
+
+        UserLogHelper::log_user_activity('Connexion', 'Utilisateur déconnecté');
 
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
     }

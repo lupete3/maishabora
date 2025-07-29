@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\Rule;
 use Livewire\Volt\Component;
+use App\Helpers\UserLogHelper;
 
 new class extends Component
 {
@@ -53,6 +54,8 @@ new class extends Component
         }
 
         $user->save();
+
+        UserLogHelper::log_user_activity('Modification Information', 'Modification des Informations du profile');
 
         $this->dispatch('profile-updated', name: $user->name);
         notyf()->success('Informations mises à jour');

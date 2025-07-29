@@ -84,7 +84,8 @@
 
                 </div>
                 <div class="col-md-2">
-                    <button wire:click="exportToPdf" class="btn btn-danger w-100">
+                    <button wire:click="exportToPdf" class="btn btn-primary " wire:loading.attr="disabled">
+                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <i class="bx bx-download"></i> Télécharger PDF
                     </button>
                 </div>

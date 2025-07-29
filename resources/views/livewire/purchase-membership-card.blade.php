@@ -1,10 +1,10 @@
-<div class="mt-4">
+<div class="mt-0">
     @can('ajouter-carnet')
     <div class="card">
         <div class="card-header bg-primary text-white">Achat de Carte d'Adhésion</div>
         <div class="card-body">
             <form wire:submit.prevent="submit">
-                <div class="row">
+                <div class="row mt-3">
 
                     <div class="col-md-6 mb-3">
                         <div class="position-relative">
@@ -69,10 +69,14 @@
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">
         <div class="card">
-            <div class="card-header bg-light d-flex align-content-between">
-                <h5>Historique des Cartes d'Adhésion</h4>
+            <div class="card-header bg-light d-flex justify-content-between">
+                <div>
+                    <h5>Historique des Cartes d'Adhésion</h4>
+                </div>
                                 <!-- Barre de recherche -->
-                <input type="text" wire:model.live="searchCard" class="form-control" placeholder="Rechercher une carte...">
+                <div>
+                    <input type="text" wire:model.live="searchCard" class="form-control" placeholder="Rechercher une carte...">
+                </div>
             </div>
 
             <div class="card-body">

@@ -89,16 +89,23 @@ class PurchaseMembershipCard extends Component
 
             // Récupération du membre
             $member = User::findOrFail($this->member_id);
-          
 
-            // Création de la carte
+            // Définition des dates
+            $startDate = now();
+            $endDate = $startDate->copy()->addDays(30); // 31 jours incluant le jour de début
+
+            // Création de la carte avec les dates
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
                 'currency' => $this->currency,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
+                'start_date' => $startDate,
+                'end_date' => $endDate,
+                'is_active' => true,
             ]);
+          
 
             // Génération des 31 mises
             $startDate = now();

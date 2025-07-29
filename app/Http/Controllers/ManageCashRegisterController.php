@@ -21,7 +21,8 @@ class ManageCashRegisterController extends Controller
                 $query->where('type', 'like', '%fonds%')
                     ->orWhere('type', 'like', '%sortie%')
                     ->orWhere('type', 'like', '%virement vers caisse centrale%')
-                    ->orWhere('type', 'like', '%octroi_de_credit_client%');
+                    ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                    ->orWhere('type', 'like', '%virement_caisse_sortant%');
             })
             ->latest()
             ->get();

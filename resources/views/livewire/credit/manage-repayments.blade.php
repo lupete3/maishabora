@@ -82,7 +82,7 @@
                                             <span class="badge bg-warning">En attente</span>
                                         @endif
                                     </td>
-                                    {{-- <td>
+                                    <td>
                                         @if(!$r->is_paid)
                                             <button wire:click="payRepayment({{ $r->id }})" class="btn btn-sm btn-success">
                                                 <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -91,7 +91,7 @@
                                         @else
                                             -
                                         @endif
-                                    </td> --}}
+                                    </td>
                                 </tr>
                             @empty
                                 <tr><td colspan="5" class="text-center">Aucune échéance trouvée.</td></tr>

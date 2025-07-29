@@ -158,6 +158,12 @@ class User extends Authenticatable
         return $this->hasMany(Transaction::class);
     }
 
+    public function logs()
+    {
+        return $this->hasMany(UserLog::class);
+    }
+
+
     protected static function booted()
     {
         static::creating(function ($user) {

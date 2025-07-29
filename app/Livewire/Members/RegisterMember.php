@@ -90,6 +90,7 @@ class RegisterMember extends Component
             'name' => $this->name,
             'postnom' => $this->postnom,
             'prenom' => $this->prenom,
+            'sexe' => $this->sexe,
             'date_naissance' => $this->date_naissance,
             'lieu_naissance' => $this->lieu_naissance,
             'telephone' => $this->telephone,
@@ -231,8 +232,6 @@ class RegisterMember extends Component
 
         notyf()->success('Membre enregistré avec succès !');
     }
-
-
 
     public function edit($idUser)
     {
@@ -449,6 +448,7 @@ class RegisterMember extends Component
                             ->orWhere('name', 'like', "%{$this->search}%")
                             ->orWhere('postnom', 'like', "%{$this->search}%")
                             ->orWhere('prenom', 'like', "%{$this->search}%")
+                            ->orWhere('sexe', 'like', "%{$this->search}%")
                             ->orWhere('date_naissance', 'like', "%{$this->search}%")
                             ->orWhere('telephone', 'like', "%{$this->search}%")
                             ->orWhere('adresse_physique', 'like', "%{$this->search}%")

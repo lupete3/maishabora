@@ -1,8 +1,11 @@
 <?php
 
 use App\Exports\MemberFinancialHistoryExport;
+use App\Helpers\UserLogHelper;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
+use App\Http\Controllers\AgentTransactionsReportController;
+use App\Http\Controllers\ClientStatReportController;
 use App\Http\Controllers\ClotureController;
 use App\Http\Controllers\CreateSubscriptionController;
 use App\Http\Controllers\CreditFollowUpReportController;
@@ -10,6 +13,7 @@ use App\Http\Controllers\CreditOverviewReportController;
 use App\Http\Controllers\CreditReceiptController;
 use App\Http\Controllers\CreditReportPdfController;
 use App\Http\Controllers\DepositForMemberController;
+use App\Http\Controllers\FundTransferController;
 use App\Http\Controllers\GlobalReportController;
 use App\Http\Controllers\GrantCreditController;
 use App\Http\Controllers\ManageCashRegisterController;
@@ -24,16 +28,12 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
 use App\Http\Controllers\RepaymentScheduleController;
-use App\Http\Controllers\SellMembershipCardController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
-use App\Livewire\Credit\GrantCredit;
-use App\Livewire\Members\CreateMember;
-use App\Livewire\Members\SellMembershipCard;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Maatwebsite\Excel\Facades\Excel;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
+
 
 Route::get('/', function () {
     return redirect()->route('login');
@@ -118,6 +118,13 @@ Route::middleware(['auth','permission:retrait-compte-membre'])->group(function (
 Route::middleware(['auth','permission:depot-compte-membre'])->group(function () {
     Route::get('/cloture-caisse', [ClotureController::class, 'index'])->name('agent.cloture');
     Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');
+    Route::get('/transfert-compte', [FundTransferController::class, 'index'])->name('transfert.ajouter');
+});
+
+Route::middleware(['auth','permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
+    Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');
+    Route::get('/rapport-carnets', [ClientStatReportController::class, 'rapportCarnets'])->name('rapports.carnets');
+    Route::get('/rapport-transactions', [AgentTransactionsReportController::class, 'rapportTransactions'])->name('rapports.transactions');
 });
 
 
@@ -178,10 +185,12 @@ Route::view('profile', 'profile')
     ->name('profile');
 
 Route::post('/logout', function () {
+    UserLogHelper::log_user_activity('Déconnexion', 'Utilisateur déconnecté');
+    
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
-
+    
     return redirect('/login');
 })->name('logout');
 
