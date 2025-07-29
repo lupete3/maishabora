@@ -2,7 +2,14 @@
     <h4>Rapport Statistique des Carnets</h4>
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <select wire:model.lazy="status" class="form-control" id="status">
+                <option value="">Tous les carnets</option>
+                <option value="open">En cours</option>
+                <option value="closed">Clôturé</option>
+            </select>
+        </div>
+        <div class="col-md-2">
             <select wire:model.lazy="currency" class="form-control">
                 <option value="">Toutes les devises</option>
                 <option value="CDF">CDF</option>
@@ -10,7 +17,7 @@
             </select>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select wire:model.lazy="periodFilter" class="form-control">
                 <option value="">Toutes les périodes</option>
                 <option value="today">Aujourd'hui</option>
