@@ -6,6 +6,8 @@ use App\Models\MainCashRegister;
 use App\Models\AgentAccount;
 use App\Models\Account;
 use App\Models\Transaction;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -63,6 +65,8 @@ class FundTransferComponent extends Component
                     'description' => 'Virement sortant vers ' . $this->transfer_type,
                 ]);
 
+                $transfer = '';
+
                 if ($this->transfer_type === 'agent') {
                     $agent = AgentAccount::firstOrCreate(
                         ['user_id' => $this->recipient_id, 'currency' => $this->currency],
@@ -72,7 +76,7 @@ class FundTransferComponent extends Component
                     $agent->balance += $this->amount;
                     $agent->save();
 
-                    Transaction::create([
+                    $transfer = Transaction::create([
                         'user_id' => $this->recipient_id,
                         'agent_account_id' => $agent->id,
                         'type' => 'virement_caisse_entrant',
@@ -90,7 +94,7 @@ class FundTransferComponent extends Component
                     $account->balance += $this->amount;
                     $account->save();
 
-                    Transaction::create([
+                    $transfer = Transaction::create([
                         'user_id' => $this->recipient_id,
                         'account_id' => $account->id,
                         'type' => 'virement_caisse_entrant',
@@ -104,6 +108,7 @@ class FundTransferComponent extends Component
 
             $this->reset(['amount', 'description', 'recipient_id']);
             notyf()->success('Virement effectué avec succès.');
+
         } catch (\Throwable $e) {
             // Journaliser l’erreur pour le debug si nécessaire
             report($e);
@@ -119,6 +124,23 @@ class FundTransferComponent extends Component
             })
             ->orderByDesc('created_at')
             ->paginate($this->perPage);
+    }
+
+    public function exportReceipt($transactionId)
+    {
+        $transfer = Transaction::with('user')->findOrFail($transactionId);
+
+        // Si c’est un transfert entrant, l’agent est le destinataire
+        $agent = $transfer->user ?? User::find($transfer->user_id);
+
+        $pdf = Pdf::loadView('receipts.transfer-compte', [
+            'transfer' => $transfer,
+            'agent' => $agent,
+        ])->setPaper([0, 0, 226.77, 600], 'portrait'); // 80mm x ~210mm
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, 'recu_virement_' . $transactionId . '.pdf');
     }
 
     public function render()

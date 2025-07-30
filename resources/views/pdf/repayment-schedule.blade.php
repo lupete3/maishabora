@@ -92,7 +92,7 @@
                 <strong>Email :</strong> {{ $member->email }}<br>
                 <strong>Adresse :</strong> {{ $member->adresse ?? 'N/A' }}<br>
             </td>
-            <td style="border: none; padding: 0;">
+            <td style="border: none; padding: 0; text-align: right">
                 <strong>Montant du prêt :</strong> {{ number_format($credit->amount, 2) }} {{ $credit->currency }}<br>
                 <strong>Taux d'intérêt :</strong> {{ $credit->interest_rate }}%<br>
                 <strong>Frais du dossier :</strong> {{ number_format(($credit->amount * 5) / 100, 2) }} {{ $credit->currency }}<br>
@@ -274,7 +274,7 @@
                 Signature Membre<br><br><br><br>
                 <strong>{{ $member->name.' '.$member->postnom }}</strong>
             </td>
-            <td style="border: none; padding: 0;">
+            <td style="border: none; padding: 0; text-align:right">
                 Signature Agent<br><br><br><br>
                 <strong>{{ $agent->name.' '.$agent->postnom }}</strong>
             </td>

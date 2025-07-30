@@ -8,12 +8,12 @@
                         <nav aria-label="breadcrumb">
                             <ol class="breadcrumb">
                                 <li class="breadcrumb-item">
-                                    <a class="mb-0 d-inline-block fs-6 lh-1" href="{{ route('dashboard') }}">{{
-                                        __("Tableau de bord") }}</a>
+                                    <a class="mb-0 d-inline-block fs-6 lh-1"
+                                        href="{{ route('dashboard') }}">{{ __('Tableau de bord') }}</a>
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
-                                    <h1 class="mb-0 d-inline-block fs-6 lh-1">{{ __("Situation de la caisse centrale")
-                                        }}</h1>
+                                    <h1 class="mb-0 d-inline-block fs-6 lh-1">
+                                        {{ __('Situation de la caisse centrale') }}</h1>
                                 </li>
                             </ol>
                         </nav>
@@ -28,48 +28,47 @@
         </div>
     </div>
     <div class="row">
-        @foreach($registers as $index => $reg)
-        @if ($index == 0)
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title d-flex align-items-start justify-content-between">
-                        <div class="avatar flex-shrink-0">
-                            <img src="../assets/img/icons/unicons/chart-success.png" alt="chart success"
-                                class="rounded" />
-                        </div>
+        @foreach ($registers as $index => $reg)
+            @if ($index == 0)
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between">
+                                <div class="avatar flex-shrink-0">
+                                    <img src="../assets/img/icons/unicons/chart-success.png" alt="chart success"
+                                        class="rounded" />
+                                </div>
 
-                    </div>
-                    <span>Compte USD</span>
-                    <h3 class="card-title mb-2">{{ $reg->currency }} : {{ number_format($reg->balance, 2)
-                        }}
-                    </h3>
-                    <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
-                        +72.80%</small>
-                </div>
-            </div>
-        </div>
-        @endif
-        @if ($index == 1)
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-body">
-                    <div class="card-title d-flex align-items-start justify-content-between">
-                        <div class="avatar flex-shrink-0">
-                            <img src="../assets/img/icons/unicons/wallet-info.png" alt="Credit Card"
-                                class="rounded" />
+                            </div>
+                            <span>Compte USD</span>
+                            <h3 class="card-title mb-2">{{ $reg->currency }} : {{ number_format($reg->balance, 2) }}
+                            </h3>
+                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
+                                +72.80%</small>
                         </div>
-
                     </div>
-                    <span>Compte CDF</span>
-                    <h3 class="card-title text-nowrap mb-1">{{ $reg->currency }} : {{
-                        number_format($reg->balance, 2) }}</h3>
-                    <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
-                        +28.42%</small>
                 </div>
-            </div>
-        </div>
-        @endif
+            @endif
+            @if ($index == 1)
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="card-title d-flex align-items-start justify-content-between">
+                                <div class="avatar flex-shrink-0">
+                                    <img src="../assets/img/icons/unicons/wallet-info.png" alt="Credit Card"
+                                        class="rounded" />
+                                </div>
+
+                            </div>
+                            <span>Compte CDF</span>
+                            <h3 class="card-title text-nowrap mb-1">{{ $reg->currency }} :
+                                {{ number_format($reg->balance, 2) }}</h3>
+                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
+                                +28.42%</small>
+                        </div>
+                    </div>
+                </div>
+            @endif
         @endforeach
     </div>
 
@@ -81,21 +80,24 @@
                 <div class="w-100 justify-content-between d-flex flex-wrap align-items-center gap-1">
 
                     <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-1">
-                        <button class="btn btn-show-table-options" type="button">Rechercher</button>
 
                         <div class="table-search-input">
-                            <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
-                            </label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text" id="basic-addon-search31">
+                                    <i class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live="search" class="form-control"
+                                    placeholder="Rechercher......." autocomplete="off" aria-label="Rechercher......."
+                                    aria-describedby="basic-addon-search31">
+                            </div>
                         </div>
                     </div>
                     @can('ajouter-sortie-caisse')
-                    <div class="d-flex align-items-center gap-1">
-                        <button wire:click="openModal" class="btn btn-primary">
-                            + Ajouter
-                        </button>
-                        <a href="{{ route('cash.register.export.pdf') }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                        <div class="d-flex align-items-center gap-1">
+                            <button wire:click="openModal" class="btn btn-primary">
+                                + Ajouter
+                            </button>
+                            <a href="{{ route('cash.register.export.pdf') }}"
+                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
                                 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
                                 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
                                 disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
@@ -109,7 +111,7 @@
                                 </svg>
                                 Télécharger PDF
                             </a>
-                    </div>
+                        </div>
                     @endcan
                 </div>
             </div>
@@ -130,30 +132,33 @@
                         </thead>
                         <tbody>
                             @forelse ($transactions as $transaction)
-                            <tr>
-                                <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                                <td>
-                                    @if ($transaction->type === 'Entrée de fonds')
-                                        <span class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @elseif ($transaction->type === 'virement vers caisse centrale')
-                                        <span class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @else
-                                        <span class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @endif
-                                </td>
-                                <td>{{ $transaction->currency }}</td>
-                                <td>{{ number_format($transaction->amount, 2) }}</td>
-                                <td>{{ number_format($transaction->balance_after, 2) }}</td>
-                                <td>{{ $transaction->description }}</td>
-                            </tr>
+                                <tr>
+                                    <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        @if ($transaction->type === 'Entrée de fonds')
+                                            <span
+                                                class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
+                                        @elseif ($transaction->type === 'virement vers caisse centrale')
+                                            <span
+                                                class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
+                                        @else
+                                            <span
+                                                class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $transaction->currency }}</td>
+                                    <td>{{ number_format($transaction->amount, 2) }}</td>
+                                    <td>{{ number_format($transaction->balance_after, 2) }}</td>
+                                    <td>{{ $transaction->description }}</td>
+                                </tr>
                             @empty
-                            <tr>
-                                <td colspan="6" class="text-center">
-                                    <div class="alert alert-danger" role="alert">
-                                        Aucune opération trouvée.
-                                    </div>
-                                </td>
-                            </tr>
+                                <tr>
+                                    <td colspan="6" class="text-center">
+                                        <div class="alert alert-danger" role="alert">
+                                            Aucune opération trouvée.
+                                        </div>
+                                    </td>
+                                </tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -190,10 +195,10 @@
     @include('livewire.admin.add-cash-register')
 
     <div class="row mt-3">
-        <div class="col-md-6">
+        <div class="col-md-12">
             <livewire:currency-conversion />
         </div>
-        <div class="col-md-6">
+        <div class="col-md-12 mt-4">
             <livewire:admin.exchange-rate-manager />
         </div>
     </div>

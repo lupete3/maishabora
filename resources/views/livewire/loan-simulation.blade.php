@@ -1,4 +1,6 @@
 <div class="p-4 space-y-4">
+
+    <!-- Formulaire de simulation -->
     <div id="simulation-form">
         <h2 class="text-xl font-bold">Simulation de Crédit</h2>
         <div class="flex space-x-4">
@@ -16,36 +18,37 @@
             </div>
         </div>
         <div class="mt-2">
-            <button wire:click="simulate" class="bg-blue-600 text-white rounded p-2">Simuler</button>
+            <button wire:click="simulate" type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Simuler
+            </button>
         </div>
     </div>
 
     @if($schedule)
-    <div id="simulation-result">
+    <!-- Zone à imprimer -->
+    <div id="print-section" class="bg-white p-4 rounded shadow">
         <div class="flex justify-between items-center mt-4">
             <div>
                 <h2 class="text-xl font-bold text-center">PLAN DE REMBOURSEMENT DE CRÉDIT</h2>
                 <p><strong>MAISHA BORA</strong></p>
             </div>
-            <div>
-                <button
-                    class="bg-green-600 text-white rounded p-2"
-                    onClick="printResult()" id="button"
-                >
-                    🖨️ Imprimer
-                </button>
+            <div class="flex justify-between items-center mt-4">
+                <div class="space-x-2">
+                    <button wire:click="exportToPdf" class="btn-success text-white rounded p-2">📄 Exporter en PDF</button>
+                </div>
             </div>
         </div>
 
-        <table style="border: none; border-collapse: collapse; width: 100%;">
+        <table class="w-full mt-4">
             <tr>
-                <td style="border: none; padding: 0; text-align: left;">
+                <td>
                     <strong>Code Membre :</strong> IMF111000<br>
                     <strong>Nom Complet :</strong> MATATA KODI Jules<br>
                     <strong>Email :</strong> matatkodi@amb.com
                 </td>
-                <td style="border: none; padding: 0;">
-                    <strong>Montant du prêt :</strong> {{ number_format($amount, 2) }} <br>
+                <td>
+                    <strong>Montant du prêt :</strong> {{ number_format($amount, 2) }}<br>
                     <strong>Taux d'intérêt :</strong> {{ number_format($rate, 2) }}%<br>
                     <strong>Type de remboursement :</strong> Mensuel<br>
                     <strong>Date d'impression :</strong> {{ now()->format('d/m/Y H:i') }}
@@ -53,7 +56,7 @@
             </tr>
         </table>
 
-        <table class="min-w-full mt-4 border-collapse border">
+        <table class="min-w-full mt-4 border-collapse border border-gray-300">
             <thead>
                 <tr class="bg-gray-100">
                     <th class="border p-2">#</th>
@@ -75,8 +78,6 @@
                     <td class="border p-2 text-right">{{ number_format($line['remaining_capital'], 2) }}</td>
                 </tr>
                 @endforeach
-
-                <!-- Totaux -->
                 <tr class="bg-gray-100 font-bold">
                     <td class="border p-2 text-center">Totaux</td>
                     <td class="border p-2 text-right">-</td>
@@ -87,32 +88,20 @@
                 </tr>
             </tbody>
         </table>
-
     </div>
     @endif
 
-    <script>
-        function printResult() {
-            const formBlock = document.getElementById('simulation-form');
-            const navbar = document.getElementById('layout-navbar');
-            const buton = document.getElementById('button');
-            const footer = document.getElementById('footer');
+    <!-- SCRIPT pour imprimer uniquement le bloc -->
+<script>
+    function printSection() {
+        const section = document.getElementById("print-section").innerHTML;
+        const original = document.body.innerHTML;
 
-            if (formBlock ) {
-                formBlock.style.display = 'none';
-                navbar.style.display = 'none';
-                buton.style.display = 'none';
-                footer.style.display = 'none';
-            }
-            window.print();
-            if (formBlock) {
-                formBlock.style.display = 'block';
-                navbar.style.display = 'block';
-                buton.style.display = 'block';
-                footer.style.display = 'block';
-            }
-        }
-    </script>
-
+        document.body.innerHTML = section;
+        window.print();
+        document.body.innerHTML = original;
+        window.location.reload(); // pour recharger Livewire
+    }
+</script>
 </div>
 
