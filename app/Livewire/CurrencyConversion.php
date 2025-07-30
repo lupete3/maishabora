@@ -7,11 +7,17 @@ use Livewire\Component;
 use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Livewire\WithPagination;
 
 class CurrencyConversion extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
     public $from_currency = 'USD';
     public $to_currency = 'CDF';
     public $amount;
@@ -94,11 +100,63 @@ class CurrencyConversion extends Component
         $this->dispatch('$refresh');
     }
 
+    public function exportConversionsPdf()
+    {
+        // Récupérer les conversions "sortie"
+        $conversions = Transaction::where('type', 'conversion_sortie')
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->get();
+
+        // Associer chaque sortie à son entrée
+        $conversions->transform(function ($sortie) {
+            $entree = Transaction::where('type', 'conversion_entree')
+                ->where('user_id', $sortie->user_id)
+                ->where('created_at', '>=', $sortie->created_at)
+                ->orderBy('created_at')
+                ->first();
+
+            $sortie->paired_entry = $entree;
+            return $sortie;
+        });
+
+        // Charger la vue PDF
+        $pdf = Pdf::loadView('pdf.conversions-pdf', [
+            'conversions' => $conversions
+        ])->setPaper('A4', 'portrait');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, 'conversions_' . now()->format('d-m-Y_H-i') . '.pdf');
+    }
+
+
     public function render()
     {
+        // Paginer uniquement les transactions de type "conversion_sortie"
+        $conversions = Transaction::where('type', 'conversion_sortie')
+            ->with('user')
+            ->orderByDesc('created_at')
+            ->paginate(10);
+
+        // Cloner la pagination pour ajouter les paires sans casser la pagination
+        $conversions->getCollection()->transform(function ($sortie) {
+            // Trouver la transaction "conversion_entree" associée
+            $entree = Transaction::where('type', 'conversion_entree')
+                ->where('user_id', $sortie->user_id)
+                ->where('created_at', '>=', $sortie->created_at)
+                ->orderBy('created_at')
+                ->first();
+
+            $sortie->paired_entry = $entree;
+            return $sortie;
+        });
+
         return view('livewire.currency-conversion', [
             'balances' => MainCashRegister::all()->keyBy('currency'),
+            'conversions' => $conversions, // ✅ encore paginé
         ]);
     }
+
 }
 

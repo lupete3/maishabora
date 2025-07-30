@@ -101,6 +101,7 @@
                             <th>Montant</th>
                             <th>Solde après</th>
                             <th>Description</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -120,10 +121,20 @@
                                 <td>{{ number_format($transaction->amount, 2) }}</td>
                                 <td>{{ number_format($transaction->balance_after, 2) }}</td>
                                 <td>{{ $transaction->description }}</td>
+                                <td>
+                                    @if ($transaction->type === 'virement_caisse_entrant')
+                                        <button wire:click="exportReceipt({{ $transaction->id }})" wire:loading.attr="disabled"
+                                             class="btn btn-sm btn-outline-dark">
+                                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+
+                                            📄 Reçu
+                                        </button>
+                                    @endif
+                                </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center">
+                                <td colspan="7" class="text-center">
                                     <div class="alert alert-warning" role="alert">
                                         Aucune opération de virement trouvée.
                                     </div>

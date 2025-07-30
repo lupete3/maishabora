@@ -16,10 +16,11 @@
                         <button class="btn btn-show-table-options" type="button">Rechercher</button>
 
                         <div class="table-search-input">
-                            <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
-                            </label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text" id="basic-addon-search31"><i class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live="search" class="form-control" 
+                                placeholder="Rechercher..." aria-label="Rechercher..." aria-describedby="basic-addon-search31">
+                            </div>
                         </div>
                     </div>
 

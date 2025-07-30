@@ -130,6 +130,7 @@
         @endcan
 
 
+        @can('afficher-rapport-credit')
         <li class="menu-item @if (request()->routeIs('rapports.clients','rapports.carnets')) 
             active @endif" wire:ignore.self>
             <a class="menu-link menu-toggle">
@@ -137,6 +138,7 @@
                 <div data-i18n="Misc">Rapports</div>
             </a>
             <ul class="menu-sub">
+                
                 <li class="menu-item @if (request()->routeIs('rapports.clients')) active @endif">
                     <a wire:navigate href="{{ route('rapports.clients') }}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-user"></i> <!-- Utilisateurs -->
@@ -149,7 +151,7 @@
                         <div data-i18n="Analytics">Rapports Carnets</div>
                     </a>
                 </li>
-                @can('afficher-rapport-credit')
+                
                 <li class="menu-item">
                     <a wire:navigate href="{{ route('report.credit.overview') }}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-time"></i> <!-- Horloge pour "en cours" -->
@@ -168,10 +170,11 @@
                         <div data-i18n="Analytics">Rapport Transactions</div>
                     </a>
                 </li>
-                @endcan
+                
             </ul>
         </li>
-
+        @endcan
+        
         @can('afficher-role')
         <li class="menu-item @if (request()->routeIs('role.management','user.management')) 
             active @endif" wire:ignore.self>

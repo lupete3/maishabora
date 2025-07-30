@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Component;
 
 class LoanSimulation extends Component
@@ -50,6 +51,27 @@ class LoanSimulation extends Component
         $this->schedule = $results;
     }
 
+    public function exportToPdf()
+    {
+        if (!$this->schedule) {
+            return;
+        }
+
+        $pdf = Pdf::loadView('pdf.simulation-credit', [
+            'schedule' => $this->schedule,
+            'amount' => $this->amount,
+            'rate' => $this->rate,
+            'installments' => $this->installments
+        ])->setPaper('A4', 'portrait');
+
+        // Renvoie le PDF dans le navigateur
+        return response()->stream(function () use ($pdf) {
+            echo $pdf->stream();
+        }, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="plan-remboursement.pdf"',
+        ]);
+    }
 
     public function render()
     {

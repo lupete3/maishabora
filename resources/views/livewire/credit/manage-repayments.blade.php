@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/manage-repayments.blade.php -->
-<div class="container mt-4">
+<div class="mt-0">
     @if (session()->has('message'))
         <div class="alert alert-success">{{ session('message') }}</div>
     @endif
@@ -7,6 +7,8 @@
     @if (session()->has('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
+
+    <h3>Gestion Remboursement Crédits</h3>
 
     <div class="card">
         <div class="card-header bg-primary text-white">Gérer les Remboursements</div>
@@ -16,11 +18,14 @@
                     <div class="col-md-6 mb-3">
                         <div class="position-relative">
                             <label>Membre</label>
-                            <input type="text"
-                                    wire:model.live="search"
-                                    class="form-control"
-                                    placeholder="Rechercher un membre"
-                                    autocomplete="off" />
+
+                            <div class="table-search-input">
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text" id="basic-addon-search31"><i class="icon-base bx bx-search"></i></span>
+                                    <input type="search" wire:model.live="search" class="form-control" 
+                                    placeholder="Rechercher Membre....." aria-label="Rechercher Membre....." aria-describedby="basic-addon-search31">
+                                </div>
+                            </div>
 
                             @if (!empty($results))
                                 <ul class="list-group w-100" style="z-index: 1000;">
