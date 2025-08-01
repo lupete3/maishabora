@@ -36,7 +36,7 @@ class CurrencyConversion extends Component
             'amount' => 'required|numeric|min:0.01',
         ]);
 
-        // 🔥 Récupérer automatiquement le dernier taux enregistré
+        //Récupérer automatiquement le dernier taux enregistré
         $rateRecord = ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
 
         if (!$rateRecord) {
@@ -54,7 +54,8 @@ class CurrencyConversion extends Component
             // Vérifier le solde disponible
             if ($fromRegister->balance < $this->amount) {
                 $this->addError('amount', 'Solde insuffisant dans la caisse ' . $this->from_currency);
-                throw new \Exception('Solde insuffisant');
+                notyf()->error('Solde insuffisant.');
+                return;
             }
 
             // Calcul conversion
@@ -92,11 +93,12 @@ class CurrencyConversion extends Component
                 'balance_after' => $toRegister->balance,
                 'description' => "Conversion depuis {$this->from_currency} vers {$this->to_currency} : reçu {$convertedAmount} {$this->to_currency}",
             ]);
+
+            notyf()->success('Conversion effectuée avec succès.');
+            $this->reset(['amount']);
+
         });
 
-        notyf()->success('Conversion effectuée avec succès.');
-
-        $this->reset(['amount']);
         $this->dispatch('$refresh');
     }
 
