@@ -389,7 +389,6 @@ class RegisterMember extends Component
         }
     }
 
-
     private function generateUniqueAccountCode()
     {
         try {
