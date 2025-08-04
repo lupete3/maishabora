@@ -34,25 +34,26 @@
         <div class="col-md-4">
             <label for="user_id">Membre</label>
             <div class="table-search-input">
-                            <div class="input-group input-group-merge">
-                                <span class="input-group-text" id="basic-addon-search31"><i class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="search" class="form-control" 
-                                placeholder="Rechercher..." aria-label="Rechercher..." aria-describedby="basic-addon-search31">
-                            </div>
-                        </div>
+                <div class="input-group input-group-merge">
+                    <span class="input-group-text" id="basic-addon-search31"><i
+                            class="icon-base bx bx-search"></i></span>
+                    <input type="search" wire:model.live="search" class="form-control" placeholder="Rechercher..."
+                        aria-label="Rechercher..." aria-describedby="basic-addon-search31">
+                </div>
+            </div>
             @if (!empty($results))
-                                <ul class="list-group w-100" style="z-index: 1000;">
-                                    @foreach ($results as $user)
-                                        <li class="list-group-item list-group-item-action"
-                                            wire:click="selectResult({{ $user['id'] }})">
-                                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
-                                        </li>
-                                    @endforeach
-                                </ul>
-                            @endif
-                            @error('member_id')
-                                <span class="text-danger">{{ $message }}</span>
-                            @enderror
+                <ul class="list-group w-100" style="z-index: 1000;">
+                    @foreach ($results as $user)
+                        <li class="list-group-item list-group-item-action"
+                            wire:click="selectResult({{ $user['id'] }})">
+                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+            @error('member_id')
+                <span class="text-danger">{{ $message }}</span>
+            @enderror
         </div>
     </div>
 
@@ -100,16 +101,25 @@
                         <tr>
                             <td>{{ $loop->iteration }}</td>
                             <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
-                            <td>{{ $transaction->user->name.' '.$transaction->user->postnom.' '.$transaction->user->prenom ?? '-' }}</td>
+                            <td>{{ $transaction->user->name . ' ' . $transaction->user->postnom . ' ' . $transaction->user->prenom ?? '-' }}
+                            </td>
                             <td>
-                                @if(in_array($transaction->type, ['dépôt','depot', 'mise_quotidienne'
-                                    ,'virement_caisse_entrant','remboursement_de_credit','ocroit_de_credit']))
+                                @if (in_array($transaction->type, [
+                                        'dépôt',
+                                        'depot',
+                                        'mise_quotidienne',
+                                        'virement_caisse_entrant',
+                                        'remboursement_de_credit',
+                                        'ocroit_de_credit',
+                                    ]))
                                     <span class="badge bg-success">
-                                        <i class="bi bi-arrow-down-circle-fill me-1"></i> {{ ucfirst($transaction->type) }}
+                                        <i class="bi bi-arrow-down-circle-fill me-1"></i>
+                                        {{ ucfirst($transaction->type) }}
                                     </span>
                                 @elseif(in_array($transaction->type, ['retrait', 'retrait_carte_adhesion']))
                                     <span class="badge bg-danger">
-                                        <i class="bi bi-arrow-up-circle-fill me-1"></i> {{ ucfirst($transaction->type) }}
+                                        <i class="bi bi-arrow-up-circle-fill me-1"></i>
+                                        {{ ucfirst($transaction->type) }}
                                     </span>
                                 @else
                                     <span class="badge bg-secondary">
@@ -118,10 +128,12 @@
                                 @endif
                             </td>
                             <td>
-                                @if(in_array($transaction->type, ['retrait', 'retrait_carte_adhesion']))
-                                    <span class="text-danger">-{{ number_format($transaction->amount, 2, ',', ' ') }}</span>
+                                @if (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion']))
+                                    <span
+                                        class="text-danger">-{{ number_format($transaction->amount, 2, ',', ' ') }}</span>
                                 @else
-                                    <span class="text-success">+{{ number_format($transaction->amount, 2, ',', ' ') }}</span>
+                                    <span
+                                        class="text-success">+{{ number_format($transaction->amount, 2, ',', ' ') }}</span>
                                 @endif
                             </td>
                             <td>{{ $transaction->currency }}</td>

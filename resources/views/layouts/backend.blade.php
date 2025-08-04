@@ -101,8 +101,6 @@
     </div>
     <!-- / Layout wrapper -->
 
-
-
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/core.js -->
     <script src="{{ asset('/') }}assets/vendor/libs/jquery/jquery.js"></script>
@@ -124,9 +122,6 @@
 
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
-
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"
-        integrity="sha256-AFAYEOkzB6iIKnTYZOdUf9FFje6lOTYdwRJKwTN5mks=" crossorigin="anonymous"></script>
 
     <script>
         window.addEventListener('closeModal', event => {

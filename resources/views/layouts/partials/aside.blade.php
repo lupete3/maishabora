@@ -212,3 +212,14 @@
         @endcan
     </ul>
 </aside>
+<script>
+  // Toggle the 'open' class when the menu-toggle is clicked
+  document.querySelectorAll('.menu-toggle').forEach(function(menuToggle) {
+    menuToggle.addEventListener('click', function() {
+      const menuItem = menuToggle.closest('.menu-item');
+      // Toggle the 'open' class on the clicked menu-item
+      menuItem.classList.toggle('open');
+    });
+  });
+</script>
+
