@@ -73,11 +73,13 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-1">
+                                            @if ($member->status)
                                             @canany(['depot-compte-membre', 'retrait-compte-membre'])
                                                 <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">
                                                     Afficher
                                                 </a>
                                             @endcanany
+                                            @endif
 
                                             @can('modifier-client')
                                                 <button wire:click='edit({{ $member->id }})' class="btn btn-sm btn-info">
