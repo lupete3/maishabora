@@ -179,7 +179,7 @@
                     <div class="flex flex-col space-y-1.5 p-6">
                         <div class="font-semibold tracking-tight flex items-center gap-3 text-xl">
                             @if ($member->photo_profil)
-                                <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" class="rounded-circle" width="100">
+                                <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" width="100">
                             @else
                                 <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="rounded-circle" width="100">
                             @endif
