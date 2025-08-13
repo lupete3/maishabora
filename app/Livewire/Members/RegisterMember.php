@@ -484,15 +484,21 @@ class RegisterMember extends Component
     {
         try {
             do {
+                // Récupère le dernier code utilisateur
                 $lastAccount = User::whereNotNull('code')->orderByDesc('id')->first();
-                $number = $lastAccount ? intval(substr($lastAccount->code, 3)) + 1 : 1;
-                $code = 'IMF' . str_pad($number, 3, '0', STR_PAD_LEFT);
-            } while (User::where('code', $code)->exists());
-
+                
+                // Extrait le numéro incrémental après "34" + année (à partir du 6ème caractère)
+                $number = $lastAccount 
+                    ? intval(substr($lastAccount->code, 6)) + 1 
+                    : 1;
+                
+                // Génère le code avec : "34" + année + numéro incrémental (10 chiffres)
+                $code = '34' . now()->format('Y') . str_pad($number, 10, '0', STR_PAD_LEFT);
+            } while (User::where('code', $code)->exists()); // Vérifie l'unicité
+            
             return $code;
-
-        } catch (Throwable $th) {
-            throw $th; // On relève l’erreur plutôt que de la traiter ici
+        } catch (\Throwable $th) {
+            throw $th; // Relève l'erreur
         }
     }
 
