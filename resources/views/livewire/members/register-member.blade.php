@@ -50,7 +50,6 @@
                                 <th>Code</th>
                                 <th>Nom</th>
                                 <th>Sexe</th>
-                                <th>Email</th>
                                 <th>Téléphone</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -62,7 +61,6 @@
                                     <td>{{ $member->code }}</td>
                                     <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
                                     <td>{{ $member->sexe }}</td>
-                                    <td>{{ $member->email }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>
                                         @if ($member->status)
@@ -91,7 +89,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="6" class="text-center">
                                         <div class="alert alert-danger" role="alert">
                                             Aucun client correspondant trouvé dans le système.
                                         </div>
