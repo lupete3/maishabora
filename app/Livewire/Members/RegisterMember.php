@@ -68,7 +68,7 @@ class RegisterMember extends Component
     // Compte
     public string $email = '';
     public string $role = 'membre';
-    public bool $status = false;
+    public bool $status = true;
 
     // Fichiers (si tu les utilises)
     public $photo_profil = null;
@@ -83,8 +83,99 @@ class RegisterMember extends Component
     public $userId;
     public $selectedMemberId = null;
 
+    public $currentStep = 1;
+    public $totalSteps = 5;
 
-    public function submit()
+
+    public function nextStep()
+    {
+        $this->validateStep($this->currentStep);
+
+        if ($this->currentStep < $this->totalSteps) {
+            $this->currentStep++;
+        }
+    }
+
+    public function previousStep()
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
+    public function validateStep($step)
+    {
+        $rules = [];
+        switch ($step) {
+            case 1:
+                $rules = [
+                    'name' => ['required', 'string', 'max:255'],
+                    'postnom' => ['required', 'string', 'max:255'],
+                    'prenom' => ['nullable', 'string', 'max:255'],
+                    'sexe' => ['nullable', 'string', 'max:255'],
+                    'date_naissance' => ['required', 'date'],
+                    'telephone' => [
+                        'required',
+                        'string',
+                        'max:20',
+                        'regex:/^\+243\d{9}$/',
+                        Rule::unique('users')->where(fn ($query) => $query
+                            ->where('name', $this->name)
+                            ->where('postnom', $this->postnom)
+                            ->where('telephone', $this->telephone)),
+                    ],
+                    'profession' => ['nullable', 'string', 'max:255'],
+                    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($this->userId)],
+                    'adresse_physique' => ['nullable', 'string'],
+                ];
+                break;
+            case 2:
+                $rules = [
+                    'type_piece' => ['nullable', 'string', 'max:100'],
+                    'numero_piece' => ['nullable', 'string', 'max:100'],
+                    'date_expiration_piece' => ['nullable', 'date'],
+                    'etat_civil' => ['nullable', 'in:célibataire,marié,divorcé,veuf'],
+                    'nombre_dependants' => ['nullable', 'integer', 'min:0'],
+                    'lieu_naissance' => ['nullable', 'string', 'max:255'],
+                ];
+                break;
+            case 3:
+                $rules = [
+                    'revenu_mensuel' => ['nullable', 'numeric', 'min:0'],
+                    'source_revenu' => ['nullable', 'string', 'max:255'],
+                    'nom_employeur' => ['nullable', 'string', 'max:255'],
+                    'nom_conjoint' => ['nullable', 'string', 'max:255'],
+                    'telephone_conjoint' => ['nullable', 'string', 'max:20'],
+                ];
+                break;
+            case 4:
+                $rules = [
+                    'nom_reference' => ['nullable', 'string', 'max:255'],
+                    'telephone_reference' => ['nullable', 'string', 'max:20'],
+                    'lien_reference' => ['nullable', 'string', 'max:255'],
+                    'province' => ['nullable', 'string', 'max:255'],
+                    'ville' => ['nullable', 'string', 'max:255'],
+                    'commune' => ['nullable', 'string', 'max:255'],
+                    'quartier' => ['nullable', 'string', 'max:255'],
+                ];
+                break;
+            case 5:
+                $rules = [
+                    'photo_profil' => ['nullable', 'image', 'max:4048'],
+                    'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
+                    'date_adhesion' => ['nullable', 'date'],
+                    'nationalite' => ['nullable', 'string', 'max:255'],
+                    'niveau_etude' => ['nullable', 'string', 'max:255'],
+                    'remarque' => ['nullable', 'string'],
+                ];
+                break;
+        }
+
+        $this->validate($rules);
+    }
+
+
+    public function submitForm()
     {
         $validator = Validator::make([
             'name' => $this->name,
@@ -185,7 +276,7 @@ class RegisterMember extends Component
 
         if ($validator->fails()) {
             $this->setErrorBag($validator->errors());
-            notyf()->error('Veuillez corriger les erreurs dans le formulaire.');
+            notyf()->error($validator->errors().'Veuillez corriger les erreurs dans le formulaire.');
             return;
         }
 
@@ -388,7 +479,6 @@ class RegisterMember extends Component
             notyf()->error('Une erreur est survenue lors de la mise à jour.');
         }
     }
-
 
     private function generateUniqueAccountCode()
     {

@@ -49,6 +49,7 @@ class FundTransferComponent extends Component
 
                 if ($mainCash->balance < $this->amount) {
                     notyf()->error('Solde insuffisant dans la caisse centrale');
+                    return;
                 }
 
                 // Débit caisse centrale
@@ -104,10 +105,11 @@ class FundTransferComponent extends Component
                         'description' => $this->description ?? 'Virement reçu depuis caisse centrale',
                     ]);
                 }
-            });
 
-            $this->reset(['amount', 'description', 'recipient_id']);
-            notyf()->success('Virement effectué avec succès.');
+                $this->reset(['amount', 'description', 'recipient_id']);
+                notyf()->success('Virement effectué avec succès.');
+
+            });
 
         } catch (\Throwable $e) {
             // Journaliser l’erreur pour le debug si nécessaire

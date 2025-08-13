@@ -170,11 +170,17 @@
                         <div data-i18n="Analytics">Rapport Transactions</div>
                     </a>
                 </li>
+                <li class="menu-item">
+                    <a wire:navigate href="{{ route('rapports.depot_retrait') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-bar-chart"></i> <!-- Graphique pour rapports -->
+                        <div data-i18n="Analytics">Rapport Dépôt-Retrait</div>
+                    </a>
+                </li>
                 
             </ul>
         </li>
         @endcan
-        
+
         @can('afficher-role')
         <li class="menu-item @if (request()->routeIs('role.management','user.management')) 
             active @endif" wire:ignore.self>
@@ -204,5 +210,7 @@
             </ul>
         </li>
         @endcan
+
     </ul>
 </aside>
+

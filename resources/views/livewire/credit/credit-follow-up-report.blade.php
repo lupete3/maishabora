@@ -114,9 +114,17 @@
                             <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
                             <td>{{ number_format($credit->amount, 2) }} {{ $credit->currency }}</td>
                             <td>
+                                @if ($credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount') > 0)
                                 {{ number_format(
                                 $credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount'), 2
                                 ) }} {{ $credit->currency }}
+                                @else
+                                +{{ number_format(
+                                $credit->repayments->where('is_paid', true)->sum('paid_amount') - $credit->amount, 2
+                                ) }} {{ $credit->currency }}
+                                    
+                                @endif
+                                
                             </td>
                             <td>
                                 {{ number_format(

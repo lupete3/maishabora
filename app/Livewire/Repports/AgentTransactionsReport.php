@@ -30,9 +30,7 @@ class AgentTransactionsReport extends Component
 
     public function getTransactionsProperty()
     {
-        $query = Transaction::query()
-            ->with(['user', 'agentAccount'])
-            ->whereNotNull('agent_account_id');
+        $query = Transaction::query();
 
         if ($this->agentId) {
             $query->where('user_id', $this->agentId);

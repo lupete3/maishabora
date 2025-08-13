@@ -2,7 +2,7 @@
 <div class="row g-4 mb-4">
     <!-- Statistique USD -->
     <div class="col-md-6 col-lg-6">
-        <div class="card bg-dark text-white h-100">
+        <div class="card bg-success text-white h-100">
             <div class="card-body">
                 <h5 class="card-title">Carnets : USD</h5>
                 <ul class="list-group list-group-flush text-white bg-dark">
@@ -19,7 +19,7 @@
                         <span class="badge bg-secondary">{{ $closedCardsUsd }}</span>
                     </li>
                     <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-                        Mises totales
+                        Tot
                         <span class="badge bg-warning text-dark">{{ number_format($totalContributionsUsd, 2) }} USD</span>
                     </li>
                 </ul>
@@ -29,7 +29,7 @@
 
     <!-- Statistique CDF -->
     <div class="col-md-6 col-lg-6">
-        <div class="card bg-dark text-white h-100">
+        <div class="card bg-warning text-white h-100">
             <div class="card-body">
                 <h5 class="card-title ">Carnets : CDF</h5>
                 <ul class="list-group list-group-flush text-white bg-dark">
@@ -46,7 +46,7 @@
                         <span class="badge bg-secondary">{{ $closedCardsCdf }}</span>
                     </li>
                     <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center">
-                        Mises totales
+                        Tot
                         <span class="badge bg-warning text-dark">{{ number_format($totalContributionsCdf, 2) }} CDF</span>
                     </li>
                 </ul>

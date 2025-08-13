@@ -275,7 +275,7 @@ class CheckOverdueRepayments extends Command
                         'user_id' => $member->id,
                         'type' => 'penalite_de_credit',
                         'currency' => $credit->currency,
-                        'amount' => $totalDue,
+                        'amount' => number_format($penaltyAmount, 2),
                         'balance_after' => $account->balance,
                         'description' => "Pénalité appliquée sur l'échéance du {$repayment->due_date}",
                     ]);

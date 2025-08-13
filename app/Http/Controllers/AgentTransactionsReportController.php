@@ -10,4 +10,11 @@ class AgentTransactionsReportController extends Controller
     {
         return view('rapports.transactions');
     }
+
+    public function rapportDepotRetrait()
+    {
+        return view('rapports.depot_retrait');
+    }
+
+    
 }
