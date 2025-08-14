@@ -14,12 +14,21 @@ class AgentDashboardController extends Controller
         return view('agent-dashboard');
     }
 
-    public function exportTransactions($userId, $filter)
+    /**
+     * Export transactions for a specific user with date filter.
+     *
+     * @param int $userId
+     * @param string $filter
+     * @return \Illuminate\Http\Response
+     */
+    public function exportTransactions(Request $request, $userId, $filter = 'day')
     {
         $user = User::findOrFail($userId);
         $now = now();
 
         $query = Transaction::where('user_id', $userId);
+
+        $query = $this->applyDateFilter($query, $filter);   
 
         switch ($filter) {
             case 'day':
@@ -52,7 +61,19 @@ class AgentDashboardController extends Controller
             'totalByCurrency',
             'transactionCount'
         ));
-
         return $pdf->download("transactions_{$user->id}_{$filter}.pdf");
+    }
+
+    protected function applyDateFilter($query, $filter)
+    {
+        $now = now();
+
+        return match ($filter) {
+            'day' => $query->whereDate('created_at', $now->toDateString()),
+            'month' => $query->whereMonth('created_at', $now->month)
+                        ->whereYear('created_at', $now->year),
+            'year' => $query->whereYear('created_at', $now->year),
+            default => $query,
+        };
     }
 }
