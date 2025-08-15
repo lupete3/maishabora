@@ -119,6 +119,17 @@ class GrantCredit extends Component
             $account->balance -= $creditFrisFix;
             $account->save();
 
+            // Frais dossier
+            Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $member->id,
+                'type' => 'commission_credit',
+                'currency' => $this->currency,
+                'amount' => $creditFrisFix,
+                'balance_after' => $account->balance,
+                'description' => "Frais de commission du dossier du credit. Montant: {$creditFrisFix} {$this->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
             $mainCash->balance -= $this->amount;
             $account->balance += $this->amount;
 
@@ -157,6 +168,8 @@ class GrantCredit extends Component
                 'balance_after' => $mainCash->balance,
                 'description'    => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
+
+            
 
             // 👉 Échéancier à intérêt CONSTANT
             $interestPart = round($this->amount * ($this->interest_rate / 100), 2);
