@@ -106,8 +106,7 @@ class TransactionReport extends Component
         $query = $this->getFilteredQuery();
 
         $deposits = (clone $query)->where(function ($q) {
-            $q->where('type', 'dépôt')->orWhere('type', 'mise_quotidienne')
-            ->orWhere('type', 'ocroit_de_credit')->orWhere('type', 'Virement_caisse_entrant');
+            $q->where('type', 'dépôt')->orWhere('type', 'mise_quotidienne');
         })->sum('amount');
 
         $withdrawals = (clone $query)->where(function ($q) {
