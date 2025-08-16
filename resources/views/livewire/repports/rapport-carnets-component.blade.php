@@ -27,12 +27,20 @@
             </select>
         </div>
 
-        <div class="col-md-3">
-            <input type="number" min="0" max="31" wire:model.lazy="minDaysFilled" class="form-control" placeholder="Min jours remplis (1-31)">
+        <div class="col-md-2">
+            <select wire:model.lazy="status" class="form-control">
+                <option value="">Touts les status</option>
+                <option value="open">Actif</option>
+                <option value="closed">Inactif</option>
+            </select>
         </div>
 
-        <div class="col-md-3">
-            <input type="number" min="0" max="31" wire:model.lazy="exactDaysFilled" class="form-control" placeholder="Jours remplis exacts (1-31)">
+        <div class="col-md-2">
+            <input type="number" min="0" max="31" wire:model.lazy="minDaysFilled" class="form-control" placeholder="Min jr remplis">
+        </div>
+
+        <div class="col-md-2">
+            <input type="number" min="0" max="31" wire:model.lazy="exactDaysFilled" class="form-control" placeholder="Jours remplis exacts">
         </div>
     </div>
 
