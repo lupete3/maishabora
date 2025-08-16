@@ -85,8 +85,14 @@
                     </tr>
                 @endforeach
             </tbody>
+        </table>
+    </div>
 
-            {{-- Modal de rejet --}}
+    <div class="card-footer">
+        {{ $closings->links() }}
+    </div>
+
+    {{-- Modal de rejet --}}
             <!-- Modal Bootstrap -->
         <div wire:ignore.self class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-lg">
@@ -130,7 +136,4 @@
                 </div>
             </div>
         </div>
-
-        </table>
-    </div>
 </div>

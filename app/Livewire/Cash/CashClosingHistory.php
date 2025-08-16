@@ -3,31 +3,21 @@
 namespace App\Livewire\Cash;
 
 use App\Models\Cloture;
+use Livewire\Component;
+use Livewire\WithPagination;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
-use Livewire\Component;
 
 class CashClosingHistory extends Component
 {
-    public $closings;
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
+    
     public $selectedClosing;
     public $rejection_reason = '';
     public $showRejetModalFlag = false, $clotureId, $motif_rejet;
     public $editBilletageUSD = [], $editBilletageCDF = [], $editNote;
 
-    public function mount()
-    {
-        $this->fetchClosings();
-    }
-
-    public function fetchClosings()
-    {
-        if (Auth::user()->role === 'admin') {
-            $this->closings = Cloture::with('user')->latest()->get();
-        } else {
-            $this->closings = Cloture::with('user')->where('user_id', Auth::user()->id)->latest()->get();
-        }
-    }
 
     public function validateClosing($id)
     {
@@ -87,7 +77,15 @@ class CashClosingHistory extends Component
 
     public function render()
     {
-        return view('livewire.cash.cash-closing-history');
+        if (Auth::user()->role === 'admin') {
+            $closings = Cloture::with('user')->latest()->paginate(10);
+        } else {
+            $closings = Cloture::with('user')->where('user_id', Auth::user()->id)->latest()->paginate(10);
+        }
+
+        return view('livewire.cash.cash-closing-history', [
+            'closings' => $closings,
+        ]);
     }
 
     public function exportPdf()
