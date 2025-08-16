@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Members;
 
+use App\Helpers\UserLogHelper;
 use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\DailyContribution;
@@ -11,6 +12,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Transaction;
+use App\Models\UserLog;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -106,6 +108,11 @@ class MemberDetails extends Component
                 'balance_after'  => $account->balance,
                 'description'    => $this->description ?: "DEPOT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
             ]);
+
+            UserLogHelper::log_user_activity(
+                action: 'dépôt',
+                description: "Dépôt de {$this->amount} {$this->currency} sur le compte de {$user->name} {$user->postnom} ({$user->code})",
+            );
 
             // Finalisation de la transaction
             DB::commit();
@@ -223,6 +230,11 @@ class MemberDetails extends Component
                                 pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name,
             ]);
 
+            UserLogHelper::log_user_activity(
+                action: 'mise_quotidienne',
+                description: "Paiement de {$contributionsToPay->count()} mises pour la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code})",
+            );
+
             DB::commit();
 
             $this->reset(['contribution_date', 'amount']);
@@ -337,6 +349,11 @@ class MemberDetails extends Component
 
             }   
 
+            UserLogHelper::log_user_activity(
+                action: 'retrait',
+                description: "Retrait de {$this->amount} {$this->currency} du compte de {$user->name} {$user->postnom} ({$user->code}), retenu de {$this->a_retenir} {$this->currency}",
+            );
+
             DB::commit();
 
             $this->reset(['amount', 'description']);
@@ -445,6 +462,11 @@ class MemberDetails extends Component
                 'description' => $this->description ?: "Entree Retenu de la carte #{$card->id} du compte " . $card->member->code . " Client: " . $card->member->name . " " . $card->member->postnom . " par " . Auth::user()->name,
 
             ]);
+
+            UserLogHelper::log_user_activity(
+                action: 'retrait_carte_adhesion',
+                description: "Retrait de la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code}), montant total {$total} {$card->currency}, retenu de {$aretenir} {$card->currency}",
+            );
 
             DB::commit();
 

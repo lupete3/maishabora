@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Account;
@@ -158,6 +159,11 @@ class PurchaseMembershipCard extends Component
                 'balance_after' => $membershipCardAccount->balance,
                 'description' => "Vente de carte à {$member->name} - Montant: {$this->price} CDF",
             ]);
+
+            UserLogHelper::log_user_activity(
+                action: 'achat_carte_adhesion',
+                description: "Achat de la carte #{$card->id} pour le membre {$member->name} {$member->postnom} ({$member->code}), montant total {$this->price} {$this->currency}"
+            );
 
             DB::commit();
 

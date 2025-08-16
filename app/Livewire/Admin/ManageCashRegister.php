@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\MainCashRegister;
 use App\Models\Transaction;
@@ -72,6 +73,17 @@ class ManageCashRegister extends Component
             'balance_after' => $cashRegister->balance,
             'description' => $this->description,
         ]);
+
+        UserLogHelper::log_user_activity(
+            action: $this->type === 'in' ? 'ajout_fonds_caisse' : 'retrait_fonds_caisse',
+            description: sprintf(
+                '%s de %s %s dans la caisse%s',
+                $this->type === 'in' ? __('Ajout') : __('Retrait'),
+                number_format($this->amount, 2),
+                $this->currency,
+                !empty($this->description) ? '. ' . __('Description') . ': ' . $this->description : ''
+            )
+        );
 
         notyf()->success(message: __('Opération effectuée avec succès !'));
 

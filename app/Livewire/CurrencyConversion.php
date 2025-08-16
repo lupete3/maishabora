@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Helpers\UserLogHelper;
 use App\Models\ExchangeRate;
 use Livewire\Component;
 use App\Models\MainCashRegister;
@@ -93,6 +94,11 @@ class CurrencyConversion extends Component
                 'balance_after' => $toRegister->balance,
                 'description' => "Conversion depuis {$this->from_currency} vers {$this->to_currency} : reçu {$convertedAmount} {$this->to_currency}",
             ]);
+
+            UserLogHelper::log_user_activity(
+                action: 'conversion',
+                description: "Conversion de {$this->amount} {$this->from_currency} vers {$convertedAmount} {$this->to_currency} par {$admin->name} ({$admin->id})"
+            );
 
             notyf()->success('Conversion effectuée avec succès.');
             $this->reset(['amount']);

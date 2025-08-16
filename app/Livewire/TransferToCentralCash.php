@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 // app/Http/Livewire/TransferToCentralCash.php
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\AgentAccount;
 use App\Models\MainCashRegister;
@@ -74,7 +75,12 @@ class TransferToCentralCash extends Component
             'amount' => $this->amount,
             'balance_after' => $agentAccount->balance,
             'description' => "Virement de ".$this->amount." ".$this->currency." du compte de ".Auth::user()->name." vers la caisse centrale. #REF".$transfer->id,
-            ]);
+        ]);
+
+        UserLogHelper::log_user_activity(
+            action: 'virement_caisse_centrale',
+            description: "Virement de {$this->amount} {$this->currency} du compte de ".Auth::user()->name." vers la caisse centrale. #REF{$transfer->id}"
+        );
 
         notyf()->success( 'Virement effectué avec succès !');
 

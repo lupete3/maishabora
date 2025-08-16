@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Credit;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Account;
@@ -169,7 +170,10 @@ class GrantCredit extends Component
                 'description'    => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
-            
+            UserLogHelper::log_user_activity(
+                action: 'octroi_de_credit',
+                description: "Crédit octroyé à {$member->name} {$member->postnom} ({$member->code}), montant total {$this->amount} {$this->currency}"
+            );
 
             // 👉 Échéancier à intérêt CONSTANT
             $interestPart = round($this->amount * ($this->interest_rate / 100), 2);

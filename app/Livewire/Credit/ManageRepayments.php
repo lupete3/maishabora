@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Credit;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Credit;
@@ -147,6 +148,11 @@ class ManageRepayments extends Component
                     'balance_after' => $account->balance,
                     'description' => "Remboursement manuel de l'échéance #{$repayment->id} pour le crédit #{$credit->id}",
                 ]);
+
+                UserLogHelper::log_user_activity(
+                    action: 'remboursement_credit',
+                    description: "Remboursement manuel de l'échéance #{$repayment->id} pour le crédit #{$credit->id} du membre {$member->code} {$member->name} {$member->postnom}, montant {$amountToPay} {$credit->currency}"
+                );
 
                 // Enregistrement de la transaction agent (crédit)
                 Transaction::create([

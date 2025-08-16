@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\UserLogHelper;
 use App\Models\ExchangeRate;
 use Livewire\Component;
 use Carbon\Carbon;
@@ -40,6 +41,11 @@ class ExchangeRateManager extends Component
             'rate' => $this->rate,
             'applied_at' => $this->applied_at ?? now(),
         ]);
+
+        UserLogHelper::log_user_activity(
+            action: 'ajout_taux_de_change',
+            description: "Ajout du taux de change de {$this->from_currency} vers {$this->to_currency} : {$this->rate} à partir de {$this->applied_at}"
+        );
 
         notyf()->success( 'Taux ajouté avec succès.');
 

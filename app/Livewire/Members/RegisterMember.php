@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Members;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Account;
@@ -305,6 +306,11 @@ class RegisterMember extends Component
             ]);
         }
 
+        UserLogHelper::log_user_activity(
+            action: 'enregistrement_membre',
+            description: "Enregistrement du membre {$user->name} {$user->postnom} ({$user->code})"
+        );
+
         $this->reset([
             'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
             'telephone', 'adresse_physique', 'province', 'ville', 'commune', 'quartier',
@@ -466,6 +472,11 @@ class RegisterMember extends Component
             }
 
             User::findOrFail($this->userId)->update($validated);
+
+            UserLogHelper::log_user_activity(
+                action: 'mise_a_jour_membre',
+                description: "Mise à jour du membre {$this->name} {$this->postnom} ({$this->userId})"
+            );
 
             $this->dispatch('closeModal', name: 'modalMembre');
             $this->dispatch('$refresh');

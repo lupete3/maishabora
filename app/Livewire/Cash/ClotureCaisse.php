@@ -2,9 +2,11 @@
 
 namespace App\Livewire\Cash;
 
+use App\Helpers\UserLogHelper;
 use App\Models\Cloture;
 use App\Models\Transaction;
 use App\Models\Billetage;
+use App\Models\UserLog;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
@@ -137,6 +139,11 @@ class ClotureCaisse extends Component
                 ]);
             }
         }
+
+        UserLogHelper::log_user_activity(
+            action: 'cloture_caisse',
+            description: "Clôture de caisse pour {$this->date} par l'utilisateur ID {$userId}. Solde logique: {$this->logical_usd} USD, {$this->logical_cdf} CDF. Solde physique: {$this->physical_usd} USD, {$this->physical_cdf} CDF. Écart: {$this->gap_usd} USD, {$this->gap_cdf} CDF."
+        );
 
         notyf()->success("Clôture enregistrée avec succès !");
     }

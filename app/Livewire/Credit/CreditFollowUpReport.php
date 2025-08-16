@@ -63,7 +63,6 @@ class CreditFollowUpReport extends Component
         return view('livewire.credit.credit-follow-up-report', [
             'credits' => $credits,
             'totals' => $totals,
-
         ]);
     }
 
