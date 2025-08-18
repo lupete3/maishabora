@@ -28,6 +28,7 @@ use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
 use App\Http\Controllers\RepaymentScheduleController;
+use App\Http\Controllers\RepaymentReportController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
@@ -97,6 +98,7 @@ Route::middleware(['auth','auth.session','permission:afficher-credit'])->group(f
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class,'index'])->name('report.credit.overview');
     Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
+    Route::get('/rapport-remboursements', [RepaymentReportController::class, 'index'])->name('report.repayments');
 });
 
 Route::middleware(['auth','auth.session','permission:afficher-simulation-credit'])->group(function () {

@@ -171,6 +171,12 @@
                     </a>
                 </li>
                 <li class="menu-item">
+                    <a wire:navigate href="{{ route('report.repayments') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-bar-chart"></i> <!-- Graphique pour rapports -->
+                        <div data-i18n="Analytics">Rapport Remboursement</div>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a wire:navigate href="{{ route('rapports.depot_retrait') }}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-bar-chart"></i> <!-- Graphique pour rapports -->
                         <div data-i18n="Analytics">Rapport Dépôt-Retrait</div>
