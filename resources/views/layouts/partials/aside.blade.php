@@ -145,6 +145,14 @@
                         <div data-i18n="Analytics">Rapports Clients</div>
                     </a>
                 </li>
+                
+                <li class="menu-item @if (request()->routeIs('member.accounts')) active @endif">
+                    <a wire:navigate href="{{ route('member.accounts') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-user"></i> <!-- Utilisateurs -->
+                        <div data-i18n="Analytics">Comptes Clients</div>
+                    </a>
+                </li>
+                
                 <li class="menu-item @if (request()->routeIs('rapports.carnets')) active @endif">
                     <a wire:navigate href="{{ route('rapports.carnets') }}" class="menu-link">
                         <i class="menu-icon tf-icons bx bx-book"></i> <!-- Livre/carnet -->

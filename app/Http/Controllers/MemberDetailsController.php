@@ -11,4 +11,9 @@ class MemberDetailsController extends Controller
         $id = $request->id;
         return view("member-details", compact("id"));
     }
+
+    public function comptes()
+    {
+        return view("rapports.comptes-clients");
+    }
 }

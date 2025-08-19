@@ -99,6 +99,8 @@ Route::middleware(['auth','auth.session','permission:afficher-credit'])->group(f
     Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
     Route::get('/rapport-remboursements', [RepaymentReportController::class, 'index'])->name('report.repayments');
+    Route::get('/comptes-membres', [MemberDetailsController::class, 'comptes'])->name('member.accounts');
+
 });
 
 Route::middleware(['auth','auth.session','permission:afficher-simulation-credit'])->group(function () {
