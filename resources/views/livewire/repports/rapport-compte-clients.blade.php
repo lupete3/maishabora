@@ -1,5 +1,5 @@
 <div>
-
+    <h4 class="card-title">Soldes des Membres</h4>
     <div class="row mb-4">
         <div class="col-md-6">
             <div class="card text-center bg-light shadow-sm">
@@ -21,7 +21,12 @@
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h3 class="card-title">Soldes des Membres</h3>
+            <div class="row mb-3">
+                <div class="col-md-12">
+                    <input type="text" wire:model.live="search" id="search" class="form-control"
+                        placeholder="Rechercher un membre (nom, code, prénom)...">
+                </div>
+            </div>
             <div class="mb-3">
                 <button wire:click="exportPdf" class="btn btn-danger" wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
@@ -43,7 +48,8 @@
                     @foreach ($balances as $balance)
                         <tr>
                             <td>{{ $balance['member']->code }}</td>
-                            <td>{{ $balance['member']->name.' '.$balance['member']->postnom.' '.$balance['member']->prenom }}</td>
+                            <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
+                            </td>
                             <td>{{ number_format($balance['usd_balance'], 2) }}</td>
                             <td>{{ number_format($balance['cdf_balance'], 2) }}</td>
                         </tr>
@@ -59,4 +65,3 @@
     </div>
 
 </div>
-

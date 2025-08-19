@@ -13,6 +13,14 @@ class RapportCompteClients extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $perPage = 10;
+    public $search = '';
+    public $currencyFilter = 'all'; // all, USD, CDF
+    public $sortByBalance = false;  // true = classer par solde le plus élevé
+
+    public function updatingSearch()
+    {
+        $this->resetPage();
+    }
 
     public function exportPdf()
     {
@@ -56,8 +64,19 @@ class RapportCompteClients extends Component
 
     public function render()
     {
-        $members = User::with(['accounts'])->where('role', 'membre')->paginate($this->perPage);
+        // 🔍 Base query
+        $query = User::with('accounts')
+            ->where('role', 'membre')
+            ->where(function ($q) {
+                $q->where('name', 'like', "%{$this->search}%")
+                  ->orWhere('postnom', 'like', "%{$this->search}%")
+                  ->orWhere('prenom', 'like', "%{$this->search}%")
+                  ->orWhere('code', 'like', "%{$this->search}%");
+            });
 
+        $members = $query->paginate($this->perPage);
+
+        // Soldes par membre (applique le filtre devise + tri solde)
         $balances = $members->map(function ($member) {
             $usd = 0;
             $cdf = 0;
@@ -77,10 +96,11 @@ class RapportCompteClients extends Component
             ];
         });
 
+        // Totaux globaux
         $globalUsd = 0;
         $globalCdf = 0;
 
-        User::with(['accounts'])->chunk(100, function ($chunk) use (&$globalUsd, &$globalCdf) {
+        User::with('accounts')->chunk(100, function ($chunk) use (&$globalUsd, &$globalCdf) {
             foreach ($chunk as $member) {
                 foreach ($member->accounts as $account) {
                     if ($account->currency === 'USD') {
@@ -99,4 +119,5 @@ class RapportCompteClients extends Component
             'globalCdf' => $globalCdf,
         ]);
     }
+
 }
