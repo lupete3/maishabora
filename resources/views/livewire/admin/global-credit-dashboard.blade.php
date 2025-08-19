@@ -116,8 +116,8 @@
                             @foreach($overdueCredits as $r)
                                 <li class="list-group-item d-flex justify-content-between align-items-center">
                                     <div>
-                                        <strong>{{ $r->credit->user->name }}</strong><br>
-                                        <small class="text-muted">Devise : {{ $r->credit->currency }}</small>
+                                        <strong>{{ $r->credit->user->code. ' '. $r->credit->user->name }}</strong><br>
+                                        <small class="text-muted">Montant : {{ $r->total_due.' '.$r->credit->currency }}</small>
                                     </div>
                                     <span class="badge bg-danger">
                                         {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
