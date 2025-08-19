@@ -103,7 +103,7 @@
                                     @endif
                                 </td>
                                 <td>{{ number_format($repayment->expected_amount, 2) }}</td>
-                                <td>{{ number_format($repayment->penality, 2) }}</td>
+                                <td>{{ number_format($repayment->penalty, 2) }}</td>
                                 <td>
                                     @if ($repayment->credit)
                                         <span class="badge bg-label-info">{{ $repayment->credit->currency }}</span>

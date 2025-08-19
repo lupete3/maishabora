@@ -78,7 +78,7 @@ class RepaymentReport extends Component
             ->map(function ($items) {
                 return [
                     'total_paid' => $items->sum('expected_amount'),
-                    'total_penality' => $items->sum('penality'),
+                    'total_penality' => $items->sum('penalty'),
                 ];
             });
 
