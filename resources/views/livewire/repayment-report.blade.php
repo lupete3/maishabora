@@ -87,7 +87,7 @@
                     <tbody>
                         @forelse ($data as $repayment)
                             <tr>
-                                <td>{{ \Carbon\Carbon::parse($repayment->paid_at)->format('d/m/Y') }}</td>
+                                <td>{{ \Carbon\Carbon::parse($repayment->paid_date)->format('d/m/Y') }}</td>
                                 <td>
                                     @if ($repayment->credit && $repayment->credit->user)
                                         {{ $repayment->credit->user->code }}
