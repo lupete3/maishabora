@@ -77,7 +77,7 @@ class RepaymentReport extends Component
         $totals = $data->groupBy(fn($r) => $r->credit->currency ?? 'N/A')
             ->map(function ($items) {
                 return [
-                    'total_paid' => $items->sum('expected_amount'),
+                    'total_paid' => $items->sum('total_due'),
                     'total_penality' => $items->sum('penalty'),
                 ];
             });
@@ -90,11 +90,13 @@ class RepaymentReport extends Component
 
     public function exportPdf()
     {
-        $data = $this->generateReport();
+        $report = $this->generateReport();
+
         $pdf = Pdf::loadView('pdf.repayments-report', [
-            'data' => $data,
+            'data' => $report['data'],   // ✅ juste la collection de remboursements
             'reportType' => $this->reportType,
-            'currency' => $this->currency
+            'currency' => $this->currency,
+            'totals' => $report['totals'], // ✅ totaux séparés
         ])->setPaper('A4', 'portrait');
 
         return response()->streamDownload(function () use ($pdf) {

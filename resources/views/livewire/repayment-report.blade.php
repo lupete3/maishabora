@@ -102,7 +102,7 @@
                                         <span class="badge bg-label-secondary">N/A</span>
                                     @endif
                                 </td>
-                                <td>{{ number_format($repayment->expected_amount, 2) }}</td>
+                                <td>{{ number_format($repayment->total_due, 2) }}</td>
                                 <td>{{ number_format($repayment->penalty, 2) }}</td>
                                 <td>
                                     @if ($repayment->credit)

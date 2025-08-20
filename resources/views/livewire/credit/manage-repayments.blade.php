@@ -89,7 +89,7 @@
                                     </td>
                                     <td>
                                         @if(!$r->is_paid)
-                                            <button wire:click="payRepayment({{ $r->id }})" class="btn btn-sm btn-success">
+                                            <button wire:click="confirmRepayment({{ $r->id }})" class="btn btn-sm btn-success">
                                                 <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                                                 Payer
                                             </button>
@@ -107,4 +107,32 @@
             @endif
         </div>
     </div>
+
+
+
+
+    <!-- Modal de confirmation -->
+<div wire:ignore.self class="modal fade" id="confirm-repayment" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title">Confirmation remboursement</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
+      </div>
+      <div class="modal-footer">
+        <button wire:click="payRepayment(false)" class="btn btn-warning" data-bs-dismiss="modal">
+            Non, solder sans intérêts
+        </button>
+        <button wire:click="payRepayment(true)" class="btn btn-success" data-bs-dismiss="modal">
+            Oui, appliquer les intérêts
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </div>

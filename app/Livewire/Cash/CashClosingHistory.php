@@ -27,7 +27,6 @@ class CashClosingHistory extends Component
             'validated_by' => Auth::user()->id,
             'validated_at' => now(),
         ]);
-        $this->fetchClosings();
         notyf()->success('Clôture validée');
 
     }
@@ -42,7 +41,6 @@ class CashClosingHistory extends Component
             'validated_at' => now(),
         ]);
         $this->rejection_reason = '';
-        $this->fetchClosings();
         notyf()->success('Clôture rejetée');
 
     }
@@ -77,7 +75,7 @@ class CashClosingHistory extends Component
 
     public function render()
     {
-        if (Auth::user()->role === 'admin') {
+        if (Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier') {
             $closings = Cloture::with('user')->latest()->paginate(10);
         } else {
             $closings = Cloture::with('user')->where('user_id', Auth::user()->id)->latest()->paginate(10);

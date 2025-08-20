@@ -398,6 +398,12 @@ class MemberDetails extends Component
                 ->lockForUpdate()
                 ->firstOrFail();
 
+            if ($account->balance < $total) {
+                DB::rollBack();
+                notyf()->error('Le solde du compte est insuffisant.');
+                return;
+            }
+
             // Récupération de la caisse de l'agent
             $agentAccount = AgentAccount::firstOrCreate(
                 ['user_id' => Auth::id(), 'currency' => $card->currency],
