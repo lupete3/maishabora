@@ -103,7 +103,7 @@
                         <tbody>
                             @forelse ($cards as $index => $card)
                                 <tr>
-                                    <td>{{ $index+1 }}</td>
+                                    <td>{{ $card->code }}</td>
                                     <td>{{ optional($card->member)->code ?? 'N/A' }} {{ optional($card->member)->name ?? 'N/A' }}
                                         {{ optional($card->member)->postnom ?? 'N/A' }} {{ optional($card->member)->prenom ?? 'N/A' }}
                                     </td>
