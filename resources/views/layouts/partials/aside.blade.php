@@ -42,7 +42,9 @@
                     <div data-i18n="Analytics">Clôture Caisse Agent</div>
                 </a>
             </li>
-            
+        @endcan
+
+        @can('effectuer-virement')
             <li class="menu-item @if (request()->routeIs('transfert.ajouter')) active @endif">
                 <a wire:navigate href="{{ route('transfert.ajouter') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-transfer"></i> <!-- Icône spécifique pour transfert -->

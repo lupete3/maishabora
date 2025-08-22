@@ -122,8 +122,12 @@ Route::middleware(['auth','auth.session','permission:retrait-compte-membre'])->g
 Route::middleware(['auth','auth.session','permission:depot-compte-membre'])->group(function () {
     Route::get('/cloture-caisse', [ClotureController::class, 'index'])->name('agent.cloture');
     Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');
+});
+
+Route::middleware(['auth','auth.session','permission:effectuer-virement'])->group(function () {
     Route::get('/transfert-compte', [FundTransferController::class, 'index'])->name('transfert.ajouter');
 });
+
 
 Route::middleware(['auth','auth.session','permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
     Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');
