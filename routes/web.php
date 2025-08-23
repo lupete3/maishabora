@@ -7,6 +7,7 @@ use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\AgentTransactionsReportController;
 use App\Http\Controllers\ClientStatReportController;
 use App\Http\Controllers\ClotureController;
+use App\Http\Controllers\ComptabiliteController;
 use App\Http\Controllers\CreateSubscriptionController;
 use App\Http\Controllers\CreditFollowUpReportController;
 use App\Http\Controllers\CreditOverviewReportController;
@@ -128,6 +129,13 @@ Route::middleware(['auth','auth.session','permission:effectuer-virement'])->grou
     Route::get('/transfert-compte', [FundTransferController::class, 'index'])->name('transfert.ajouter');
 });
 
+Route::middleware(['auth','auth.session','permission:afficher-rapport-comptable'])->group(function () {
+    Route::get('/comptes-comptabilite', [ComptabiliteController::class, 'index'])->name('comptabilite.comptes');
+    Route::get('/type-journal', [ComptabiliteController::class, 'typeJournal'])->name('comptabilite.type_journal');
+    Route::get('/journals', [ComptabiliteController::class, 'journals'])->name('comptabilite.journals');
+    Route::get('/balances', [ComptabiliteController::class, 'balanceGenerale'])->name('comptabilite.balance');
+    Route::get('/resultats', [ComptabiliteController::class, 'resultats'])->name('comptabilite.resultats');
+});
 
 Route::middleware(['auth','auth.session','permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
     Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');

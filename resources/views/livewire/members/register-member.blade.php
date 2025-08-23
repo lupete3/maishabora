@@ -17,9 +17,11 @@
 
                         <div class="table-search-input">
                             <div class="input-group input-group-merge">
-                                <span class="input-group-text" id="basic-addon-search31"><i class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="search" class="form-control" 
-                                placeholder="Rechercher..." aria-label="Rechercher..." aria-describedby="basic-addon-search31">
+                                <span class="input-group-text" id="basic-addon-search31"><i
+                                        class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live="search" class="form-control"
+                                    placeholder="Rechercher..." aria-label="Rechercher..."
+                                    aria-describedby="basic-addon-search31">
                             </div>
                         </div>
                     </div>
@@ -34,7 +36,7 @@
                         </select>
                         @can('ajouter-client')
                             <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
-                                {{ __("Ajouter") }}
+                                {{ __('Ajouter') }}
                             </button>
                         @endcan
                     </div>
@@ -59,7 +61,7 @@
                             @forelse ($members as $member)
                                 <tr>
                                     <td>{{ $member->code }}</td>
-                                    <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
+                                    <td>{{ $member->name . ' ' . $member->postnom . ' ' . $member->prenom }}</td>
                                     <td>{{ $member->sexe }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>
@@ -72,13 +74,14 @@
                                     <td>
                                         <div class="d-flex align-items-center gap-1">
                                             @if ($member->status)
-                                            @canany(['depot-compte-membre', 'retrait-compte-membre'])
-                                                <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">
-                                                    Afficher
-                                                </a>
-                                            @endcanany
+                                                @canany(['afficher-compte-membre', 'depot-compte-membre',
+                                                    'retrait-compte-membre'])
+                                                    <a href="{{ route('member.details', $member->id) }}" wire:navigate
+                                                        class="btn btn-sm btn-primary">
+                                                        Afficher
+                                                    </a>
+                                                @endcanany
                                             @endif
-
                                             @can('modifier-client')
                                                 <button wire:click='edit({{ $member->id }})' class="btn btn-sm btn-info">
                                                     {{ __('Modifier') }}
@@ -123,9 +126,9 @@
 
                 </div>
                 @if ($members)
-                <div class="d-flex justify-content-center">
-                    {{ $members->links() }}
-                </div>
+                    <div class="d-flex justify-content-center">
+                        {{ $members->links() }}
+                    </div>
                 @endif
             </div>
 
