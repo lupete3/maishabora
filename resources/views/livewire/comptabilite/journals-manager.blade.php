@@ -13,7 +13,7 @@
     <div class="card-header">
         <div class="row">
             <div class="col-md-12 text-end mb-2">
-                @if ($currencies)
+                @if ($journals->count() > 0)
                     <button wire:click="export" class="btn btn-sm btn-success" wire:loading.attr="disabled">
                         <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                         <i class="bx bx-download"></i> Exporter PDF
