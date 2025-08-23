@@ -22,7 +22,7 @@ class AccountsManager extends Component
     protected $rules = [
         'code' => 'required|unique:comptes,code',
         'intitule' => 'required|string|max:255',
-        'type' => 'required|in:Actif,Passif',
+        'type' => 'required|in:Actif,Passif,Produit,Charge',
     ];
 
     public function updatingSearch()
@@ -74,7 +74,7 @@ class AccountsManager extends Component
             $this->validate([
                 'code' => 'required|unique:comptes,code,' . $this->accountId,
                 'intitule' => 'required|string|max:255',
-                'type' => 'required|in:Actif,Passif',
+                'type' => 'required|in:Actif,Passif,Produit,Charge',
             ]);
             $account = Compte::findOrFail($this->accountId);
             $account->update([

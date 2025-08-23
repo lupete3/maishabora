@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('code')->unique();
             $table->string('intitule');
-            $table->enum('type', ['Actif', 'Passif']);
+            $table->enum('type', ['Actif', 'Passif','Produit', 'Charge']);
             $table->timestamps();
         });
     }

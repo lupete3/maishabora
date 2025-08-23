@@ -98,6 +98,8 @@
                             <option value="">-- Choisir --</option>
                             <option value="Actif">Actif</option>
                             <option value="Passif">Passif</option>
+                            <option value="Produit">Produit</option>
+                            <option value="Charge">Charge</option>
                         </select>
                         @error('type')
                             <small class="text-danger">{{ $message }}</small>
