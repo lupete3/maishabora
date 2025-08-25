@@ -50,10 +50,10 @@ class PurchaseMembershipCard extends Component
     {
         $query = trim($this->search);
         if ($query !== '') {
-            $this->results = User::query()
+            $this->results = User::query()->where('role', 'membre')
                 ->where(function($q) use ($query) {
                     $q->where('role', 'membre')
-                    ->where('code', 'like', "%{$query}%")
+                      ->where('code', 'like', "%{$query}%")
                       ->orWhere('name', 'like', "%{$query}%")
                       ->orWhere('postnom', 'like', "%{$query}%")
                       ->orWhere('prenom', 'like', "%{$query}%")

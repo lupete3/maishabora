@@ -228,7 +228,7 @@ class GrantCredit extends Component
                 ['balance' => 0]
             );
 
-            $commissionCreditAccount->balance += $interestPart;
+            $commissionCreditAccount->balance += $creditFrisFix;
             $commissionCreditAccount->save();
 
             // Envoyer le montant du crédit au compte 2 du caissier pour attente du retrait
