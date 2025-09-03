@@ -94,6 +94,13 @@
                 <div class="card">
                     <div class="card-header">
                         <h5 class="card-title m-0 me-2">{{ __('Historique des opérations du compte du jour') }}</h5>
+                        <p>Nombre total de transactions : <strong>{{ $transactionCount }}</strong></p>
+                        @foreach($totalByCurrency as $currency => $total)
+                            <tr>
+                                <td>{{ $currency }}</td>
+                                <td><strong>{{ number_format($total, 2) }}</strong></td>
+                            </tr>
+                        @endforeach
                         <div class="row">
                             @forelse($transactions as $t)
                                 <div class="col-12 mb-6 mb-xl-0">
@@ -107,6 +114,8 @@
                                                             <h6 class="mb-1">{{ ucfirst($t->type) }}</h6>
                                                             <small>{{ $t->currency }} -
                                                                 {{ number_format($t->amount, 2) }}</small>
+                                                            <small>Solde Après : {{ $t->currency }} -
+                                                                {{ number_format($t->balance_after, 2) }}</small>
                                                             <div class="user-status">
                                                                 <span class="badge badge-dot bg-success"></span>
                                                                 <small>{{ $t->description }}</small>

@@ -15,6 +15,8 @@ class AgentDashboard extends Component
     public $user_id;
     public $isShowTransaction = false;
     public $transactions = [];
+    public $transactionCount;
+    public $totalByCurrency;
 
     public function mount()
     {
@@ -43,6 +45,15 @@ class AgentDashboard extends Component
         $query = $this->applyDateFilter($query, $filter);
 
         $this->transactions = $query->orderByDesc('created_at')->get();
+
+        $this->transactionCount = $query->count();
+
+        // Totaux par devise
+        $this->totalByCurrency = $query->get()
+            ->groupBy('currency')
+            ->map(function ($group) {
+            return $group->sum('amount');
+        });
     }
 
     public function placeholder()

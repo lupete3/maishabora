@@ -30,10 +30,6 @@
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/css/theme-default.css"
         class="template-customizer-theme-css" />
     <link rel="stylesheet" href="{{ asset('/') }}assets/css/demo.css" />
-    {{--
-    <link rel="stylesheet" href="{{ asset('/') }}assets/css/select2-bootstrap4.css" /> --}}
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Vendors CSS -->
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
@@ -55,8 +51,8 @@
 
     <!-- Scripts -->
     @livewireStyles
-    @vite(['resources/js/app.js'])
-    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+    {{-- @vite(['resources/js/app.js']) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
@@ -136,17 +132,10 @@
 
         });
     </script>
-    <script>
-        $(document).ready(function() {
-            $('.select2').select2();
-        });
 
-    </script>
     <script>
         window.addEventListener('sendConfirm', event => {
-
             Swal.fire({
-
                 // icon: event.detail.type,
                 title: event.detail.title,
                 html: event.detail.message,

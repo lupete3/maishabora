@@ -63,14 +63,14 @@
         @endcan
 
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs('report.credit.overview','report.credit.followup','credit.grant')) 
+            <li class="menu-item @if (request()->routeIs('report.credit.overview','report.credit.followup','credit.grant'))
                 active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-credit-card"></i>
                     <div data-i18n="Misc">Crédits</div>
                 </a>
                 <ul class="menu-sub">
-                    
+
                     @can('ajouter-credit', App\Models\User::class)
                         <li class="menu-item">
                             <a wire:navigate href="{{ route('credit.grant') }}" class="menu-link">
@@ -123,14 +123,14 @@
         @can('afficher-rapport-comptable', App\Models\User::class)
             <!-- Simulation de crédit -->
             <li class="menu-item @if (request()->routeIs('comptabilite.comptes','comptabilite.type_journal',
-                'comptabilite.journals','comptabilite.balance','comptabilite.resultats')) 
+                'comptabilite.journals','comptabilite.balance','comptabilite.resultats'))
                 active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône générale pour rapports -->
                     <div data-i18n="Misc">Comptabilité</div>
                 </a>
                 <ul class="menu-sub">
-                    
+
                     <li class="menu-item @if (request()->routeIs('comptabilite.comptes')) active @endif">
                         <a wire:navigate href="{{ route('comptabilite.comptes') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Icône de calculateur -->
@@ -150,28 +150,28 @@
                             <i class="menu-icon tf-icons bx bx-edit"></i> <!-- Icône de calculateur -->
                             <div data-i18n="Analytics">Ecritures Comptables</div>
                         </a>
-                    </li> 
+                    </li>
                     <!-- Simulation de crédit -->
                     <li class="menu-item @if (request()->routeIs('comptabilite.balance')) active @endif">
                         <a wire:navigate href="{{ route('comptabilite.balance') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
                             <div data-i18n="Analytics">Balance Générale</div>
                         </a>
-                    </li>     
+                    </li>
                     <!-- Simulation de crédit -->
                     <li class="menu-item @if (request()->routeIs('comptabilite.resultats')) active @endif">
                         <a wire:navigate href="{{ route('comptabilite.resultats') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-line-chart"></i> <!-- Icône de calculateur -->
                             <div data-i18n="Analytics">Résultat Général</div>
                         </a>
-                    </li>  
+                    </li>
                 </ul>
             </li>
         @endcan
 
         @can('afficher-rapport-credit')
             <li class="menu-item @if (request()->routeIs('rapports.clients','rapports.carnets','rapports.transactions',
-                'report.credit.overview','report.credit.followup','report.repayments','rapports.depot_retrait','member.accounts')) 
+                'report.credit.overview','report.credit.followup','report.repayments','rapports.depot_retrait','member.accounts'))
                 active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-file"></i> <!-- Icône générale pour rapports -->
@@ -184,21 +184,21 @@
                             <div data-i18n="Analytics">Rapports Clients</div>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item @if (request()->routeIs('member.accounts')) active @endif">
                         <a wire:navigate href="{{ route('member.accounts') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-id-card"></i> <!-- Utilisateurs -->
                             <div data-i18n="Analytics">Comptes Clients</div>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item @if (request()->routeIs('rapports.carnets')) active @endif">
                         <a wire:navigate href="{{ route('rapports.carnets') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-book-content"></i> <!-- Livre/carnet -->
                             <div data-i18n="Analytics">Rapports Carnets</div>
                         </a>
                     </li>
-                    
+
                     <li class="menu-item">
                         <a wire:navigate href="{{ route('report.credit.overview') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-time-five"></i> <!-- Horloge pour "en cours" -->
@@ -234,7 +234,7 @@
         @endcan
 
         @can('afficher-role')
-            <li class="menu-item @if (request()->routeIs('role.management','user.management')) 
+            <li class="menu-item @if (request()->routeIs('role.management','user.management'))
                 active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                 <i class="menu-icon tf-icons bx bx-group"></i>
