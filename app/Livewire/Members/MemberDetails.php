@@ -33,6 +33,7 @@ class MemberDetails extends Component
 
     public $card_id;
     public $cards = [];
+    public $allCards = [];
     public $selectedCard;
     public $contribution_date;
     public $amount = 0;
@@ -40,6 +41,8 @@ class MemberDetails extends Component
     public $operation_type;
 
     public $type;
+
+    public $cardDetail = [];
 
     public function mount($id)
     {
@@ -51,6 +54,10 @@ class MemberDetails extends Component
             ->where('is_active', true)
             ->with(['contributions'])
             ->get();
+
+        $this->allCards = MembershipCard::where('member_id', $this->memberId)
+            ->with(['contributions'])
+            ->latest()->get();
     }
 
     //Make Deposit to customer Account
@@ -304,11 +311,11 @@ class MemberDetails extends Component
                 $retenuMiseAccount->balance += $this->a_retenir;
                 $retenuMiseAccount->save();
             }
-            
+
 
             $account->save();
             $agentAccount->save();
-            
+
 
             // Création de la transaction
             $transaction = Transaction::create([
@@ -335,7 +342,7 @@ class MemberDetails extends Component
             if (
                 $this->a_retenir > 0
             ) {
-                
+
                 // Création de la transaction
                 $retenuMiseAccount = Transaction::create([
                     'account_id' => null,
@@ -347,7 +354,7 @@ class MemberDetails extends Component
                     'description' => $this->description ?: "Entree Retenu du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
                 ]);
 
-            }   
+            }
 
             UserLogHelper::log_user_activity(
                 action: 'retrait',
@@ -510,6 +517,18 @@ class MemberDetails extends Component
     public function openRetraitModal()
     {
         $this->dispatch('openModal', name: 'modalRetraitMembre');
+    }
+
+    public function openCardViewModal($cardId = null)
+    {
+        $this->cardDetail = MembershipCard::with(['contributions','member'])->find($cardId);
+
+        $this->dispatch('openModal', name: 'modalCardDetails');
+
+    }
+    public function closeCardViewModal()
+    {
+        $this->dispatch('closeModal', name: 'modalCardDetails');
     }
 
     public function placeholder()

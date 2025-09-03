@@ -3,174 +3,7 @@
 
     @include('livewire.admin.add-deposit-for-member')
     @include('livewire.admin.add-retrait-for-member')
-
-    {{-- <div class="row">
-        <!-- Infos Membre -->
-        <div class="col-md-8 mb-4">
-
-            <div class="card">
-                <div class="d-flex align-items-end row">
-                    <div class="col-sm-9">
-                        <div class="card-body">
-                            <h5 class="card-title text-primary">Client {{ $member->name.' '.$member->postnom.'
-                                '.$member->prenom }} 🎉</h5>
-                            <div class="mt-3 d-flex align-content-between gap-4">
-                                <p><strong>Code :</strong> {{ $member->code }}</p>
-                                <p><strong>Date d'inscription :</strong>
-                                    {{ \Carbon\Carbon::parse($member->created_at)->translatedFormat('d-m-Y') }}
-                                </p>
-                            </div>
-                            <div class="mt-3 d-flex align-content-between gap-4">
-
-                                <p><strong>Téléphone :</strong> {{ $member->telephone ?? '-' }}</p>
-                                <p><strong>Email :</strong> {{ $member->email }}</p>
-
-                            </div>
-
-                            <div class="mt-3 d-flex gap-2">
-                                <button wire:click='openDepositModal' class="btn btn-outline-success"><i
-                                        class="bx bx-download"></i> {{ __('Dépôt') }}</button>
-                                <button wire:click='openRetraitModal' class="btn btn-outline-danger"><i
-                                        class="bx bx-upload"></i> {{ __('Retrait') }}</button>
-
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-sm-3 text-center text-sm-left">
-                        <div class="card-body pb-0 px-0 px-md-4">
-                            <img src="../assets/img/illustrations/man-with-laptop-light.png" height="140"
-                                alt="View Badge User" data-app-dark-img="illustrations/man-with-laptop-dark.png"
-                                data-app-light-img="illustrations/man-with-laptop-light.png">
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Soldes en card -->
-        <div class="col-md-4 mb-4">
-
-            @foreach(['USD', 'CDF'] as $curr)
-            @php
-            $balance = number_format($member->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
-            $color = $curr === 'USD' ? 'info' : 'warning';
-            @endphp
-            <div class="row">
-                <div class="col-sm-12 mb-3">
-                    <div class="card border border-{{ $color }}">
-                        <div class="card-body text-center">
-                            <h6 class="card-title text-muted mb-1">{{ $curr }}</h6>
-                            @php
-                            $balance = (float) ($member->accounts->firstWhere('currency', $curr)?->balance ?? 0);
-                            @endphp
-                            <h4 class="fw-bold text-{{ $color }}">{{ number_format($balance, 2, '.', ' ')
-                                }}</h4>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            @endforeach
-
-        </div>
-    </div>
-
-
-    <div class="table-wrapper">
-        <div class="card has-actions has-filter">
-
-            <div class="card-header">
-                <div class="w-100 justify-content-between d-flex flex-wrap align-items-center gap-1">
-                    <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-1">
-                        <button class="btn btn-show-table-options" type="button">Rechercher</button>
-                        <div class="table-search-input">
-                            <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="d-flex align-items-center gap-1">
-                        <select wire:model.live="perPage" class="form-select form-select-sm">
-                            <option value="10">10</option>
-                            <option value="30">30</option>
-                            <option value="50">50</option>
-                            <option value="100">100</option>
-                            <option value="999999">Tous</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card-table">
-                <div class="table-responsive table-has-actions table-has-filter">
-                    <table
-                        class="table card-table table-vcenter table-striped table-hover dataTable no-footer dtr-inline collapsed">
-                        <thead>
-                            <tr>
-                                <th>Date</th>
-                                <th>Type</th>
-                                <th>Devise</th>
-                                <th>Montant</th>
-                                <th>Solde après</th>
-                                <th>Description</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody class="card-body ps ps--active-y" id="vertical-example">
-                            @forelse ($transactions as $transaction)
-                            <tr>
-                                <td>{{ $transaction->created_at->format('d/m/Y à H:i') }}</td>
-                                <td>
-                                    @if ($transaction->type === 'dépôt')
-                                    <span class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @elseif ($transaction->type === 'retrait')
-                                    <span class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @else
-                                    <span class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
-                                    @endif
-                                </td>
-                                <td>{{ $transaction->currency }}</td>
-                                <td>
-                                    @if($transaction->type === 'retrait') -@endif
-                                    {{ number_format($transaction->amount, 2) }}</td>
-                                <td>{{ number_format($transaction->balance_after, 2) }}</td>
-                                <td>{{ $transaction->description }}</td>
-                                <td>
-                                    <a href="{{ route('receipt.generate', ['id' => $transaction->id]) }}"
-                                        target="_blank" class="btn btn-sm btn-secondary"><i
-                                            class="bx bx-printer"></i>Imprimer</a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="7" class="text-center">
-                                    <div class="alert alert-danger" role="alert">
-                                        Aucune transaction trouvée.
-                                    </div>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <div class="card-footer d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
-                <div class="d-flex justify-content-between align-items-center gap-3">
-                    <div class="text-muted">
-                        Affichage de {{ $transactions->firstItem() }} à {{ $transactions->lastItem() }} sur
-                        <span class="badge bg-primary">{{ $transactions->total() }}</span> transactions
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-center">
-                    {{ $transactions->links() }}
-                </div>
-            </div>
-
-        </div>
-    </div> --}}
+    @include('livewire.admin.show-card-details') 
 
     <main class="flex-grow mx-auto  py-0">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -355,7 +188,6 @@
                             </a>
                         </div>
                     </div>
-
                     <div dir="ltr" class="relative overflow-hidden h-[400px] w-full rounded-md border"
                         style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
                         <style>
@@ -530,6 +362,51 @@
 
                         <div class="d-flex justify-content-center">
                             {{ $transactions->links() }}
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title m-0 me-2">Cartes de membre associées</h5>
+                    </div>
+                    <div class="card-body"></div>
+                        <div class="table-responsive">
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Mise</th>
+                                        <th>Total Déposé</th>
+                                        <th>Statut</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($allCards as $card)
+                                        <tr>
+                                            <td>{{ $card->code }}</td>
+                                            <td>{{ $card->subscription_amount }} {{ $card->currency }}</td>
+                                            <td>{{ $card->contributions->where('is_paid', '=', 1)->sum('amount') }} {{ $card->currency }}</td>
+                                            <td>
+                                                @if($card->is_active)
+                                                <span class="badge bg-success">Active</span>
+                                                @else
+                                                <span class="badge bg-secondary">Inactive</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                <button wire:click="openCardViewModal({{ $card->id }})" class="btn btn-info btn-sm">
+                                                    Voir Détails
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @empty
+                                        <tr>
+                                            <td colspan="4" class="text-center">Aucune carte de membre trouvée.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
