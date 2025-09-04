@@ -44,7 +44,7 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($cardDetail->contributions as $contribution)
+                                    @foreach ($cardDetail->contributions->where('is_paid', '=', 1) as $contribution)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($contribution->contribution_date)->format('d/m/Y') }}
                                             </td>
