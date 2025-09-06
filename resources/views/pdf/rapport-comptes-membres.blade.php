@@ -22,6 +22,7 @@
         }
         .table td, .table th {
             border: 1px solid;
+            font-size: 8px;
             padding: 2px;
         }
         .signature {
