@@ -25,7 +25,7 @@ class RapportCompteClients extends Component
     public function exportPdf()
     {
         // On récupère tous les membres avec leurs soldes
-        $members = User::with(['accounts'])->where('role', 'membre')->get();
+        $members = User::with(['accounts'])->where('role', 'membre')->orderBy('name', 'asc')->get();
 
         $balances = $members->map(function ($member) {
             $usd = 0;

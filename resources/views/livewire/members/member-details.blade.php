@@ -3,7 +3,7 @@
 
     @include('livewire.admin.add-deposit-for-member')
     @include('livewire.admin.add-retrait-for-member')
-    @include('livewire.admin.show-card-details') 
+    @include('livewire.admin.show-card-details')
 
     <main class="flex-grow mx-auto  py-0">
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -410,8 +410,13 @@
                         </div>
                     </div>
                 </div>
+
+            </div>
+            <div class="col-md-12 mt-4">
+                <livewire:credit.client-credit-situation :user-id="$member->id" />
             </div>
         </div>
+
     </main>
 
 </div>
