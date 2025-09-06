@@ -22,7 +22,7 @@
         }
         .table td, .table th {
             border: 1px solid;
-            padding: 4px;
+            padding: 2px;
         }
         .signature {
             margin-top: 30px;
@@ -80,7 +80,7 @@
     <h3>Total CDF : {{ number_format($globalCdf, 2) }} CDF</h3>
     <h3>Total Membres : {{ $balances->count() }}</h3>
 
-    <table class="table" border="1" cellspacing="0" cellpadding="4">
+    <table class="table" border="1" cellspacing="0" cellpadding="0">
         <thead>
             <tr>
                 <th>Code</th>
