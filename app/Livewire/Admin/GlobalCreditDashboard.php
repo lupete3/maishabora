@@ -52,19 +52,8 @@ class GlobalCreditDashboard extends Component
             ->count('credit_id');
     }
 
-    public function getOverdueCreditsProperty()
-    {
-        return Repayment::with(['credit.user'])
-            ->where('due_date', '<', now())
-            ->where('is_paid', false)
-            ->latest()
-            ->paginate(5);
-    }
-
     public function render()
     {
-        $overdueCredits = $this->overdueCredits;
-
         $credits = Credit::with(['user', 'repayments'])->where('is_paid', false)->latest()->paginate(10);
 
         // Crédits par mois
@@ -96,7 +85,6 @@ class GlobalCreditDashboard extends Component
 
         return view('livewire.admin.global-credit-dashboard', compact(
             'credits',
-            'overdueCredits',
             'creditsMonths',
             'creditsCounts',
             'currencyLabels',
