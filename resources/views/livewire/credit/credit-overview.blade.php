@@ -20,9 +20,26 @@
                                     <small class="text-muted">
                                         Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>
-                                    <small class="text-danger">
-                                        Retard : {{ number_format($daysLate, 0) }} {{ Str::plural('jour', $daysLate) }}
-                                    </small>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="pt-0 ">
+                                            Solde :
+                                            @foreach(['USD', 'CDF'] as $curr)
+                                                @php
+                                                    $balance = number_format($r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
+                                                    $color = $curr === 'USD' ? 'green' : 'blue';
+                                                @endphp
+                                                @php
+                                                    $balance = (float) ($r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0);
+                                                @endphp
+                                                <small class="text-muted">
+                                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
+                                                </small>
+                                            @endforeach
+                                        </div>
+                                        <small class="text-danger">
+                                            Retard : {{ number_format($daysLate, 0) }} {{ Str::plural('jour', $daysLate) }}
+                                        </small>
+                                    </div>
                                 </div>
                                 <span class="badge bg-danger">
                                     {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
@@ -59,10 +76,26 @@
                                     <small class="text-muted">
                                         Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>
-                                    <small class="text-primary">
-                                        Échéance dans {{ number_format(abs($daysRemaining), 0) }}
-                                        {{ Str::plural('jour', $daysRemaining) }}
-                                    </small>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="pt-0 ">
+                                            Solde :
+                                            @foreach(['USD', 'CDF'] as $curr)
+                                                @php
+                                                    $balance = number_format($r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
+                                                    $color = $curr === 'USD' ? 'green' : 'blue';
+                                                @endphp
+                                                @php
+                                                    $balance = (float) ($r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0);
+                                                @endphp
+                                                <small class="text-muted">
+                                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
+                                                </small>
+                                            @endforeach
+                                        </div>
+                                        <small class="text-primary">
+                                            Échéance dans {{ number_format($daysLate, 0) }} {{ Str::plural('jour', $daysLate) }}
+                                        </small>
+                                    </div>
                                 </div>
                                 <span class="badge bg-warning text-dark">
                                     {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
