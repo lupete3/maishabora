@@ -93,7 +93,7 @@
                                             @endforeach
                                         </div>
                                         <small class="text-primary">
-                                            Échéance dans {{ number_format($daysLate, 0) }} {{ Str::plural('jour', $daysLate) }}
+                                            Échéance dans {{ number_format($daysRemaining, 0) }} {{ Str::plural('jour', $daysRemaining) }}
                                         </small>
                                     </div>
                                 </div>
