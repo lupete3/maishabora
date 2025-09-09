@@ -35,9 +35,13 @@ class ManageRepayments extends Component
     public $repaymentToPay = null;
     public $applyInterest = true; // valeur par défaut
 
+    public $penality = 0;
+
     public function confirmRepayment($repaymentId)
     {
         $this->repaymentToPay = $repaymentId;
+        $repayment = Repayment::findOrFail($repaymentId);
+        $this->penality = floatval($repayment->penalty);
         $this->dispatch('openModal', name: 'confirm-repayment'); // JS pour ouvrir le modal
     }
 
@@ -192,7 +196,7 @@ class ManageRepayments extends Component
 
                 if ($withInterest == true) {
                     // Paiement normal d'une échéance avec intérêts
-                    $amountToPay = round($repayment->total_due, 3); // Sans pénalité si payé manuellement à temps
+                    $amountToPay = round($repayment->expected_amount + $this->penality, 3); // Sans pénalité si payé manuellement à temps
                 } else {
                     // Remboursement total sans intérêts futurs
                     $capitalRestant = $repayment->credit->amount / $repayment->credit->installments;
@@ -223,7 +227,7 @@ class ManageRepayments extends Component
                 if ($withInterest == true) {
                     // Paiement normal d'une échéance avec intérêts
                     $amountToPay = $repayment->total_due; // Sans pénalité si payé manuellement à temps
-                
+
                     // Récupérer ou créer le compte agent encaisseur
                     $agentAccount = AgentAccount::firstOrCreate(
                         ['user_id' => 95, 'currency' => $credit->currency],
@@ -236,7 +240,7 @@ class ManageRepayments extends Component
                     // Créditer le compte agent
                     $agentAccount->balance += ($interestPart+$penality);
                     $agentAccount->save();
-                
+
                     // Enregistrement de la transaction agent (crédit)
                     Transaction::create([
                         'agent_account_id' => $agentAccount->id,
