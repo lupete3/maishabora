@@ -201,6 +201,30 @@ class GrantCredit extends Component
                 description: "Crédit octroyé à {$member->name} {$member->postnom} ({$member->code}), montant total {$this->amount} {$this->currency}"
             );
 
+            // Enregistrement de la transaction pour commission crédit
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $commissionCreditAccount->id,
+                'user_id' => 94,
+                'type' => 'commission_credit',
+                'currency' => $credit->currency,
+                'amount' => $creditFrisFix,
+                'balance_after' => $commissionCreditAccount->balance,
+                'description' => "Frais de commission du dossier du credit #{$credit->id} - Montant: {$creditFrisFix} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
+            // Enregistrement de la transaction pour commission crédit au caissier
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $cassisierAccount->id,
+                'user_id' => 2,
+                'type' => 'frais_credit_pour_retrait',
+                'currency' => $credit->currency,
+                'amount' => $this->amount,
+                'balance_after' => $cassisierAccount->balance,
+                'description' => "Frais à retirer du dossier du credit #{$credit->id} - Montant: {$this->amount} {$credit->currency} du client {$member->name} {$member->postnom}",
+            ]);
+
             // Définition de l'échéancier selon le type de remboursement
             $startDate = Carbon::parse($this->start_date);
             $currentDate = $startDate->copy();
