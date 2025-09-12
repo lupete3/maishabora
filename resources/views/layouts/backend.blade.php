@@ -184,7 +184,6 @@
       document.addEventListener("livewire:load", () => {
           Livewire.hook('request.failed', ({ status }) => {
               if (status === 419) {
-                  alert("⚠️ Votre session a expiré, veuillez recharger la page.");
                   window.location.reload();
               }
           });

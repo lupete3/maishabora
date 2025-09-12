@@ -43,7 +43,7 @@
 
                     <div class="col-md-3 mb-3">
                         <label>Devise</label>
-                        <select wire:model="currency" class="form-control">
+                        <select wire:model="currency" class="form-select">
                             <option value="USD">USD</option>
                             <option value="CDF">CDF</option>
                         </select>
@@ -66,7 +66,7 @@
                     </div>
                     <div class="col-md-4 mb-3">
                         <label>Fréquence des échéances</label>
-                        <select wire:model="frequency" class="form-control">
+                        <select wire:model="frequency" class="form-select">
                             <option value="daily">Quotidienne</option>
                             <option value="weekly">Hebdomadaire</option> <!-- AJOUT -->
                             <option value="monthly">Mensuelle</option>
@@ -89,7 +89,23 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label>Type de remboursement</label>
+                        <select wire:model="repayment_type" class="form-select">
+                            <option value="degressif">Dégressif</option>
+                            <option value="constant">Constant</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label>Frais du crédit (%) </label>
+                        <input type="number" step="0.01" wire:model="creditFrisFix" class="form-control" />
+                        @error('creditFrisFix')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-12 mb-3">
                         <label>Description (facultatif)</label>
                         <input type="text" wire:model="description" class="form-control" />
                     </div>

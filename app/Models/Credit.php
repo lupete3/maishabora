@@ -13,7 +13,7 @@ class Credit extends Model
     protected $fillable = [
         'user_id', 'account_id', 'currency', 'amount',
         'interest_rate', 'installments', 'start_date',
-        'due_date', 'is_paid'
+        'due_date', 'frais_credit', 'credit_type', 'repayment_type', 'is_paid'
     ];
 
     public function user()

@@ -26,6 +26,8 @@ class GrantCredit extends Component
     public $installments = 6;
     public $start_date;
     public $frequency = 'daily'; // 'daily', 'monthly', 'weekly'
+    public $repayment_type = 'constant'; // 'constant', 'degressif'
+    public $creditFrisFix = 3; // frais fixe de dossier
 
     public $description = '';
 
@@ -41,6 +43,8 @@ class GrantCredit extends Component
         'installments' => 'required|integer|min:1',
         'start_date' => 'required|date',
         'frequency' => 'required|in:daily,monthly,weekly',
+        'repayment_type' => 'required|in:constant,degressif',
+        'creditFrisFix' => 'required|numeric|min:0.01|max:100',
     ];
 
     public function mount()
@@ -57,13 +61,13 @@ class GrantCredit extends Component
         $query = trim($this->search);
         if ($query !== '') {
             $this->results = User::query()
-                ->where(function($q) use ($query) {
+                ->where(function ($q) use ($query) {
                     $q->where('role', 'membre')
-                    ->where('code', 'like', "%{$query}%")
-                      ->orWhere('name', 'like', "%{$query}%")
-                      ->orWhere('postnom', 'like', "%{$query}%")
-                      ->orWhere('prenom', 'like', "%{$query}%")
-                      ->orWhere('telephone', 'like', "%{$query}%");
+                        ->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])
@@ -102,9 +106,9 @@ class GrantCredit extends Component
                 ->lockForUpdate()
                 ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);
 
-            $creditFrisFix = round($this->amount * (5 / 100), 2);
-            //$creditFris = round($this->amount * ($this->interest_rate / 100), 2);
+            $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
 
+            // Validation des soldes
             if ($account->balance < $creditFrisFix) {
                 DB::rollBack();
                 notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier'));
@@ -117,10 +121,11 @@ class GrantCredit extends Component
                 return;
             }
 
+            // Déduction des frais de commission du client
             $account->balance -= $creditFrisFix;
             $account->save();
 
-            // Frais dossier
+            // Enregistrement de la transaction pour les frais de dossier
             Transaction::create([
                 'account_id' => $account->id,
                 'user_id' => $member->id,
@@ -131,12 +136,13 @@ class GrantCredit extends Component
                 'description' => "Frais de commission du dossier du credit. Montant: {$creditFrisFix} {$this->currency} octroyé à {$member->name} {$member->postnom}",
             ]);
 
+            // Transfert du montant du crédit de la caisse centrale au compte du client
             $mainCash->balance -= $this->amount;
             $account->balance += $this->amount;
-
             $mainCash->save();
             $account->save();
 
+            // Création de l'enregistrement du crédit
             $credit = Credit::create([
                 'user_id'       => $member->id,
                 'account_id'    => $account->id,
@@ -146,10 +152,13 @@ class GrantCredit extends Component
                 'installments'  => $this->installments,
                 'start_date'    => $this->start_date,
                 'due_date'      => Carbon::parse($this->start_date),
+                'credit_type'=> $this->repayment_type,
+                'frais_credit'  => $this->creditFrisFix,
+                'repayment_type' => $this->frequency,
                 'is_paid'       => false,
             ]);
 
-            // Transactions
+            // Enregistrement des transactions pour l'octroi du crédit
             Transaction::create([
                 'user_id'       => $member->id,
                 'type'           => 'octroi_de_credit',
@@ -170,64 +179,11 @@ class GrantCredit extends Component
                 'description'    => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
-            UserLogHelper::log_user_activity(
-                action: 'octroi_de_credit',
-                description: "Crédit octroyé à {$member->name} {$member->postnom} ({$member->code}), montant total {$this->amount} {$this->currency}"
-            );
-
-            // 👉 Échéancier à intérêt CONSTANT
-            $interestPart = round($this->amount * ($this->interest_rate / 100), 2);
-            $capitalPart = round($this->amount / $this->installments, 2);
-            $installmentTotal = round($capitalPart + $interestPart, 2);
-
-            $remainingCapital = $this->amount;
-
-            $startDate = Carbon::parse($this->start_date);
-            $currentDate = $startDate->copy();
-            $lastDueDate = null;
-
-            for ($i = 0; $i < $this->installments; $i++) {
-                // Dernière ligne : corriger le capital restant
-                if ($i == $this->installments - 1) {
-                    $capitalPart = round($remainingCapital, 2);
-                    $installmentTotal = round($capitalPart + $interestPart, 2);
-                }
-
-                Repayment::create([
-                    'credit_id'       => $credit->id,
-                    'due_date'        => $currentDate->toDateString(),
-                    'expected_amount' => $installmentTotal,
-                    'total_due'       => $installmentTotal,
-                ]);
-
-                $remainingCapital -= $capitalPart;
-
-                $lastDueDate = $currentDate->copy();
-
-                // Incrémentation de la date selon la fréquence
-                if ($this->frequency === 'daily') {
-                    do {
-                        $currentDate->addDay();
-                    } while ($currentDate->isSunday());
-                } elseif ($this->frequency === 'weekly') {
-                    $currentDate = $i === 0 ? $currentDate : $currentDate->addWeek();
-                    if ($currentDate->isSunday()) {
-                        $currentDate->addDay();
-                    }
-                } else {
-                    $currentDate->addMonth();
-                }
-            }
-
-            $credit->due_date = $lastDueDate ? $lastDueDate->toDateString() : $credit->start_date;
-            $credit->save();
-
-            // Envoyer les frais de commitssion du crédit au compte 94
+            // Envoyer les frais de commission du crédit au compte 94
             $commissionCreditAccount = AgentAccount::firstOrCreate(
                 ['user_id' => 94, 'currency' => $credit->currency],
                 ['balance' => 0]
             );
-
             $commissionCreditAccount->balance += $creditFrisFix;
             $commissionCreditAccount->save();
 
@@ -239,39 +195,113 @@ class GrantCredit extends Component
             $cassisierAccount->balance += $this->amount;
             $cassisierAccount->save();
 
-            // Enregistrement de la transaction pour commission crédit
-            Transaction::create([
-                'account_id' => null,
-                'agent_account_id' => $commissionCreditAccount->id,
-                'user_id' => 94,
-                'type' => 'commission_credit',
-                'currency' => $credit->currency,
-                'amount' => $interestPart,
-                'balance_after' => $commissionCreditAccount->balance,
-                'description' => "Frais de commission du dossier du credit #{$credit->id} - Montant: {$interestPart} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
-            ]);
+            // Log de l'activité utilisateur
+            UserLogHelper::log_user_activity(
+                action: 'octroi_de_credit',
+                description: "Crédit octroyé à {$member->name} {$member->postnom} ({$member->code}), montant total {$this->amount} {$this->currency}"
+            );
 
-            // Enregistrement de la transaction pour commission crédit
-            Transaction::create([
-                'account_id' => null,
-                'agent_account_id' => $cassisierAccount->id,
-                'user_id' => 2,
-                'type' => 'frais_credit_pour_retrait',
-                'currency' => $credit->currency,
-                'amount' => $this->amount,
-                'balance_after' => $cassisierAccount->balance,
-                'description' => "Frais à retirer du dossier du credit #{$credit->id} - Montant: {$this->amount} {$credit->currency} du client {$member->name} {$member->postnom}",
-            ]);
+            // Définition de l'échéancier selon le type de remboursement
+            $startDate = Carbon::parse($this->start_date);
+            $currentDate = $startDate->copy();
+            $lastDueDate = null;
+
+            if ($this->repayment_type === 'degressif') {
+                // Remboursement à capital constant (dégressif)
+                $capitalPart = $this->amount / $this->installments;
+                $remainingCapital = $this->amount;
+
+                for ($i = 0; $i < $this->installments; $i++) {
+                    $interest = $remainingCapital * ($this->interest_rate / 100);
+                    $installmentTotal = $capitalPart + $interest;
+
+                    // Ajustement pour la dernière échéance pour éviter les erreurs d'arrondi
+                    if ($i === $this->installments - 1) {
+                        $installmentTotal = $remainingCapital + $interest;
+                    }
+
+                    Repayment::create([
+                        'credit_id'        => $credit->id,
+                        'due_date'         => $currentDate->toDateString(),
+                        'expected_amount'  => round($installmentTotal, 2),
+                        'total_due'        => round($installmentTotal, 2),
+                    ]);
+
+                    $remainingCapital -= $capitalPart;
+
+                    // Incrémentation de la date
+                    if ($this->frequency === 'daily') {
+                        $currentDate->addDay();
+                        if ($currentDate->isSunday()) {
+                            $currentDate->addDay();
+                        }
+                    } elseif ($this->frequency === 'weekly') {
+                        $currentDate->addWeek();
+                    } else {
+                        $currentDate->addMonth();
+                    }
+                }
+                $lastDueDate = $currentDate->copy();
+            } else {
+                // Remboursement à annuités constantes
+                $monthlyRate = $this->interest_rate / 100;
+                if ($monthlyRate > 0) {
+                    // Formule de l'annuité constante : C = (PV * r) / [1 - (1 + r)^-n]
+                    $annuity = $this->amount * $monthlyRate / (1 - pow(1 + $monthlyRate, -$this->installments));
+                } else {
+                    $annuity = $this->amount / $this->installments;
+                }
+
+                $remainingCapital = $this->amount;
+
+                for ($i = 0; $i < $this->installments; $i++) {
+                    $interest = $remainingCapital * $monthlyRate;
+                    $capitalPart = $annuity - $interest;
+
+                    // Ajustement pour la dernière échéance
+                    if ($i === $this->installments - 1) {
+                        $capitalPart = $remainingCapital;
+                        $annuity = $capitalPart + $interest;
+                    }
+
+                    Repayment::create([
+                        'credit_id'        => $credit->id,
+                        'due_date'         => $currentDate->toDateString(),
+                        'expected_amount'  => round($annuity, 2),
+                        'total_due'        => round($annuity, 2),
+                    ]);
+
+                    $remainingCapital -= $capitalPart;
+
+                    // Incrémentation de la date
+                    if ($this->frequency === 'daily') {
+                        $currentDate->addDay();
+                        if ($currentDate->isSunday()) {
+                            $currentDate->addDay();
+                        }
+                    } elseif ($this->frequency === 'weekly') {
+                        $currentDate->addWeek();
+                    } else {
+                        $currentDate->addMonth();
+                    }
+                }
+                $lastDueDate = $currentDate->copy();
+            }
+
+            // Mise à jour de la date d'échéance finale
+            $credit->due_date = $lastDueDate ? $lastDueDate->toDateString() : $credit->start_date;
+            $credit->save();
 
             DB::commit();
 
             notyf()->success(__('Crédit octroyé avec succès !'));
             $this->reset(['amount', 'description']);
             $this->dispatch('facture-validee', url: route('credit.receipt.generate', ['id' => $credit->id]));
-
+            return;
         } catch (\Throwable $th) {
             DB::rollBack();
             report($th);
+            dd($th);
             notyf()->error(__('Une erreur est survenue lors de l’octroi du crédit.'));
         }
     }

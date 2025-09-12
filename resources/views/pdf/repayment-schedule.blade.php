@@ -95,10 +95,18 @@
             <td style="border: none; padding: 0; text-align: right">
                 <strong>Montant du prêt :</strong> {{ number_format($credit->amount, 2) }} {{ $credit->currency }}<br>
                 <strong>Taux d'intérêt :</strong> {{ $credit->interest_rate }}%<br>
-                <strong>Frais du dossier :</strong> {{ number_format(($credit->amount * 5) / 100, 2) }} {{ $credit->currency }}<br>
+                <strong>Frais du dossier :</strong> {{ number_format(($credit->amount * $credit->frais_credit) / 100, 2) }} {{ $credit->currency }}<br>
                 <strong>Date d'octroit :</strong> {{ \Carbon\Carbon::parse($credit->created_at)->format('d/m/Y H:i') }} <br>
                 <strong>Date de début :</strong> {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }} <br>
                 <strong>Date de fin :</strong> {{ \Carbon\Carbon::parse($credit->due_date)->format('d/m/Y') }} <br>
+                <strong>Durée :</strong> {{ number_format($credit->installments, 0) }}
+                @if ($credit->repayment_type == 'daily')
+                    jours
+                @elseif ($credit->repayment_type == 'weekly')
+                    semaines
+                @elseif ($credit->repayment_type == 'monthly')
+                    mois
+                @endif <br>
             </td>
         </tr>
     </table>
