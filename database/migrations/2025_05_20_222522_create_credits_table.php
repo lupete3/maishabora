@@ -21,6 +21,9 @@ return new class extends Migration
             $table->integer('installments'); // nombre de mensualités
             $table->date('start_date');
             $table->date('due_date');
+            $table->decimal('frais_credit', 15, 2)->default(0); // frais de crédit
+            $table->string('credit_type'); // type de crédit (e.g., 'degressif', 'constant')
+            $table->string('repayment_type'); // type de remboursement (e.g., 'monthly', 'weekly')
             $table->boolean('is_paid')->default(false);
             $table->timestamps();
         });
