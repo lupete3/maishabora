@@ -106,7 +106,7 @@ class PurchaseMembershipCard extends Component
                 'end_date' => $endDate,
                 'is_active' => true,
             ]);
-          
+
 
             // Génération des 31 mises
             $startDate = now();

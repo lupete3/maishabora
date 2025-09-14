@@ -79,6 +79,14 @@ class PermissionSeeder extends Seeder
             "supprimer-compte-comptable",
             "supprimer-type-journal",
 
+            "afficher-paye",
+            "ajouter-paye",
+            
+            "afficher-salaire",
+            "ajouter-salaire",
+            "modifier-salaire",
+            "supprimer-salaire",
+
         ];
 
         foreach ($permissions as $key => $permission) {

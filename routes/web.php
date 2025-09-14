@@ -25,6 +25,7 @@ use App\Http\Controllers\MemberDetailsController;
 use App\Http\Controllers\MemberFinancialHistoryController;
 use App\Http\Controllers\MembershipCardController;
 use App\Http\Controllers\MemberTransactionReportController;
+use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
@@ -129,6 +130,10 @@ Route::middleware(['auth','auth.session','permission:effectuer-virement'])->grou
     Route::get('/transfert-compte', [FundTransferController::class, 'index'])->name('transfert.ajouter');
 });
 
+Route::middleware(['auth','auth.session','permission:afficher-paye'])->group(function () {
+    Route::get('/paie-salarie', [PayrollController::class, 'index'])->name('payroll.index');
+});
+
 Route::middleware(['auth','auth.session','permission:afficher-rapport-comptable'])->group(function () {
     Route::get('/comptes-comptabilite', [ComptabiliteController::class, 'index'])->name('comptabilite.comptes');
     Route::get('/type-journal', [ComptabiliteController::class, 'typeJournal'])->name('comptabilite.type_journal');
@@ -203,11 +208,11 @@ Route::view('profile', 'profile')
 
 Route::post('/logout', function () {
     UserLogHelper::log_user_activity('Déconnexion', 'Utilisateur déconnecté');
-    
+
     Auth::logout();
     request()->session()->invalidate();
     request()->session()->regenerateToken();
-    
+
     return redirect('/login');
 })->name('logout');
 

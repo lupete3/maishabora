@@ -120,6 +120,16 @@
             </li>
         @endcan
 
+        @can('afficher-paye', App\Models\User::class)
+            <!-- Gestion de la paie -->
+        <li class="menu-item @if (request()->routeIs('payroll.index')) active @endif" >
+            <a wire:navigate href="{{ route('payroll.index') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-money"></i> <!-- Icône de paie -->
+                <div data-i18n="Analytics">Gestion de la Paie</div>
+            </a>
+        </li>
+        @endcan
+
         @can('afficher-rapport-comptable', App\Models\User::class)
             <!-- Simulation de crédit -->
             <li class="menu-item @if (request()->routeIs('comptabilite.comptes','comptabilite.type_journal',

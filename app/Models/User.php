@@ -163,6 +163,11 @@ class User extends Authenticatable
         return $this->hasMany(UserLog::class);
     }
 
+    public function salaries()
+    {
+        return $this->hasMany(Salary::class);
+    }
+
 
     protected static function booted()
     {

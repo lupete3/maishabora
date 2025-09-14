@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\UserLogHelper;
 use App\Models\MainCashRegister;
 use App\Models\AgentAccount;
 use App\Models\Account;
@@ -24,9 +25,45 @@ class FundTransferComponent extends Component
     public $description;
     public $recipient_id;
     public $search = '';
+    public $searchagent = '';
     public $perPage = 10;
     protected $paginationTheme = 'bootstrap';
 
+    public $members = [];
+    public $results = [];
+
+    public function updatedSearchagent()
+    {
+        $query = trim($this->searchagent);
+        if ($query !== '') {
+            $this->results = User::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('role', 'membre')
+                        ->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+        } else {
+            $this->results = [];
+        }
+    }
+
+    public function selectResult(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->searchagent = "{$user->name} {$user->postnom}";
+            $this->results = [];
+
+            $this->recipient_id = $user->id;
+            $this->dispatch('userSelected', $user->id);
+        }
+    }
 
 
     public function updatedTransferType()
@@ -105,6 +142,11 @@ class FundTransferComponent extends Component
                         'description' => $this->description ?? 'Virement reçu depuis caisse centrale',
                     ]);
                 }
+
+                UserLogHelper::log_user_activity(
+                    action: 'virement_caisse',
+                    description: "Virement de {$this->amount} {$this->currency} vers {$this->transfer_type} ID:{$this->recipient_id}"
+                );
 
                 $this->reset(['amount', 'description', 'recipient_id']);
                 notyf()->success('Virement effectué avec succès.');
