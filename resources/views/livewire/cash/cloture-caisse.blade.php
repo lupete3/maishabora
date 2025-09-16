@@ -34,7 +34,8 @@
                 @foreach ($denominations_usd as $denomination)
                     <div class="col-md-2 mb-2">
                         <label class="form-label">${{ $denomination }}</label>
-                        <input type="number" wire:model.lazy="billetages_usd.{{ $denomination }}" class="form-control" min="0">
+                        <input type="number" wire:model.lazy="billetages_usd.{{ $denomination }}" class="form-control"
+                            min="0">
                     </div>
                 @endforeach
             </div>
@@ -45,7 +46,8 @@
                 @foreach ($denominations_cdf as $denomination)
                     <div class="col-md-2 mb-2">
                         <label class="form-label">{{ $denomination }} Fc</label>
-                        <input type="number" wire:model.lazy="billetages_cdf.{{ $denomination }}" class="form-control" min="0">
+                        <input type="number" wire:model.lazy="billetages_cdf.{{ $denomination }}" class="form-control"
+                            min="0">
                     </div>
                 @endforeach
             </div>

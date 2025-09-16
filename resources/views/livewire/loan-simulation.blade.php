@@ -4,6 +4,33 @@
     <div id="simulation-form">
         <h2 class="text-xl font-bold">Simulation de Crédit</h2>
         <div class="flex space-x-4">
+            <div class="position-relative">
+                            <label>Membre</label>
+                            <div class="table-search-input">
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text" id="basic-addon-search31"><i
+                                            class="icon-base bx bx-search"></i></span>
+                                    <input type="search" wire:model.live="search" class="form-control"
+                                        placeholder="Rechercher Membre....." aria-label="Rechercher Membre....."
+                                        aria-describedby="basic-addon-search31">
+                                </div>
+                            </div>
+
+                            @if (!empty($results))
+                                <ul class="list-group w-100" style="z-index: 1000;">
+                                    @foreach ($results as $user)
+                                        <li class="list-group-item list-group-item-action"
+                                            wire:click="selectResult({{ $user['id'] }})">
+                                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @error('member_id')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+
+                        </div>
             <div>
                 <label>Montant du prêt :</label>
                 <input type="number" wire:model="amount" class="border rounded p-2">
@@ -15,6 +42,13 @@
             <div>
                 <label>Nombre d'échéances :</label>
                 <input type="number" wire:model="installments" class="border rounded p-2">
+            </div>
+            <div>
+                <label>Type de remboursement :</label>
+                <select wire:model="type" class="border rounded p-2">
+                    <option value="constant">Mensualités constantes</option>
+                    <option value="degressif">Dégressif (capital constant)</option>
+                </select>
             </div>
         </div>
         <div class="mt-2">
@@ -35,7 +69,9 @@
             </div>
             <div class="flex justify-between items-center mt-4">
                 <div class="space-x-2">
-                    <button wire:click="exportToPdf" class="btn-success text-white rounded p-2">📄 Exporter en PDF</button>
+                    <button wire:click="exportToPdf" class="btn-success text-white rounded p-2">
+                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        📄 Exporter en PDF</button>
                 </div>
             </div>
         </div>
@@ -43,14 +79,19 @@
         <table class="w-full mt-4">
             <tr>
                 <td>
-                    <strong>Code Membre :</strong> IMF111000<br>
-                    <strong>Nom Complet :</strong> MATATA KODI Jules<br>
-                    <strong>Email :</strong> matatkodi@amb.com
+                    <strong>Code Membre :</strong> {{ $user->code ?? '3420250000000000' }}<br>
+                    <strong>Nom Complet :</strong> {{ $user->name ?? 'MATATA' }} {{ $user->postnom ?? 'KODI' }} {{ $user->prenom ?? 'Jules' }} <br>
+                    <strong>Téléphone :</strong> {{ $user->telephone ?? '+243999999990' }} <br>
+                    <strong>Email :</strong> {{ $user->email ?? 'matatkodi@amb.com' }} <br>
                 </td>
-                <td>
+                <td class="text-right">
+
                     <strong>Montant du prêt :</strong> {{ number_format($amount, 2) }}<br>
                     <strong>Taux d'intérêt :</strong> {{ number_format($rate, 2) }}%<br>
-                    <strong>Type de remboursement :</strong> Mensuel<br>
+                    <strong>Type de remboursement :</strong>
+                    {{ $type === 'constant' ? 'Mensualités constantes' : 'Dégressif (capital constant)' }}<br>
+                    <strong>Nombre d'échéances :</strong> {{ $installments }}<br>
+
                     <strong>Date d'impression :</strong> {{ now()->format('d/m/Y H:i') }}
                 </td>
             </tr>

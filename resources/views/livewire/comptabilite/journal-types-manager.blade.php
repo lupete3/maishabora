@@ -4,7 +4,7 @@
         @can('ajouter-type-journal', App\Models\User::class)
             <button class="btn btn-primary" wire:click="openCreateModal">
                 <i class="bx bx-plus"></i> Nouveau Type
-            </button> 
+            </button>
         @endcan
     </div>
 
@@ -12,8 +12,7 @@
         <!-- Recherche -->
         <div class="card-header row">
             <div class="col-md-6 col-lg-4">
-                <input type="text" class="form-control" placeholder="Rechercher..."
-                wire:model.live="search">
+                <input type="text" class="form-control" placeholder="Rechercher..." wire:model.live="search">
             </div>
         </div>
         <hr>
@@ -58,7 +57,6 @@
         <div class="card-footer">
             {{ $types->links() }}
         </div>
-
     </div>
 
     <!-- Modal -->
@@ -69,19 +67,19 @@
                     <h5 class="modal-title">
                         {{ $modalMode === 'create' ? 'Créer un Type de Journal' : 'Modifier un Type de Journal' }}
                     </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
                     <div class="mb-3">
                         <label>Libellé</label>
                         <input type="text" class="form-control" wire:model.defer="libelle">
-                        @error('libelle') <small class="text-danger">{{ $message }}</small> @enderror
+                        @error('libelle')
+                            <small class="text-danger">{{ $message }}</small>
+                        @enderror
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary"
-                            data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                     <button type="submit" class="btn btn-primary">
                         {{ $modalMode === 'create' ? 'Enregistrer' : 'Mettre à jour' }}
                     </button>

@@ -163,6 +163,8 @@ class PayrollComponent extends Component
             $salary = Salary::where('user_id', $userId)->where('currency', $this->currency)->firstOrFail();
             $mainCash = MainCashRegister::where('currency', $this->currency)->firstOrFail();
 
+            $retenuSalaire = round($salary->amount * (10 / 100), 2);
+
             if ($mainCash->balance < $salary->amount) {
                 notyf()->error('Solde insuffisant dans la caisse centrale.');
                 return;
@@ -186,16 +188,33 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
-            $account->increment('balance', $salary->amount);
+            // Crédit compte agent
+            $accountRetenuSalaire = Account::firstOrCreate(
+                ['user_id' => 328, 'currency' => $this->currency],
+                ['balance' => 0]
+            );
+
+            $account->increment('balance', $salary->amount - $retenuSalaire);
+            $accountRetenuSalaire->increment('balance', $retenuSalaire);
 
             Transaction::create([
                 'user_id' => $userId,
                 'account_id' => $account->id,
                 'type' => 'paie_entrant',
                 'currency' => $this->currency,
-                'amount' => $salary->amount,
+                'amount' => $salary->amount - $retenuSalaire,
                 'balance_after' => $account->balance,
                 'description' => 'Salaire reçu',
+            ]);
+
+            Transaction::create([
+                'user_id' => $userId,
+                'account_id' => $accountRetenuSalaire->id,
+                'type' => 'paie_entrant',
+                'currency' => $this->currency,
+                'amount' => $retenuSalaire,
+                'balance_after' => $accountRetenuSalaire->balance,
+                'description' => 'Retenue sur salaire',
             ]);
 
             // Enregistrer dans l’historique payroll

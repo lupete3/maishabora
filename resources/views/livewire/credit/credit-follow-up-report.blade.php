@@ -122,9 +122,9 @@
                                 +{{ number_format(
                                 $credit->repayments->where('is_paid', true)->sum('paid_amount') - $credit->amount, 2
                                 ) }} {{ $credit->currency }}
-                                    
+
                                 @endif
-                                
+
                             </td>
                             <td>
                                 {{ number_format(
@@ -157,7 +157,5 @@
                 </div>
             </div>
         </div>
-        <!-- Récapitulatif -->
-
     </div>
 </div>

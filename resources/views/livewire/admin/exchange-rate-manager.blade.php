@@ -49,7 +49,6 @@
                 @endif
             </div>
         </form>
-
         <hr>
 
         <h5 class="mt-4">Historique des taux</h5>

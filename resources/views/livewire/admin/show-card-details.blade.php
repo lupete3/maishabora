@@ -25,7 +25,8 @@
                     </div>
                     <div class="col-6">
                         <p><strong>{{ __('Montant total') }} :</strong>
-                            {{ number_format($cardDetail->contributions->where('is_paid', '=', 1)->sum('amount')) }} {{ $cardDetail->currency }}</p>
+                            {{ number_format($cardDetail->contributions->where('is_paid', '=', 1)->sum('amount')) }}
+                            {{ $cardDetail->currency }}</p>
                         <p><strong>{{ __('Nombre de contributions') }} :</strong>
                             {{ count($cardDetail->contributions->where('is_paid', '=', 1)) }}</p>
                         <p><strong>{{ __('Date de début') }} :</strong>
@@ -68,6 +69,3 @@
 
     </div>
 </div>
-
-
-<!-- Table des adhésions (inchangée) -->

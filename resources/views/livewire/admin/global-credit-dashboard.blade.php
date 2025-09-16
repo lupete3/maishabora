@@ -85,7 +85,7 @@
                         </div>
                         <div class="card-body">
                             <div class="row">
-                                @foreach($cashRegisters as $cr)
+                                @foreach ($cashRegisters as $cr)
                                     <div class="col-md-12 mt-3">
                                         <div class="card border shadow-sm h-100">
                                             <div class="card-body text-center">
@@ -145,7 +145,7 @@
                     <tbody>
                         @forelse ($credits as $credit)
                             <tr>
-                                <td>{{ $credit->user->name.' '.$credit->user->postnom }}</td>
+                                <td>{{ $credit->user->name . ' ' . $credit->user->postnom }}</td>
                                 <td>{{ $credit->currency }}</td>
                                 <td>{{ number_format($credit->amount, 2) }}</td>
                                 <td>{{ $credit->interest_rate }}%</td>
@@ -159,7 +159,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}" target="_blank" class="btn btn-sm btn-secondary">
+                                    <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}"
+                                        target="_blank" class="btn btn-sm btn-secondary">
                                         Imprimer le plan
                                     </a>
                                 </td>
@@ -179,111 +180,51 @@
         </div>
     </div>
 
-    {{-- <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header bg-dark text-white">Crédits par mois</div>
-            <div class="card-body">
-                <div id="creditsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card h-100">
-            <div class="card-header bg-dark text-white">Répartition par devise</div>
-            <div class="card-body">
-                <div id="creditsByCurrencyChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-dark text-white">Montant remboursé par mois</div>
-            <div class="card-body">
-                <div id="repaymentsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
+    <script>
+        document.addEventListener('livewire:load', function() {
 
+            // Crédits par mois
+            new ApexCharts(document.querySelector("#creditsByMonthChart"), {
+                chart: {
+                    type: 'bar',
+                    height: 300
+                },
+                series: [{
+                    name: 'Crédits',
+                    data: @json($creditsCounts)
+                }],
+                xaxis: {
+                    categories: @json($creditsMonths)
+                },
+                colors: ['#0d6efd']
+            }).render();
 
-    <div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-primary text-white">Crédits par mois</div>
-            <div class="card-body">
-                <div id="creditsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
+            // Crédits par devise
+            new ApexCharts(document.querySelector("#creditsByCurrencyChart"), {
+                chart: {
+                    type: 'pie',
+                    height: 300
+                },
+                series: @json($currencyCounts),
+                labels: @json($currencyLabels),
+                colors: ['#198754', '#ffc107', '#dc3545', '#0dcaf0']
+            }).render();
 
-    <div class="col-md-6">
-        <div class="card">
-            <div class="card-header bg-success text-white">Crédits par devise</div>
-            <div class="card-body">
-                <div id="creditsByCurrencyChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-12">
-        <div class="card">
-            <div class="card-header bg-warning text-dark">Remboursements mensuels</div>
-            <div class="card-body">
-                <div id="repaymentsByMonthChart" style="height: 300px;"></div>
-            </div>
-        </div>
-    </div>
-</div>--}}
-
-<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-<script>
-    document.addEventListener('livewire:load', function () {
-
-
-        // Crédits par mois
-        new ApexCharts(document.querySelector("#creditsByMonthChart"), {
-            chart: {
-                type: 'bar',
-                height: 300
-            },
-            series: [{
-                name: 'Crédits',
-                data: @json($creditsCounts)
-            }],
-            xaxis: {
-                categories: @json($creditsMonths)
-            },
-            colors: ['#0d6efd']
-        }).render();
-
-        // Crédits par devise
-        new ApexCharts(document.querySelector("#creditsByCurrencyChart"), {
-            chart: {
-                type: 'pie',
-                height: 300
-            },
-            series: @json($currencyCounts),
-            labels: @json($currencyLabels),
-            colors: ['#198754', '#ffc107', '#dc3545', '#0dcaf0']
-        }).render();
-
-        // Remboursements par mois
-        new ApexCharts(document.querySelector("#repaymentsByMonthChart"), {
-            chart: {
-                type: 'line',
-                height: 300
-            },
-            series: [{
-                name: 'Montant remboursé',
-                data: @json($repaymentAmounts)
-            }],
-            xaxis: {
-                categories: @json($repaymentMonths)
-            },
-            colors: ['#fd7e14']
-        }).render();
-    });
-</script>
+            // Remboursements par mois
+            new ApexCharts(document.querySelector("#repaymentsByMonthChart"), {
+                chart: {
+                    type: 'line',
+                    height: 300
+                },
+                series: [{
+                    name: 'Montant remboursé',
+                    data: @json($repaymentAmounts)
+                }],
+                xaxis: {
+                    categories: @json($repaymentMonths)
+                },
+                colors: ['#fd7e14']
+            }).render();
+        });
+    </script>
 </div>

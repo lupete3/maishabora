@@ -39,20 +39,6 @@
                 </select>
             </div>
 
-            {{-- Choix du bénéficiaire --}}
-            {{-- <div class="mb-3">
-            <label class="form-label fw-bold">Bénéficiaire</label>
-            <select class="form-select" wire:model="recipient_id">
-                <option value="">-- Choisissez un bénéficiaire --</option>
-                @foreach ($recipients as $recipient)
-                    <option value="{{ $recipient->user->id }}">
-                        {{ $recipient->user->name.' '.$recipient->user->postnom.' '.$recipient->user->prenom ?? 'Non défini' }} (ID: {{ $recipient->id }})
-                    </option>
-                @endforeach
-            </select>
-            @error('recipient_id') <small class="text-danger">{{ $message }}</small> @enderror
-        </div> --}}
-
             <div class="col-md-12">
                 <div class="position-relative">
                     <label class="form-label fw-bold">Bénéficiaire</label>
@@ -206,5 +192,4 @@
             </div>
         </div>
     </div>
-
 </div>

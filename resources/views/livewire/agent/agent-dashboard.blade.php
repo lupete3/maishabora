@@ -13,17 +13,6 @@
                                 aria-haspopup="true" aria-expanded="false">
                                 <i class="bx bx-dots-vertical-rounded"></i>
                             </button>
-                            {{-- <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
-                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "day")'>
-                                    Voir les opérations (Aujourd'hui)
-                                </a>
-                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "month")'>
-                                    Ce Mois
-                                </a>
-                                <a class="dropdown-item" href="javascript:void(0);" wire:click='showTransactions({{ $agent->id }}, "year")'>
-                                    Cette Année
-                                </a>
-                            </div> --}}
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="transactionID">
                                 <a class="dropdown-item" href="javascript:void(0);"
                                     wire:click='showTransactions({{ $agent->id }}, "day")'>
@@ -95,7 +84,7 @@
                     <div class="card-header">
                         <h5 class="card-title m-0 me-2">{{ __('Historique des opérations du compte du jour') }}</h5>
                         <p>Nombre total de transactions : <strong>{{ $transactionCount }}</strong></p>
-                        @foreach($totalByCurrency as $currency => $total)
+                        @foreach ($totalByCurrency as $currency => $total)
                             <tr>
                                 <td>{{ $currency }}</td>
                                 <td><strong>{{ number_format($total, 2) }}</strong></td>

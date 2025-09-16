@@ -7,7 +7,8 @@
                 {{-- Filtre devise --}}
                 <div class="ms-md-3">
                     <label for="devise" class="me-1 fw-bold">Devise :</label>
-                    <select wire:model.lazy="selectedCurrency" id="devise" class="form-select form-select-sm d-inline w-auto">
+                    <select wire:model.lazy="selectedCurrency" id="devise"
+                        class="form-select form-select-sm d-inline w-auto">
                         <option value="all">Toutes les devises</option>
                         @foreach ($currencies as $currency)
                             <option value="{{ $currency }}">{{ $currency }}</option>
@@ -17,13 +18,14 @@
             </div>
 
             {{-- Bouton Export PDF --}}
-            <a href="{{ route('credits-retard.pdf', ['devise' => $selectedCurrency]) }}" class="btn btn-primary btn-sm" target="_blank">
+            <a href="{{ route('credits-retard.pdf', ['devise' => $selectedCurrency]) }}" class="btn btn-primary btn-sm"
+                target="_blank">
                 📄 Exporter en PDF
             </a>
         </div>
 
         <div class="card-body table-responsive">
-            <table class="table table-bordered table-hover table-sm" >
+            <table class="table table-bordered table-hover table-sm">
                 <thead class="table-light text-center">
                     <tr>
                         <th>ID Crédit</th>
@@ -66,7 +68,9 @@
                             <td>{{ $d['range_7'] ? number_format($d['range_7'], 2) : '' }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="16" class="text-center">Aucun crédit en retard.</td></tr>
+                        <tr>
+                            <td colspan="16" class="text-center">Aucun crédit en retard.</td>
+                        </tr>
                     @endforelse
                 </tbody>
                 <tfoot class="table-light">

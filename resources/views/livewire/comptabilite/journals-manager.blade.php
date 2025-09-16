@@ -10,85 +10,85 @@
 
     <div class="card">
         <!-- Recherche -->
-    <div class="card-header">
-        <div class="row">
-            <div class="col-md-12 text-end mb-2">
-                @if ($journals->count() > 0)
-                    <button wire:click="export" class="btn btn-sm btn-success" wire:loading.attr="disabled">
-                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i class="bx bx-download"></i> Exporter PDF
-                    </button>
-                @endif
-            </div>
-            <div class="col-md-3">
-                <input type="text" wire:model.live="search" class="form-control" placeholder="Recherche...">
-            </div>
-            <div class="col-md-3">
-                <select wire:model.lazy="filter_journal_type" class="form-control">
-                    <option value="">-- Tous les journaux --</option>
-                    @foreach ($journalTypes as $jt)
-                        <option value="{{ $jt->id }}">{{ $jt->libelle }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select wire:model.lazy="filter_account" class="form-control">
-                    <option value="">-- Tous les comptes --</option>
-                    @foreach ($accounts as $acc)
-                        <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->intitule }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
-                <select wire:model.lazy="filter_currency" class="form-control">
-                    <option value="">-- Toutes les devises --</option>
-                    @foreach($currencies as $cur)
-                        <option value="{{ $cur }}">{{ $cur }}</option>
-                    @endforeach
-                    
-                </select>
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-12 text-end mb-2">
+                    @if ($journals->count() > 0)
+                        <button wire:click="export" class="btn btn-sm btn-success" wire:loading.attr="disabled">
+                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <i class="bx bx-download"></i> Exporter PDF
+                        </button>
+                    @endif
+                </div>
+                <div class="col-md-3">
+                    <input type="text" wire:model.live="search" class="form-control" placeholder="Recherche...">
+                </div>
+                <div class="col-md-3">
+                    <select wire:model.lazy="filter_journal_type" class="form-control">
+                        <option value="">-- Tous les journaux --</option>
+                        @foreach ($journalTypes as $jt)
+                            <option value="{{ $jt->id }}">{{ $jt->libelle }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select wire:model.lazy="filter_account" class="form-control">
+                        <option value="">-- Tous les comptes --</option>
+                        @foreach ($accounts as $acc)
+                            <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->intitule }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select wire:model.lazy="filter_currency" class="form-control">
+                        <option value="">-- Toutes les devises --</option>
+                        @foreach ($currencies as $cur)
+                            <option value="{{ $cur }}">{{ $cur }}</option>
+                        @endforeach
+
+                    </select>
+                </div>
             </div>
         </div>
-    </div>
-    <hr>
+        <hr>
 
-    <!-- Liste des journaux -->
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead class="table-light">
-                <tr>
-                    <th>Date</th>
-                    <th>Référence</th>
-                    <th>Libellé</th>
-                    <th>Type</th>
-                    <th>Compte</th>
-                    <th>Débit</th>
-                    <th>Crédit</th>
-                </tr>
-            </thead>
-            <tbody>
-                @forelse($journals as $j)
+        <!-- Liste des journaux -->
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead class="table-light">
                     <tr>
-                        <td>{{ $j->date_operation }}</td>
-                        <td>{{ $j->reference }}</td>
-                        <td>{{ $j->libelle }}</td>
-                        <td>{{ $j->journalType->libelle ?? '-' }}</td>
-                        <td>{{ $j->account->code }} - {{ $j->account->intitule }}</td>
-                        <td class="text-success">{{ number_format($j->montant_debit, 2, ',', ' ') }}</td>
-                        <td class="text-danger">{{ number_format($j->montant_credit, 2, ',', ' ') }}</td>
+                        <th>Date</th>
+                        <th>Référence</th>
+                        <th>Libellé</th>
+                        <th>Type</th>
+                        <th>Compte</th>
+                        <th>Débit</th>
+                        <th>Crédit</th>
                     </tr>
-                @empty
-                    <tr>
-                        <td colspan="7" class="text-center">Aucune écriture trouvée.</td>
-                    </tr>
-                @endforelse
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    @forelse($journals as $j)
+                        <tr>
+                            <td>{{ $j->date_operation }}</td>
+                            <td>{{ $j->reference }}</td>
+                            <td>{{ $j->libelle }}</td>
+                            <td>{{ $j->journalType->libelle ?? '-' }}</td>
+                            <td>{{ $j->account->code }} - {{ $j->account->intitule }}</td>
+                            <td class="text-success">{{ number_format($j->montant_debit, 2, ',', ' ') }}</td>
+                            <td class="text-danger">{{ number_format($j->montant_credit, 2, ',', ' ') }}</td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center">Aucune écriture trouvée.</td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
 
-    <div class="card-footer">
-        {{ $journals->links() }}
-    </div>
+        <div class="card-footer">
+            {{ $journals->links() }}
+        </div>
     </div>
 
     <!-- Modal Saisie -->
