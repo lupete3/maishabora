@@ -48,7 +48,7 @@
                                 @endif
                             </td>
                             <td>
-                                @if (auth()->user()->role === 'caissier' || auth()->user()->role === 'admin' auth()->user()->role === 'comptable' && $closing->status === 'pending')
+                                @if (Auth::user()->role === 'caissier' || Auth::user()->role === 'admin' Auth::user()->role === 'comptable' && $closing->status === 'pending')
                                     <button wire:click="validateClosing({{ $closing->id }})"
                                         class="btn btn-success btn-sm">Valider</button>
 
