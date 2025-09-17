@@ -163,7 +163,7 @@
                 <strong></strong>
             </td>
             <td style="border: none; padding: 0; text-align:right">
-                Visa Responsable<br><br><br><br>
+                Visa Responsable Gérant<br><br><br><br>
                 <strong>{{ auth()->user()->name ?? 'Responsable RH' }} {{ auth()->user()->postnom ?? '' }}</strong>
             </td>
         </tr>
