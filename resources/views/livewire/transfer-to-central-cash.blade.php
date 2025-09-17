@@ -16,7 +16,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label>Devise</label>
-                                <select wire:model="currency" class="form-control">
+                                <select wire:model="currency" class="form-select">
                                     <option value="">Choisir devise</option>
                                     @foreach($currencies as $curr)
                                         <option value="{{ $curr }}">{{ $curr }}</option>

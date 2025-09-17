@@ -8,81 +8,77 @@
         </div>
 
         <div class="card-body">
-            @if (session()->has('success'))
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {{ session('success') }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            @endif
-
             {{-- Type de virement --}}
-            <div class="mb-3">
-                <label class="form-label fw-bold">Type de bénéficiaire</label>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" id="agentRadio" value="agent"
-                        wire:model.lazy="transfer_type">
-                    <label class="form-check-label" for="agentRadio">Agent</label>
-                </div>
-                <div class="form-check form-check-inline">
-                    <input class="form-check-input" type="radio" id="memberRadio" value="member"
-                        wire:model.lazy="transfer_type">
-                    <label class="form-check-label" for="memberRadio">Membre</label>
-                </div>
-            </div>
+            <div class="row">
 
-            {{-- Devise --}}
-            <div class="mb-3">
-                <label class="form-label fw-bold">Devise</label>
-                <select class="form-select" wire:model="currency">
-                    <option value="CDF">Franc Congolais (CDF)</option>
-                    <option value="USD">Dollar Américain (USD)</option>
-                </select>
-            </div>
-
-            <div class="col-md-12">
-                <div class="position-relative">
-                    <label class="form-label fw-bold">Bénéficiaire</label>
-                    <div class="table-search-input">
-                        <div class="input-group input-group-merge">
-                            <span class="input-group-text" id="basic-addon-search31"><i
-                                    class="icon-base bx bx-search"></i></span>
-                            <input type="search" wire:model.live="searchagent" class="form-control"
-                                placeholder="Rechercher Agent....." aria-label="Rechercher Agent....."
-                                aria-describedby="basic-addon-search31">
-                        </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Type de bénéficiaire</label><br>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="agentRadio" value="agent"
+                            wire:model.lazy="transfer_type">
+                        <label class="form-check-label" for="agentRadio">Agent</label>
                     </div>
-
-                    @if (!empty($results))
-                        <ul class="list-group w-100" style="z-index: 1000;">
-                            @foreach ($results as $user)
-                                <li class="list-group-item list-group-item-action"
-                                    wire:click="selectResult({{ $user['id'] }})">
-                                    {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
-                                </li>
-                            @endforeach
-                        </ul>
-                    @endif
-                    @error('recipient_id')
-                        <span class="text-danger">{{ $message }}</span>
-                    @enderror
-
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" id="memberRadio" value="member"
+                            wire:model.lazy="transfer_type">
+                        <label class="form-check-label" for="memberRadio">Membre</label>
+                    </div>
                 </div>
-            </div>
 
-            {{-- Montant --}}
-            <div class="mb-3">
-                <label class="form-label fw-bold">Montant</label>
-                <input type="number" step="0.01" class="form-control" wire:model="amount"
-                    placeholder="Saisissez le montant">
-                @error('amount')
-                    <small class="text-danger">{{ $message }}</small>
-                @enderror
-            </div>
+                {{-- Devise --}}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Devise</label>
+                    <select class="form-select" wire:model="currency">
+                        <option value="CDF">Franc Congolais (CDF)</option>
+                        <option value="USD">Dollar Américain (USD)</option>
+                    </select>
+                </div>
 
-            {{-- Description facultative --}}
-            <div class="mb-3">
-                <label class="form-label fw-bold">Description (facultatif)</label>
-                <textarea class="form-control" rows="2" wire:model="description" placeholder="Motif ou remarque du virement"></textarea>
+                <div class="col-md-6 mb-3">
+                    <div class="position-relative">
+                        <label class="form-label fw-bold">Bénéficiaire</label>
+                        <div class="table-search-input">
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text" id="basic-addon-search31"><i
+                                        class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live="searchagent" class="form-control"
+                                    placeholder="Rechercher Agent....." aria-label="Rechercher Agent....."
+                                    aria-describedby="basic-addon-search31">
+                            </div>
+                        </div>
+
+                        @if (!empty($results))
+                            <ul class="list-group w-100" style="z-index: 1000;">
+                                @foreach ($results as $user)
+                                    <li class="list-group-item list-group-item-action"
+                                        wire:click="selectResult({{ $user['id'] }})">
+                                        {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                        @error('recipient_id')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+
+                    </div>
+                </div>
+
+                {{-- Montant --}}
+                <div class="col-md-6 mb-3">
+                    <label class="form-label fw-bold">Montant</label>
+                    <input type="number" step="0.01" class="form-control" wire:model="amount"
+                        placeholder="Saisissez le montant">
+                    @error('amount')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                </div>
+
+                {{-- Description facultative --}}
+                <div class="col-md-12 mb-3">
+                    <label class="form-label fw-bold">Description (facultatif)</label>
+                    <textarea class="form-control" rows="2" wire:model="description" placeholder="Motif ou remarque du virement"></textarea>
+                </div>
             </div>
 
             {{-- Bouton soumettre --}}
