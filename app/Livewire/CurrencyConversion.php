@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Helpers\UserLogHelper;
+use App\Models\Account;
 use App\Models\ExchangeRate;
 use Livewire\Component;
 use App\Models\MainCashRegister;
@@ -24,10 +25,51 @@ class CurrencyConversion extends Component
     public $amount;
     public $exchange_rate;
 
+    public $conversion_type = 'central'; // central ou client
+    public $selected_user_id;
+
+    public $searchclient = '';
+    public $members = [];
+    public $results = [];
+
     public $rates = [
         'USD' => 'CDF',
         'CDF' => 'USD',
     ];
+
+    public function updatedSearchclient()
+    {
+        $query = trim($this->searchclient);
+        if ($query !== '') {
+            $this->results = User::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('role', 'membre')
+                        ->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+
+        } else {
+            $this->results = [];
+        }
+    }
+
+    public function selectResult(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->searchclient = "{$user->code} {$user->name} {$user->postnom}";
+            $this->results = [];
+
+            $this->selected_user_id = $user->id;
+            $this->dispatch('userSelected', $user->id);
+        }
+    }
 
     public function convert()
     {
@@ -35,9 +77,10 @@ class CurrencyConversion extends Component
             'from_currency' => 'required|in:USD,CDF',
             'to_currency' => 'required|in:USD,CDF|different:from_currency',
             'amount' => 'required|numeric|min:0.01',
+            'conversion_type' => 'required|in:central,client',
         ]);
 
-        //Récupérer automatiquement le dernier taux enregistré
+        // Récupérer automatiquement le dernier taux enregistré
         $rateRecord = ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
 
         if (!$rateRecord) {
@@ -48,52 +91,99 @@ class CurrencyConversion extends Component
         $this->exchange_rate = $rateRecord->rate;
 
         DB::transaction(function () {
-            // Récupérer les caisses
-            $fromRegister = MainCashRegister::getByCurrency($this->from_currency);
-            $toRegister = MainCashRegister::getByCurrency($this->to_currency);
-
-            // Vérifier le solde disponible
-            if ($fromRegister->balance < $this->amount) {
-                $this->addError('amount', 'Solde insuffisant dans la caisse ' . $this->from_currency);
-                notyf()->error('Solde insuffisant.');
-                return;
-            }
-
-            // Calcul conversion
+            $admin = Auth::user();
             $convertedAmount = $this->amount * $this->exchange_rate;
 
-            // Débiter la caisse source
-            $fromRegister->balance -= $this->amount;
-            $fromRegister->save();
+            if ($this->conversion_type === 'central') {
+                // ✅ Conversion dans la caisse centrale
+                $fromRegister = MainCashRegister::getByCurrency($this->from_currency);
+                $toRegister = MainCashRegister::getByCurrency($this->to_currency);
 
-            // Créditer la caisse cible
-            $toRegister->balance += $convertedAmount;
-            $toRegister->save();
+                if ($fromRegister->balance < $this->amount) {
+                    $this->addError('amount', 'Solde insuffisant dans la caisse ' . $this->from_currency);
+                    notyf()->error('Solde insuffisant.');
+                    return;
+                }
 
-            // User effectuant l'opération
-            $admin = Auth::user();
+                $fromRegister->balance -= $this->amount;
+                $fromRegister->save();
 
-            // Enregistrer la transaction (sortie)
-            Transaction::create([
-                'user_id' => $admin->id,
-                'type' => 'conversion_sortie',
-                'currency' => $this->from_currency,
-                'amount' => $this->amount,
-                'exchange_rate' => $this->exchange_rate,
-                'balance_after' => $fromRegister->balance,
-                'description' => "Conversion de {$this->amount} {$this->from_currency} vers {$this->to_currency}",
-            ]);
+                $toRegister->balance += $convertedAmount;
+                $toRegister->save();
 
-            // Enregistrer la transaction (entrée)
-            Transaction::create([
-                'user_id' => $admin->id,
-                'type' => 'conversion_entree',
-                'currency' => $this->to_currency,
-                'amount' => $convertedAmount,
-                'exchange_rate' => $this->exchange_rate,
-                'balance_after' => $toRegister->balance,
-                'description' => "Conversion depuis {$this->from_currency} vers {$this->to_currency} : reçu {$convertedAmount} {$this->to_currency}",
-            ]);
+                // Transactions
+                Transaction::create([
+                    'user_id' => $admin->id,
+                    'type' => 'conversion_sortie',
+                    'currency' => $this->from_currency,
+                    'amount' => $this->amount,
+                    'exchange_rate' => $this->exchange_rate,
+                    'balance_after' => $fromRegister->balance,
+                    'description' => "Conversion (CAISSE) de {$this->amount} {$this->from_currency} vers {$this->to_currency}",
+                ]);
+
+                Transaction::create([
+                    'user_id' => $admin->id,
+                    'type' => 'conversion_entree',
+                    'currency' => $this->to_currency,
+                    'amount' => $convertedAmount,
+                    'exchange_rate' => $this->exchange_rate,
+                    'balance_after' => $toRegister->balance,
+                    'description' => "Conversion (CAISSE) depuis {$this->from_currency} : reçu {$convertedAmount} {$this->to_currency}",
+                ]);
+
+            } else {
+                // ✅ Conversion dans un compte CLIENT
+                $this->validate([
+                    'selected_user_id' => 'required|exists:users,id',
+                ]);
+
+                $fromAccount = \App\Models\Account::where('user_id', $this->selected_user_id)
+                    ->where('currency', $this->from_currency)
+                    ->first();
+
+                $toAccount = \App\Models\Account::where('user_id', $this->selected_user_id)
+                    ->where('currency', $this->to_currency)
+                    ->first();
+
+                if (!$fromAccount || !$toAccount) {
+                    $this->addError('amount', "Le client n'a pas les deux comptes requis.");
+                    return;
+                }
+
+                if ($fromAccount->balance < $this->amount) {
+                    $this->addError('amount', 'Solde insuffisant sur le compte du client.');
+                    notyf()->error('Solde insuffisant client.');
+                    return;
+                }
+
+                $fromAccount->balance -= $this->amount;
+                $fromAccount->save();
+
+                $toAccount->balance += $convertedAmount;
+                $toAccount->save();
+
+                // Transactions dans le journal du client
+                Transaction::create([
+                    'account_id' => $fromAccount->id,
+                    'user_id' => $this->selected_user_id,
+                    'type' => 'conversion_sortie_client',
+                    'currency' => $this->from_currency,
+                    'amount' => $this->amount,
+                    'balance_after' => $fromAccount->balance,
+                    'description' => "Conversion (CLIENT) de {$this->amount} {$this->from_currency} vers {$this->to_currency} au taux de {$this->exchange_rate}.",
+                ]);
+
+                Transaction::create([
+                    'account_id' => $toAccount->id,
+                    'user_id' => $this->selected_user_id,
+                    'type' => 'conversion_entree_client',
+                    'currency' => $this->to_currency,
+                    'amount' => $convertedAmount,
+                    'balance_after' => $toAccount->balance,
+                    'description' => "Conversion (CLIENT) depuis {$this->from_currency} : reçu {$convertedAmount} {$this->to_currency} au taux de {$this->exchange_rate}.",
+                ]);
+            }
 
             UserLogHelper::log_user_activity(
                 action: 'conversion',
@@ -101,8 +191,7 @@ class CurrencyConversion extends Component
             );
 
             notyf()->success('Conversion effectuée avec succès.');
-            $this->reset(['amount']);
-
+            $this->reset(['amount', 'selected_user_id']);
         });
 
         $this->dispatch('$refresh');
@@ -138,18 +227,16 @@ class CurrencyConversion extends Component
         }, 'conversions_' . now()->format('d-m-Y_H-i') . '.pdf');
     }
 
-
     public function render()
     {
-        // Paginer uniquement les transactions de type "conversion_sortie"
+        // Transactions des conversions caisse centrale (par défaut)
         $conversions = Transaction::where('type', 'conversion_sortie')
             ->with('user')
             ->orderByDesc('created_at')
             ->paginate(10);
 
-        // Cloner la pagination pour ajouter les paires sans casser la pagination
+        // Ajouter les paires "entrée"
         $conversions->getCollection()->transform(function ($sortie) {
-            // Trouver la transaction "conversion_entree" associée
             $entree = Transaction::where('type', 'conversion_entree')
                 ->where('user_id', $sortie->user_id)
                 ->where('created_at', '>=', $sortie->created_at)
@@ -160,9 +247,17 @@ class CurrencyConversion extends Component
             return $sortie;
         });
 
+        if ($this->conversion_type === 'client' && $this->selected_user_id) {
+            $balances = Account::where('user_id', $this->selected_user_id)
+                ->get()
+                ->keyBy('currency');
+        } else {
+            $balances = MainCashRegister::all()->keyBy('currency');
+        }
+
         return view('livewire.currency-conversion', [
-            'balances' => MainCashRegister::all()->keyBy('currency'),
-            'conversions' => $conversions, // ✅ encore paginé
+            'balances' => $balances,
+            'conversions' => $conversions,
         ]);
     }
 

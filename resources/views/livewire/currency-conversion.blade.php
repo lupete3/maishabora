@@ -9,30 +9,77 @@
         @endif
 
         <form wire:submit.prevent="convert">
+
             <div class="row mb-3 mt-3">
-                <div class="col-md-6">
+
+                <div class="col-md-6 mb-3">
+                    <label>Type de conversion</label>
+                    <select class="form-select" wire:model.lazy="conversion_type">
+                        <option value="central">Caisse centrale</option>
+                        <option value="client">Compte client</option>
+                    </select>
+                </div>
+
+                @if($conversion_type === 'client')
+
+                    <div class="col-md-6 mb-3">
+                        <div class="position-relative">
+                            <label class="form-label fw-bold">Rechercher le client</label>
+                            <div class="table-search-input">
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text" id="basic-addon-search31"><i
+                                            class="icon-base bx bx-search"></i></span>
+                                    <input type="search" wire:model.live="searchclient" class="form-control"
+                                        placeholder="Rechercher Client....." aria-label="Rechercher Client....."
+                                        aria-describedby="basic-addon-search31">
+                                </div>
+                            </div>
+
+                            @if (!empty($results))
+                                <ul class="list-group w-100" style="z-index: 1000;">
+                                    @foreach ($results as $user)
+                                        <li class="list-group-item list-group-item-action"
+                                            wire:click="selectResult({{ $user['id'] }})">
+                                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @error('selected_user_id')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+
+                        </div>
+                    </div>
+
+                @endif
+            </div>
+
+            <div class="row mb-3 mt-3">
+                <div class="col-md-4">
                     <label>De (Devise Source)</label>
-                    <select class="form-control" wire:model="from_currency">
+                    <select class="form-select" wire:model="from_currency">
                         <option value="USD">USD ({{ number_format($balances['USD']->balance ?? 0, 2) }})</option>
                         <option value="CDF">CDF ({{ number_format($balances['CDF']->balance ?? 0, 2) }})</option>
                     </select>
                     @error('from_currency') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
 
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label>Vers (Devise Cible)</label>
-                    <select class="form-control" wire:model="to_currency">
+                    <select class="form-select" wire:model="to_currency">
                         <option value="USD">USD</option>
                         <option value="CDF">CDF</option>
                     </select>
                     @error('to_currency') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
-            </div>
 
-            <div class="mb-3">
-                <label>Montant à convertir ({{ $from_currency }})</label>
-                <input type="number" step="0.01" wire:model="amount" class="form-control">
-                @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
+                <div class="col-md-4 mb-3">
+                    <label>Montant à convertir ({{ $from_currency }})</label>
+                    <input type="number" step="0.01" wire:model="amount" class="form-control">
+                    @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+
             </div>
 
             @if($exchange_rate)
