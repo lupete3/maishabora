@@ -146,7 +146,6 @@ class CheckOverdueRepayments extends Command
     //     $this->info(count($overdue) . ' échéances en retard vérifiées.');
     // }
 
-
     public function handle()
     {
         $today = Carbon::today();
@@ -257,37 +256,32 @@ class CheckOverdueRepayments extends Command
                     'message' => "Votre échéance du {$repayment->due_date} a été remboursée automatiquement avec succès.",
                     'read' => false,
                 ]);
-
             } else {
                 // Solde insuffisant → appliquer pénalité sans virement
-                if ($repayment->penalty != $penaltyAmount) {
-                    $repayment->penalty = $penaltyAmount;
-                    $repayment->total_due = $totalDue;
-                    $repayment->save();
+                // if ($repayment->penalty != $penaltyAmount) {
+                $repayment->penalty = $penaltyAmount;
+                $repayment->total_due = $totalDue;
+                $repayment->save();
 
-                    // Mettre à jour le solde du membre (solde devient négatif)
-                    // $account->balance -= $totalDue;
-                    // $account->save();
+                // Enregistrer la transaction (solde négatif)
+                Transaction::create([
+                    'account_id' => $account->id,
+                    'user_id' => $member->id,
+                    'type' => 'penalite_de_credit',
+                    'currency' => $credit->currency,
+                    'amount' => number_format($penaltyAmount, 2),
+                    'balance_after' => $account->balance,
+                    'description' => "Pénalité appliquée sur l'échéance du {$repayment->due_date}",
+                ]);
 
-                    // Enregistrer la transaction (solde négatif)
-                    Transaction::create([
-                        'account_id' => $account->id,
-                        'user_id' => $member->id,
-                        'type' => 'penalite_de_credit',
-                        'currency' => $credit->currency,
-                        'amount' => number_format($penaltyAmount, 2),
-                        'balance_after' => $account->balance,
-                        'description' => "Pénalité appliquée sur l'échéance du {$repayment->due_date}",
-                    ]);
-
-                    // Notification de pénalité
-                    Notification::create([
-                        'user_id' => $member->id,
-                        'title' => 'Retard de remboursement',
-                        'message' => "Votre échéance du {$repayment->due_date} est en retard de {$daysLate} jour(s). Une pénalité de " . number_format($penaltyAmount, 2) . " a été appliquée.",
-                        'read' => false,
-                    ]);
-                }
+                // Notification de pénalité
+                Notification::create([
+                    'user_id' => $member->id,
+                    'title' => 'Retard de remboursement',
+                    'message' => "Votre échéance du {$repayment->due_date} est en retard de {$daysLate} jour(s). Une pénalité de " . number_format($penaltyAmount, 2) . " a été appliquée.",
+                    'read' => false,
+                ]);
+                // }
             }
         }
 

@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Helpers\UserLogHelper;
 use App\Models\Account;
+use App\Models\AgentAccount;
 use App\Models\MainCashRegister;
 use App\Models\Payroll;
 use App\Models\Salary;
@@ -194,8 +195,15 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
+            // Envoyer le montant du crédit au compte 2 du caissier pour attente du retrait
+            $cassisierAccount = AgentAccount::firstOrCreate(
+                ['user_id' => 2, 'currency' => $this->currency],
+                ['balance' => 0]
+            );
+
             $account->increment('balance', $salary->amount - $retenuSalaire);
             $accountRetenuSalaire->increment('balance', $retenuSalaire);
+            $cassisierAccount->increment('balance', $salary->amount - $retenuSalaire);
 
             Transaction::create([
                 'user_id' => $userId,
@@ -218,13 +226,25 @@ class PayrollComponent extends Component
             ]);
 
             // Enregistrer dans l’historique payroll
-            Payroll::create([
+            $payroll = Payroll::create([
                 'user_id' => $userId,
                 'salary_id' => $salary->id,
                 'currency' => $this->currency,
                 'amount' => $salary->amount,
                 'period' => $this->period ?? now()->format('Y-m'),
                 'status' => 'paid',
+            ]);
+
+            // Enregistrement de la transaction pour paiment salaire au caissier
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $cassisierAccount->id,
+                'user_id' => 2,
+                'type' => 'salaire_pour_retrait',
+                'currency' => $this->currency,
+                'amount' => $salary->amount - $retenuSalaire,
+                'balance_after' => $cassisierAccount->balance,
+                'description' => "Frais à retirer du salaire #{$payroll->id} de l'agent {$salary->user->name} {$salary->user->postnom}",
             ]);
 
             UserLogHelper::log_user_activity(
