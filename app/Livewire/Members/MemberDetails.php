@@ -195,6 +195,11 @@ class MemberDetails extends Component
             // Calculer le montant réel utilisé
             $totalPaid = $contributionsToPay->count() * $dailyAmount;
 
+            // Si l'utilisateur a saisi plus que le reste dû, notifier et ajuster
+            if ($this->amount > $totalPaid) {
+                notyf()->info("Le montant saisi ({$this->amount}) dépasse le reste dû ({$totalPaid}). Montant ajusté automatiquement.");
+            }
+
             // Créditer le compte du membre et de l'agent
             $account = Account::firstOrCreate(
                 ['user_id' => $card->member_id, 'currency' => $card->currency],
@@ -211,26 +216,30 @@ class MemberDetails extends Component
             $agentAccount->save();
             $account->save();
 
+            // Transaction agent
             Transaction::create([
                 'account_id'     => null,
                 'user_id'        => Auth::id(),
                 'type'           => 'mise_quotidienne',
                 'currency'       => $card->currency,
-                'amount'         => $this->amount,
+                'amount'         => $totalPaid, // ✅ montant réel
                 'balance_after'  => $agentAccount->balance,
-                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
-                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name . " ". Auth::user()->postnom,
+                'description'    => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
+                                    pour le client: {$card->member->name} {$card->member->postnom} par "
+                                    . Auth::user()->name . " " . Auth::user()->postnom,
             ]);
 
+            // Transaction membre
             $transaction = Transaction::create([
                 'account_id'     => $account->id,
                 'user_id'        => $card->member_id,
                 'type'           => 'mise_quotidienne',
                 'currency'       => $card->currency,
-                'amount'         => $this->amount,
+                'amount'         => $totalPaid, // ✅ montant réel
                 'balance_after'  => $account->balance,
-                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
-                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name . " ". Auth::user()->postnom,
+                'description'    => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
+                                    pour le client: {$card->member->name} {$card->member->postnom} par "
+                                    . Auth::user()->name . " " . Auth::user()->postnom,
             ]);
 
             UserLogHelper::log_user_activity(
@@ -252,6 +261,7 @@ class MemberDetails extends Component
             notyf()->error('Une erreur est survenue lors du dépôt. Veuillez réessayer.');
         }
     }
+
 
     public function submitRetrait()
     {
