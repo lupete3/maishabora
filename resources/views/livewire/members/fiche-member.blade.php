@@ -297,87 +297,25 @@
                 </tr>
             </table>
 
-            <div class="section-title">Remarques</div>
-            <p>{{ $member->remarque }}</p>
+            <div class="section-title">EN CAS DE DECES : HERITIER (E)</div>
+            <p>Advenant mon décès, "'ordonne "Asociation MAISHA BORA à réduire de mon compte ses droits vis-à-vis
+                de ma personne en crédit et autres frais de service. L'Association MAISHA BORA a d'office droit
+                de donner le solde de mes comptes au profit de : </p>
+            <p> Mr, Mme ..................................................................................................................................................
+                que je désigne sans aucune contrainte ni influence mon héritier (e). </p>
+            <p> Nom du témoin ..........................................................................................................................
+                Signature ............................................ </p>
+
+            <p>Date : ............./................/............................</p>
+            <br>
+            <p><b>Signature du membre</b></p><br>
+            <p><b>Pour Approbation</b></p><br>
+            <p><b>Président du Conseil d'Administration</b></p><br>
+            <p><b>NB: Toutes les mentions sont obligatoires</b></p>
+
+            
         </div>
 
-        {{-- <div class="client-sheet">
-            <div class="text-end mb-3">
-                <button class="btn btn-primary" onclick="window.print()">
-                    <i class="bx bx-printer"></i> Imprimer la fiche
-                </button>
-            </div>
-
-            <div class="client-header">
-                <img src="{{ asset('assets/img/logo.jpg') }}" alt="Logo" width="100" style="margin-bottom:-40px">
-                <h2>FICHE CLIENT - MAISHA BORA</h2>
-                <small class="text-muted">Date : ____ / ____ / ______</small>
-            </div>
-
-            <div class="section-title">Infos de Base</div>
-            <table class="info-table">
-                <tr><th>Code Système</th></tr>
-                <tr><th>Nom</th></tr>
-                <tr><th>Sexe</th></tr>
-                <tr><th>Date de naissance</th></tr>
-                <tr><th>Lieu de naissance</th></tr>
-                <tr><th>Téléphone</th></tr>
-                <tr><th>Email</th></tr>
-                <tr><th>Status</th></tr>
-            </table>
-
-            <div class="section-title">Identité & État Civil</div>
-            <table class="info-table">
-                <tr><th>Type de pièce</th></tr>
-                <tr><th>Numéro de pièce</th></tr>
-                <tr><th>Date d'expiration</th></tr>
-                <tr><th>État civil</th></tr>
-                <tr><th>Nombre de dépendants</th></tr>
-            </table>
-
-            <div class="section-title">Infos Économiques et Professionnelles</div>
-            <table class="info-table">
-                <tr><th>Profession</th></tr>
-                <tr><th>Revenu mensuel</th></tr>
-                <tr><th>Source de revenu</th></tr>
-                <tr><th>Nom de l'employeur</th></tr>
-                <tr><th>Nom du conjoint</th></tr>
-                <tr><th>Téléphone conjoint</th></tr>
-            </table>
-
-            <div class="section-title">Références</div>
-            <table class="info-table">
-                <tr><th>Nom référence</th></tr>
-                <tr><th>Téléphone référence</th></tr>
-                <tr><th>Lien avec le membre</th></tr>
-            </table>
-
-            <div class="section-title">Localisation</div>
-            <table class="info-table">
-                <tr><th>Adresse physique</th></tr>
-                <tr><th>Province</th></tr>
-                <tr><th>Ville</th></tr>
-                <tr><th>Commune</th></tr>
-                <tr><th>Quartier</th></tr>
-            </table>
-
-            <div class="section-title">Média</div>
-            <table class="info-table">
-                <tr><th>Scan pièce (joindre copie papier)</th></tr>
-            </table>
-
-            <div class="section-title">Infos Institutionnelles</div>
-            <table class="info-table">
-                <tr><th>Date d'adhésion</th></tr>
-                <tr><th>Nationalité</th></tr>
-                <tr><th>Niveau d'étude</th></tr>
-            </table>
-
-            <div class="section-title">Remarques</div>
-            <p>__</p>
-            <p>__</p>
-            <p>__</p>
-        </div> --}}
 
     </div>
 
