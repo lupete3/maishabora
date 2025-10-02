@@ -149,53 +149,11 @@ Route::middleware(['auth','auth.session','permission:afficher-rapport-client|aff
     Route::get('/rapport-depot-retrait', [AgentTransactionsReportController::class, 'rapportDepotRetrait'])->name('rapports.depot_retrait');
 });
 
+Route::middleware(['auth','auth.session','permission:afficher-logs'])->group(function () {
+    Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
+});
 
 
-
-
-
-
-
-Route::get('/membres/souscrire', [CreateSubscriptionController::class, 'index'])
-    ->middleware(['auth','auth.session'])
-    ->name('members.subscribe');
-
-Route::get('/membres/carnets', [ManageContributionBookController::class, 'index'])
-    ->middleware(['auth','auth.session'])
-    ->name('members.books');
-
-Route::get('/membre/{id}/dashboard', [MemberDashboardController::class, 'index'])
-    ->middleware(['auth','auth.session', 'role:admin,recouvreur'])
-    ->name('member.dashboard');
-
-
-Route::get('/membre/carnet/{book}/pdf', [ManageContributionBookController::class, 'generatePdf'])
-    ->middleware(['auth','auth.session'])
-    ->name('member.book.pdf');
-
-Route::get('/membre/historique', [MemberFinancialHistoryController::class, 'index'])
-    ->middleware(['auth','auth.session'])
-    ->name('member.history');
-
-Route::get('/membre/historique/export-excel', function () {
-    return Excel::download(new MemberFinancialHistoryExport, 'historique-financier-' . now()->format('Y-m-d') . '.xlsx');
-})->name('member.history.excel')->middleware(['auth','auth.session']);
-
-Route::get('/admin/dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth','auth.session', 'role:admin'])
-    ->name('admin.dashboard');
-
-Route::get('/admin/reports/monthly/pdf', [GlobalReportController::class, 'generateMonthlyReport'])
-    ->middleware(['auth','auth.session'])
-    ->name('admin.reports.monthly.pdf');
-
-Route::get('/admin/reports/annual/pdf', [GlobalReportController::class, 'generateAnnualReport'])
-    ->middleware(['auth','auth.session'])
-    ->name('admin.reports.annual.pdf');
-
-Route::get('/recouvreur/enregistrer-membre', [RegisterMemberByRecouvreurCOntroller::class, 'index'])
-    ->middleware(['auth','auth.session', 'role:admin,recouvreur'])
-    ->name('recouvreur.member.register');
 
 
 Route::get('dashboard', [DashboardController::class, 'index'])

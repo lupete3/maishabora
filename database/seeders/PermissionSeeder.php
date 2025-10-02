@@ -81,11 +81,13 @@ class PermissionSeeder extends Seeder
 
             "afficher-paye",
             "ajouter-paye",
-            
+
             "afficher-salaire",
             "ajouter-salaire",
             "modifier-salaire",
             "supprimer-salaire",
+
+            "afficher-logs",
 
         ];
 

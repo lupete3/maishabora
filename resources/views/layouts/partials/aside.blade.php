@@ -273,6 +273,16 @@
             </li>
         @endcan
 
+        @can('afficher-logs', App\Models\User::class)
+            <!-- Simulation de crédit -->
+            <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
+                <a wire:navigate href="{{ route('rapports.logs') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
+                    <div data-i18n="Analytics">Logs</div>
+                </a>
+            </li>
+        @endcan
+
         @can('afficher-simulation-credit', App\Models\User::class)
             <!-- Simulation de crédit -->
             <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
