@@ -3,7 +3,7 @@
 
     <input type="text" class="form-control mb-3" placeholder="Rechercher..."
            wire:model.live="search">
-
+    <div class="table-responsive">
     <table class="table table-bordered table-striped">
         <thead>
             <tr>
@@ -56,6 +56,7 @@
 
     <div>
         {{ $logs->links() }}
+    </div>
     </div>
 
 

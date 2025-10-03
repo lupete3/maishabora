@@ -109,8 +109,8 @@
                         <div class="card-header bg-label-secondary fw-bold">
                             Statistiques des Cartes de Membre
                         </div>
-                        <div class="card-body p-2">
-                            <livewire:membership-card-stats>
+                        <div class="card-body p-2" wire:ignore>
+                            <livewire:membership-card-stats />
                         </div>
                     </div>
                 </div>
