@@ -9,9 +9,7 @@
         <!-- Search -->
         <div class="navbar-nav align-items-center">
             <div class="nav-item d-flex align-items-center">
-                <i class="bx bx-search fs-4 lh-0"></i>
-                <input type="text" class="form-control border-0 shadow-none" placeholder="Search..."
-                    aria-label="Search..." />
+
             </div>
         </div>
         <!-- /Search -->
@@ -42,7 +40,7 @@
                                         @else
                                             <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="w-px-40 h-auto rounded-circle">
                                         @endif
-                                        
+
                                     </div>
                                 </div>
                                 <div class="flex-grow-1">
@@ -61,7 +59,7 @@
                             <span class="align-middle">Mon Profil</span>
                         </a>
                     </li>
-                    
+
                     <li>
                         <div class="dropdown-divider"></div>
                     </li>
