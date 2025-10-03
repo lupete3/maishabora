@@ -4,8 +4,7 @@
             <span class="app-brand-logo demo ">
                 <img src="{{ asset('assets/img/logo.jpg') }}" width="50px" alt="" class="mr-2">
             </span>
-            {{ config( 'app.name', 'Laravel') }}
-
+            {{ config( 'app.name', 'Maisha Bora') }}
         </a>
 
         <a class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
