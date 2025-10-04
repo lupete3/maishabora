@@ -5,8 +5,8 @@
         <p>Complérer le formulaire pour faire une simulation de crédit de l'agent</p>
         <div class="card">
             <div class="card-body">
-                <div class="flex space-x-4">
-                    <div class="position-relative">
+                <div class="row">
+                    <div class="mt-3 col-md-3 position-relative">
                         <label>Membre</label>
                         <div class="table-search-input">
                             <div class="input-group input-group-merge">
@@ -33,19 +33,19 @@
                         @enderror
 
                     </div>
-                    <div>
+                    <div class="mt-3 col-md-2">
                         <label>Montant du prêt :</label>
                         <input type="number" wire:model="amount" class="form-control p-2">
                     </div>
-                    <div>
+                    <div class="mt-3 col-md-2">
                         <label>Taux d’intérêt (%):</label>
                         <input type="number" step="0.1" wire:model="rate" class="form-control p-2">
                     </div>
-                    <div>
+                    <div class="mt-3 col-md-2">
                         <label>Nombre d'échéances :</label>
                         <input type="number" wire:model="installments" class="form-control p-2">
                     </div>
-                    <div>
+                    <div class="mt-3 col-md-3">
                         <label>Type de remboursement :</label>
                         <select wire:model="type" class="form-select p-2">
                             <option value="constant">Mensualités constantes</option>
@@ -100,6 +100,8 @@
                 </tr>
             </table>
 
+            <div class="table-responsive">
+
             <table class="min-w-full mt-4 border-collapse border border-gray-300">
                 <thead>
                     <tr class="bg-gray-100">
@@ -134,6 +136,8 @@
                     </tr>
                 </tbody>
             </table>
+
+            </div>
         </div>
     @endif
 
