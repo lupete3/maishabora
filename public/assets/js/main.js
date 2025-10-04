@@ -116,4 +116,9 @@ let menu, animate;
   document.addEventListener("livewire:update", initMain);
   document.addEventListener("livewire:navigated", initMain);
 
+  // Réinitialiser les styles dynamiques Sneat (inputs, selects, etc.)
+    if (typeof window.Helpers !== "undefined" && typeof window.Helpers.initFormElements === "function") {
+        window.Helpers.initFormElements();
+    }
+
 })();
