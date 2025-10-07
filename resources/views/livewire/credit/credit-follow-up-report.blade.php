@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-2">
             <div class="card border-danger h-100">
                 <div class="card-body">
                     <h6 class="card-title text-danger">En cours</h6>
@@ -36,7 +36,18 @@
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-2">
+            <div class="card border-warning h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-warning">Intérêt</h6>
+                    @foreach ($totals['interestByCurrency'] as $curr => $total)
+                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
             <div class="card border-warning h-100">
                 <div class="card-body">
                     <h6 class="card-title text-warning">Pénalités</h6>

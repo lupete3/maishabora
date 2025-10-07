@@ -153,9 +153,6 @@ Route::middleware(['auth','auth.session','permission:afficher-logs'])->group(fun
     Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
 });
 
-
-
-
 Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth','auth.session', 'verified'])
     ->name('dashboard');

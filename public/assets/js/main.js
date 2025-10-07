@@ -114,7 +114,7 @@ let menu, animate;
   // ========== ✅ COMPATIBILITÉ LIVEWIRE ==========
   document.addEventListener("livewire:load", initMain);
   document.addEventListener("livewire:update", initMain);
-  document.addEventListener("livewire:navigated", initMain);
+  document.addEventListener("livewire:navigated", initMain);redit
 
   // Réinitialiser les styles dynamiques Sneat (inputs, selects, etc.)
   if (typeof window.Helpers !== "undefined" && typeof window.Helpers.initFormElements === "function") {
