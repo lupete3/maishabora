@@ -1,20 +1,18 @@
 <?php
 
-// app/Http/Livewire/CreditFollowUpReport.php
 namespace App\Livewire\Credit;
 
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Credit;
-use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class CreditFollowUpReport extends Component
 {
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
-
 
     public $perPage = 10;
     public $searchMember = '';
@@ -25,10 +23,9 @@ class CreditFollowUpReport extends Component
 
     public function render()
     {
-        $query = Credit::with(['user'])
-            ->select('credits.*');
+        $query = Credit::with(['user'])->select('credits.*');
 
-        // Recherche par membre
+        // 🔍 Filtres
         if ($this->searchMember) {
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', "%{$this->searchMember}%")
@@ -36,19 +33,16 @@ class CreditFollowUpReport extends Component
             });
         }
 
-        // Filtre par devise
         if ($this->currency) {
             $query->where('currency', $this->currency);
         }
 
-        // Filtre par statut
         if ($this->status === 'paid') {
             $query->where('is_paid', true);
         } elseif ($this->status === 'unpaid') {
             $query->where('is_paid', false);
         }
 
-        // Filtre par période
         if ($this->startDate && $this->endDate) {
             $query->whereBetween('start_date', [$this->startDate, $this->endDate]);
         } elseif ($this->startDate) {
@@ -67,106 +61,37 @@ class CreditFollowUpReport extends Component
     }
 
     public function getTotals()
-{
-    $query = Credit::query();
+    {
+        $query = $this->baseFilteredQuery();
+        $credits = $query->with(['repayments'])->get();
 
-    // 🧭 Application des filtres
-    if ($this->searchMember) {
-        $query->whereHas('user', function ($q) {
-            $q->where('name', 'like', "%{$this->searchMember}%")
-              ->orWhere('id', 'like', "%{$this->searchMember}%");
-        });
+        return $this->calculateTotals($credits);
     }
-
-    if ($this->currency) {
-        $query->where('currency', $this->currency);
-    }
-
-    if ($this->status === 'paid') {
-        $query->where('is_paid', true);
-    } elseif ($this->status === 'unpaid') {
-        $query->where('is_paid', false);
-    }
-
-    if ($this->startDate && $this->endDate) {
-        $query->whereBetween('start_date', [$this->startDate, $this->endDate]);
-    } elseif ($this->startDate) {
-        $query->whereDate('start_date', '>=', $this->startDate);
-    } elseif ($this->endDate) {
-        $query->whereDate('start_date', '<=', $this->endDate);
-    }
-
-    // 🔎 Récupération des crédits filtrés
-    $credits = $query->with(['repayments'])->get();
-
-    // 🔹 IDs des crédits sélectionnés (pour le filtre global)
-    $creditIds = $credits->pluck('id')->toArray();
-
-    // Initialisation
-    $totalByCurrency = ['USD' => 0, 'CDF' => 0];
-    $totalPaidByCurrency = ['USD' => 0, 'CDF' => 0];
-    $totalUnpaidByCurrency = ['USD' => 0, 'CDF' => 0];
-
-    foreach ($credits as $credit) {
-        $curr = $credit->currency;
-        $totalByCurrency[$curr] += $credit->amount;
-        $paid = $credit->repayments->where('is_paid', true)->sum('paid_amount');
-        $remaining = max(0, $credit->amount - $paid);
-        $totalPaidByCurrency[$curr] += $paid;
-        $totalUnpaidByCurrency[$curr] += $remaining;
-    }
-
-    // 💰 Calcul des intérêts selon les crédits filtrés
-    $interestByCurrency = [
-        'USD' => DB::table('repayments')
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->whereIn('credits.id', $creditIds)
-            ->where('credits.currency', 'USD')
-            ->where('repayments.is_paid', true)
-            ->sum(DB::raw('GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)')),
-
-        'CDF' => DB::table('repayments')
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->whereIn('credits.id', $creditIds)
-            ->where('credits.currency', 'CDF')
-            ->where('repayments.is_paid', true)
-            ->sum(DB::raw('GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)')),
-    ];
-
-    // ⚠️ Même correction pour les pénalités
-    $penaltyByCurrency = [
-        'USD' => DB::table('repayments')
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->whereIn('credits.id', $creditIds)
-            ->where('credits.currency', 'USD')
-            ->sum('repayments.penalty'),
-
-        'CDF' => DB::table('repayments')
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->whereIn('credits.id', $creditIds)
-            ->where('credits.currency', 'CDF')
-            ->sum('repayments.penalty'),
-    ];
-
-    return [
-        'totalByCurrency' => $totalByCurrency,
-        'totalPaidByCurrency' => $totalPaidByCurrency,
-        'totalUnpaidByCurrency' => $totalUnpaidByCurrency,
-        'interestByCurrency' => $interestByCurrency,
-        'penaltyByCurrency' => $penaltyByCurrency,
-    ];
-}
-
-
 
     public function exportToPdf()
     {
-        $query = Credit::with(['user'])->latest();
+        $query = $this->baseFilteredQuery();
+        $credits = $query->with(['user', 'repayments'])->get();
+
+        // 🧮 Calcul des totaux incluant intérêts et pénalités
+        $totals = $this->calculateTotals($credits);
+
+        $pdf = Pdf::loadView('pdf.credits-report', compact('credits', 'totals'))
+            ->setPaper('A4', 'landscape');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, "rapport_credit_" . now()->format("Ymd_His") . ".pdf");
+    }
+
+    private function baseFilteredQuery()
+    {
+        $query = Credit::query();
 
         if ($this->searchMember) {
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', "%{$this->searchMember}%")
-                ->orWhere('id', 'like', "%{$this->searchMember}%");
+                  ->orWhere('id', 'like', "%{$this->searchMember}%");
             });
         }
 
@@ -188,35 +113,39 @@ class CreditFollowUpReport extends Component
             $query->whereDate('start_date', '<=', $this->endDate);
         }
 
-        $credits = $query->get();
-        $totals = $this->calculateTotals($credits);
-
-        $pdf = Pdf::loadView('pdf.credits-report', compact('credits', 'totals'))->setPaper('A4', 'landscape');
-
-        return response()->streamDownload(function () use ($pdf) {
-            echo $pdf->stream();
-        }, "rapport_credit_".now()->format("Ymd_His").".pdf");
+        return $query;
     }
 
     private function calculateTotals($credits)
     {
-        // Initialisation des totaux par devise
+        $creditIds = $credits->pluck('id')->toArray();
+
         $totalByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalPaidByCurrency = ['USD' => 0, 'CDF' => 0];
-        $penaltyByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalUnpaidByCurrency = ['USD' => 0, 'CDF' => 0];
+        $penaltyByCurrency = ['USD' => 0, 'CDF' => 0];
+        $interestByCurrency = ['USD' => 0, 'CDF' => 0];
 
         foreach ($credits as $credit) {
             $curr = $credit->currency;
             $totalByCurrency[$curr] += $credit->amount;
 
-            $paidAmount = $credit->repayments->where('is_paid', true)->sum('paid_amount');
-            $totalPaidByCurrency[$curr] += $paidAmount;
-
-            $remaining = $credit->amount - $paidAmount;
-            $totalUnpaidByCurrency[$curr] += max(0, $remaining);
+            $paid = $credit->repayments->where('is_paid', true)->sum('paid_amount');
+            $remaining = max(0, $credit->amount - $paid);
+            $totalPaidByCurrency[$curr] += $paid;
+            $totalUnpaidByCurrency[$curr] += $remaining;
 
             $penaltyByCurrency[$curr] += $credit->repayments->sum('penalty');
+        }
+
+        // 💰 Calcul des intérêts totaux (selon crédits filtrés)
+        foreach (['USD', 'CDF'] as $curr) {
+            $interestByCurrency[$curr] = DB::table('repayments')
+                ->join('credits', 'repayments.credit_id', '=', 'credits.id')
+                ->whereIn('credits.id', $creditIds)
+                ->where('credits.currency', $curr)
+                ->where('repayments.is_paid', true)
+                ->sum(DB::raw('GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)'));
         }
 
         return [
@@ -224,6 +153,7 @@ class CreditFollowUpReport extends Component
             'totalPaidByCurrency' => $totalPaidByCurrency,
             'totalUnpaidByCurrency' => $totalUnpaidByCurrency,
             'penaltyByCurrency' => $penaltyByCurrency,
+            'interestByCurrency' => $interestByCurrency,
         ];
     }
 }

@@ -122,6 +122,7 @@
                 <th>Total Crédits</th>
                 <th>Remboursés</th>
                 <th>En cours</th>
+                <th>Intérêt</th>
                 <th>Pénalités</th>
             </tr>
         </thead>
@@ -132,6 +133,7 @@
                     <td>{{ number_format($totals['totalByCurrency'][$curr] ?? 0, 2) }}</td>
                     <td>{{ number_format($totals['totalPaidByCurrency'][$curr] ?? 0, 2) }}</td>
                     <td>{{ number_format($totals['totalUnpaidByCurrency'][$curr] ?? 0, 2) }}</td>
+                    <td>{{ number_format($totals['interestByCurrency'][$curr] ?? 0, 2) }}</td>
                     <td>{{ number_format($totals['penaltyByCurrency'][$curr] ?? 0, 2) }}</td>
                 </tr>
             @endforeach
