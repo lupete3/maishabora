@@ -44,7 +44,7 @@ class GrantCredit extends Component
         'start_date' => 'required|date',
         'frequency' => 'required|in:daily,monthly,weekly',
         'repayment_type' => 'required|in:constant,degressif',
-        'creditFrisFix' => 'required|numeric|min:0.01|max:100',
+        'creditFrisFix' => 'required|numeric|min:0.0|max:100',
     ];
 
     public function mount()
