@@ -111,12 +111,88 @@
                     </div>
 
                     <div class="col-md-12">
-                        <button type="submit" class="btn btn-success float-end">
+                        <button type="button" class="btn btn-success float-end" wire:click="confirmGrant">
                             <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            Valider le Crédit</button>
+                            Valider le Crédit
+                        </button>
                     </div>
                 </div>
             </form>
         </div>
     </div>
+
+    <!-- Modal de confirmation -->
+    <div class="modal fade @if($showConfirmModal) show d-block @endif" tabindex="-1"
+        style="@if($showConfirmModal)  @else display:none; @endif"
+        aria-hidden="{{ $showConfirmModal ? 'false' : 'true' }}">
+
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmation de l’octroi de crédit</h5>
+                    <button type="button" class="btn-close" wire:click="$set('showConfirmModal', false)"></button>
+                </div>
+
+                <div class="modal-body">
+                    <p class="fw-bold text-center mb-3">Merci de vérifier les détails ci-dessous avant de confirmer :</p>
+                    <table class="table table-bordered">
+                        <tbody>
+                            <tr>
+                                <th>Membre</th>
+                                <td>{{ $creditSummary['membre'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Montant du crédit</th>
+                                <td>{{ $creditSummary['montant'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Taux d'intérêt</th>
+                                <td>{{ $creditSummary['taux'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Frais du dossier</th>
+                                <td>{{ $creditSummary['frais'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total à rembourser (approximatif)</th>
+                                <td class="fw-bold text-success">{{ $creditSummary['total'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Nombre d'échéances</th>
+                                <td>{{ $creditSummary['echeances'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Date de début</th>
+                                <td>{{ $creditSummary['debut'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Type de remboursement</th>
+                                <td>{{ $creditSummary['type'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Description</th>
+                                <td>{{ $creditSummary['description'] ?? '' }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <div class="alert alert-warning mt-3">
+                        <i class="bx bx-error-circle"></i>
+                        Cette opération est irréversible. Vérifiez bien les informations avant de confirmer.
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" wire:click="$set('showConfirmModal', false)" class="btn btn-secondary">
+                        Annuler
+                    </button>
+                    <button type="button" wire:click="confirmSubmit" class="btn btn-success">
+                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        Confirmer et Octroyer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>

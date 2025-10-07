@@ -35,6 +35,10 @@ class GrantCredit extends Component
     public $search;
     public $results = [];
 
+    public $showConfirmModal = false;
+    public $creditSummary = [];
+
+
     protected $rules = [
         'member_id' => 'required|exists:users,id',
         'currency' => 'required|in:USD,CDF',
@@ -328,6 +332,39 @@ class GrantCredit extends Component
             dd($th);
             notyf()->error(__('Une erreur est survenue lors de l’octroi du crédit.'));
         }
+    }
+
+    public function confirmGrant()
+    {
+        $this->validate();
+
+        // Calcul du montant des frais et total à rembourser (pour affichage)
+        $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
+        $interestAmount = round(($this->amount * $this->interest_rate / 100), 2);
+        $totalToRepay = $this->amount + $interestAmount;
+
+        $member = User::find($this->member_id);
+
+        $this->creditSummary = [
+            'membre' => $member ? "{$member->name} {$member->postnom}" : 'Inconnu',
+            'montant' => "{$this->amount} {$this->currency}",
+            'taux' => "{$this->interest_rate} %",
+            'frais' => "{$creditFrisFix} {$this->currency}",
+            'total' => "{$totalToRepay} {$this->currency}",
+            'debut' => $this->start_date,
+            'echeances' => "{$this->installments} × {$this->frequency}",
+            'type' => ucfirst($this->repayment_type),
+            'description' => $this->description ?: '—',
+        ];
+
+        // Ouvre le modal
+        $this->showConfirmModal = true;
+    }
+
+    public function confirmSubmit()
+    {
+        $this->showConfirmModal = false;
+        $this->submit(); // Exécute la logique principale d’octroi
     }
 
     public function render()
