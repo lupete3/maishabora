@@ -13,9 +13,9 @@
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31">
                                         <i class="icon-base bx bx-search"></i></span>
-                                    <input type="search" wire:model.live="search" class="form-control" 
+                                    <input type="search" wire:model.live="search" class="form-control"
                                         placeholder="Rechercher un membre"
-                                        autocomplete="off" aria-label="Rechercher un membre" 
+                                        autocomplete="off" aria-label="Rechercher un membre"
                                         aria-describedby="basic-addon-search31">
                                 </div>
                             </div>
@@ -98,6 +98,9 @@
                                 <th>Date de début</th>
                                 <th>Date de fin</th>
                                 <th>Status</th>
+                                @can('supprimer-carnet', App\Models\User::class)
+                                <th>Actions</th>
+                                @endcan
                             </tr>
                         </thead>
                         <tbody>
@@ -119,6 +122,24 @@
                                             <span class="badge bg-secondary">Terminée</span>
                                         @endif
                                     </td>
+
+                                    @can('supprimer-carnet', App\Models\User::class)
+                                    <td>
+                                        @if (!$card->is_active)
+                                            <button class="btn btn-warning btn-sm" wire:click.prevent="desactivateorActivateMembershipCard({{ $card->id }}, 'activate')"
+                                                 title="Réactiver cette carte d'adhésion" wire:loading.attr="disabled">
+                                                <span wire:loading class="spinner-border spinner-border-sm me-2"></span>
+                                                Réactiver
+                                            </button>
+                                        @else
+                                            <button wire:click.prevent="desactivateorActivateMembershipCard({{ $card->id }}, 'desactivate')"
+                                                 title="Désactiver cette carte d'adhésion" class="btn btn-danger btn-sm" wire:loading.attr="disabled">
+                                                 <span wire:loading class="spinner-border spinner-border-sm me-2"></span>
+                                                Désactiver
+                                            </button>
+                                        @endif
+                                    </td>
+                                    @endcan
                                 </tr>
                             @empty
                                 <tr><td colspan="7" class="text-center">Aucune carte trouvée.</td></tr>

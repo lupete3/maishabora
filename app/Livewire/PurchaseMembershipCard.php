@@ -200,4 +200,62 @@ class PurchaseMembershipCard extends Component
             'cards' => $cards->latest()->paginate($this->perPage)
         ]);
     }
+
+    // public function confirmDesactivateMembershipCard($cardId)
+    // {
+    //     $this->dispatch('openModal', name: 'modalDesactivateMembershipCard');
+    // }
+
+    public function desactivateorActivateMembershipCard($cardId, $action)
+    {
+        Gate::authorize('supprimer-carnet', User::class);
+
+        $card = MembershipCard::find($cardId);
+        if (!$card) {
+            notyf()->error("Carte non trouvée.");
+            return;
+        }
+
+        if ($action === 'activate') {
+            if ($card->is_active) {
+                notyf()->error("La carte est déjà active.");
+                return;
+            }
+
+            $card->is_active = true;
+            $card->save();
+
+            UserLogHelper::log_user_activity(
+                action: 'activation_carte_adhesion',
+                description: "Activation de la carte #{$card->id} pour le membre {$card->member->name} {$card->member->postnom} ({$card->member->code})"
+            );
+
+            $this->dispatch('$refresh');
+            $this->resetPage();
+            notyf()->success("Carte activée avec succès.");
+            return;
+        }elseif ($action === 'desactivate') {
+
+            if (!$card->is_active) {
+                notyf()->error("La carte est déjà désactivée.");
+                return;
+            }
+
+            $card->is_active = false;
+            $card->save();
+
+            UserLogHelper::log_user_activity(
+                action: 'desactivation_carte_adhesion',
+                description: "Désactivation de la carte #{$card->id} pour le membre {$card->member->name} {$card->member->postnom} ({$card->member->code})"
+            );
+
+            $this->dispatch('$refresh');
+            $this->resetPage();
+            notyf()->success("Carte désactivée avec succès.");
+            return;
+        } else {
+            notyf()->error("Action invalide.");
+            return;
+        }
+    }
 }
