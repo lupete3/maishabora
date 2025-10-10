@@ -44,7 +44,6 @@
                             @enderror
                         </div>
 
-
                         <div class="col-md-6 mb-3">
                             <label>Montant à retenir</label>
                             <input type="number" step="0.00" wire:model="a_retenir" class="form-control" />
@@ -53,10 +52,10 @@
                             @enderror
                         </div>
 
-                        {{-- <div class="col-md-12 mb-3">
-                                <label>Description (facultatif)</label>
-                                <input type="text" wire:model="description" class="form-control" />
-                            </div> --}}
+                        <div class="col-md-12 mb-3">
+                            <label>Description (facultatif)</label>
+                            <input type="text" wire:model="description" class="form-control" />
+                        </div>
 
                     </div>
 
