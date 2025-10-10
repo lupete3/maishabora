@@ -262,7 +262,6 @@ class MemberDetails extends Component
         }
     }
 
-
     public function submitRetrait()
     {
         Gate::authorize('retrait-compte-membre', User::class);
@@ -318,10 +317,8 @@ class MemberDetails extends Component
                 $retenuMiseAccount->save();
             }
 
-
             $account->save();
             $agentAccount->save();
-
 
             // Création de la transaction
             $transaction = Transaction::create([
