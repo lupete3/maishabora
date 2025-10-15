@@ -31,12 +31,16 @@ class PurchaseMembershipCard extends Component
     public $members = [];
     public $results = [];
 
+    public $agent_id;
+    public $agents;
+
     protected $rules = [
-        'code' => 'required',
+        'agent_id' => 'nullable|exists:users,id',
         'member_id' => 'required|exists:users,id',
-        'currency' => 'required|in:USD,CDF',
-        'price' => 'required|numeric|min:0.01',
-        'subscription_amount' => 'required|numeric|min:0.01',
+        'code' => 'required|string|unique:membership_cards,code',
+        'currency' => 'required|string',
+        'price' => 'required|numeric|min:0',
+        'subscription_amount' => 'required|numeric|min:0',
     ];
 
     public function mount()
@@ -44,7 +48,9 @@ class PurchaseMembershipCard extends Component
         Gate::authorize('afficher-carnet', User::class);
 
         $this->members = User::where('role', 'membre')->get();
+        $this->agents = User::where('role', '!=','membre')->get();
     }
+
 
     public function updatedSearch()
     {
@@ -99,6 +105,7 @@ class PurchaseMembershipCard extends Component
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
+                'user_id' => $this->agent_id,
                 'currency' => $this->currency,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
@@ -181,7 +188,7 @@ class PurchaseMembershipCard extends Component
     {
         // Si l'utilisateur est un agent, il voit toutes les cartes des membres qu'il gère
 
-        $cards = MembershipCard::with('member')
+        $cards = MembershipCard::with(['member', 'agent'])
             ->when($this->searchCard, function ($query) {
                 $query->where('code', 'like', "%{$this->searchCard}%")
                     ->orWhereHas('member', function ($q) {
@@ -200,11 +207,6 @@ class PurchaseMembershipCard extends Component
             'cards' => $cards->latest()->paginate($this->perPage)
         ]);
     }
-
-    // public function confirmDesactivateMembershipCard($cardId)
-    // {
-    //     $this->dispatch('openModal', name: 'modalDesactivateMembershipCard');
-    // }
 
     public function desactivateorActivateMembershipCard($cardId, $action)
     {

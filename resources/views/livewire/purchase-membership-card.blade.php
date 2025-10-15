@@ -56,11 +56,23 @@
                         @error('card_id') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-3 mb-3">
                         <label>Montant quotidien à épargner</label>
                         <input type="number" step="0.01" wire:model="subscription_amount" class="form-control" />
                         @error('card_id') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label for="agent_id" class="form-label">Agent</label>
+                        <select wire:model="agent_id" id="agent_id" class="form-select">
+                            <option value="">-- Sélectionner un agent --</option>
+                            @foreach($agents as $agent)
+                                <option value="{{ $agent->id }}">{{ $agent->name }} ({{ $agent->email }})</option>
+                            @endforeach
+                        </select>
+                        @error('agent_id') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+
                 </div>
 
                 <button type="submit" class="btn btn-success">
@@ -97,6 +109,7 @@
                                 <th>Devise</th>
                                 <th>Date de début</th>
                                 <th>Date de fin</th>
+                                <th>Agent</th>
                                 <th>Status</th>
                                 @can('supprimer-carnet', App\Models\User::class)
                                 <th>Actions</th>
@@ -115,6 +128,7 @@
                                     <td>{{ $card->currency }}</td>
                                     <td>{{ \Carbon\Carbon::parse($card->start_date)->format('d/m/Y') }}</td>
                                     <td>{{ \Carbon\Carbon::parse($card->end_date)->format('d/m/Y') }}</td>
+                                    <td>{{ optional($card->agent)->name. ' '.optional($card->agent)->postnom. ' '.optional($card->agent)->prenom ?? 'N/A' }}</td>
                                     <td>
                                         @if ($card->is_active)
                                             <span class="badge bg-success">Active</span>

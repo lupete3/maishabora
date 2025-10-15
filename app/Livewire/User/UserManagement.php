@@ -3,14 +3,13 @@
 namespace App\Livewire\User;
 
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Account;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
-use Illuminate\Validation\Rules;
-use Livewire\WithPagination;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Spatie\Permission\Models\Role;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Throwable;
 
 class UserManagement extends Component
@@ -18,6 +17,8 @@ class UserManagement extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
+    // 🧩 Propriétés
+    public $userId = null;
     public string $name = '';
     public string $postnom = '';
     public ?string $prenom = null;
@@ -26,73 +27,83 @@ class UserManagement extends Component
     public ?string $adresse_physique = null;
     public ?string $profession = null;
     public string $email = '';
-    public string|null $password = null;
-    public $roles = [];
-
-    public string $role = 'membre'; // Valeur par défaut
+    public ?string $password = null;
+    public array $roles = [];
+    public string $role = 'membre';
     public bool $status = false;
-    public $search = '';
-    public $perPage = 10; // Corrigé: généralement 10 par page
-    public $editModal = false;
-    public $userId;
-    public $selectedMemberId = null;
+    public string $search = '';
+    public int $perPage = 10;
+    public bool $editModal = false;
 
+    public $roleAgent;
+    public $rolesAgents = ['admin', 'caissier', 'recouvreur', 'receptionniste', 'membre', 'comptable'];
+
+    // ✅ Validation centralisée
+    protected function rules()
+    {
+        $uniquePhone = Rule::unique('users', 'telephone')
+            ->ignore($this->userId);
+
+        $uniqueEmail = Rule::unique('users', 'email')
+            ->ignore($this->userId);
+
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'postnom' => ['required', 'string', 'max:255'],
+            'prenom' => ['nullable', 'string', 'max:255'],
+            'date_naissance' => ['required', 'date'],
+            'telephone' => ['required', 'regex:/^\+243\d{9}$/', $uniquePhone],
+            'adresse_physique' => ['nullable', 'string'],
+            'profession' => ['nullable', 'string'],
+            'email' => ['required', 'email', 'max:255', $uniqueEmail],
+            'role' => ['nullable'],
+            'status' => ['required', 'boolean'],
+        ];
+    }
+
+    protected $messages = [
+        'name.required' => 'Le nom est obligatoire.',
+        'postnom.required' => 'Le post-nom est obligatoire.',
+        'date_naissance.required' => 'La date de naissance est obligatoire.',
+        'telephone.required' => 'Le numéro de téléphone est obligatoire.',
+        'telephone.regex' => 'Le numéro doit commencer par +243 et contenir 9 chiffres après.',
+        'telephone.unique' => 'Ce numéro est déjà utilisé.',
+        'email.required' => 'L’adresse e-mail est obligatoire.',
+        'email.email' => 'L’adresse e-mail doit être valide.',
+        'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
+        'status.required' => 'Choisir le statut du membre.',
+    ];
+
+    // ✅ Réinitialise le formulaire
+    private function resetForm()
+    {
+        $this->reset([
+            'userId', 'name', 'postnom', 'prenom', 'date_naissance',
+            'telephone', 'adresse_physique', 'profession',
+            'email', 'password', 'role', 'status', 'roles'
+        ]);
+    }
+
+    // ✅ Créer un membre
     public function submit()
     {
         try {
-            $validated = $this->validate([
-                'name' => ['required', 'string', 'max:255'],
-                'postnom' => ['required', 'string', 'max:255'],
-                'prenom' => ['nullable', 'string', 'max:255'],
-                'date_naissance' => ['required', 'date'],
-                'telephone' => [
-                    'required',
-                    'string',
-                    'max:20',
-                    'regex:/^\+243\d{9}$/',
-                    Rule::unique('users')->where(function ($query) {
-                        return $query->where('name', $this->name)
-                                    ->where('postnom', $this->postnom)
-                                    ->where('telephone', $this->telephone);
-                    }),
-                ],
-                'adresse_physique' => ['nullable', 'string'],
-                'profession' => ['nullable', 'string'],
-                'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:' . User::class],
-                'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
-                'status' => ['required','in:0,1'],
-            ],[
-                'name.required' => 'Le nom est obligatoire.',
-                'postnom.required' => 'Le post-nom est obligatoire.',
-                'prenom.string' => 'Le prénom doit être une chaîne de caractères.',
-                'date_naissance.required' => 'La date de naissance est obligatoire.',
-                'date_naissance.date' => 'La date de naissance doit être une date valide.',
-                'telephone.regex' => 'Le numéro de téléphone doit commencer par +243 et contenir 9 chiffres après.',
-                'telephone.unique' => 'Un membre avec le même nom, post-nom et numéro existe déjà.',
-                'adresse_physique.string' => 'L’adresse physique doit être une chaîne de caractères.',
-                'profession.string' => 'La profession doit être une chaîne de caractères.',
-                'email.required' => 'L’adresse e-mail est obligatoire.',
-                'email.email' => 'L’adresse e-mail doit être valide.',
-                'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
-                'role.in' => 'Le rôle sélectionné est invalide.',
-                'status.required' => 'Choisir le status du membre.',
-                'status.in' => 'Le status sélectionné est invalide.',
-            ]);
-
+            $validated = $this->validate();
             $validated['password'] = Hash::make('1234');
             $validated['status'] = (int) $this->status;
+            $validated['role'] = $this->roleAgent ?? 'membre';
             $validated['code'] = $this->generateUniqueAccountCode();
 
             $user = User::create($validated);
 
-            //  ➜ Ici on attache les rôles sélectionnés :
+            // Attribution des rôles
             if (!empty($this->roles)) {
                 $user->syncRoles($this->roles);
             } else {
-                $user->assignRole($this->role ?? 'Membre');
+                $user->assignRole($this->role ?? 'membre');
             }
 
-            // Créer les deux comptes (USD et CDF)
+            // Création automatique des comptes
             foreach (['USD', 'CDF'] as $currency) {
                 Account::create([
                     'user_id' => $user->id,
@@ -101,197 +112,120 @@ class UserManagement extends Component
                 ]);
             }
 
-            $this->reset([
-                'name',
-                'postnom',
-                'prenom',
-                'date_naissance',
-                'telephone',
-                'adresse_physique',
-                'profession',
-                'email',
-                'role',
-                'status'
-            ]);
+            $this->resetForm();
             $this->dispatch('closeModal', name: 'modalMembre');
             $this->dispatch('$refresh');
             notyf()->success('Membre enregistré avec succès !');
-
         } catch (Throwable $th) {
-            notyf()->error('Erreur lors de l\'enregistrement du membre.');
+            report($th);
+            dd($th);
+            notyf()->error('Erreur lors de l’enregistrement du membre.');
         }
     }
 
+    // ✅ Charger les données d’un membre pour modification
     public function edit($idUser)
     {
         try {
             $user = User::findOrFail($idUser);
-
             $this->userId = $user->id;
-            $this->name = $user->name;
-            $this->postnom = $user->postnom;
-            $this->prenom = $user->prenom;
-            $this->date_naissance = $user->date_naissance;
-            $this->telephone = $user->telephone;
-            $this->adresse_physique = $user->adresse_physique;
-            $this->profession = $user->profession;
-            $this->email = $user->email;
-            $this->status = $user->status;
-            $this->password = null;
-            $this->editModal = true;
-
-            // ➜ Charger les rôles actuels :
+            $this->fill($user->only([
+                'name', 'postnom', 'prenom', 'date_naissance',
+                'telephone', 'adresse_physique', 'profession',
+                'email', 'status'
+            ]));
+            $this->roleAgent = $user->role;
             $this->roles = $user->roles()->pluck('name')->toArray();
-
+            $this->editModal = true;
             $this->dispatch('openModal', name: 'modalMembre');
-
-        } catch (ModelNotFoundException $e) {
+        } catch (ModelNotFoundException) {
             notyf()->error('Membre non trouvé.');
         } catch (Throwable $th) {
-            notyf()->error('Une erreur est survenue lors du chargement du membre.');
+            report($th);
+            notyf()->error('Erreur lors du chargement du membre.');
         }
     }
 
+    // ✅ Mettre à jour un membre
     public function update()
     {
         try {
-            $status = (int) $this->status;
+            $validated = $this->validate();
 
-            $rules = [
-                'name' => ['required', 'string', 'max:255'],
-                'postnom' => ['required', 'string', 'max:255'],
-                'prenom' => ['nullable', 'string', 'max:255'],
-                'date_naissance' => ['required', 'date'],
-                'telephone' => [
-                    'required',
-                    'string',
-                    'max:20',
-                    'regex:/^\\+243\\d{9}$/',
-                    Rule::unique('users')
-                        ->ignore($this->userId)
-                        ->where(function ($query) {
-                            return $query->where('name', $this->name)
-                                ->where('postnom', $this->postnom)
-                                ->where('telephone', $this->telephone);
-                        }),
-                ],
-                'adresse_physique' => ['nullable', 'string'],
-                'profession' => ['nullable', 'string'],
-                'email' => [
-                    'required', 'string', 'lowercase', 'email', 'max:255',
-                    Rule::unique('users')->ignore($this->userId),
-                ],
-                'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
-            ];
-
-            // Si mot de passe est fourni on l'ajoute aux règles
-            if ($this->password !== null && trim($this->password) !== '') {
-                $rules['password'] = ['min:4'];
-            }
-
-            $validated = $this->validate($rules);
-
-            $validated['status'] = $status;
-
-            if ($this->password !== null && trim($this->password) !== '') {
+            if (!empty($this->password)) {
                 $validated['password'] = Hash::make($this->password);
-            } else {
-                unset($validated['password']);
             }
 
-            // $user = User::findOrFail($this->userId)->update($validated);
             $user = User::findOrFail($this->userId);
             $user->update($validated);
 
-            // ➜ Synchroniser les rôles :
             $user->syncRoles($this->roles);
 
-
+            $this->resetForm();
             $this->dispatch('closeModal', name: 'modalMembre');
             $this->dispatch('$refresh');
             $this->resetPage();
-            notyf()->success('Mise à jour effectuée avec succès.');
 
-        } catch (ModelNotFoundException $e) {
+            notyf()->success('Mise à jour effectuée avec succès.');
+        } catch (ModelNotFoundException) {
             notyf()->error('Membre non trouvé.');
         } catch (Throwable $th) {
-            notyf()->error('Une erreur est survenue lors de la mise à jour.');
+            report($th);
+            notyf()->error('Erreur lors de la mise à jour du membre.');
         }
     }
 
+    // ✅ Génération code unique
     private function generateUniqueAccountCode()
     {
-        try {
-            do {
-                $lastAccount = User::whereNotNull('code')->orderByDesc('id')->first();
-                $number = $lastAccount ? intval(substr($lastAccount->code, 3)) + 1 : 1;
-                $code = 'IMF' . str_pad($number, 3, '0', STR_PAD_LEFT);
-            } while (User::where('code', $code)->exists());
+        do {
+            $last = User::whereNotNull('code')->orderByDesc('id')->first();
+            $num = $last ? intval(substr($last->code, 6)) + 1 : 1;
+            $code = '34' . now()->format('Y') . str_pad($num, 10, '0', STR_PAD_LEFT);
+        } while (User::where('code', $code)->exists());
 
-            return $code;
-
-        } catch (Throwable $th) {
-            throw $th; // On relève l’erreur plutôt que de la traiter ici
-        }
+        return $code;
     }
 
-    public function placeholder()
+    // ✅ Ouverture du modal pour ajout
+    public function openModal()
     {
-        return view('livewire.placeholder');
+        $this->resetForm();
+        $this->dispatch('openModal', name: 'modalMembre');
     }
 
     public function closeModal()
     {
-        $this->dispatch(event: 'closeModal', name: 'modalMembre');
+        $this->resetForm();
+        $this->dispatch('closeModal', name: 'modalMembre');
     }
 
-    public function openModal()
-    {
-        try {
-            $this->reset([
-                'name',
-                'postnom',
-                'prenom',
-                'date_naissance',
-                'telephone',
-                'adresse_physique',
-                'profession',
-                'email',
-                'role',
-                'status'
-            ]);
-            $this->dispatch('openModal', name: 'modalMembre');
-
-        } catch (Throwable $th) {
-            notyf()->error('Impossible d’ouvrir la fenêtre.');
-        }
-    }
-
+    // ✅ Affichage
     public function render()
     {
         try {
+            $query = User::query();
+
             if ($this->search) {
-                $members = User::where('code', 'like', "%{$this->search}%")
-                    ->orWhere('name', 'like', "%{$this->search}%")
-                    ->orWhere('postnom', 'like', "%{$this->search}%")
-                    ->orWhere('prenom', 'like', "%{$this->search}%")
-                    ->orWhere('date_naissance', 'like', "%{$this->search}%")
-                    ->orWhere('telephone', 'like', "%{$this->search}%")
-                    ->orWhere('adresse_physique', 'like', "%{$this->search}%")
-                    ->orWhere('profession', 'like', "%{$this->search}%")
-                    ->paginate($this->perPage);
+                $query->where(function ($q) {
+                    $q->where('code', 'like', "%{$this->search}%")
+                      ->orWhere('name', 'like', "%{$this->search}%")
+                      ->orWhere('postnom', 'like', "%{$this->search}%")
+                      ->orWhere('prenom', 'like', "%{$this->search}%")
+                      ->orWhere('telephone', 'like', "%{$this->search}%");
+                });
             } else {
-                $members = User::where('role', 'membre')->paginate($this->perPage);
+                $query->whereHas('roles', fn($r) => $r->where('name', 'membre'));
             }
 
+            $members = $query->paginate($this->perPage);
             $roles_user = Role::all();
 
-            return view('livewire.user.user-management', ['members' => $members, 'roles_user' => $roles_user]);
-
+            return view('livewire.user.user-management', compact('members', 'roles_user'));
         } catch (Throwable $th) {
+            report($th);
             notyf()->error('Erreur lors du chargement des membres.');
-            return view('livewire.user.user-management', ['members' => []]);
+            return view('livewire.user.user-management', ['members' => collect()]);
         }
     }
 }
-

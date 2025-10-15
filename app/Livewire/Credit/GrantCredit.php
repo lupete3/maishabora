@@ -156,7 +156,7 @@ class GrantCredit extends Component
                 'installments'  => $this->installments,
                 'start_date'    => $this->start_date,
                 'due_date'      => Carbon::parse($this->start_date),
-                'credit_type'=> $this->repayment_type,
+                'credit_type' => $this->repayment_type,
                 'frais_credit'  => $this->creditFrisFix,
                 'repayment_type' => $this->frequency,
                 'is_paid'       => false,
@@ -271,34 +271,50 @@ class GrantCredit extends Component
                 }
                 $lastDueDate = $currentDate->copy();
             } else {
-                // Remboursement à annuités constantes
-                $monthlyRate = $this->interest_rate / 100;
-                if ($monthlyRate > 0) {
-                    // Formule de l'annuité constante : C = (PV * r) / [1 - (1 + r)^-n]
-                    $annuity = $this->amount * $monthlyRate / (1 - pow(1 + $monthlyRate, -$this->installments));
-                } else {
-                    $annuity = $this->amount / $this->installments;
-                }
+                // --- Calculs initiaux basés sur la logique de l'intérêt forfaitaire constant ---
+
+                // 1. Calcul de la part de capital constante (Arrondie une fois)
+                $monthlyCapital = round($this->amount / $this->installments, 2);
+                // Ex: 400 / 3 = 133.33 (si installments=3) ou 400 / 4 = 100.00 (si installments=4)
+
+                // 2. Calcul de l'INTÉRÊT FORFAITAIRE CONSTANT par mensualité
+                // On applique le taux ($this->interest_rate / 100) au capital initial ($this->amount)
+                $monthlyInterest = round($this->amount * ($this->interest_rate / 100), 2);
+                // Ex: 400 * 0.05 = 20.00 OU 500 * 0.05 = 25.00
+
+                // 3. Calcul de la mensualité constante (annuité) pour toutes les périodes sauf la dernière
+                $annuity_flat = $monthlyCapital + $monthlyInterest;
+                // Ex: 133.33 + 20.00 = 153.33 (si 400/3) OU 100.00 + 20.00 = 120.00 (si 400/4)
+                // Ex: 125.00 + 25.00 = 150.00 (si 500/4)
 
                 $remainingCapital = $this->amount;
 
                 for ($i = 0; $i < $this->installments; $i++) {
-                    $interest = $remainingCapital * $monthlyRate;
-                    $capitalPart = $annuity - $interest;
 
-                    // Ajustement pour la dernière échéance
+                    $interest = $monthlyInterest; // Intérêt forfaitaire constant
+
+                    // La part de capital est la part constante, sauf à la dernière échéance
+                    $capitalPart = $monthlyCapital;
+
+                    // La mensualité (annuity) est la valeur constante par défaut
+                    $annuity = $annuity_flat;
+
+                    // --- AJUSTEMENT pour la dernière échéance ---
                     if ($i === $this->installments - 1) {
+                        // La partie capital doit égaler le capital restant pour solder le crédit (pour corriger les erreurs d'arrondi)
                         $capitalPart = $remainingCapital;
+                        // La mensualité est recalculée avec le capital restant exact et l'intérêt fixe
                         $annuity = $capitalPart + $interest;
                     }
 
                     Repayment::create([
-                        'credit_id'        => $credit->id,
-                        'due_date'         => $currentDate->toDateString(),
-                        'expected_amount'  => round($annuity, 2),
-                        'total_due'        => round($annuity, 2),
+                        'credit_id'          => $credit->id,
+                        'due_date'           => $currentDate->toDateString(),
+                        'expected_amount'    => round($annuity, 2),
+                        'total_due'          => round($annuity, 2),
                     ]);
 
+                    // Déduction du capital remboursé
                     $remainingCapital -= $capitalPart;
 
                     // Incrémentation de la date
