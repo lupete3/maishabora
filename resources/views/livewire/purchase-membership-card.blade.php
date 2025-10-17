@@ -43,7 +43,7 @@
 
                     <div class="col-md-3 mb-3">
                         <label>Devise</label>
-                        <select wire:model="currency" class="form-control">
+                        <select wire:model="currency" class="form-select">
                             <option value="USD">USD</option>
                             <option value="CDF">CDF</option>
                         </select>
@@ -63,7 +63,7 @@
                     </div>
 
                     <div class="col-md-3 mb-3">
-                        <label for="agent_id" class="form-label">Agent</label>
+                        <label for="agent_id">Agent</label>
                         <select wire:model="agent_id" id="agent_id" class="form-select">
                             <option value="">-- Sélectionner un agent --</option>
                             @foreach($agents as $agent)
@@ -75,9 +75,10 @@
 
                 </div>
 
-                <button type="submit" class="btn btn-success">
+                <button type="button" class="btn btn-success" wire:click="showConfirmation" wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    Valider l'achat de carte</button>
+                    Valider l'achat de carte
+                </button>
             </form>
         </div>
     </div>
@@ -106,7 +107,6 @@
                                 <th>Membre</th>
                                 <th>Prix de la carte</th>
                                 <th>Montant quotidien</th>
-                                <th>Devise</th>
                                 <th>Date de début</th>
                                 <th>Date de fin</th>
                                 <th>Agent</th>
@@ -125,7 +125,6 @@
                                     </td>
                                     <td>{{ number_format($card->price, 2) }} {{ $card->currency }}</td>
                                     <td>{{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}</td>
-                                    <td>{{ $card->currency }}</td>
                                     <td>{{ \Carbon\Carbon::parse($card->start_date)->format('d/m/Y') }}</td>
                                     <td>{{ \Carbon\Carbon::parse($card->end_date)->format('d/m/Y') }}</td>
                                     <td>{{ optional($card->agent)->name. ' '.optional($card->agent)->postnom. ' '.optional($card->agent)->prenom ?? 'N/A' }}</td>
@@ -176,4 +175,7 @@
             </div>
         </div>
     </div>
+
+    @include('livewire.validePurchaseCard')
+    
 </div>

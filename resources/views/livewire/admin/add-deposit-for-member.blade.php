@@ -52,6 +52,7 @@
                             <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                             {{ __('Ajouter') }}
                         </button>
+                        
                     </div>
                 </form>
             @endif

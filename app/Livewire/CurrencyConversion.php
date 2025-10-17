@@ -32,6 +32,8 @@ class CurrencyConversion extends Component
     public $members = [];
     public $results = [];
 
+    public $showConfirmationModal = false;
+
     public $rates = [
         'USD' => 'CDF',
         'CDF' => 'USD',
@@ -69,6 +71,41 @@ class CurrencyConversion extends Component
             $this->selected_user_id = $user->id;
             $this->dispatch('userSelected', $user->id);
         }
+    }
+
+    public function showConfirmation()
+    {
+        $this->validate([
+            'from_currency' => 'required|in:USD,CDF',
+            'to_currency' => 'required|in:USD,CDF|different:from_currency',
+            'amount' => 'required|numeric|min:0.01',
+            'conversion_type' => 'required|in:central,client',
+        ]);
+
+        if ($this->conversion_type === 'client') {
+            $this->validate([
+                'selected_user_id' => 'required|exists:users,id',
+            ]);
+        }
+
+        // Récupérer le taux de change actuel pour l’afficher dans le modal
+        $rateRecord = \App\Models\ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
+
+        if (!$rateRecord) {
+            $this->addError('amount', 'Aucun taux de change défini pour cette conversion.');
+            return;
+        }
+
+        $this->exchange_rate = $rateRecord->rate;
+
+        // Afficher le modal de confirmation
+        $this->showConfirmationModal = true;
+    }
+
+    public function confirmConversion()
+    {
+        $this->showConfirmationModal = false;
+        $this->convert();
     }
 
     public function convert()

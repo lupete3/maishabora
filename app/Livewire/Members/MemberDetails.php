@@ -40,6 +40,11 @@ class MemberDetails extends Component
 
     public $cardDetail = [];
 
+    public $showConfirmDepositNormal = false;
+    public $showConfirmDepositCarte = false;
+    public $showConfirmRetraitNormal = false;
+    public $showConfirmRetraitCarte = false;
+
     public function mount($id)
     {
         Gate::authorize('afficher-client', User::class);
@@ -55,6 +60,18 @@ class MemberDetails extends Component
             ->with(['contributions'])
             ->latest()->get();
     }
+
+    // // Méthodes pour afficher les modals
+    // public function showConfirmDepositNormal() { $this->validate(['currency'=>'required','amount'=>'required|numeric']); $this->showConfirmDepositNormal = true; }
+    // public function showConfirmDepositCarte() { $this->validate(['card_id'=>'required','amount'=>'required|numeric']); $this->showConfirmDepositCarte = true; }
+    // public function showConfirmRetraitNormal() { $this->validate(['currency'=>'required','amount'=>'required|numeric']); $this->showConfirmRetraitNormal = true; }
+    // public function showConfirmRetraitCarte() { $this->validate(['card_id'=>'required']); $this->showConfirmRetraitCarte = true; }
+
+    // // Méthodes pour confirmer
+    // public function confirmDepositNormal() { $this->showConfirmDepositNormal = false; $this->submit(); }
+    // public function confirmDepositCarte() { $this->showConfirmDepositCarte = false; $this->contribute(); }
+    // public function confirmRetraitNormal() { $this->showConfirmRetraitNormal = false; $this->submitRetrait(); }
+    // public function confirmRetraitCarte() { $this->showConfirmRetraitCarte = false; $this->submitRetraitCarte(); }
 
     //Make Deposit to customer Account
     public function submit()
@@ -517,6 +534,7 @@ class MemberDetails extends Component
         $this->dispatch('openModal', name: 'modalDepositMembre');
 
     }
+
     public function openRetraitModal()
     {
         $this->dispatch('openModal', name: 'modalRetraitMembre');
@@ -562,5 +580,4 @@ class MemberDetails extends Component
             'cards' => $this->cards
         ]);
     }
-
 }

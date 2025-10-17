@@ -34,6 +34,9 @@ class PurchaseMembershipCard extends Component
     public $agent_id;
     public $agents;
 
+    public $showConfirmationModal = false;
+    public $selectedMemberName;
+
     protected $rules = [
         'agent_id' => 'nullable|exists:users,id',
         'member_id' => 'required|exists:users,id',
@@ -50,7 +53,6 @@ class PurchaseMembershipCard extends Component
         $this->members = User::where('role', 'membre')->get();
         $this->agents = User::where('role', '!=','membre')->get();
     }
-
 
     public function updatedSearch()
     {
@@ -182,6 +184,22 @@ class PurchaseMembershipCard extends Component
             DB::rollBack();
             notyf()->error("Cette carte existe déjà");
         }
+    }
+
+    public function showConfirmation()
+    {
+        $this->validate();
+
+        $member = User::find($this->member_id);
+        $this->selectedMemberName = $member ? "{$member->name} {$member->postnom}" : 'Inconnu';
+
+        $this->showConfirmationModal = true;
+    }
+
+    public function confirmPurchase()
+    {
+        $this->showConfirmationModal = false;
+        $this->submit();
     }
 
     public function render()

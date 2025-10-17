@@ -126,7 +126,7 @@
 
                             </div>
 
-                            <a href="{{ route('member.transactions.export', ['id' => $member->id]) }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                            {{-- <a href="{{ route('member.transactions.export', ['id' => $member->id]) }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
                                 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
                                 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
                                 disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
@@ -139,7 +139,7 @@
                                     <line x1="12" x2="12" y1="15" y2="3"></line>
                                 </svg>
                                 Télécharger PDF
-                            </a>
+                            </a> --}}
                         </div>
                     </div>
 
