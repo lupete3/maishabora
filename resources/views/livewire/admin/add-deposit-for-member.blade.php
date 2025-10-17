@@ -18,7 +18,7 @@
                 </div>
             </div>
             @if ($operation_type == 'normal')
-                <form wire:submit.prevent="submit">
+                <form wire:submit.prevent="showConfirmDepositNormal">
                     <div class="modal-body row">
                         <div class="col-md-6 mb-3">
                             <label>Devise</label>
@@ -52,13 +52,13 @@
                             <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                             {{ __('Ajouter') }}
                         </button>
-                        
+
                     </div>
                 </form>
             @endif
 
             @if ($operation_type == 'carte')
-                <form wire:submit.prevent="contribute">
+                <form wire:submit.prevent="showConfirmDepositNormal">
                     <div class="modal-body row">
                         <div class="col-md-12 mb-3">
                             <label>Choisir une carte</label>
@@ -99,4 +99,6 @@
             @endif
         </div>
     </div>
+
+    @include('livewire.admin.confirm-deposit')
 </div>

@@ -40,10 +40,8 @@ class MemberDetails extends Component
 
     public $cardDetail = [];
 
-    public $showConfirmDepositNormal = false;
-    public $showConfirmDepositCarte = false;
-    public $showConfirmRetraitNormal = false;
-    public $showConfirmRetraitCarte = false;
+    public $openConfirmDepositNormal = false;
+    public $openConfirmRetraitNormal = false;
 
     public function mount($id)
     {
@@ -61,17 +59,49 @@ class MemberDetails extends Component
             ->latest()->get();
     }
 
-    // // Méthodes pour afficher les modals
-    // public function showConfirmDepositNormal() { $this->validate(['currency'=>'required','amount'=>'required|numeric']); $this->showConfirmDepositNormal = true; }
-    // public function showConfirmDepositCarte() { $this->validate(['card_id'=>'required','amount'=>'required|numeric']); $this->showConfirmDepositCarte = true; }
-    // public function showConfirmRetraitNormal() { $this->validate(['currency'=>'required','amount'=>'required|numeric']); $this->showConfirmRetraitNormal = true; }
-    // public function showConfirmRetraitCarte() { $this->validate(['card_id'=>'required']); $this->showConfirmRetraitCarte = true; }
+    public function showConfirmDepositNormal()
+    {
+        $this->openConfirmDepositNormal = true;
+    }
 
-    // // Méthodes pour confirmer
-    // public function confirmDepositNormal() { $this->showConfirmDepositNormal = false; $this->submit(); }
-    // public function confirmDepositCarte() { $this->showConfirmDepositCarte = false; $this->contribute(); }
-    // public function confirmRetraitNormal() { $this->showConfirmRetraitNormal = false; $this->submitRetrait(); }
-    // public function confirmRetraitCarte() { $this->showConfirmRetraitCarte = false; $this->submitRetraitCarte(); }
+    public function closeDepositConfirmationModal()
+    {
+        $this->openConfirmDepositNormal = false;
+    }
+
+    public function makeDeposit()
+    {
+        $this->openConfirmDepositNormal = false;
+        if ($this->operation_type == 'normal') {
+            $this->submit();
+            return;
+        }elseif ($this->operation_type == 'carte') {
+            $this->contribute();
+            return;
+        }
+    }
+
+    public function showConfirmRetraitNormal()
+    {
+        $this->openConfirmRetraitNormal = true;
+    }
+
+    public function closeRetraitConfirmationModal()
+    {
+        $this->openConfirmRetraitNormal = false;
+    }
+
+    public function makeRetrait()
+    {
+        $this->openConfirmRetraitNormal = false;
+        if ($this->operation_type == 'normal') {
+            $this->submitRetrait();
+            return;
+        }elseif ($this->operation_type == 'carte') {
+            $this->submitRetraitCarte();
+            return;
+        }
+    }
 
     //Make Deposit to customer Account
     public function submit()
@@ -141,6 +171,7 @@ class MemberDetails extends Component
             $this->dispatch('closeModal', name: 'modalDepositMembre');
             $this->dispatch('$refresh');
             notyf()->success('Dépôt effectué avec succès !');
+            $this->resetInputFields();
             $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
 
         } catch (\Throwable $th) {
@@ -270,6 +301,7 @@ class MemberDetails extends Component
             $this->dispatch('closeModal', name: 'modalDepositMembre');
             $this->dispatch('$refresh');
             notyf()->success("Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
+            $this->resetInputFields();
             $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
 
         } catch (\Throwable $th) {
@@ -387,6 +419,7 @@ class MemberDetails extends Component
             $this->dispatch('closeModal', name: 'modalRetraitMembre');
             $this->dispatch('$refresh');
             notyf()->success('Retrait effectué avec succès !');
+            $this->resetInputFields();
             $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
 
         } catch (\Throwable $th) {
@@ -507,6 +540,7 @@ class MemberDetails extends Component
             $this->dispatch('closeModal', name: 'modalRetraitMembre');
             $this->dispatch('$refresh');
             notyf()->success('Retrait effectué avec succès !');
+            $this->resetInputFields();
             $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
 
         } catch (\Throwable $th) {
@@ -579,5 +613,17 @@ class MemberDetails extends Component
             'transactions' => $transactions,
             'cards' => $this->cards
         ]);
+    }
+
+    public function resetInputFields()
+    {
+        $this->amount = 0;
+        $this->currency = '';
+        $this->description = '';
+        $this->card_id = null;
+        $this->selectedCard = null;
+        $this->contribution_date = null;
+        $this->operation_type = null;
+        $this->type = null;
     }
 }

@@ -20,7 +20,7 @@
             </div>
 
             @if ($operation_type == 'normal')
-                <form wire:submit.prevent="submitRetrait">
+                <form wire:submit.prevent="showConfirmRetraitNormal">
 
                     <div class="modal-body row">
 
@@ -71,7 +71,7 @@
             @endif
 
             @if ($operation_type == 'carte')
-                <form wire:submit.prevent="submitRetraitCarte">
+                <form wire:submit.prevent="showConfirmRetraitNormal">
 
                     <div class="modal-body row">
 
@@ -111,4 +111,7 @@
             @endif
         </div>
     </div>
+
+    @include('livewire.admin.confirm-retrait')
+
 </div>
