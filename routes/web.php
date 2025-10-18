@@ -31,6 +31,7 @@ use App\Http\Controllers\RegisterMemberByRecouvreurCOntroller;
 use App\Http\Controllers\RegisterMemberController;
 use App\Http\Controllers\RepaymentScheduleController;
 use App\Http\Controllers\RepaymentReportController;
+use App\Http\Controllers\ReportAIController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Auth;
@@ -170,6 +171,10 @@ Route::post('/logout', function () {
 
     return redirect('/login');
 })->name('logout');
+
+
+Route::get('/ai/reports/daily', [ReportAIController::class, 'dailySummary'])->name('ai.reports.daily');
+
 
 //Route to 404 page not found
 Route::fallback(function(){
