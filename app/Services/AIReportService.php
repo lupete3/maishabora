@@ -10,29 +10,36 @@ class AIReportService
 
     public function summarizeTransactions($transactions, $type = 'général')
     {
+        if ($transactions->isEmpty()) {
+            return "Aucune opération de type $type enregistrée pour cette période.";
+        }
+
         $text = $transactions->map(function ($t) {
-            return "{$t->type} de {$t->amount} {$t->currency} par {$t->user->name} le {$t->created_at->format('d/m/Y')}";
+            $account = optional($t->account)->name ?? "Compte #{$t->account_id}";
+            return "Compte {$account} : total {$t->total_amount} {$t->currency}";
         })->join('. ');
 
         $prompt = match ($type) {
-            'depots' => "Fais un résumé clair et synthétique des dépôts suivants : $text",
-            'retraits' => "Fais un résumé clair et synthétique des retraits suivants : $text",
-            'credits' => "Analyse ces crédits et résume les montants, durées et situations de remboursement : $text",
+            'depots' => "Fais un résumé clair des dépôts journaliers suivants, en indiquant les montants totaux et tendances : $text",
+            'retraits' => "Fais un résumé clair des retraits journaliers suivants, en indiquant les montants totaux et observations : $text",
+            'credits' => "Fais un résumé clair des crédits octroyés aujourd'hui, en précisant les comptes et montants : $text",
             default => "Résume ces opérations de microfinance : $text"
         };
 
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
-            'Content-Type'  => 'application/json',
-        ])->post($this->baseUrl, [
-            'model' => 'openai/gpt-4-turbo-preview',
-            'messages' => [
-                ['role' => 'system', 'content' => 'Tu es un expert en microfinance et comptabilité.'],
-                ['role' => 'user', 'content' => $prompt],
-            ],
-        ]);
+        $response = Http::withOptions(['verify' => false]) // ⚠️ désactive SSL seulement en local
+            ->withHeaders([
+                'Authorization' => 'Bearer ' . env('OPENROUTER_API_KEY'),
+                'Content-Type'  => 'application/json',
+            ])->post($this->baseUrl, [
+                'model' => 'openai/gpt-4-turbo-preview',
+                'messages' => [
+                    ['role' => 'system', 'content' => 'Tu es un expert en gestion de microfinance. Rédige des résumés simples et professionnels.'],
+                    ['role' => 'user', 'content' => $prompt],
+                ],
+            ]);
 
-        return $response->json()['choices'][0]['message']['content'] ?? 'Aucun résumé généré.';
+        return $response->json()['choices'][0]['message']['content'] ?? 'Résumé non généré.';
     }
+
 }
 

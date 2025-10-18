@@ -20,15 +20,33 @@ class ReportAIController extends Controller
     {
         $today = now()->toDateString();
 
-        // Récupérer les transactions du jour
-        $deposits = Transaction::where('type', 'depot')->whereDate('created_at', $today)->get();
-        $withdrawals = Transaction::where('type', 'retrait')->whereDate('created_at', $today)->get();
-        $credits = Credit::whereDate('created_at', $today)->get();
+        // --- DÉPÔTS ---
+        $depositTypes = ['dépôt', 'mise_quotidienne'];
+        $deposits = Transaction::whereIn('type', $depositTypes)
+            ->whereDate('created_at', $today)
+            ->selectRaw('account_id, currency, SUM(amount) as total_amount')
+            ->groupBy('account_id', 'currency')
+            ->get();
 
-        // Générer les résumés
-        $summaryDeposits = $this->ai->summarizeTransactions($deposits, 'depots');
-        $summaryWithdrawals = $this->ai->summarizeTransactions($withdrawals, 'retraits');
-        $summaryCredits = $this->ai->summarizeTransactions($credits, 'credits');
+        // --- RETRAITS ---
+        $withdrawalTypes = ['retrait', 'retrait_carte_adhesion'];
+        $withdrawals = Transaction::whereIn('type', $withdrawalTypes)
+            ->whereDate('created_at', $today)
+            ->selectRaw('account_id, currency, SUM(amount) as total_amount')
+            ->groupBy('account_id', 'currency')
+            ->get();
+
+        // --- CRÉDITS ---
+        $credits = Transaction::where('type', 'crédit')
+            ->whereDate('created_at', $today)
+            ->selectRaw('account_id, currency, SUM(amount) as total_amount')
+            ->groupBy('account_id', 'currency')
+            ->get();
+
+        // Générer les résumés IA
+        $summaryDeposits = app(\App\Services\AIReportService::class)->summarizeTransactions($deposits, 'depots');
+        $summaryWithdrawals = app(\App\Services\AIReportService::class)->summarizeTransactions($withdrawals, 'retraits');
+        $summaryCredits = app(\App\Services\AIReportService::class)->summarizeTransactions($credits, 'credits');
 
         return view('reports.daily-summary', compact(
             'summaryDeposits',
@@ -37,4 +55,5 @@ class ReportAIController extends Controller
             'today'
         ));
     }
+
 }
