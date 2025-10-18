@@ -83,6 +83,9 @@ class MemberDetails extends Component
 
     public function showConfirmRetraitNormal()
     {
+        if ($this->operation_type == 'carte') {
+            $this->cardDetail = MembershipCard::find($this->card_id);
+        }
         $this->openConfirmRetraitNormal = true;
     }
 

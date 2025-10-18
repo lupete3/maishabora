@@ -1,7 +1,7 @@
 <!-- resources/views/livewire/admin/confirm-retrait.blade.php -->
 @if($openConfirmRetraitNormal)
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50">
-        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
+        <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg m-2">
             <div class="flex items-center justify-between pb-4 border-b">
                 <h3 class="text-lg font-semibold">Confirmer le Retrait</h3>
                 <button wire:click="closeWithdrawalConfirmationModal" class="text-gray-500 hover:text-gray-700">
@@ -9,9 +9,17 @@
                 </button>
             </div>
             <div class="mt-4">
-                <p>Vous êtes sur le point de faire un retrait de <strong>{{ $amount }} {{ $currency }}</strong>.</p>
-                <p>Pour le membre <strong>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</strong>, avec le compte <strong>{{ $member->code }}</strong>.</p>
+                <p>Client <strong>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</strong></p> 
+                <p>Compte <strong>{{ $member->code }}</strong></p>  
                 <p>Du type d'opération <strong>{{ ucfirst($operation_type) }}</strong>.</p>
+                @if ($operation_type == 'carte')
+                    <p>Retrait depuis la carte <strong>{{ $cardDetail->code }}</strong>.</p>
+                    <p>Solde disponible : <strong>{{ number_format($cardDetail->contributions->where('is_paid', true)->sum('amount'), 2) }} {{ $cardDetail->currency }}</strong>.</p>
+                    <p>Retenue est de <strong>{{ number_format($cardDetail->subscription_amount, 2) }} {{ $cardDetail->currency }}</strong>.</p>
+                @else
+                    <p>Retrait normal de <strong>{{ $amount }} {{ $currency }}</strong>.</p>
+                    <p>Retenu <strong>{{ $a_retenir }} {{ $currency }}</strong>.</p>
+                @endif
                 <p>Voulez-vous vraiment continuer ?</p>
             </div>
             <div class="flex justify-end mt-6 space-x-4">
