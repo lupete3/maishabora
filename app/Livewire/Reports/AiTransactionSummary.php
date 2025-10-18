@@ -75,7 +75,7 @@ class AiTransactionSummary extends Component
             ->get();
 
         // --- Crédits ---
-        $credits = Transaction::where('type', 'crédit')
+        $credits = Transaction::where('type', 'octroi_de_credit')
             ->whereBetween(DB::raw('DATE(created_at)'), [$start, $end])
             ->selectRaw('account_id, currency, SUM(amount) as total_amount')
             ->groupBy('account_id', 'currency')
