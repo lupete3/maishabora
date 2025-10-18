@@ -151,6 +151,7 @@ Route::middleware(['auth','auth.session','permission:afficher-rapport-client|aff
 });
 
 Route::middleware(['auth','auth.session','permission:afficher-logs'])->group(function () {
+    Route::get('/ai/reports/daily', [ReportAIController::class, 'index'])->name('ai.reports');
     Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
 });
 
@@ -171,9 +172,6 @@ Route::post('/logout', function () {
 
     return redirect('/login');
 })->name('logout');
-
-
-Route::get('/ai/reports/daily', [ReportAIController::class, 'dailySummary'])->name('ai.reports.daily');
 
 
 //Route to 404 page not found
