@@ -23,6 +23,7 @@ class ReportAIController extends Controller
         // --- DÉPÔTS ---
         $depositTypes = ['dépôt', 'mise_quotidienne'];
         $deposits = Transaction::whereIn('type', $depositTypes)
+            ->where('account_id', '!=', null)
             ->whereDate('created_at', $today)
             ->selectRaw('account_id, currency, SUM(amount) as total_amount')
             ->groupBy('account_id', 'currency')
@@ -31,13 +32,14 @@ class ReportAIController extends Controller
         // --- RETRAITS ---
         $withdrawalTypes = ['retrait', 'retrait_carte_adhesion'];
         $withdrawals = Transaction::whereIn('type', $withdrawalTypes)
+            ->where('account_id', '!=', null)
             ->whereDate('created_at', $today)
             ->selectRaw('account_id, currency, SUM(amount) as total_amount')
             ->groupBy('account_id', 'currency')
             ->get();
 
         // --- CRÉDITS ---
-        $credits = Transaction::where('type', 'crédit')
+        $credits = Transaction::where('type', 'octroi_de_credit')
             ->whereDate('created_at', $today)
             ->selectRaw('account_id, currency, SUM(amount) as total_amount')
             ->groupBy('account_id', 'currency')
