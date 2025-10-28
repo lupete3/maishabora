@@ -160,6 +160,3 @@
         });
     });
 </script>
-
-
-<!-- Table des adhésions (inchangée) -->

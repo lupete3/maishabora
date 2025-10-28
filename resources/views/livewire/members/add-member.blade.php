@@ -42,7 +42,7 @@
                                 <!-- Postnom -->
                                 <div class="col-md-4 mb-1">
                                     <label for="postnom" class="form-label">Postnom</label>
-                                    <input type="text" wire:model.defer="postnom" id="postnom" class="form-control"
+                                    <input type="text" wire:model.live="postnom" id="postnom" class="form-control"
                                         placeholder="Postnom" required />
                                     @error('postnom') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
@@ -294,29 +294,34 @@
                     </div>
                     @else
                     {{-- Edit Form (Tabs) --}}
-                    <ul class="nav nav-tabs" id="membreTab" role="tablist">
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link active" id="infos-tab" data-bs-toggle="tab"
-                                data-bs-target="#infos" type="button" role="tab">Infos de base</button>
+                    <ul class="nav nav-tabs row" id="membreTab" role="tablist">
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link active" id="infos-tab" data-bs-toggle="tab" data-bs-target="#infos" type="button" role="tab">
+                                <i class="bx bx-user me-1"></i> Infos de base
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="identite-tab" data-bs-toggle="tab"
-                                data-bs-target="#identite" type="button" role="tab">Identité & État civil</button>
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link" id="identite-tab" data-bs-toggle="tab" data-bs-target="#identite" type="button" role="tab">
+                                <i class="bx bx-id-card me-1"></i> Identité & État civil
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="eco-tab" data-bs-toggle="tab" data-bs-target="#eco"
-                                type="button" role="tab">Économie & Pro</button>
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link" id="eco-tab" data-bs-toggle="tab" data-bs-target="#eco" type="button" role="tab">
+                                <i class="bx bx-briefcase me-1"></i> Économie & Pro
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="reference-tab" data-bs-toggle="tab"
-                                data-bs-target="#reference" type="button" role="tab">Références &
-                                Localisation</button>
+                        <li class="nav-item col-md-6 mb-1" role="presentation">
+                            <button class="nav-link" id="reference-tab" data-bs-toggle="tab" data-bs-target="#reference" type="button" role="tab">
+                                <i class="bx bx-map me-1"></i> Références & Localisation
+                            </button>
                         </li>
-                        <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media"
-                                type="button" role="tab">Média / Docs</button>
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
+                                <i class="bx bx-image me-1"></i> Média / Docs
+                            </button>
                         </li>
                     </ul>
+                    <hr>
 
                     <div class="tab-content mt-3">
                         <!-- Onglet 1 : Infos de base -->
@@ -334,7 +339,7 @@
                                 <!-- Postnom -->
                                 <div class="col-md-4 mb-1">
                                     <label for="postnom" class="form-label">Postnom</label>
-                                    <input type="text" wire:model.defer="postnom" id="postnom"
+                                    <input type="text" wire:model.live="postnom" id="postnom"
                                         class="form-control" placeholder="Postnom" required />
                                     @error('postnom') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>

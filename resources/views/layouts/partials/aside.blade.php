@@ -4,7 +4,7 @@
             <span class="app-brand-logo demo ">
                 <img src="{{ asset('assets/img/logo.jpg') }}" width="50px" alt="" class="mr-2">
             </span>
-            {{ config( 'app.name', 'Maisha Bora') }}
+            {{ config('app.name', 'Maisha Bora') }}
         </a>
 
         <a class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -23,7 +23,6 @@
             </a>
         </li>
 
-        <!-- Liens Comptable -->
         @can('afficher-caisse-centrale')
             <li class="menu-item @if (request()->routeIs('cash.register')) active @endif">
                 <a wire:navigate href="{{ route('cash.register') }}" class="menu-link">
@@ -33,7 +32,6 @@
             </li>
         @endcan
 
-        <!-- Liens Comptable -->
         @can('depot-compte-membre')
             <li class="menu-item @if (request()->routeIs('agent.cloture')) active @endif">
                 <a wire:navigate href="{{ route('agent.cloture') }}" class="menu-link">
@@ -62,14 +60,12 @@
         @endcan
 
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs('report.credit.overview','report.credit.followup','credit.grant'))
-                active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage')) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-credit-card"></i>
                     <div data-i18n="Misc">Crédits</div>
                 </a>
                 <ul class="menu-sub">
-
                     @can('ajouter-credit', App\Models\User::class)
                         <li class="menu-item">
                             <a wire:navigate href="{{ route('credit.grant') }}" class="menu-link">
@@ -79,12 +75,12 @@
                         </li>
                     @endcan
                     @can('afficher-credit')
-                    <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
-                        <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
-                            <div data-i18n="Analytics">Gérer les Remboursements</div>
-                        </a>
-                    </li>
+                        <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
+                            <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-refresh"></i> <!-- Remboursements -->
+                                <div data-i18n="Analytics">Gérer les Remboursements</div>
+                            </a>
+                        </li>
                     @endcan
                 </ul>
             </li>
@@ -100,8 +96,7 @@
         @endcan
 
         @can('afficher-client', App\Models\User::class)
-            <li
-                class="menu-item @if (request()->routeIs('member.register','member.details','receipt.generate')) active @endif">
+            <li class="menu-item @if (request()->routeIs('member.register', 'member.details', 'receipt.generate')) active @endif">
                 <a wire:navigate href="{{ route('member.register') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
                     <div data-i18n="Analytics">Gestion des membres</div>
@@ -120,20 +115,21 @@
         @endcan
 
         @can('afficher-paye', App\Models\User::class)
-            <!-- Gestion de la paie -->
-        <li class="menu-item @if (request()->routeIs('payroll.index')) active @endif" >
-            <a wire:navigate href="{{ route('payroll.index') }}" class="menu-link">
-                <i class="menu-icon tf-icons bx bx-money"></i> <!-- Icône de paie -->
-                <div data-i18n="Analytics">Gestion de la Paie</div>
-            </a>
-        </li>
+            <li class="menu-item @if (request()->routeIs('payroll.index')) active @endif">
+                <a wire:navigate href="{{ route('payroll.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-money"></i> <!-- Icône de paie -->
+                    <div data-i18n="Analytics">Gestion de la Paie</div>
+                </a>
+            </li>
         @endcan
 
         @can('afficher-rapport-comptable', App\Models\User::class)
-            <!-- Simulation de crédit -->
-            <li class="menu-item @if (request()->routeIs('comptabilite.comptes','comptabilite.type_journal',
-                'comptabilite.journals','comptabilite.balance','comptabilite.resultats'))
-                active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs(
+                    'comptabilite.comptes',
+                    'comptabilite.type_journal',
+                    'comptabilite.journals',
+                    'comptabilite.balance',
+                    'comptabilite.resultats')) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône générale pour rapports -->
                     <div data-i18n="Misc">Comptabilité</div>
@@ -179,9 +175,15 @@
         @endcan
 
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs('rapports.clients','rapports.carnets','rapports.transactions',
-                'report.credit.overview','report.credit.followup','report.repayments','rapports.depot_retrait','member.accounts'))
-                active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs(
+                    'rapports.clients',
+                    'rapports.carnets',
+                    'rapports.transactions',
+                    'report.credit.overview',
+                    'report.credit.followup',
+                    'report.repayments',
+                    'rapports.depot_retrait',
+                    'member.accounts')) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-file"></i> <!-- Icône générale pour rapports -->
                     <div data-i18n="Misc">Rapports</div>
@@ -243,11 +245,10 @@
         @endcan
 
         @can('afficher-role')
-            <li class="menu-item @if (request()->routeIs('role.management','user.management'))
-                active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs('role.management', 'user.management')) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
-                <i class="menu-icon tf-icons bx bx-group"></i>
-                <div data-i18n="Misc">Rôles et Utilisateurs</div>
+                    <i class="menu-icon tf-icons bx bx-group"></i>
+                    <div data-i18n="Misc">Rôles et Utilisateurs</div>
                 </a>
                 <ul class="menu-sub">
                     @can('afficher-role')
@@ -273,7 +274,6 @@
         @endcan
 
         @can('afficher-logs', App\Models\User::class)
-            <!-- Simulation de crédit -->
             <li class="menu-item @if (request()->routeIs('ai.reports')) active @endif">
                 <a wire:navigate href="{{ route('ai.reports') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
@@ -289,7 +289,6 @@
         @endcan
 
         @can('afficher-simulation-credit', App\Models\User::class)
-            <!-- Simulation de crédit -->
             <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
                 <a wire:navigate href="{{ route('repayments.simulation') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->

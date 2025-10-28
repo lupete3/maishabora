@@ -497,16 +497,16 @@ class RegisterMember extends Component
             do {
                 // Récupère le dernier code utilisateur
                 $lastAccount = User::whereNotNull('code')->orderByDesc('id')->first();
-                
+
                 // Extrait le numéro incrémental après "34" + année (à partir du 6ème caractère)
-                $number = $lastAccount 
-                    ? intval(substr($lastAccount->code, 6)) + 1 
+                $number = $lastAccount
+                    ? intval(substr($lastAccount->code, 6)) + 1
                     : 1;
-                
+
                 // Génère le code avec : "34" + année + numéro incrémental (10 chiffres)
                 $code = '34' . now()->format('Y') . str_pad($number, 10, '0', STR_PAD_LEFT);
             } while (User::where('code', $code)->exists()); // Vérifie l'unicité
-            
+
             return $code;
         } catch (\Throwable $th) {
             throw $th; // Relève l'erreur
@@ -571,6 +571,20 @@ class RegisterMember extends Component
         } catch (Throwable $th) {
             notyf()->error('Erreur lors du chargement des membres.');
             return view('livewire.members.register-member', ['members' => []]);
+        }
+    }
+
+    // Dès que "name" change, on met à jour l'email
+    public function updatedPostnom($value)
+    {
+        if (!empty($value)) {
+            // Nettoyage du nom : espaces -> points, minuscules
+            $username = strtolower(str_replace(' ', '.', $value));
+            $name = strtolower(str_replace(' ', '.', $this->name));
+
+            $this->email = $name . $username . '@gmail.com';
+        } else {
+            $this->email = '';
         }
     }
 }
