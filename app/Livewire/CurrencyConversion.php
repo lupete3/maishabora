@@ -90,6 +90,7 @@ class CurrencyConversion extends Component
 
         // Récupérer le taux de change actuel pour l’afficher dans le modal
         $rateRecord = \App\Models\ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
+        
 
         if (!$rateRecord) {
             $this->addError('amount', 'Aucun taux de change défini pour cette conversion.');

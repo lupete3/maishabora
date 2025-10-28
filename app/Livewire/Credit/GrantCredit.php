@@ -23,9 +23,9 @@ class GrantCredit extends Component
     public $currency = 'USD';
     public $amount = 0;
     public $interest_rate = 5.0; // %
-    public $installments = 6;
+    public $installments = 3;
     public $start_date;
-    public $frequency = 'daily'; // 'daily', 'monthly', 'weekly'
+    public $frequency = 'monthly'; // 'daily', 'monthly', 'weekly'
     public $repayment_type = 'constant'; // 'constant', 'degressif'
     public $creditFrisFix = 3; // frais fixe de dossier
 
@@ -57,7 +57,7 @@ class GrantCredit extends Component
         Gate::authorize('ajouter-credit', User::class);
 
         $this->members = User::where('role', 'membre')->get();
-        $this->start_date = now()->format('Y-m-d');
+        $this->start_date = Carbon::today()->addMonth()->toDateString();
     }
 
     public function updatedSearch()
