@@ -24,7 +24,7 @@
                             <!-- Onglet Photo -->
                             <div class="tab-pane fade show active text-center" id="photo" role="tabpanel" aria-labelledby="photo-tab">
                                 @if ($member->photo_profil)
-                                    <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" class="rounded-circle shadow" width="120">
+                                    <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" class="shadow" width="90%">
                                 @else
                                     <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="rounded-circle shadow" width="120">
                                     <p class="text-muted mt-2">Aucune photo de profil disponible</p>
