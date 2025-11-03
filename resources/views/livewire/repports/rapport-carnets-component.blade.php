@@ -93,7 +93,7 @@
             <h5>Liste des carnets filtrés ({{ $carnets->total() }} résultats)</h5>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <input wire:model.live="search" type="text" placeholder="Recherche membre..." class="form-control" />
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Recherche membre..." class="form-control" />
                 </div>
                 <div class="col-md-3">
                     <select wire:model.lazy="currency" class="form-control">
@@ -134,9 +134,9 @@
                                 <td>
                                     {{ $pourcentage }}%
                                     <div class="progress bg-label-success" style="height: 6px;">
-                                        <div class="progress-bar bg-success" role="progressbar" 
-                                            style="width: {{ $pourcentage }}%" 
-                                            aria-valuenow="{{ $pourcentage }}" 
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                            style="width: {{ $pourcentage }}%"
+                                            aria-valuenow="{{ $pourcentage }}"
                                             aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                     </div>

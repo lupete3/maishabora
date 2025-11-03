@@ -41,7 +41,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31"><i
                                         class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="searchagent" class="form-control"
+                                <input type="search" wire:model.live.debounce.300ms="searchagent" class="form-control"
                                     placeholder="Rechercher Agent....." aria-label="Rechercher Agent....."
                                     aria-describedby="basic-addon-search31">
                             </div>
@@ -99,7 +99,7 @@
                         <button class="btn btn-show-table-options" type="button">Rechercher</button>
                         <div class="table-search-input">
                             <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
+                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control input-sm"
                                     placeholder="Rechercher..." style="min-width: 120px">
                             </label>
                         </div>

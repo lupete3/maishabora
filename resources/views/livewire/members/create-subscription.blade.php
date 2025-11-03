@@ -68,7 +68,7 @@
                     <div class="d-flex justify-content-between align-items-center mb-3">
                         <div>
                             <label for="perPage" class="form-label">{{ __('Afficher par page') }}</label>
-                            <select wire:model.live="perPage" id="perPage" class="form-select form-select-sm w-auto">
+                            <select wire:model.live.debounce.300ms="perPage" id="perPage" class="form-select form-select-sm w-auto">
                                 <option value="10">10</option>
                                 <option value="25">25</option>
                                 <option value="50">50</option>

@@ -6,6 +6,7 @@ use App\Helpers\UserLogHelper;
 use App\Models\MainCashRegister;
 use App\Models\AgentAccount;
 use App\Models\Account;
+use App\Models\Notification;
 use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -147,6 +148,13 @@ class FundTransferComponent extends Component
                     action: 'virement_caisse',
                     description: "Virement de {$this->amount} {$this->currency} vers {$this->transfer_type} ID:{$this->recipient_id}"
                 );
+
+                Notification::create([
+                    'user_id' => $this->recipient_id,
+                    'title' => 'Virement reçu',
+                    'message' => "Vous avez reçu un virement de {$this->amount} {$this->currency} dans votre compte.",
+                    'read' => false,
+                ]);
 
                 $this->reset(['amount', 'description', 'recipient_id']);
                 notyf()->success('Virement effectué avec succès.');

@@ -12,7 +12,7 @@
         <!-- Recherche -->
         <div class="card-header row">
             <div class="col-md-6 col-lg-4">
-                <input type="text" class="form-control" placeholder="Rechercher..." wire:model.live="search">
+                <input type="text" class="form-control" placeholder="Rechercher..." wire:model.live.debounce.300ms="search">
             </div>
         </div>
         <hr>

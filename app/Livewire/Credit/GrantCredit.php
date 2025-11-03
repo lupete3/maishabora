@@ -35,6 +35,10 @@ class GrantCredit extends Component
     public $search;
     public $results = [];
 
+    public $agent;
+    public $resultsAgent;
+    public $agent_id;
+
     public $showConfirmModal = false;
     public $creditSummary = [];
 
@@ -81,6 +85,27 @@ class GrantCredit extends Component
         }
     }
 
+    public function updatedAgent()
+    {
+        $query = trim($this->agent);
+        if ($query !== '') {
+            $this->resultsAgent = User::query()
+                ->where(function ($q) use ($query) {
+                    // $q->where('role', '!=', 'membre')
+                        $q->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+        } else {
+            $this->resultsAgent = [];
+        }
+    }
+
     public function selectResult(int $id)
     {
         $user = User::find($id);
@@ -89,6 +114,18 @@ class GrantCredit extends Component
             $this->results = [];
 
             $this->member_id = $user->id;
+            $this->dispatch('userSelected', $user->id);
+        }
+    }
+
+    public function selectResultAgent(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->agent_id = "{$user->name} {$user->postnom}";
+            $this->resultsAgent = [];
+
+            $this->agent_id = $user->id;
             $this->dispatch('userSelected', $user->id);
         }
     }
@@ -160,6 +197,7 @@ class GrantCredit extends Component
                 'frais_credit'  => $this->creditFrisFix,
                 'repayment_type' => $this->frequency,
                 'is_paid'       => false,
+                'agent_id'      => $this->agent_id,
             ]);
 
             // Enregistrement des transactions pour l'octroi du crédit
@@ -370,6 +408,7 @@ class GrantCredit extends Component
             'debut' => $this->start_date,
             'echeances' => "{$this->installments} × {$this->frequency}",
             'type' => ucfirst($this->repayment_type),
+            'agent' => User::find($this->agent_id) ? User::find($this->agent_id)->name . ' ' . User::find($this->agent_id)->postnom : 'Inconnu',
             'description' => $this->description ?: '—',
         ];
 

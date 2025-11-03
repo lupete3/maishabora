@@ -92,6 +92,7 @@
                 <th>Montant payé</th>
                 <th>Interêt</th>
                 <th>Pénalité</th>
+                <th>Agent Crédit</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -108,6 +109,7 @@
                     <td>{{ number_format($credit->repayments->where('is_paid', true)->sum('paid_amount'), 2) }} {{ $credit->currency }}</td>
                     <td>{{ number_format(($credit->amount * $credit->interest_rate / 100), 2) }} {{ $credit->currency }}</td>
                     <td>{{ number_format($credit->repayments->sum('penalty'), 2) }} {{ $credit->currency }}</td>
+                    <td>{{ $credit->agent ? $credit->agent->name . ' ' . $credit->agent->postnom : 'N/A' }}</td>
                     <td>{{ $credit->is_paid ? 'Remboursé' : 'En cours' }}</td>
                 </tr>
             @endforeach

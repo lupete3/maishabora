@@ -2,7 +2,7 @@
     <h4 class="mb-3">📋 Logs du système</h4>
 
     <input type="text" class="form-control mb-3" placeholder="Rechercher..."
-           wire:model.live="search">
+           wire:model.live.debounce.300ms="search">
     <div class="table-responsive">
     <table class="table table-bordered table-striped">
         <thead>

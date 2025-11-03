@@ -1,7 +1,7 @@
 <div>
     <div class="d-flex justify-content-between mb-3">
         <div>
-            <input type="text" wire:model.live="search" class="form-control" placeholder="Rechercher un compte...">
+            <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Rechercher un compte...">
         </div>
         <div>
             <select wire:model.lazy="filter_currency" class="form-select">

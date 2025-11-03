@@ -19,7 +19,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31"><i
                                         class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="search" class="form-control"
+                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                     placeholder="Rechercher..." aria-label="Rechercher..."
                                     aria-describedby="basic-addon-search31">
                             </div>
@@ -27,7 +27,7 @@
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <select wire:model.live="perPage" class="form-select form-select-sm">
+                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm">
                             <option value="10">10</option>
                             <option value="30">30</option>
                             <option value="50">50</option>

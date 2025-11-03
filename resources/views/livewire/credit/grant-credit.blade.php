@@ -18,7 +18,7 @@
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31"><i
                                             class="icon-base bx bx-search"></i></span>
-                                    <input type="search" wire:model.live="search" class="form-control"
+                                    <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                         placeholder="Rechercher Membre....." aria-label="Rechercher Membre....."
                                         aria-describedby="basic-addon-search31">
                                 </div>
@@ -105,6 +105,36 @@
                         @enderror
                     </div>
 
+                    <div class="col-md-6 mb-3">
+                        <div class="position-relative">
+                            <label>Agent Crédit</label>
+                            <div class="table-search-input">
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text" id="basic-addon-search31"><i
+                                            class="icon-base bx bx-search"></i></span>
+                                    <input type="search" wire:model.live.debounce.300ms="agent" class="form-control"
+                                        placeholder="Rechercher Agent Crédit....." aria-label="Rechercher Agent Crédit....."
+                                        aria-describedby="basic-addon-search31">
+                                </div>
+                            </div>
+
+                            @if (!empty($resultsAgent))
+                                <ul class="list-group w-100" style="z-index: 1000;">
+                                    @foreach ($resultsAgent as $agent)
+                                        <li class="list-group-item list-group-item-action"
+                                            wire:click="selectResultAgent({{ $agent['id'] }})">
+                                            {{ "{$agent['code']} {$agent['name']} {$agent['postnom']}" }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @error('agent_id')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+
+                        </div>
+                    </div>
+
                     <div class="col-md-12 mb-3">
                         <label>Description (facultatif)</label>
                         <input type="text" wire:model="description" class="form-control" />
@@ -168,6 +198,10 @@
                             <tr>
                                 <th>Type de remboursement</th>
                                 <td>{{ $creditSummary['type'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Agent Crédit</th>
+                                <td>{{ $creditSummary['agent'] ?? '' }}</td>
                             </tr>
                             <tr>
                                 <th>Description</th>

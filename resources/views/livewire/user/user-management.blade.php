@@ -15,14 +15,14 @@
 
                         <div class="table-search-input">
                             <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
+                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control input-sm"
                                     placeholder="Rechercher..." style="min-width: 120px">
                             </label>
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <select wire:model.live="perPage" class="form-select form-select-sm">
+                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm">
                             <option value="10">10</option>
                             <option value="30">30</option>
                             <option value="50">50</option>

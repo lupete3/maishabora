@@ -20,6 +20,7 @@ class CreditFollowUpReport extends Component
     public $status = '';
     public $startDate = '';
     public $endDate = '';
+    public $searchAgent = '';
 
     public function render()
     {
@@ -29,7 +30,19 @@ class CreditFollowUpReport extends Component
         if ($this->searchMember) {
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%");
+                  ->orWhere('id', 'like', "%{$this->searchMember}%")
+                  ->orWhere('code', 'like', "%{$this->searchMember}%")
+                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
+                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
+            });
+        }
+        if ($this->searchAgent) {
+            $query->whereHas('agent', function ($q) {
+                $q->where('name', 'like', "%{$this->searchMember}%")
+                  ->orWhere('id', 'like', "%{$this->searchMember}%")
+                  ->orWhere('code', 'like', "%{$this->searchMember}%")
+                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
+                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
             });
         }
 
@@ -91,7 +104,20 @@ class CreditFollowUpReport extends Component
         if ($this->searchMember) {
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%");
+                  ->orWhere('id', 'like', "%{$this->searchMember}%")
+                  ->orWhere('code', 'like', "%{$this->searchMember}%")
+                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
+                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
+            });
+        }
+
+        if ($this->searchAgent) {
+            $query->whereHas('agent', function ($q) {
+                $q->where('name', 'like', "%{$this->searchMember}%")
+                  ->orWhere('id', 'like', "%{$this->searchMember}%")
+                  ->orWhere('code', 'like', "%{$this->searchMember}%")
+                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
+                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
             });
         }
 

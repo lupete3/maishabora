@@ -62,7 +62,7 @@
                     <div class="modal-body row">
                         <div class="col-md-12 mb-3">
                             <label>Choisir une carte</label>
-                            <select wire:model.live="card_id" class="form-control">
+                            <select wire:model.live.debounce.300ms="card_id" class="form-control">
                                 <option value="">Sélectionner une carte</option>
                                 @foreach ($cards as $card)
                                     <option value="{{ $card->id }}">

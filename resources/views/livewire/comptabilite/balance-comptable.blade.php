@@ -6,7 +6,7 @@
             <div class="row">
                 <div class="col-md-6">
                     <input type="text" class="form-control" placeholder="Rechercher (code, intitulé)..."
-                        wire:model.live="search">
+                        wire:model.live.debounce.300ms="search">
                 </div>
                 <div class="col-md-3">
                     <select class="form-select" wire:model.lazy="filter_devise" style="min-width: 140px;">

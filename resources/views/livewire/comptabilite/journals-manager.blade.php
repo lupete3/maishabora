@@ -21,7 +21,7 @@
                     @endif
                 </div>
                 <div class="col-md-3">
-                    <input type="text" wire:model.live="search" class="form-control" placeholder="Recherche...">
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Recherche...">
                 </div>
                 <div class="col-md-3">
                     <select wire:model.lazy="filter_journal_type" class="form-control">

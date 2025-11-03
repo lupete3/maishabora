@@ -23,7 +23,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <div class="row mb-3">
                 <div class="col-md-12">
-                    <input type="text" wire:model.live="search" id="search" class="form-control"
+                    <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
                         placeholder="Rechercher un membre (nom, code, prénom)...">
                 </div>
             </div>

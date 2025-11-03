@@ -42,7 +42,7 @@
                                 <!-- Postnom -->
                                 <div class="col-md-4 mb-1">
                                     <label for="postnom" class="form-label">Postnom</label>
-                                    <input type="text" wire:model.live="postnom" id="postnom" class="form-control"
+                                    <input type="text" wire:model.live.debounce.300ms="postnom" id="postnom" class="form-control"
                                         placeholder="Postnom" required />
                                     @error('postnom') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
@@ -339,7 +339,7 @@
                                 <!-- Postnom -->
                                 <div class="col-md-4 mb-1">
                                     <label for="postnom" class="form-label">Postnom</label>
-                                    <input type="text" wire:model.live="postnom" id="postnom"
+                                    <input type="text" wire:model.live.debounce.300ms="postnom" id="postnom"
                                         class="form-control" placeholder="Postnom" required />
                                     @error('postnom') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
