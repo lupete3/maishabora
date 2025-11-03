@@ -4,14 +4,42 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="lg:col-span-1 space-y-6">
                 <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="flex flex-col space-y-1.5 p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-user h-6 w-6 text-primary">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>Informations du client</div>
+                    <div class="">
+                        <div class="card-header border-bottom">
+                            <ul class="nav nav-tabs card-header-tabs" id="profileTabs" role="tablist">
+                                <li class="nav-item">
+                                    <button class="nav-link active" id="photo-tab" data-bs-toggle="tab" data-bs-target="#photo" type="button" role="tab">
+                                        📸 Photo de profil
+                                    </button>
+                                </li>
+                                <li class="nav-item">
+                                    <button class="nav-link" id="signature-tab" data-bs-toggle="tab" data-bs-target="#signature" type="button" role="tab">
+                                        ✍️ Signature
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div class="tab-content p-4" id="profileTabsContent">
+                            <!-- Onglet Photo -->
+                            <div class="tab-pane fade show active text-center" id="photo" role="tabpanel" aria-labelledby="photo-tab">
+                                @if ($member->photo_profil)
+                                    <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil" class="rounded-circle shadow" width="120">
+                                @else
+                                    <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="rounded-circle shadow" width="120">
+                                    <p class="text-muted mt-2">Aucune photo de profil disponible</p>
+                                @endif
+                            </div>
+
+                            <!-- Onglet Signature -->
+                            <div class="tab-pane fade text-center" id="signature" role="tabpanel" aria-labelledby="signature-tab">
+                                @if ($member->scan_piece)
+                                    <img src="{{ asset('storage/' . $member->scan_piece) }}" alt="Signature" class="img-fluid rounded border shadow-sm" style="max-width: 90%;">
+                                @else
+                                    <span class="text-sm text-primary card p-2">Aucune signature enregistrée pour ce client</span>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <div class="p-6 pt-0 space-y-3 text-sm">

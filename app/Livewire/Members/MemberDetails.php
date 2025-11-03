@@ -455,6 +455,11 @@ class MemberDetails extends Component
             // Retirer la mise totale
             $total = $card->contributions->where('is_paid', true)->sum('amount');
 
+            if ($total < $aretenir) {
+                notyf()->error( 'Cette carnet n\'est peut-être retirée car le solde est insuffisant.');
+                return;
+            }
+
             // Ajouter au compte du membre
             $account = Account::where('user_id', $card->member_id)
                 ->where('currency', $card->currency)

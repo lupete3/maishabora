@@ -56,7 +56,7 @@ class UserManagement extends Component
             'adresse_physique' => ['nullable', 'string'],
             'profession' => ['nullable', 'string'],
             'email' => ['required', 'email', 'max:255', $uniqueEmail],
-            'role' => ['nullable'],
+            'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
             'status' => ['required', 'boolean'],
         ];
     }
@@ -155,6 +155,7 @@ class UserManagement extends Component
             if (!empty($this->password)) {
                 $validated['password'] = Hash::make($this->password);
             }
+            $validated['role'] = $this->roleAgent;
 
             $user = User::findOrFail($this->userId);
             $user->update($validated);

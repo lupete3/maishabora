@@ -6,6 +6,7 @@ use App\Helpers\UserLogHelper;
 use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\MainCashRegister;
+use App\Models\Notification;
 use App\Models\Payroll;
 use App\Models\Salary;
 use App\Models\Transaction;
@@ -201,16 +202,18 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
-            $account->increment('balance', $salary->amount - $retenuSalaire);
+            $amount = $salary->amount - $retenuSalaire;
+
+            $account->increment('balance', $amount);
             $accountRetenuSalaire->increment('balance', $retenuSalaire);
-            $cassisierAccount->increment('balance', $salary->amount - $retenuSalaire);
+            $cassisierAccount->increment('balance', $amount);
 
             Transaction::create([
                 'user_id' => $userId,
                 'account_id' => $account->id,
                 'type' => 'paie_entrant',
                 'currency' => $this->currency,
-                'amount' => $salary->amount - $retenuSalaire,
+                'amount' => $amount,
                 'balance_after' => $account->balance,
                 'description' => 'Salaire reçu',
             ]);
@@ -242,7 +245,7 @@ class PayrollComponent extends Component
                 'user_id' => 2,
                 'type' => 'salaire_pour_retrait',
                 'currency' => $this->currency,
-                'amount' => $salary->amount - $retenuSalaire,
+                'amount' => $amount,
                 'balance_after' => $cassisierAccount->balance,
                 'description' => "Frais à retirer du salaire #{$payroll->id} de l'agent {$salary->user->name} {$salary->user->postnom}",
             ]);
@@ -251,6 +254,13 @@ class PayrollComponent extends Component
                 action: 'paiement_salaire',
                 description: "Paiement du salaire de {$salary->amount} {$this->currency} à l’agent ID:$userId"
             );
+
+            Notification::create([
+                'user_id' => $userId,
+                'title' => 'Paiement de salaire',
+                'message' => "Votre salaire de {$amount} {$this->currency} pour la période {$this->period} a été payé.",
+                'read' => false,
+            ]);
 
             notyf()->success('Salaire payé avec succès.');
         });

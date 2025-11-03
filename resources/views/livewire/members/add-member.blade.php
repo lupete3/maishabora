@@ -632,7 +632,6 @@
                     @endif
                 </div>
 
-
                 <div class="modal-footer">
                     @if (!$editModal)
                         @if ($currentStep > 1)
@@ -659,6 +658,3 @@
         </div>
     </div>
 </div>
-
-
-<!-- Table des adhésions (inchangée) -->
