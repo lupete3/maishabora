@@ -13,7 +13,7 @@
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31">
                                         <i class="icon-base bx bx-search"></i></span>
-                                    <input type="search" wire:model.live="search" class="form-control"
+                                    <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                         placeholder="Rechercher un membre"
                                         autocomplete="off" aria-label="Rechercher un membre"
                                         aria-describedby="basic-addon-search31">
@@ -93,7 +93,7 @@
                 </div>
                                 <!-- Barre de recherche -->
                 <div>
-                    <input type="text" wire:model.live="searchCard" class="form-control" placeholder="Rechercher une carte...">
+                    <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control" placeholder="Rechercher une carte...">
                 </div>
             </div>
 
@@ -177,5 +177,5 @@
     </div>
 
     @include('livewire.validePurchaseCard')
-    
+
 </div>

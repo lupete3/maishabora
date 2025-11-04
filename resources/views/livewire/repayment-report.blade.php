@@ -27,7 +27,7 @@
             <div class="row g-3 mb-3">
                 <div class="col-md-3">
                     <label for="reportType" class="form-label">Type de Rapport</label>
-                    <select wire:model.live="reportType" id="reportType" class="form-select">
+                    <select wire:model.live.debounce.300ms="reportType" id="reportType" class="form-select">
                         <option value="daily">Journalier</option>
                         <option value="weekly">Hebdomadaire</option>
                         <option value="monthly">Mensuel</option>
@@ -38,7 +38,7 @@
 
                 <div class="col-md-3">
                     <label for="currency" class="form-label">Devise</label>
-                    <select wire:model.live="currency" id="currency" class="form-select">
+                    <select wire:model.live.debounce.300ms="currency" id="currency" class="form-select">
                         <option value="all">Toutes</option>
                         <option value="USD">USD</option>
                         <option value="CDF">CDF</option>
@@ -48,11 +48,11 @@
                 @if ($reportType === 'custom')
                     <div class="col-md-3">
                         <label for="startDate" class="form-label">Date de début</label>
-                        <input type="date" wire:model.live="startDate" id="startDate" class="form-control">
+                        <input type="date" wire:model.live.debounce.300ms="startDate" id="startDate" class="form-control">
                     </div>
                     <div class="col-md-3">
                         <label for="endDate" class="form-label">Date de fin</label>
-                        <input type="date" wire:model.live="endDate" id="endDate" class="form-control">
+                        <input type="date" wire:model.live.debounce.300ms="endDate" id="endDate" class="form-control">
                     </div>
                 @endif
             </div>

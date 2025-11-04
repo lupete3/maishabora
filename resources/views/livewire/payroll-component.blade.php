@@ -28,7 +28,7 @@
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31"><i
                                             class="icon-base bx bx-search"></i></span>
-                                    <input type="search" wire:model.live="search" class="form-control"
+                                    <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                         placeholder="Rechercher Agent....." aria-label="Rechercher Agent....."
                                         aria-describedby="basic-addon-search31">
                                 </div>
@@ -185,7 +185,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31"><i
                                         class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="searchAgent" class="form-control"
+                                <input type="search" wire:model.live.debounce.300ms="searchAgent" class="form-control"
                                     placeholder="Rechercher Agent....." aria-label="Rechercher Agent....."
                                     aria-describedby="basic-addon-search31">
                             </div>
@@ -240,7 +240,7 @@
         <div class="card-header d-flex justify-content-between">
             <h5 class="mb-0 text-primary"><i class="bx bx-history me-2"></i> Historique des Salaires Payés</h5>
             <div class="table-search-input">
-                <input type="search" wire:model.live="search" class="form-control" placeholder="Rechercher un agent...">
+                <input type="search" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Rechercher un agent...">
             </div>
         </div>
 

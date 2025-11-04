@@ -12,7 +12,7 @@
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31"><i
                                         class="icon-base bx bx-search"></i></span>
-                                <input type="search" wire:model.live="search" class="form-control"
+                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                     placeholder="Rechercher Membre....." aria-label="Rechercher Membre....."
                                     aria-describedby="basic-addon-search31">
                             </div>
