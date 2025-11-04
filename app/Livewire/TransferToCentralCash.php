@@ -2,8 +2,6 @@
 
 namespace App\Livewire;
 
-// app/Http/Livewire/TransferToCentralCash.php
-
 use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\AgentAccount;
@@ -16,13 +14,24 @@ use Illuminate\Support\Facades\Gate;
 
 class TransferToCentralCash extends Component
 {
-    public $currency;
-    public $amount = 0;
+    public $currency = '';
+    public $amount = '';
     public $currencies = ['USD', 'CDF'];
+
+    // ✅ Nouveau : contrôle d’affichage du modal
+    public $showConfirmation = false;
 
     protected $rules = [
         'currency' => 'required|in:USD,CDF',
         'amount' => 'required|numeric|min:0.01',
+    ];
+
+    protected $messages = [
+        'currency.required' => 'Veuillez choisir une devise.',
+        'currency.in' => 'Devise invalide.',
+        'amount.required' => 'Le montant est obligatoire.',
+        'amount.numeric' => 'Le montant doit être un nombre.',
+        'amount.min' => 'Le montant doit être supérieur à 0.',
     ];
 
     public function mount()
@@ -30,11 +39,32 @@ class TransferToCentralCash extends Component
         Gate::authorize('ajouter-transfert-caisse', User::class);
     }
 
+    public function updated($property)
+    {
+        $this->validateOnly($property);
+    }
+
     public function submit()
     {
         $this->validate();
 
-        // Récupérer la caisse de l'agent
+        $agentAccount = AgentAccount::where('user_id', Auth::id())
+            ->where('currency', $this->currency)
+            ->first();
+
+        if ($agentAccount && $agentAccount->balance < $this->amount) {
+            $this->addError('amount', "Solde insuffisant dans votre caisse.");
+            return;
+        }
+
+        // ✅ Active le modal de prévisualisation
+        $this->showConfirmation = true;
+    }
+
+    public function confirmSubmit()
+    {
+        $this->validate();
+
         $agentAccount = AgentAccount::firstOrCreate(
             ['user_id' => Auth::id(), 'currency' => $this->currency],
             ['balance' => 0]
@@ -45,20 +75,16 @@ class TransferToCentralCash extends Component
             return;
         }
 
-        // Récupérer ou créer la caisse centrale
         $mainCash = MainCashRegister::firstOrCreate(
             ['currency' => $this->currency],
             ['balance' => 0]
         );
 
-        // Mise à jour des soldes
-        $agentAccount->balance -= $this->amount;
-        $mainCash->balance += $this->amount;
+        // ✅ Mise à jour des soldes
+        $agentAccount->decrement('balance', $this->amount);
+        $mainCash->increment('balance', $this->amount);
 
-        $agentAccount->save();
-        $mainCash->save();
-
-        // Enregistrer le virement
+        // ✅ Enregistrement du transfert
         $transfer = Transfert::create([
             'from_agent_account_id' => $agentAccount->id,
             'to_main_cash_register_id' => $mainCash->id,
@@ -66,7 +92,6 @@ class TransferToCentralCash extends Component
             'amount' => $this->amount,
         ]);
 
-        // Enregistrer la transaction pour l'agent
         Transaction::create([
             'agent_account_id' => $agentAccount->id,
             'user_id' => Auth::id(),
@@ -74,26 +99,21 @@ class TransferToCentralCash extends Component
             'currency' => $this->currency,
             'amount' => $this->amount,
             'balance_after' => $agentAccount->balance,
-            'description' => "Virement de ".$this->amount." ".$this->currency." du compte de ".Auth::user()->name." vers la caisse centrale. #REF".$transfer->id,
+            'description' => "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}",
         ]);
 
         UserLogHelper::log_user_activity(
             action: 'virement_caisse_centrale',
-            description: "Virement de {$this->amount} {$this->currency} du compte de ".Auth::user()->name." vers la caisse centrale. #REF{$transfer->id}"
+            description: "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}"
         );
 
-        notyf()->success( 'Virement effectué avec succès !');
+        notyf()->success('Virement effectué avec succès !');
 
-        $this->reset(['amount']);
+        // ✅ Ferme le modal et réinitialise
+        $this->reset(['amount', 'currency', 'showConfirmation']);
+
         $this->redirect(route('transfer.receipt.generate', ['id' => $transfer->id]), navigate: false);
-
     }
-
-    public function placeholder()
-    {
-        return view('livewire.placeholder');
-    }
-
 
     public function render()
     {

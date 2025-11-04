@@ -33,6 +33,9 @@ class FundTransferComponent extends Component
     public $members = [];
     public $results = [];
 
+    public $showPreview = false; // contrôle du modal
+    public $previewData = [];
+
     public function updatedSearchagent()
     {
         $query = trim($this->searchagent);
@@ -65,7 +68,6 @@ class FundTransferComponent extends Component
             $this->dispatch('userSelected', $user->id);
         }
     }
-
 
     public function updatedTransferType()
     {
@@ -157,6 +159,7 @@ class FundTransferComponent extends Component
                 ]);
 
                 $this->reset(['amount', 'description', 'recipient_id']);
+                $this->dispatch('refreshComponent');
                 notyf()->success('Virement effectué avec succès.');
 
             });
@@ -202,5 +205,42 @@ class FundTransferComponent extends Component
                 ? AgentAccount::with('user')->where('currency', $this->currency)->get()
                 : Account::with('user')->where('currency', $this->currency)->get(),
         ]);
+    }
+
+    public function previewTransfer()
+    {
+        // Validation simple avant prévisualisation
+        $this->validate([
+            'transfer_type' => 'required|in:agent,member',
+            'recipient_id' => 'required|integer',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required|in:CDF,USD',
+        ]);
+
+        // Trouver le bénéficiaire
+        $user = User::find($this->recipient_id);
+
+        if (!$user) {
+            notyf()->error('Bénéficiaire introuvable');
+            return;
+        }
+
+        // Préparer les données à afficher
+        $this->previewData = [
+            'type' => $this->transfer_type === 'agent' ? 'Agent' : 'Membre',
+            'devise' => $this->currency,
+            'montant' => number_format($this->amount, 2, ',', ' '),
+            'beneficiaire' => "{$user->name} {$user->postnom} {$user->prenom}",
+            'description' => $this->description ?: 'Aucune remarque',
+        ];
+
+        // Ouvrir le modal
+        $this->showPreview = true;
+    }
+
+    public function confirmTransfer()
+    {
+        $this->showPreview = false;
+        $this->submitTransfer();
     }
 }

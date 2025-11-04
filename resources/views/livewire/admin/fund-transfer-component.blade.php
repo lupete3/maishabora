@@ -83,9 +83,9 @@
 
             {{-- Bouton soumettre --}}
             <div class="">
-                <button wire:click="submitTransfer" class="btn btn-primary" wire:loading.attr="disabled">
+                <button wire:click="previewTransfer" class="btn btn-primary" wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    <i class="bx bx-send me-1"></i> Effectuer le virement
+                    <i class="bx bx-send me-1"></i> Prévisualiser le virement
                 </button>
             </div>
         </div>
@@ -188,4 +188,6 @@
             </div>
         </div>
     </div>
+
+    @include('livewire.admin.fund-transfer-confirm')
 </div>
