@@ -1,6 +1,6 @@
-
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Rapport des Transactions</title>
@@ -11,50 +11,83 @@
             margin: 5px;
             color: #000;
         }
-        .footer { text-align: center; margin-top: 50px }
-        .text-center { text-align: center; }
-        .text-end { text-align: right; }
-        .text-start { text-align: left; }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .text-start {
+            text-align: left;
+        }
+
         .table {
-            width: 100%; border-collapse: collapse; margin-top: 20px;
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
         }
-        .table td, .table th {
-            border: 1px solid #000; padding: 2px; font-size: 8px;
+
+        .table td,
+        .table th {
+            border: 1px solid #000;
+            padding: 2px;
+            font-size: 8px;
         }
+
         .signature {
             margin-top: 30px;
             display: flex;
             justify-content: space-between;
             font-size: 10px;
         }
+
         .signature-block {
             width: 45%;
             text-align: center;
         }
+
         th {
             background-color: #f1c206;
         }
+
         .section-title {
             margin-top: 10px;
             font-weight: bold;
             text-align: center;
             font-size: 11px;
         }
+
         .totals p {
             margin: 2px 0;
         }
+
         .logo {
             width: 80px;
         }
+        .balances {
+            width: 49%;
+            display: inline-block;
+            vertical-align: top;
+        }
     </style>
 </head>
+
 <body>
 
     <div class="header" style="padding-bottom: 5px;">
         <table style="width:100%;">
             <tr>
                 <td style="width: 15%;">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" class="logo" alt="Logo">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
+                        class="logo" alt="Logo">
                 </td>
                 <td style="width: 60%; text-align:center;">
                     <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
@@ -87,7 +120,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($transactions as $t)
+            @foreach ($transactions as $t)
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($t->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ ucfirst($t->type) }}</td>
@@ -99,23 +132,50 @@
         </tbody>
     </table>
 
-    <h3 style="margin-top: 30px;">Récapitulatif des totaux par devise</h3>
-    <table class="table" border="1" cellspacing="0" cellpadding="4">
-        <thead>
-            <tr>
-                <th>Devise</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($totalByCurrency as $currency => $total)
+    <div class="balances">
+        <h3 style="margin-top: 30px;">Récapitulatif des totaux par devise</h3>
+        <table class="table" border="1" cellspacing="0" cellpadding="4">
+            <thead>
                 <tr>
-                    <td>{{ $currency }}</td>
-                    <td>{{ number_format($total, 2) }}</td>
+                    <th>Devise</th>
+                    <th>Total</th>
                 </tr>
-            @endforeach
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach ($totalByCurrency as $currency => $total)
+                    <tr>
+                        <td>{{ $currency }}</td>
+                        <td>{{ number_format($total, 2) }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+    <div class="balances">
+        <h3 style="margin-top: 30px;">Solde disponible en caisse</h3>
+        <table class="table" border="1" cellspacing="0" cellpadding="4">
+            <thead>
+                <tr>
+                    <th>Devise</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($agentAccounts as $agent)
+                    @foreach ($agent->agentAccounts as $index => $acc)
+                        <tr>
+                            <td>
+                                {{ $acc->currency }}
+                            </td>
+                            <td>
+                                {{ number_format($acc->balance, 2) }}
+                            </td>
+                        </tr>
+                    @endforeach
+                @endforeach
+            </tbody>
+        </table>
+    </div>
 
     <div class="footer">
         Rapport généré le {{ now()->format('d/m/Y H:i') }} par {{ Auth::user()->name }} {{ Auth::user()->postnom }} -
@@ -123,5 +183,5 @@
     </div>
 
 </body>
-</html>
 
+</html>

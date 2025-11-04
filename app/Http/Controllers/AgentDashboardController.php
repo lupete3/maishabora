@@ -6,6 +6,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AgentDashboardController extends Controller
 {
@@ -28,7 +29,7 @@ class AgentDashboardController extends Controller
 
         $query = Transaction::where('user_id', $userId);
 
-        $query = $this->applyDateFilter($query, $filter);   
+        $query = $this->applyDateFilter($query, $filter);
 
         switch ($filter) {
             case 'day':
@@ -53,13 +54,19 @@ class AgentDashboardController extends Controller
             return $group->sum('amount');
         });
 
+        $agentAccounts = User::where('id', $user->id)
+            ->with(['agentAccounts' => function ($query) {
+                $query->orderBy('currency');
+            }])->get();
+
         // Génération PDF avec tous les paramètres
         $pdf = Pdf::loadView('pdf.agent-transactions', compact(
             'user',
             'transactions',
             'filter',
             'totalByCurrency',
-            'transactionCount'
+            'transactionCount',
+            'agentAccounts'
         ));
         return $pdf->download("transactions_{$user->id}_{$filter}.pdf");
     }

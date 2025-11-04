@@ -81,7 +81,7 @@ class AgentDashboard extends Component
                 ->get();
         }
 
-        return view('livewire.agent.agent-dashboard', [
+            return view('livewire.agent.agent-dashboard', [
             'agentAccounts' => $agentAccounts
         ]);
     }
