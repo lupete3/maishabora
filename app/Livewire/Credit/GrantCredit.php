@@ -67,15 +67,22 @@ class GrantCredit extends Component
     public function updatedSearch()
     {
         $query = trim($this->search);
+
         if ($query !== '') {
-            $this->results = User::query()
-                ->where(function ($q) use ($query) {
-                    $q->where('role', 'membre')
-                        ->where('code', 'like', "%{$query}%")
-                        ->orWhere('name', 'like', "%{$query}%")
-                        ->orWhere('postnom', 'like', "%{$query}%")
-                        ->orWhere('prenom', 'like', "%{$query}%")
-                        ->orWhere('telephone', 'like', "%{$query}%");
+            // Découper la recherche en plusieurs mots
+            $terms = preg_split('/\s+/', $query);
+
+            $this->results = User::where('role', 'membre')
+                ->where(function ($mainQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $mainQuery->where(function ($q) use ($term) {
+                            $q->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%");
+                        });
+                    }
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])
@@ -88,15 +95,22 @@ class GrantCredit extends Component
     public function updatedAgent()
     {
         $query = trim($this->agent);
+
         if ($query !== '') {
-            $this->resultsAgent = User::query()
-                ->where(function ($q) use ($query) {
-                    // $q->where('role', '!=', 'membre')
-                        $q->where('code', 'like', "%{$query}%")
-                        ->orWhere('name', 'like', "%{$query}%")
-                        ->orWhere('postnom', 'like', "%{$query}%")
-                        ->orWhere('prenom', 'like', "%{$query}%")
-                        ->orWhere('telephone', 'like', "%{$query}%");
+            // Découper la recherche en plusieurs mots
+            $terms = preg_split('/\s+/', $query);
+
+            $this->resultsAgent = User::where('role', '!=', 'membre') // ou commenter selon ton besoin
+                ->where(function ($mainQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $mainQuery->where(function ($q) use ($term) {
+                            $q->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%");
+                        });
+                    }
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])

@@ -45,4 +45,9 @@ class MembershipCard extends Model
     {
         return $this->contributions->where('is_paid', false);
     }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
 }

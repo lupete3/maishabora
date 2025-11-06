@@ -1,5 +1,5 @@
 <!-- resources/views/livewire/admin/confirm-deposit.blade.php -->
-@if($openConfirmDepositNormal)
+@if($openConfirmDepositNormal == true)
     <div class="fixed inset-0 z-50 flex items-center justify-center bg-gray-800 bg-opacity-50">
         <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg m-2">
             <div class="flex items-center justify-between pb-4 border-b">

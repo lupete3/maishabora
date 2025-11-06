@@ -548,25 +548,34 @@ class RegisterMember extends Component
     public function render()
     {
         try {
+            $query = User::where('role', 'membre');
+
             if ($this->search) {
-                $members = User::where('role', 'membre')
-                    ->where(function ($query) {
-                        $query->where('code', 'like', "%{$this->search}%")
-                            ->orWhere('name', 'like', "%{$this->search}%")
-                            ->orWhere('postnom', 'like', "%{$this->search}%")
-                            ->orWhere('prenom', 'like', "%{$this->search}%")
-                            ->orWhere('sexe', 'like', "%{$this->search}%")
-                            ->orWhere('date_naissance', 'like', "%{$this->search}%")
-                            ->orWhere('telephone', 'like', "%{$this->search}%")
-                            ->orWhere('adresse_physique', 'like', "%{$this->search}%")
-                            ->orWhere('profession', 'like', "%{$this->search}%");
-                    })
-                    ->paginate($this->perPage);
-            } else {
-                $members = User::where('role', 'membre')->paginate($this->perPage);
+                // Découpe la recherche par espaces
+                $terms = explode(' ', $this->search);
+
+                $query->where(function ($q) use ($terms) {
+                    foreach ($terms as $term) {
+                        $q->where(function ($subQuery) use ($term) {
+                            $subQuery->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('sexe', 'like', "%{$term}%")
+                                ->orWhere('date_naissance', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%")
+                                ->orWhere('adresse_physique', 'like', "%{$term}%")
+                                ->orWhere('profession', 'like', "%{$term}%");
+                        });
+                    }
+                });
             }
 
-            return view('livewire.members.register-member', ['members' => $members]);
+            $members = $query->paginate($this->perPage);
+
+            return view('livewire.members.register-member', [
+                'members' => $members,
+            ]);
 
         } catch (Throwable $th) {
             notyf()->error('Erreur lors du chargement des membres.');

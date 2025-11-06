@@ -57,19 +57,28 @@ class PurchaseMembershipCard extends Component
     public function updatedSearch()
     {
         $query = trim($this->search);
+
         if ($query !== '') {
-            $this->results = User::query()->where('role', 'membre')
-                ->where(function($q) use ($query) {
-                    $q->where('role', 'membre')
-                      ->where('code', 'like', "%{$query}%")
-                      ->orWhere('name', 'like', "%{$query}%")
-                      ->orWhere('postnom', 'like', "%{$query}%")
-                      ->orWhere('prenom', 'like', "%{$query}%")
-                      ->orWhere('telephone', 'like', "%{$query}%");
+            // Découper la recherche en mots séparés
+            $terms = preg_split('/\s+/', $query); // gère plusieurs espaces
+
+            $users = User::where('role', 'membre')
+                ->where(function ($mainQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $mainQuery->where(function ($q) use ($term) {
+                            $q->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%");
+                        });
+                    }
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])
                 ->toArray();
+
+            $this->results = $users;
         } else {
             $this->results = [];
         }
@@ -204,25 +213,32 @@ class PurchaseMembershipCard extends Component
 
     public function render()
     {
-        // Si l'utilisateur est un agent, il voit toutes les cartes des membres qu'il gère
-
-        $cards = MembershipCard::with(['member', 'agent'])
+        $cards = MembershipCard::with('member')
             ->when($this->searchCard, function ($query) {
-                $query->where('code', 'like', "%{$this->searchCard}%")
-                    ->orWhereHas('member', function ($q) {
-                        $q->where('code', 'like', "%{$this->searchCard}%")
-                            ->orWhere('name', 'like', "%{$this->searchCard}%")
-                            ->orWhere('postnom', 'like', "%{$this->searchCard}%")
-                            ->orWhere('prenom', 'like', "%{$this->searchCard}%");
-                    });
-            });
+                // Découpe la recherche en plusieurs termes (séparés par espace)
+                $terms = explode(' ', $this->searchCard);
 
-            // Sinon, c’est un membre qui voit ses propres cartes
-            // $cards = MembershipCard::where('member_id', auth()->id());
+                $query->where(function ($mainQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $mainQuery->where(function ($q) use ($term) {
+                            $q->where('code', 'like', "%{$term}%")
+                                ->orWhereHas('member', function ($sub) use ($term) {
+                                    $sub->where('role', 'membre')
+                                        ->where(function ($memberQuery) use ($term) {
+                                            $memberQuery->where('code', 'like', "%{$term}%")
+                                                ->orWhere('name', 'like', "%{$term}%")
+                                                ->orWhere('postnom', 'like', "%{$term}%")
+                                                ->orWhere('prenom', 'like', "%{$term}%");
+                                        });
+                                });
+                        });
+                    }
+                });
+            });
 
         return view('livewire.purchase-membership-card', [
             'members' => $this->members,
-            'cards' => $cards->latest()->paginate($this->perPage)
+            'cards' => $cards->latest()->paginate($this->perPage),
         ]);
     }
 

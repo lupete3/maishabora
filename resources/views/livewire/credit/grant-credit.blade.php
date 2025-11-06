@@ -105,7 +105,7 @@
                         @enderror
                     </div>
 
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <div class="position-relative">
                             <label>Agent Crédit</label>
                             <div class="table-search-input">
@@ -135,7 +135,7 @@
                         </div>
                     </div>
 
-                    <div class="col-md-12 mb-3">
+                    <div class="col-md-8 mb-3">
                         <label>Description (facultatif)</label>
                         <input type="text" wire:model="description" class="form-control" />
                     </div>
