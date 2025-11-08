@@ -1,4 +1,5 @@
 <div class="mt-4">
+    @if ($this->logical_usd > 0 || $this->logical_cdf > 0)
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Clôture de caisse - Agent</h5>
@@ -78,6 +79,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <livewire:cash.cash-closing-history>
 </div>
