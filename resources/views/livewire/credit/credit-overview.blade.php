@@ -1,16 +1,9 @@
 <div class="row">
-    <!-- Échéances en retard -->
+    <!-- Paiement en retard -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
-            <div class="card-header bg-label-danger fw-bold d-flex justify-content-between align-items-center">
-                <span>Échéances en retard</span>
-                <div>
-                    @foreach ($totals['overdue'] as $currency => $total)
-                        <span class="badge bg-danger ms-1">
-                            {{ $currency }} {{ number_format($total, 2, '.', ' ') }}
-                        </span>
-                    @endforeach
-                </div>
+            <div class="card-header bg-label-danger fw-bold">
+                Échéances en retard
             </div>
             <div class="card-body p-0">
                 @if ($overdueCredits->isEmpty())
@@ -23,24 +16,37 @@
                             @endphp
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ $r->credit->user->code }} {{ $r->credit->user->name }}</strong><br>
+                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name }}</strong><br>
                                     <small class="text-muted">
-                                        Montant : {{ number_format($r->total_due, 2, '.', ' ') }} {{ $r->credit->currency }}
+                                        Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div>
+                                        <div class="pt-0 ">
                                             Solde :
                                             @foreach (['USD', 'CDF'] as $curr)
                                                 @php
-                                                    $balance = $r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0;
+                                                    $balance = number_format(
+                                                        $r->credit->user->accounts->firstWhere('currency', $curr)
+                                                            ?->balance ?? 0,
+                                                        2,
+                                                    );
+                                                    $color = $curr === 'USD' ? 'green' : 'blue';
+                                                @endphp
+                                                @php
+                                                    $balance =
+                                                        (float) ($r->credit->user->accounts->firstWhere(
+                                                            'currency',
+                                                            $curr,
+                                                        )?->balance ?? 0);
                                                 @endphp
                                                 <small class="text-muted">
-                                                    {{ number_format($balance, 2, '.', ' ') }} {{ $curr }} |
+                                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
                                                 </small>
                                             @endforeach
                                         </div>
                                         <small class="text-danger">
-                                            Retard : {{ $daysLate }} {{ Str::plural('jour', $daysLate) }}
+                                            Retard : {{ number_format($daysLate, 0) }}
+                                            {{ Str::plural('jour', $daysLate) }}
                                         </small>
                                     </div>
                                 </div>
@@ -58,18 +64,11 @@
         </div>
     </div>
 
-    <!-- Échéances à venir -->
+    <!-- Paiement a venir -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
-            <div class="card-header bg-label-warning fw-bold d-flex justify-content-between align-items-center">
-                <span>Échéances à venir (7 jours)</span>
-                <div>
-                    @foreach ($totals['upcoming'] as $currency => $total)
-                        <span class="badge bg-warning text-dark ms-1">
-                            {{ $currency }} {{ number_format($total, 2, '.', ' ') }}
-                        </span>
-                    @endforeach
-                </div>
+            <div class="card-header bg-label-warning fw-bold">
+                Échéances à venir (7 jours)
             </div>
             <div class="card-body p-0">
                 @if ($upcomingCredits->isEmpty())
@@ -82,24 +81,37 @@
                             @endphp
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ $r->credit->user->code }} {{ $r->credit->user->name }}</strong><br>
+                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name }}</strong><br>
                                     <small class="text-muted">
-                                        Montant : {{ number_format($r->total_due, 2, '.', ' ') }} {{ $r->credit->currency }}
+                                        Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <div>
+                                        <div class="pt-0 ">
                                             Solde :
                                             @foreach (['USD', 'CDF'] as $curr)
                                                 @php
-                                                    $balance = $r->credit->user->accounts->firstWhere('currency', $curr)?->balance ?? 0;
+                                                    $balance = number_format(
+                                                        $r->credit->user->accounts->firstWhere('currency', $curr)
+                                                            ?->balance ?? 0,
+                                                        2,
+                                                    );
+                                                    $color = $curr === 'USD' ? 'green' : 'blue';
+                                                @endphp
+                                                @php
+                                                    $balance =
+                                                        (float) ($r->credit->user->accounts->firstWhere(
+                                                            'currency',
+                                                            $curr,
+                                                        )?->balance ?? 0);
                                                 @endphp
                                                 <small class="text-muted">
-                                                    {{ number_format($balance, 2, '.', ' ') }} {{ $curr }} |
+                                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
                                                 </small>
                                             @endforeach
                                         </div>
                                         <small class="text-primary">
-                                            Échéance dans {{ $daysRemaining }} {{ Str::plural('jour', $daysRemaining) }}
+                                            Échéance dans {{ number_format($daysRemaining, 0) }}
+                                            {{ Str::plural('jour', $daysRemaining) }}
                                         </small>
                                     </div>
                                 </div>
