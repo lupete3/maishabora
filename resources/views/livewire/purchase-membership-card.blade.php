@@ -114,6 +114,9 @@
                                 @can('supprimer-carnet', App\Models\User::class)
                                 <th>Actions</th>
                                 @endcan
+                                @can('modifier-carnet', App\Models\User::class)
+                                <th>Actions</th>
+                                @endcan
                             </tr>
                         </thead>
                         <tbody>
@@ -135,6 +138,14 @@
                                             <span class="badge bg-secondary">Terminée</span>
                                         @endif
                                     </td>
+                                    
+                                    @can('modifier-carnet', App\Models\User::class)
+                                        <td>
+                                            <button wire:click="editCard({{ $card->id }})" class="btn btn-primary btn-sm" title="Modifier cette carte">
+                                                Modifier
+                                            </button>
+                                        </td>
+                                    @endcan
 
                                     @can('supprimer-carnet', App\Models\User::class)
                                     <td>
@@ -177,5 +188,6 @@
     </div>
 
     @include('livewire.validePurchaseCard')
+    @include('livewire.editPurchaseCard')
 
 </div>

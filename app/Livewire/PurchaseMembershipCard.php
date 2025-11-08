@@ -37,6 +37,14 @@ class PurchaseMembershipCard extends Component
     public $showConfirmationModal = false;
     public $selectedMemberName;
 
+    public $editModal = false;
+    public $editCardId;
+    public $edit_code;
+    public $edit_currency;
+    public $edit_price;
+    public $edit_subscription_amount;
+    public $edit_agent_id;
+
     protected $rules = [
         'agent_id' => 'nullable|exists:users,id',
         'member_id' => 'required|exists:users,id',
@@ -242,6 +250,63 @@ class PurchaseMembershipCard extends Component
         ]);
     }
 
+    // Ouvre le modal de modification
+    public function editCard($cardId)
+    {
+        $card = MembershipCard::find($cardId);
+
+        if (!$card) {
+            notyf()->error('Carte introuvable.');
+            return;
+        }
+
+        $this->editCardId = $card->id;
+        $this->edit_code = $card->code;
+        $this->edit_currency = $card->currency;
+        $this->edit_price = $card->price;
+        $this->edit_subscription_amount = $card->subscription_amount;
+        $this->edit_agent_id = $card->user_id;
+
+        $this->editModal = true;
+    }
+
+    // Validation et mise à jour
+    public function updateCard()
+    {
+        $this->validate([
+            'edit_code' => 'required|string|unique:membership_cards,code,' . $this->editCardId,
+            'edit_currency' => 'required|string',
+            'edit_price' => 'required|numeric|min:0',
+            'edit_subscription_amount' => 'required|numeric|min:0',
+            'edit_agent_id' => 'nullable|exists:users,id',
+        ]);
+
+        $card = MembershipCard::find($this->editCardId);
+
+        if (!$card) {
+            notyf()->error('Carte introuvable.');
+            return;
+        }
+
+        $card->update([
+            'code' => $this->edit_code,
+            'currency' => $this->edit_currency,
+            'price' => $this->edit_price,
+            'subscription_amount' => $this->edit_subscription_amount,
+            'user_id' => $this->edit_agent_id,
+        ]);
+
+        UserLogHelper::log_user_activity(
+            action: 'modification_carte_adhesion',
+            description: "Modification de la carte #{$card->id} ({$card->code}) du membre {$card->member->name}"
+        );
+
+        $this->editModal = false;
+        $this->reset(['editCardId', 'edit_code', 'edit_currency', 'edit_price', 'edit_subscription_amount', 'edit_agent_id']);
+        $this->dispatch('$refresh');
+        notyf()->success('Carte modifiée avec succès.');
+    }
+
     public function desactivateorActivateMembershipCard($cardId, $action)
     {
         Gate::authorize('supprimer-carnet', User::class);
@@ -294,4 +359,5 @@ class PurchaseMembershipCard extends Component
             return;
         }
     }
+
 }
