@@ -96,83 +96,6 @@ class ManageRepayments extends Component
         }
     }
 
-
-// public function payRepayment($withInterest = true)
-// {
-//     try {
-//         DB::transaction(function () use ($withInterest) {
-//             $repayment = Repayment::findOrFail($this->repaymentToPay);
-
-//             if ($repayment->is_paid) {
-//                 notyf()->info(__('Cette échéance a déjà été remboursée.'));
-//                 return;
-//             }
-
-//             $credit = $repayment->credit;
-//             $member = $credit->user;
-
-//             $account = Account::firstOrCreate(
-//                 ['user_id' => $member->id, 'currency' => $credit->currency],
-//                 ['balance' => 0]
-//             );
-
-//             // ✅ Si remboursement total demandé sans intérêts futurs
-//             if (!$withInterest) {
-//                 $capitalRestant = $credit->amount - $credit->repayments()->where('is_paid', true)->sum('expected_amount');
-//                 $amountToPay = $capitalRestant;
-//             } else {
-//                 $amountToPay = round($repayment->total_due, 3);
-//             }
-
-//             if ($account->balance < $amountToPay) {
-//                 throw new \Exception('Solde insuffisant pour effectuer ce remboursement.');
-//             }
-
-//             // Débiter le compte membre
-//             $account->balance -= $amountToPay;
-//             $account->save();
-
-//             if (!$withInterest) {
-//                 // ✅ Tout solder sans intérêts futurs
-//                 foreach ($credit->repayments as $r) {
-//                     if (!$r->is_paid) {
-//                         $r->paid_date = now();
-//                         $r->paid_amount = $r->expected_amount;
-//                         $r->total_due = $r->expected_amount;
-//                         $r->is_paid = true;
-//                         $r->save();
-//                     }
-//                 }
-//                 $credit->is_paid = true;
-//                 $credit->save();
-//             } else {
-//                 // Paiement normal d'une échéance
-//                 $repayment->paid_date = now();
-//                 $repayment->paid_amount = $amountToPay;
-//                 $repayment->total_due = $amountToPay;
-//                 $repayment->is_paid = true;
-//                 $repayment->save();
-
-//                 if (!$credit->repayments()->where('is_paid', false)->exists()) {
-//                     $credit->is_paid = true;
-//                     $credit->save();
-//                 }
-//             }
-
-//             // ... reste de ta logique (transactions, logs, notifications) ...
-//         });
-
-//         notyf()->success(__('Remboursement effectué avec succès !'));
-//         $this->updatedCreditId();
-
-//     } catch (\Throwable $e) {
-//         report($e);
-//         notyf()->error('Erreur lors du remboursement : ' . $e->getMessage());
-//     }
-// }
-
-
-
     public function payRepayment($withInterest = true)
     {
         $repaymentId = $this->repaymentToPay;
@@ -204,7 +127,7 @@ class ManageRepayments extends Component
                 }
 
                 if ($account->balance < $amountToPay) {
-                    throw new \Exception('Solde insuffisant pour effectuer ce remboursement.');
+                    notyf()->error(__('Solde insuffisant pour effectuer ce remboursement.'));
                 }
 
                 // Débiter le compte membre
@@ -283,6 +206,7 @@ class ManageRepayments extends Component
         } catch (\Throwable $e) {
             report($e);
             notyf()->error('Erreur lors du remboursement : ' . $e->getMessage());
+            
         }
     }
 
