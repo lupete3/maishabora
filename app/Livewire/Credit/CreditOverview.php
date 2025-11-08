@@ -32,14 +32,14 @@ class CreditOverview extends Component
             ->paginate(5);
     }
 
-    // Totaux par devise
+    // Totaux par devise (corrigé)
     public function getTotalsByCurrencyProperty()
     {
         $now = now();
 
         // Totaux des crédits en retard
         $overdueTotals = Repayment::join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->select('credits.currency', DB::raw('SUM(repayments.total_due) as total'))
+            ->select('credits.currency', DB::raw('SUM(COALESCE(repayments.total_due, repayments.expected_amount)) as total'))
             ->where('repayments.due_date', '<', $now)
             ->where('repayments.is_paid', false)
             ->groupBy('credits.currency')
@@ -47,7 +47,7 @@ class CreditOverview extends Component
 
         // Totaux des crédits à venir (7 jours)
         $upcomingTotals = Repayment::join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->select('credits.currency', DB::raw('SUM(repayments.total_due) as total'))
+            ->select('credits.currency', DB::raw('SUM(COALESCE(repayments.total_due, repayments.expected_amount)) as total'))
             ->whereBetween('repayments.due_date', [$now, $now->copy()->addDays(7)])
             ->where('repayments.is_paid', false)
             ->groupBy('credits.currency')
