@@ -52,31 +52,33 @@
         <hr>
 
         <h5 class="mt-4">Historique des taux</h5>
-        <table class="table table-sm table-bordered">
-            <thead>
-                <tr>
-                    <th>De</th>
-                    <th>Vers</th>
-                    <th>Taux</th>
-                    <th>Appliqué le</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($rates as $r)
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead>
                     <tr>
-                        <td>{{ $r->from_currency }}</td>
-                        <td>{{ $r->to_currency }}</td>
-                        <td>{{ $r->rate }}</td>
-                        <td>{{ $r->applied_at ? $r->applied_at : '-' }}</td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary" wire:click="edit({{ $r->id }})">
-                                Modifier
-                            </button>
-                        </td>
+                        <th>De</th>
+                        <th>Vers</th>
+                        <th>Taux</th>
+                        <th>Appliqué le</th>
+                        <th>Actions</th>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach($rates as $r)
+                        <tr>
+                            <td>{{ $r->from_currency }}</td>
+                            <td>{{ $r->to_currency }}</td>
+                            <td>{{ $r->rate }}</td>
+                            <td>{{ $r->applied_at ? $r->applied_at : '-' }}</td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-primary" wire:click="edit({{ $r->id }})">
+                                    Modifier
+                                </button>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>

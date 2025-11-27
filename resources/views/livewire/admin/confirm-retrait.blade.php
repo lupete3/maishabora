@@ -10,10 +10,10 @@
             </div>
             <div class="mt-4">
                 <p>Client <strong>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</strong></p> 
-                <p>Compte <strong>{{ $member->code }}</strong></p>  
+                <p>Compte <strong>{{ $member->code ?? 'N/A' }}</strong></p>  
                 <p>Du type d'opération <strong>{{ ucfirst($operation_type) }}</strong>.</p>
                 @if ($operation_type == 'carte')
-                    <p>Retrait depuis la carte <strong>{{ $cardDetail->code }}</strong>.</p>
+                    <p>Retrait depuis la carte <strong>{{ $cardDetail->code ?? 'N/A' }}</strong>.</p>
                     <p>Solde disponible : <strong>{{ number_format($cardDetail->contributions->where('is_paid', true)->sum('amount'), 2) }} {{ $cardDetail->currency }}</strong>.</p>
                     <p>Retenue est de <strong>{{ number_format($cardDetail->subscription_amount, 2) }} {{ $cardDetail->currency }}</strong>.</p>
                 @else

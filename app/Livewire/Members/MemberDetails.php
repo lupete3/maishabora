@@ -251,6 +251,43 @@ class MemberDetails extends Component
                 $this->getContributionDescription($card, $contributionsToPay->count(), false)
             );
 
+             // --------------------------------------------------------
+            // COMMISSION AGENT : première mise dans ce carnet
+            // --------------------------------------------------------
+            $firstEverContribution = $card->contributions()
+                ->where('is_paid', true)
+                ->orderBy('contribution_date', 'asc')
+                ->first();
+
+            // Si c'est la toute première mise payée
+            if ($firstEverContribution && $firstEverContribution->id == $contributionsToPay->first()->id) {
+
+                $commissionAmount = $dailyAmount; // La première mise vaut commission
+
+                // Créditer le compte du membre et de l'agent
+                $account = $this->getOrCreateAccount($card->member_id, $card->currency);
+                $account->balance -= $commissionAmount;
+                $account->save();
+
+                $commissionAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
+                $commissionAccount->balance += $commissionAmount;
+                $commissionAccount->save();
+
+                $card->first_mise_retained = true;
+                $card->save();
+
+                $this->createTransaction(
+                    null,
+                    self::RETAINED_ACCOUNT_USER_ID,
+                    'depot',
+                    $card->currency,
+                    $commissionAmount,
+                    $commissionAccount->balance,
+                    $this->getCardRetainedDescription($card)
+                );
+
+            }
+
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
                 description: "Paiement de {$contributionsToPay->count()} mises pour la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code})",
@@ -374,9 +411,15 @@ class MemberDetails extends Component
                 return;
             }
 
-            $toRetain = $card->subscription_amount;
-            $total = $card->contributions->where('is_paid', true)->sum('amount');
+            if ($card->first_mise_retained === false) {
+                $toRetain = $card->subscription_amount;
+                $total = $card->contributions->where('is_paid', true)->sum('amount');
 
+            }else {
+                $toRetain = 0;
+                $total = $card->contributions->where('is_paid', true)->sum('amount') - $card->subscription_amount;
+            }
+            
             if ($total < $toRetain) {
                 notyf()->error('Cette carte ne peut pas être retirée car le solde est insuffisant.');
                 return;

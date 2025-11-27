@@ -1,9 +1,19 @@
 <div class="row">
-    <!-- Paiement en retard -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-header bg-label-danger fw-bold">
-                Échéances en retard
+                Échéances en retard 
+                {{-- NOUVEAU: Affichage des totaux en retard --}}
+                @if ($overdueTotals->isNotEmpty())
+                    <span class="float-end small fw-normal">
+                        **Total dû :**
+                        @foreach ($overdueTotals as $currency => $total)
+                            <span class="badge bg-danger">
+                                {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
+                            </span>
+                        @endforeach
+                    </span>
+                @endif
             </div>
             <div class="card-body p-0">
                 @if ($overdueCredits->isEmpty())
@@ -25,19 +35,10 @@
                                             Solde :
                                             @foreach (['USD', 'CDF'] as $curr)
                                                 @php
-                                                    $balance = number_format(
-                                                        $r->credit->user->accounts->firstWhere('currency', $curr)
-                                                            ?->balance ?? 0,
-                                                        2,
-                                                    );
-                                                    $color = $curr === 'USD' ? 'green' : 'blue';
-                                                @endphp
-                                                @php
-                                                    $balance =
-                                                        (float) ($r->credit->user->accounts->firstWhere(
-                                                            'currency',
-                                                            $curr,
-                                                        )?->balance ?? 0);
+                                                    $balance = (float) ($r->credit->user->accounts->firstWhere(
+                                                        'currency',
+                                                        $curr,
+                                                    )?->balance ?? 0);
                                                 @endphp
                                                 <small class="text-muted">
                                                     {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
@@ -64,11 +65,21 @@
         </div>
     </div>
 
-    <!-- Paiement a venir -->
     <div class="col-md-6 mb-4">
         <div class="card h-100">
             <div class="card-header bg-label-warning fw-bold">
                 Échéances à venir (7 jours)
+                {{-- NOUVEAU: Affichage des totaux à venir --}}
+                @if ($upcomingTotals->isNotEmpty())
+                    <span class="float-end small fw-normal">
+                        **Total dû :**
+                        @foreach ($upcomingTotals as $currency => $total)
+                            <span class="badge bg-warning text-dark">
+                                {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
+                            </span>
+                        @endforeach
+                    </span>
+                @endif
             </div>
             <div class="card-body p-0">
                 @if ($upcomingCredits->isEmpty())
@@ -90,19 +101,10 @@
                                             Solde :
                                             @foreach (['USD', 'CDF'] as $curr)
                                                 @php
-                                                    $balance = number_format(
-                                                        $r->credit->user->accounts->firstWhere('currency', $curr)
-                                                            ?->balance ?? 0,
-                                                        2,
-                                                    );
-                                                    $color = $curr === 'USD' ? 'green' : 'blue';
-                                                @endphp
-                                                @php
-                                                    $balance =
-                                                        (float) ($r->credit->user->accounts->firstWhere(
-                                                            'currency',
-                                                            $curr,
-                                                        )?->balance ?? 0);
+                                                    $balance = (float) ($r->credit->user->accounts->firstWhere(
+                                                        'currency',
+                                                        $curr,
+                                                    )?->balance ?? 0);
                                                 @endphp
                                                 <small class="text-muted">
                                                     {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
