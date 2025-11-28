@@ -60,7 +60,8 @@
         @endcan
 
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage')) active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage', 'credit.applications.*')) active @endif"
+                wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-credit-card"></i>
                     <div data-i18n="Misc">Crédits</div>
@@ -74,6 +75,20 @@
                             </a>
                         </li>
                     @endcan
+
+                    <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
+                        <a wire:navigate href="{{ route('credit.applications.list') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-list-ul"></i>
+                            <div data-i18n="Analytics">Demandes / Analyse</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('credit.applications.create')) active @endif">
+                        <a wire:navigate href="{{ route('credit.applications.create') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-file-plus"></i>
+                            <div data-i18n="Analytics">Nouvelle Demande</div>
+                        </a>
+                    </li>
+
                     @can('afficher-credit')
                         <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
                             <a wire:navigate href="{{ route('repayments.manage') }}" class="menu-link">
@@ -96,7 +111,8 @@
         @endcan
 
         @can('afficher-client', App\Models\User::class)
-            <li class="menu-item @if (request()->routeIs('member.register', 'member.details', 'receipt.generate')) active @endif">
+            <li
+                class="menu-item @if (request()->routeIs('member.register', 'member.details', 'receipt.generate')) active @endif">
                 <a wire:navigate href="{{ route('member.register') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-group"></i> <!-- Membres -->
                     <div data-i18n="Analytics">Gestion des membres</div>
@@ -124,12 +140,15 @@
         @endcan
 
         @can('afficher-rapport-comptable', App\Models\User::class)
-            <li class="menu-item @if (request()->routeIs(
+            <li class="menu-item @if (
+                request()->routeIs(
                     'comptabilite.comptes',
                     'comptabilite.type_journal',
                     'comptabilite.journals',
                     'comptabilite.balance',
-                    'comptabilite.resultats')) active @endif" wire:ignore.self>
+                    'comptabilite.resultats'
+                )
+            ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône générale pour rapports -->
                     <div data-i18n="Misc">Comptabilité</div>
@@ -175,7 +194,8 @@
         @endcan
 
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs(
+            <li class="menu-item @if (
+                request()->routeIs(
                     'rapports.clients',
                     'rapports.carnets',
                     'rapports.transactions',
@@ -183,7 +203,9 @@
                     'report.credit.followup',
                     'report.repayments',
                     'rapports.depot_retrait',
-                    'member.accounts')) active @endif" wire:ignore.self>
+                    'member.accounts'
+                )
+            ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-file"></i> <!-- Icône générale pour rapports -->
                     <div data-i18n="Misc">Rapports</div>
@@ -245,7 +267,8 @@
         @endcan
 
         @can('afficher-role')
-            <li class="menu-item @if (request()->routeIs('role.management', 'user.management')) active @endif" wire:ignore.self>
+            <li class="menu-item @if (request()->routeIs('role.management', 'user.management')) active @endif"
+                wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-group"></i>
                     <div data-i18n="Misc">Rôles et Utilisateurs</div>

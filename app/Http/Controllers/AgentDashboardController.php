@@ -24,42 +24,42 @@ class AgentDashboardController extends Controller
      */
     public function exportTransactions(Request $request, $userId, $filter = 'day')
     {
+        // Augmenter la limite de mémoire et le temps d'exécution pour les gros exports
+        ini_set('memory_limit', '1024M');
+        set_time_limit(300);
+
         $user = User::findOrFail($userId);
-        $now = now();
 
+        // Construction de la requête de base
         $query = Transaction::where('user_id', $userId);
-
         $query = $this->applyDateFilter($query, $filter);
 
-        switch ($filter) {
-            case 'day':
-                $query->whereDate('created_at', $now->toDateString());
-                break;
-            case 'month':
-                $query->whereMonth('created_at', $now->month)
-                    ->whereYear('created_at', $now->year);
-                break;
-            case 'year':
-                $query->whereYear('created_at', $now->year);
-                break;
-        }
+        // 1. Calculer les totaux via SQL (beaucoup plus léger que de charger tous les modèles)
+        // On clone la requête pour ne pas affecter la requête principale
+        $totalByCurrency = $query->clone()
+            ->selectRaw('currency, sum(amount) as total')
+            ->groupBy('currency')
+            ->pluck('total', 'currency');
 
-        $transactions = $query->orderByDesc('created_at')->get();
+        // 2. Compter le nombre de transactions (SQL)
+        $transactionCount = $query->count();
 
-        // Compter le nombre de transactions filtrées
-        $transactionCount = $transactions->count();
-
-        // Totaux par devise
-        $totalByCurrency = $transactions->groupBy('currency')->map(function ($group) {
-            return $group->sum('amount');
-        });
+        // 3. Récupérer les transactions
+        // Utilisation de toBase() pour éviter l'hydratation des modèles Eloquent (gain mémoire important)
+        // Sélection uniquement des colonnes nécessaires
+        $transactions = $query->select(['created_at', 'type', 'amount', 'currency', 'description'])
+            ->orderByDesc('created_at')
+            ->toBase()
+            ->get();
 
         $agentAccounts = User::where('id', $user->id)
-            ->with(['agentAccounts' => function ($query) {
-                $query->orderBy('currency');
-            }])->get();
+            ->with([
+                'agentAccounts' => function ($query) {
+                    $query->orderBy('currency');
+                }
+            ])->get();
 
-        // Génération PDF avec tous les paramètres
+        // Génération PDF
         $pdf = Pdf::loadView('pdf.agent-transactions', compact(
             'user',
             'transactions',
@@ -68,6 +68,7 @@ class AgentDashboardController extends Controller
             'transactionCount',
             'agentAccounts'
         ));
+
         return $pdf->download("transactions_{$user->id}_{$filter}.pdf");
     }
 
@@ -78,7 +79,7 @@ class AgentDashboardController extends Controller
         return match ($filter) {
             'day' => $query->whereDate('created_at', $now->toDateString()),
             'month' => $query->whereMonth('created_at', $now->month)
-                        ->whereYear('created_at', $now->year),
+                ->whereYear('created_at', $now->year),
             'year' => $query->whereYear('created_at', $now->year),
             default => $query,
         };
