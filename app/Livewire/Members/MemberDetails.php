@@ -84,7 +84,7 @@ class MemberDetails extends Component
     public function makeDeposit()
     {
         $this->openConfirmDepositNormal = false;
-        match($this->operation_type) {
+        match ($this->operation_type) {
             self::DEPOSIT_TYPE_NORMAL => $this->submit(),
             self::DEPOSIT_TYPE_CARD => $this->contribute(),
             default => null
@@ -107,7 +107,7 @@ class MemberDetails extends Component
     public function makeRetrait()
     {
         $this->openConfirmRetraitNormal = false;
-        match($this->operation_type) {
+        match ($this->operation_type) {
             self::DEPOSIT_TYPE_NORMAL => $this->submitRetrait(),
             self::DEPOSIT_TYPE_CARD => $this->submitRetraitCarte(),
             default => null
@@ -251,7 +251,7 @@ class MemberDetails extends Component
                 $this->getContributionDescription($card, $contributionsToPay->count(), false)
             );
 
-             // --------------------------------------------------------
+            // --------------------------------------------------------
             // COMMISSION AGENT : première mise dans ce carnet
             // --------------------------------------------------------
             $firstEverContribution = $card->contributions()
@@ -411,15 +411,15 @@ class MemberDetails extends Component
                 return;
             }
 
-            if ($card->first_mise_retained === false) {
+            if (!$card->first_mise_retained) {
                 $toRetain = $card->subscription_amount;
                 $total = $card->contributions->where('is_paid', true)->sum('amount');
 
-            }else {
+            } else {
                 $toRetain = 0;
                 $total = $card->contributions->where('is_paid', true)->sum('amount') - $card->subscription_amount;
             }
-            
+
             if ($total < $toRetain) {
                 notyf()->error('Cette carte ne peut pas être retirée car le solde est insuffisant.');
                 return;
@@ -544,7 +544,7 @@ class MemberDetails extends Component
 
     public function openCardViewModal($cardId = null)
     {
-        $this->cardDetail = MembershipCard::with(['contributions','member'])->find($cardId);
+        $this->cardDetail = MembershipCard::with(['contributions', 'member'])->find($cardId);
         $this->dispatch('openModal', name: 'modalCardDetails');
     }
 
@@ -571,13 +571,13 @@ class MemberDetails extends Component
                 $searchTerm = "%{$this->search}%";
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('type', 'like', $searchTerm)
-                      ->orWhere('currency', 'like', $searchTerm);
+                        ->orWhere('currency', 'like', $searchTerm);
                 });
             })
             ->latest()
             ->paginate($this->perPage);
 
-        return view('livewire.members.member-details',[
+        return view('livewire.members.member-details', [
             'member' => $member,
             'transactions' => $transactions,
             'cards' => $this->cards
@@ -719,7 +719,7 @@ class MemberDetails extends Component
     {
         DB::rollBack();
         report($th);
-        $errorMessage = $operationType === 'dépôt' 
+        $errorMessage = $operationType === 'dépôt'
             ? 'Une erreur est survenue lors du dépôt. Veuillez réessayer plus tard.'
             : 'Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.';
         notyf()->error($errorMessage);
