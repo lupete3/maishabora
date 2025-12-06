@@ -69,7 +69,7 @@ class AgentDashboardController extends Controller
             'agentAccounts'
         ));
 
-        return $pdf->download("transactions_{$user->id}_{$filter}.pdf");
+        return $pdf->stream("transactions_{$user->id}_{$filter}.pdf");
     }
 
     protected function applyDateFilter($query, $filter)
