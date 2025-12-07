@@ -106,11 +106,16 @@
                                     @endforeach
                                 </div>
 
-                                <button wire:click="exportPDF" class="btn btn-sm btn-danger"
+                                <button wire:click="exportPDF" class="btn btn-sm @if ($filter === 'year')
+                                        btn-success
+                                    @else btn-danger @endif"
                                     wire:loading.attr="disabled">
                                     <span class="spinner-border spinner-border-sm me-2" role="status"
                                         wire:loading></span>
-                                    <i class="bx bx-file me-1"></i> Exporter PDF
+                                    <i class="bx bx-file me-1"></i> Exporter 
+                                    @if ($filter === 'year')
+                                        EXCEL
+                                    @else PDF @endif 
                                 </button>
                             </div>
                             <div class="row mt-3">
