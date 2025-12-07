@@ -24,7 +24,7 @@ class PurchaseMembershipCard extends Component
     public $searchCard;
     public $member_id;
     public $currency = 'CDF';
-    public $price = 0;
+    public $price = 1000;
     public $subscription_amount = 0;
     public $code;
 
