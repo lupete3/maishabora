@@ -88,7 +88,8 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-agent'])-
 });
 
 Route::middleware(['auth', 'auth.session'])->group(function () {
-    Route::get('/agent/transactions/export/{user}/{filter}', [AgentDashboardController::class, 'exportTransactions'])->name('agent.transactions.export');
+Route::get('/agent/{userId}/transactions/export/{filter?}', [AgentDashboardController::class, 'exportTransactions'])
+     ->name('agent.transactions.export');    
 });
 
 Route::middleware(['auth', 'auth.session', 'permission:ajouter-credit'])->group(function () {

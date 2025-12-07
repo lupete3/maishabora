@@ -106,7 +106,7 @@
         <h3 class="text-center" style="text-decoration: underline; margin-bottom: 2px;">RAPPORT DES TRANSACTIONS</h3>
     </div>
 
-    <h4>Transactions de {{ $user->name }} {{ $user->postnom }} {{ $user->prenom }} ({{ ucfirst($filter) }})</h4>
+    <h4>Transactions de {{ $user->name }} {{ $user->postnom }} {{ $user->prenom }} ({{ ucfirst($periodLabel) }})</h4>
     Nombre total de transactions : <strong>{{ $transactionCount }}</strong></p>
 
     <table class="table" border="1" cellspacing="0" cellpadding="4">
