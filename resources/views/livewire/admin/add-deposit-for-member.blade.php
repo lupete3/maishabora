@@ -1,10 +1,10 @@
 <!-- Modal -->
-<div class="modal fade" id="modalDepositMembre" tabindex="-1" aria-labelledby="modalDepositMembreLabel"
-    aria-hidden="true" data-focus="false" wire:ignore.self>
+<div class="modal fade" id="modalDepositMembre" tabindex="-1" aria-labelledby="modalDepositMembreLabel" aria-hidden="true"
+    data-focus="false" wire:ignore.self>
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="modalDepositMembreLabel">{{ __("Effectuer une mise") }}</h5>
+                <h5 class="modal-title" id="modalDepositMembreLabel">{{ __('Effectuer une mise') }}</h5>
                 <button type="button" class="btn-close" aria-label="Close" wire:click='closeDepositModal'></button>
             </div>
 
@@ -18,8 +18,7 @@
                 </div>
             </div>
             @if ($operation_type == 'normal')
-
-                <form wire:submit.prevent="submit">
+                <form wire:submit.prevent="showConfirmDepositNormal">
                     <div class="modal-body row">
                         <div class="col-md-6 mb-3">
                             <label>Devise</label>
@@ -28,13 +27,17 @@
                                 <option value="USD">USD</option>
                                 <option value="CDF">CDF</option>
                             </select>
-                            @error('currency') <span class="text-danger">{{ $message }}</span> @enderror
+                            @error('currency')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label>Montant</label>
                             <input type="number" step="0.01" wire:model="amount" class="form-control" />
-                            @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
+                            @error('amount')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
                         </div>
 
                         <div class="col-md-12 mb-3">
@@ -43,22 +46,23 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click='closeDepositModal'>{{ __('Fermer')
-                            }}</button>
+                        <button type="button" class="btn btn-secondary"
+                            wire:click='closeDepositModal'>{{ __('Fermer') }}</button>
                         <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
                             <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                             {{ __('Ajouter') }}
                         </button>
+
                     </div>
                 </form>
             @endif
 
             @if ($operation_type == 'carte')
-                <form wire:submit.prevent="contribute">
+                <form wire:submit.prevent="showConfirmDepositNormal">
                     <div class="modal-body row">
                         <div class="col-md-12 mb-3">
                             <label>Choisir une carte</label>
-                            <select wire:model.live="card_id" class="form-control">
+                            <select wire:model.live.debounce.300ms="card_id" class="form-control">
                                 <option value="">Sélectionner une carte</option>
                                 @foreach ($cards as $card)
                                     <option value="{{ $card->id }}">
@@ -71,26 +75,30 @@
                             </select>
                         </div>
 
-                    @if ($selectedCard)
-                        <div class="col-md-12 mb-3">
-                            <label>Montant à verser</label>
-                            <input type="number" step="0.01" wire:model="amount" class="form-control" />
-                            @error('amount') <span class="text-danger">{{ $message }}</span> @enderror
-                        </div>
-                    @endif
+                        @if ($selectedCard)
+                            <div class="col-md-12 mb-3">
+                                <label>Montant à verser</label>
+                                <input type="number" step="0.01" wire:model="amount" class="form-control" />
+                                @error('amount')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        @endif
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click='closeDepositModal'>{{ __('Fermer')
-                            }}</button>
+                        <button type="button" class="btn btn-secondary"
+                            wire:click='closeDepositModal'>{{ __('Fermer') }}</button>
                         @if ($selectedCard)
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
-                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            {{ __('Valider la mise') }}
-                        </button>
+                            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                {{ __('Valider la mise') }}
+                            </button>
                         @endif
                     </div>
                 </form>
             @endif
         </div>
     </div>
+
+    @include('livewire.admin.confirm-deposit')
 </div>

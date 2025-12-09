@@ -34,4 +34,11 @@ class Transaction extends Model
     {
         return $this->belongsTo(Credit::class);
     }
+
+    public function paired()
+    {
+        return $this->hasOne(Transaction::class, 'created_at', 'created_at')
+                    ->where('type', 'conversion_entree')
+                    ->where('user_id', $this->user_id);
+    }
 }

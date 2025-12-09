@@ -7,14 +7,23 @@ use Illuminate\Database\Eloquent\Model;
 
 class MembershipCard extends Model
 {
-    /** @use HasFactory<\Database\Factories\MembershipCardFactory> */
     use HasFactory;
 
-    protected $fillable = ['code', 'member_id', 'currency', 'price', 'subscription_amount', 'start_date', 'end_date', 'is_active'];
+    protected $fillable = [
+        'code', 'member_id', 'user_id', 'currency', 'price',
+        'subscription_amount', 'start_date', 'end_date', 'is_active'
+    ];
 
+    // Membre propriétaire du carnet
     public function member()
     {
         return $this->belongsTo(User::class, 'member_id');
+    }
+
+    // Agent responsable du carnet
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function contributions()
@@ -35,5 +44,10 @@ class MembershipCard extends Model
     public function getUnpaidContributionsAttribute()
     {
         return $this->contributions->where('is_paid', false);
+    }
+
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
     }
 }

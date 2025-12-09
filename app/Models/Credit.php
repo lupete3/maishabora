@@ -7,18 +7,24 @@ use Illuminate\Database\Eloquent\Model;
 
 class Credit extends Model
 {
-    /** @use HasFactory<\Database\Factories\CreditFactory> */
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'account_id', 'currency', 'amount',
-        'interest_rate', 'installments', 'start_date',
-        'due_date', 'is_paid'
+        'user_id', 'agent_id', 'account_id', 'currency', 'amount',
+        'interest_rate', 'installments', 'start_date', 'due_date',
+        'frais_credit', 'credit_type', 'repayment_type', 'is_paid'
     ];
 
+    // Membre bénéficiaire
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Agent qui gère ce crédit
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'agent_id');
     }
 
     public function account()

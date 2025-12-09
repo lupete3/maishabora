@@ -26,24 +26,24 @@ class MembershipCardStats extends Component
             // ADMIN : voir tous les membres
             $cardsUsd = MembershipCard::where('currency', 'USD')
                 ->whereHas('member', fn($q) => $q->where('role', 'membre'))
-                ->withCount('contributions')
+                ->with(['contributions'])
                 ->get();
 
             $cardsCdf = MembershipCard::where('currency', 'CDF')
                 ->whereHas('member', fn($q) => $q->where('role', 'membre'))
-                ->withCount('contributions')
+                ->with(['contributions'])
                 ->get();
 
         } elseif ($user->can('afficher-tableaudebord-client')) {
             // CLIENT : voir ses propres cartes
             $cardsUsd = MembershipCard::where('currency', 'USD')
                 ->where('member_id', $user->id)
-                ->withCount('contributions')
+                ->with(['contributions'])
                 ->get();
 
             $cardsCdf = MembershipCard::where('currency', 'CDF')
                 ->where('member_id', $user->id)
-                ->withCount('contributions')
+                ->with(['contributions'])
                 ->get();
         } else {
             // PAS DE PERMISSION : vider ou bloquer
@@ -55,13 +55,17 @@ class MembershipCardStats extends Component
         $this->totalCardsUsd = $cardsUsd->count();
         $this->activeCardsUsd = $cardsUsd->where('is_active', true)->count();
         $this->closedCardsUsd = $cardsUsd->where('is_active', false)->count();
-        $this->totalContributionsUsd = $cardsUsd->sum('subscription_amount');
+        $this->totalContributionsUsd = $cardsUsd->sum(function ($card) {
+            return $card->getTotalSavedAttribute();
+        });
 
         // Statistiques CDF
         $this->totalCardsCdf = $cardsCdf->count();
         $this->activeCardsCdf = $cardsCdf->where('is_active', true)->count();
         $this->closedCardsCdf = $cardsCdf->where('is_active', false)->count();
-        $this->totalContributionsCdf = $cardsCdf->sum('subscription_amount');
+        $this->totalContributionsCdf = $cardsCdf->sum(function ($card) {
+            return $card->getTotalSavedAttribute();
+        });
     }
 
     public function render()

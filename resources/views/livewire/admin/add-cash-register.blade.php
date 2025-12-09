@@ -11,7 +11,6 @@
                 </div>
 
                 <div class="modal-body">
-
                     <div class="row">
                         <div class="col-md-6 mt-2">
                             <label for="currency">{{ __('Devise') }}</label>
@@ -57,5 +56,3 @@
         </div>
     </div>
 </div>
-
-<!-- Table des adhésions (inchangée) -->

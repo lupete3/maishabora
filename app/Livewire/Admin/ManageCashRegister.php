@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\MainCashRegister;
 use App\Models\Transaction;
@@ -73,6 +74,17 @@ class ManageCashRegister extends Component
             'description' => $this->description,
         ]);
 
+        UserLogHelper::log_user_activity(
+            action: $this->type === 'in' ? 'ajout_fonds_caisse' : 'retrait_fonds_caisse',
+            description: sprintf(
+                '%s de %s %s dans la caisse%s',
+                $this->type === 'in' ? __('Ajout') : __('Retrait'),
+                number_format($this->amount, 2),
+                $this->currency,
+                !empty($this->description) ? '. ' . __('Description') . ': ' . $this->description : ''
+            )
+        );
+
         notyf()->success(message: __('Opération effectuée avec succès !'));
 
         $this->reset(['amount', 'description']);
@@ -112,7 +124,8 @@ class ManageCashRegister extends Component
                     ->orWhere('type', 'like', '%octroi_de_credit_client%')
                     ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
                     ->orWhere('type', 'like', '%octroi_de_credit_client%')
-                    ->orWhere('type', 'like', '%virement_caisse_sortant%');
+                    ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                    ->orWhere('type', 'like', '%paie_sortant%');
 
             })
             ->where(function ($query) {

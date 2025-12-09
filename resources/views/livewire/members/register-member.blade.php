@@ -16,15 +16,18 @@
                         <button class="btn btn-show-table-options" type="button">Rechercher</button>
 
                         <div class="table-search-input">
-                            <label>
-                                <input type="search" wire:model.live="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
-                            </label>
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text" id="basic-addon-search31"><i
+                                        class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
+                                    placeholder="Rechercher..." aria-label="Rechercher..."
+                                    aria-describedby="basic-addon-search31">
+                            </div>
                         </div>
                     </div>
 
                     <div class="d-flex align-items-center gap-2">
-                        <select wire:model.live="perPage" class="form-select form-select-sm">
+                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm">
                             <option value="10">10</option>
                             <option value="30">30</option>
                             <option value="50">50</option>
@@ -33,7 +36,7 @@
                         </select>
                         @can('ajouter-client')
                             <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
-                                {{ __("Ajouter") }}
+                                {{ __('Ajouter') }}
                             </button>
                         @endcan
                     </div>
@@ -49,7 +52,6 @@
                                 <th>Code</th>
                                 <th>Nom</th>
                                 <th>Sexe</th>
-                                <th>Email</th>
                                 <th>Téléphone</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -59,9 +61,8 @@
                             @forelse ($members as $member)
                                 <tr>
                                     <td>{{ $member->code }}</td>
-                                    <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
+                                    <td>{{ $member->name . ' ' . $member->postnom . ' ' . $member->prenom }}</td>
                                     <td>{{ $member->sexe }}</td>
-                                    <td>{{ $member->email }}</td>
                                     <td>{{ $member->telephone ?? '-' }}</td>
                                     <td>
                                         @if ($member->status)
@@ -72,12 +73,15 @@
                                     </td>
                                     <td>
                                         <div class="d-flex align-items-center gap-1">
-                                            @canany(['depot-compte-membre', 'retrait-compte-membre'])
-                                                <a href="{{ route('member.details', $member->id) }}" wire:navigate class="btn btn-sm btn-primary">
-                                                    Afficher
-                                                </a>
-                                            @endcanany
-
+                                            @if ($member->status)
+                                                @canany(['afficher-compte-membre', 'depot-compte-membre',
+                                                    'retrait-compte-membre'])
+                                                    <a href="{{ route('member.details', $member->id) }}" wire:navigate
+                                                        class="btn btn-sm btn-primary">
+                                                        Afficher
+                                                    </a>
+                                                @endcanany
+                                            @endif
                                             @can('modifier-client')
                                                 <button wire:click='edit({{ $member->id }})' class="btn btn-sm btn-info">
                                                     {{ __('Modifier') }}
@@ -88,7 +92,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="6" class="text-center">
                                         <div class="alert alert-danger" role="alert">
                                             Aucun client correspondant trouvé dans le système.
                                         </div>
@@ -122,9 +126,9 @@
 
                 </div>
                 @if ($members)
-                <div class="d-flex justify-content-center">
-                    {{ $members->links() }}
-                </div>
+                    <div class="d-flex justify-content-center">
+                        {{ $members->links() }}
+                    </div>
                 @endif
             </div>
 

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Members;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Account;
@@ -68,7 +69,7 @@ class RegisterMember extends Component
     // Compte
     public string $email = '';
     public string $role = 'membre';
-    public bool $status = false;
+    public bool $status = true;
 
     // Fichiers (si tu les utilises)
     public $photo_profil = null;
@@ -83,8 +84,99 @@ class RegisterMember extends Component
     public $userId;
     public $selectedMemberId = null;
 
+    public $currentStep = 1;
+    public $totalSteps = 5;
 
-    public function submit()
+
+    public function nextStep()
+    {
+        $this->validateStep($this->currentStep);
+
+        if ($this->currentStep < $this->totalSteps) {
+            $this->currentStep++;
+        }
+    }
+
+    public function previousStep()
+    {
+        if ($this->currentStep > 1) {
+            $this->currentStep--;
+        }
+    }
+
+    public function validateStep($step)
+    {
+        $rules = [];
+        switch ($step) {
+            case 1:
+                $rules = [
+                    'name' => ['required', 'string', 'max:255'],
+                    'postnom' => ['required', 'string', 'max:255'],
+                    'prenom' => ['nullable', 'string', 'max:255'],
+                    'sexe' => ['nullable', 'string', 'max:255'],
+                    'date_naissance' => ['required', 'date'],
+                    'telephone' => [
+                        'required',
+                        'string',
+                        'max:20',
+                        'regex:/^\+243\d{9}$/',
+                        Rule::unique('users')->where(fn ($query) => $query
+                            ->where('name', $this->name)
+                            ->where('postnom', $this->postnom)
+                            ->where('telephone', $this->telephone)),
+                    ],
+                    'profession' => ['nullable', 'string', 'max:255'],
+                    'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($this->userId)],
+                    'adresse_physique' => ['nullable', 'string'],
+                ];
+                break;
+            case 2:
+                $rules = [
+                    'type_piece' => ['nullable', 'string', 'max:100'],
+                    'numero_piece' => ['nullable', 'string', 'max:100'],
+                    'date_expiration_piece' => ['nullable', 'date'],
+                    'etat_civil' => ['nullable', 'in:célibataire,marié,divorcé,veuf'],
+                    'nombre_dependants' => ['nullable', 'integer', 'min:0'],
+                    'lieu_naissance' => ['nullable', 'string', 'max:255'],
+                ];
+                break;
+            case 3:
+                $rules = [
+                    'revenu_mensuel' => ['nullable', 'numeric', 'min:0'],
+                    'source_revenu' => ['nullable', 'string', 'max:255'],
+                    'nom_employeur' => ['nullable', 'string', 'max:255'],
+                    'nom_conjoint' => ['nullable', 'string', 'max:255'],
+                    'telephone_conjoint' => ['nullable', 'string', 'max:20'],
+                ];
+                break;
+            case 4:
+                $rules = [
+                    'nom_reference' => ['nullable', 'string', 'max:255'],
+                    'telephone_reference' => ['nullable', 'string', 'max:20'],
+                    'lien_reference' => ['nullable', 'string', 'max:255'],
+                    'province' => ['nullable', 'string', 'max:255'],
+                    'ville' => ['nullable', 'string', 'max:255'],
+                    'commune' => ['nullable', 'string', 'max:255'],
+                    'quartier' => ['nullable', 'string', 'max:255'],
+                ];
+                break;
+            case 5:
+                $rules = [
+                    'photo_profil' => ['nullable', 'image', 'max:4048'],
+                    'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
+                    'date_adhesion' => ['nullable', 'date'],
+                    'nationalite' => ['nullable', 'string', 'max:255'],
+                    'niveau_etude' => ['nullable', 'string', 'max:255'],
+                    'remarque' => ['nullable', 'string'],
+                ];
+                break;
+        }
+
+        $this->validate($rules);
+    }
+
+
+    public function submitForm()
     {
         $validator = Validator::make([
             'name' => $this->name,
@@ -185,7 +277,7 @@ class RegisterMember extends Component
 
         if ($validator->fails()) {
             $this->setErrorBag($validator->errors());
-            notyf()->error('Veuillez corriger les erreurs dans le formulaire.');
+            notyf()->error($validator->errors().'Veuillez corriger les erreurs dans le formulaire.');
             return;
         }
 
@@ -213,6 +305,11 @@ class RegisterMember extends Component
                 'balance' => 0,
             ]);
         }
+
+        UserLogHelper::log_user_activity(
+            action: 'enregistrement_membre',
+            description: "Enregistrement du membre {$user->name} {$user->postnom} ({$user->code})"
+        );
 
         $this->reset([
             'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
@@ -376,6 +473,11 @@ class RegisterMember extends Component
 
             User::findOrFail($this->userId)->update($validated);
 
+            UserLogHelper::log_user_activity(
+                action: 'mise_a_jour_membre',
+                description: "Mise à jour du membre {$this->name} {$this->postnom} ({$this->userId})"
+            );
+
             $this->dispatch('closeModal', name: 'modalMembre');
             $this->dispatch('$refresh');
             $this->resetPage();
@@ -389,20 +491,25 @@ class RegisterMember extends Component
         }
     }
 
-
     private function generateUniqueAccountCode()
     {
         try {
             do {
+                // Récupère le dernier code utilisateur
                 $lastAccount = User::whereNotNull('code')->orderByDesc('id')->first();
-                $number = $lastAccount ? intval(substr($lastAccount->code, 3)) + 1 : 1;
-                $code = 'IMF' . str_pad($number, 3, '0', STR_PAD_LEFT);
-            } while (User::where('code', $code)->exists());
+
+                // Extrait le numéro incrémental après "34" + année (à partir du 6ème caractère)
+                $number = $lastAccount
+                    ? intval(substr($lastAccount->code, 6)) + 1
+                    : 1;
+
+                // Génère le code avec : "34" + année + numéro incrémental (10 chiffres)
+                $code = '34' . now()->format('Y') . str_pad($number, 10, '0', STR_PAD_LEFT);
+            } while (User::where('code', $code)->exists()); // Vérifie l'unicité
 
             return $code;
-
-        } catch (Throwable $th) {
-            throw $th; // On relève l’erreur plutôt que de la traiter ici
+        } catch (\Throwable $th) {
+            throw $th; // Relève l'erreur
         }
     }
 
@@ -441,29 +548,52 @@ class RegisterMember extends Component
     public function render()
     {
         try {
+            $query = User::where('role', 'membre');
+
             if ($this->search) {
-                $members = User::where('role', 'membre')
-                    ->where(function ($query) {
-                        $query->where('code', 'like', "%{$this->search}%")
-                            ->orWhere('name', 'like', "%{$this->search}%")
-                            ->orWhere('postnom', 'like', "%{$this->search}%")
-                            ->orWhere('prenom', 'like', "%{$this->search}%")
-                            ->orWhere('sexe', 'like', "%{$this->search}%")
-                            ->orWhere('date_naissance', 'like', "%{$this->search}%")
-                            ->orWhere('telephone', 'like', "%{$this->search}%")
-                            ->orWhere('adresse_physique', 'like', "%{$this->search}%")
-                            ->orWhere('profession', 'like', "%{$this->search}%");
-                    })
-                    ->paginate($this->perPage);
-            } else {
-                $members = User::where('role', 'membre')->paginate($this->perPage);
+                // Découpe la recherche par espaces
+                $terms = explode(' ', $this->search);
+
+                $query->where(function ($q) use ($terms) {
+                    foreach ($terms as $term) {
+                        $q->where(function ($subQuery) use ($term) {
+                            $subQuery->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('sexe', 'like', "%{$term}%")
+                                ->orWhere('date_naissance', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%")
+                                ->orWhere('adresse_physique', 'like', "%{$term}%")
+                                ->orWhere('profession', 'like', "%{$term}%");
+                        });
+                    }
+                });
             }
 
-            return view('livewire.members.register-member', ['members' => $members]);
+            $members = $query->paginate($this->perPage);
+
+            return view('livewire.members.register-member', [
+                'members' => $members,
+            ]);
 
         } catch (Throwable $th) {
             notyf()->error('Erreur lors du chargement des membres.');
             return view('livewire.members.register-member', ['members' => []]);
+        }
+    }
+
+    // Dès que "name" change, on met à jour l'email
+    public function updatedPostnom($value)
+    {
+        if (!empty($value)) {
+            // Nettoyage du nom : espaces -> points, minuscules
+            $username = strtolower(str_replace(' ', '.', $value));
+            $name = strtolower(str_replace(' ', '.', $this->name));
+
+            $this->email = $name . $username . '@gmail.com';
+        } else {
+            $this->email = '';
         }
     }
 }

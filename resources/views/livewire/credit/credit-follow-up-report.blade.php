@@ -25,7 +25,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-2">
             <div class="card border-danger h-100">
                 <div class="card-body">
                     <h6 class="card-title text-danger">En cours</h6>
@@ -36,7 +36,18 @@
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6 col-lg-2">
+            <div class="card border-warning h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-warning">Intérêt</h6>
+                    @foreach ($totals['interestByCurrency'] as $curr => $total)
+                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 col-lg-2">
             <div class="card border-warning h-100">
                 <div class="card-body">
                     <h6 class="card-title text-warning">Pénalités</h6>
@@ -51,14 +62,14 @@
     <div class="table-wrapper">
         <div class="card has-table ">
             <div class="card-header bg-light d-flex justify-between">
-                <div class="row g-3">
+                <div class="row g-2 w-100">
                     <div class="col-md-3">
-                        <input type="text" wire:model.live="searchMember" class="form-control"
+                        <input type="text" wire:model.live.debounce.300ms="searchMember" class="form-control"
                             placeholder="Rechercher membre..." />
                     </div>
 
                     <div class="col-md-2">
-                        <select wire:model.live="currency" class="form-select">
+                        <select wire:model.live.debounce.300ms="currency" class="form-select">
                             <option value="">Devise</option>
                             <option value="USD">USD</option>
                             <option value="CDF">CDF</option>
@@ -66,7 +77,7 @@
                     </div>
 
                     <div class="col-md-2">
-                        <select wire:model.live="status" class="form-select">
+                        <select wire:model.live.debounce.300ms="status" class="form-select">
                             <option value="">Statut</option>
                             <option value="paid">Remboursé</option>
                             <option value="unpaid">En cours</option>
@@ -74,19 +85,21 @@
                     </div>
 
                     <div class="col-md-2">
-                        <input type="date" wire:model.live="startDate" class="form-control" />
+                        <input type="date" wire:model.live.debounce.300ms="startDate" class="form-control" />
                     </div>
 
                     <div class="col-md-2">
-                        <input type="date" wire:model.live="endDate" class="form-control" />
+                        <input type="date" wire:model.live.debounce.300ms="endDate" class="form-control" />
                     </div>
-
-
+                    <div class="col-md-4">
+                        <input type="text" wire:model.live.debounce.300ms="searchAgent" class="form-control"
+                            placeholder="Filtrer par agent..." />
+                    </div>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <button wire:click="exportToPdf" class="btn btn-primary " wire:loading.attr="disabled">
                         <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i class="bx bx-download"></i> Télécharger PDF
+                        <i class="bx bx-download"></i> PDF
                     </button>
                 </div>
             </div>
@@ -101,6 +114,7 @@
                             <th>Montant</th>
                             <th>Solde Restant</th>
                             <th>Pénalité</th>
+                            <th>Agent Crédit</th>
                             <th>Status</th>
                         </tr>
                     </thead>
@@ -114,14 +128,25 @@
                             <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
                             <td>{{ number_format($credit->amount, 2) }} {{ $credit->currency }}</td>
                             <td>
+                                @if ($credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount') > 0)
                                 {{ number_format(
                                 $credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount'), 2
                                 ) }} {{ $credit->currency }}
+                                @else
+                                +{{ number_format(
+                                $credit->repayments->where('is_paid', true)->sum('paid_amount') - $credit->amount, 2
+                                ) }} {{ $credit->currency }}
+
+                                @endif
+
                             </td>
                             <td>
                                 {{ number_format(
                                 $credit->repayments->sum('penalty'), 2
                                 ) }} {{ $credit->currency }}
+                            </td>
+                            <td>
+                                {{ $credit->agent ? $credit->agent->name . ' ' . $credit->agent->postnom : 'N/A' }}
                             </td>
                             <td>
                                 @if ($credit->is_paid)
@@ -149,7 +174,5 @@
                 </div>
             </div>
         </div>
-        <!-- Récapitulatif -->
-
     </div>
 </div>

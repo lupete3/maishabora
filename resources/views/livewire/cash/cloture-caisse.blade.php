@@ -1,4 +1,5 @@
 <div class="mt-4">
+    @if ($this->logical_usd > 0 || $this->logical_cdf > 0)
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="card-title mb-0">Clôture de caisse - Agent</h5>
@@ -34,7 +35,8 @@
                 @foreach ($denominations_usd as $denomination)
                     <div class="col-md-2 mb-2">
                         <label class="form-label">${{ $denomination }}</label>
-                        <input type="number" wire:model.lazy="billetages_usd.{{ $denomination }}" class="form-control" min="0">
+                        <input type="number" wire:model.lazy="billetages_usd.{{ $denomination }}" class="form-control"
+                            min="0">
                     </div>
                 @endforeach
             </div>
@@ -45,7 +47,8 @@
                 @foreach ($denominations_cdf as $denomination)
                     <div class="col-md-2 mb-2">
                         <label class="form-label">{{ $denomination }} Fc</label>
-                        <input type="number" wire:model.lazy="billetages_cdf.{{ $denomination }}" class="form-control" min="0">
+                        <input type="number" wire:model.lazy="billetages_cdf.{{ $denomination }}" class="form-control"
+                            min="0">
                     </div>
                 @endforeach
             </div>
@@ -76,6 +79,7 @@
             </div>
         </div>
     </div>
+    @endif
 
     <livewire:cash.cash-closing-history>
 </div>

@@ -26,6 +26,8 @@ class RapportCarnetsComponent extends Component
     public $totalToSave;
     public $totalSaved;
     public $totalContributedDays;
+    public $status = ''; // 'open' ou 'closed'
+
 
     public function mount()
     {
@@ -34,7 +36,7 @@ class RapportCarnetsComponent extends Component
 
     public function updated($field)
     {
-        if (in_array($field, ['currency', 'periodFilter', 'minDaysFilled', 'maxDaysFilled', 'exactDaysFilled', 'search'])) {
+        if (in_array($field, ['currency', 'periodFilter', 'minDaysFilled', 'maxDaysFilled', 'exactDaysFilled', 'search', 'status'])) {
             $this->resetPage();
         }
         $this->updateStats();
@@ -43,6 +45,12 @@ class RapportCarnetsComponent extends Component
     public function updateStats()
     {
         $query = MembershipCard::query();
+
+        if ($this->status === 'open') {
+            $query->where('is_active', true);
+        } elseif ($this->status === 'closed') {
+            $query->where('is_active', false);
+        }
 
         if ($this->currency) {
             $query->where('currency', $this->currency);
@@ -105,6 +113,12 @@ class RapportCarnetsComponent extends Component
             ->withCount(['contributions as contributed_days_count' => function ($q) {
                 $q->where('is_paid', true);
             }]);
+        
+        if ($this->status === 'open') {
+            $query->where('is_active', true);
+        } elseif ($this->status === 'closed') {
+            $query->where('is_active', false);
+        }
 
         if ($this->currency) {
             $query->where('currency', $this->currency);
@@ -159,6 +173,12 @@ class RapportCarnetsComponent extends Component
             ->withCount(['contributions as contributed_days_count' => function ($q) {
                 $q->where('is_paid', true);
             }]);
+
+        if ($this->status === 'open') {
+            $carnets->where('is_active', true);
+        } elseif ($this->status === 'closed') {
+            $carnets->where('is_active', false);
+        }
 
         if ($this->currency) {
             $carnets->where('currency', $this->currency);

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Credit;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Credit;
@@ -10,6 +11,7 @@ use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\Notification;
 use App\Models\Transaction;
+use App\Models\UserLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -29,6 +31,19 @@ class ManageRepayments extends Component
         'member_id' => 'required|exists:users,id',
         'credit_id' => 'required|exists:credits,id',
     ];
+
+    public $repaymentToPay = null;
+    public $applyInterest = true; // valeur par défaut
+
+    public $penality = 0;
+
+    public function confirmRepayment($repaymentId)
+    {
+        $this->repaymentToPay = $repaymentId;
+        $repayment = Repayment::findOrFail($repaymentId);
+        $this->penality = floatval($repayment->penalty);
+        $this->dispatch('openModal', name: 'confirm-repayment'); // JS pour ouvrir le modal
+    }
 
     public function mount()
     {
@@ -81,10 +96,13 @@ class ManageRepayments extends Component
         }
     }
 
-    public function payRepayment($repaymentId)
+    public function payRepayment($withInterest = true)
     {
+        $repaymentId = $this->repaymentToPay;
+
         try {
-            DB::transaction(function () use ($repaymentId) {
+            DB::transaction(function () use ($repaymentId, $withInterest) {
+
                 $repayment = Repayment::findOrFail($repaymentId);
 
                 if ($repayment->is_paid) {
@@ -95,49 +113,71 @@ class ManageRepayments extends Component
                 $credit = $repayment->credit;
                 $member = $credit->user;
 
-                // Compte du membre
+                // Récupération ou création du compte membre
                 $account = Account::firstOrCreate(
                     ['user_id' => $member->id, 'currency' => $credit->currency],
                     ['balance' => 0]
                 );
 
-                $amountToPay = round($repayment->total_due, 3); // Sans pénalité si payé manuellement à temps
+                // Calcul du montant à payer
+                if ($withInterest) {
+                    $expectedAmount = floatval($repayment->expected_amount);
+                    $penalityAmount = floatval($this->penality);
+                    $amountToPay = round($expectedAmount + $penalityAmount, 3);
+                } else {
+                    $capitalRestant = floatval($repayment->credit->amount) / max(floatval($repayment->credit->installments), 1);
+                    $amountToPay = round($capitalRestant, 3);
+                }
 
-                if ($account->balance < $amountToPay) {
-                    throw new \Exception('Solde insuffisant pour effectuer ce remboursement.');
+                // Vérification du solde
+                if (floatval($account->balance) < $amountToPay) {
+                    notyf()->error(__('Solde insuffisant pour effectuer ce remboursement.'));
+                    return;
                 }
 
                 // Débiter le compte membre
-                $account->balance -= $amountToPay;
+                $account->balance = floatval($account->balance) - $amountToPay;
                 $account->save();
 
-                // Marquer l’échéance comme payée
-                $repayment->paid_date = date('Y-m-d');
+                // Mettre à jour le remboursement
+                $repayment->paid_date = now()->format('Y-m-d');
                 $repayment->paid_amount = $amountToPay;
                 $repayment->total_due = $amountToPay;
                 $repayment->is_paid = true;
                 $repayment->save();
 
-                // Vérifier si tout est remboursé
+                // Vérifier si le crédit est entièrement remboursé
                 if (!$credit->repayments()->where('is_paid', false)->exists()) {
                     $credit->is_paid = true;
                     $credit->save();
                 }
 
-                // Récupérer ou créer le compte agent encaisseur
-                $agentAccount = AgentAccount::firstOrCreate(
-                    ['user_id' => 95, 'currency' => $credit->currency],
-                    ['balance' => 0]
-                );
+                // Gestion de l'encaissement agent si paiement avec intérêt
+                if ($withInterest) {
+                    $agentAccount = AgentAccount::firstOrCreate(
+                        ['user_id' => 95, 'currency' => $credit->currency],
+                        ['balance' => 0]
+                    );
 
-                $interestPart = round($amountToPay * ($credit->interest_rate * 2 / 100), 3);
-                $penality = $repayment->penalty;
+                    $interestPart = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
+                    $penality = floatval($repayment->penalty);
 
-                // Créditer le compte agent
-                $agentAccount->balance += ($interestPart+$penality);
-                $agentAccount->save();
+                    $agentAccount->balance = floatval($agentAccount->balance) + ($interestPart + $penality);
+                    $agentAccount->save();
 
-                // Enregistrement de la transaction client (débit)
+                    // Transaction agent
+                    Transaction::create([
+                        'agent_account_id' => $agentAccount->id,
+                        'user_id' => 95,
+                        'type' => 'encaissement_agent',
+                        'currency' => $credit->currency,
+                        'amount' => ($interestPart + $penality),
+                        'balance_after' => $agentAccount->balance,
+                        'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
+                    ]);
+                }
+
+                // Transaction client (débit)
                 Transaction::create([
                     'account_id' => $account->id,
                     'user_id' => $member->id,
@@ -148,18 +188,13 @@ class ManageRepayments extends Component
                     'description' => "Remboursement manuel de l'échéance #{$repayment->id} pour le crédit #{$credit->id}",
                 ]);
 
-                // Enregistrement de la transaction agent (crédit)
-                Transaction::create([
-                    'agent_account_id' => $agentAccount->id,
-                    'user_id' => 95,
-                    'type' => 'encaissement_agent',
-                    'currency' => $credit->currency,
-                    'amount' => ($interestPart+$penality),
-                    'balance_after' => $agentAccount->balance,
-                    'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
-                ]);
+                // Journalisation
+                UserLogHelper::log_user_activity(
+                    action: 'remboursement_credit',
+                    description: "Remboursement manuel de l'échéance #{$repayment->id} pour le crédit #{$credit->id} du membre {$member->code} {$member->name} {$member->postnom}, montant {$amountToPay} {$credit->currency}"
+                );
 
-                // Notification
+                // Notification membre
                 Notification::create([
                     'user_id' => $member->id,
                     'title' => 'Remboursement effectué',
@@ -169,13 +204,13 @@ class ManageRepayments extends Component
             });
 
             notyf()->success(__('Échéance remboursée avec succès !'));
-            $this->updatedCreditId(); // Rafraîchir
+            $this->updatedCreditId(); // Rafraîchir l’affichage
+
         } catch (\Throwable $e) {
             report($e);
             notyf()->error('Erreur lors du remboursement : ' . $e->getMessage());
         }
     }
-
 
     public function render()
     {

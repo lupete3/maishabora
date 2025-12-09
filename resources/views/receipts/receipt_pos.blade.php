@@ -111,7 +111,7 @@
 
   <!-- Pied de page -->
   <div class="footer">
-    Ce reçu est valable comme preuve de transaction.<br>
+    Ce reçu est la preuve de transaction.<br>
     Aucun remboursement sans ce document.
   </div>
 

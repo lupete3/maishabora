@@ -13,7 +13,7 @@ class CreditController extends Controller
      */
     public function index()
     {
-        //
+        return view('loan-application-list');
     }
 
     /**
@@ -21,7 +21,7 @@ class CreditController extends Controller
      */
     public function create()
     {
-        //
+        return view('loan-application-create');
     }
 
     /**

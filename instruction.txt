@@ -1,0 +1,3 @@
+vérifier les migration repayments, credits et users. 
+je veux que tu me produit un rapport détaillé des remboursements de  crédits journliers, hebomadaires, mensuels, annuels 
+en te référent sur le fichier "CreditFollowUpReport.php" et que ça soit exportable aussi

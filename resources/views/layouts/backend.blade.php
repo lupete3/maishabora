@@ -30,10 +30,6 @@
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/css/theme-default.css"
         class="template-customizer-theme-css" />
     <link rel="stylesheet" href="{{ asset('/') }}assets/css/demo.css" />
-    {{--
-    <link rel="stylesheet" href="{{ asset('/') }}assets/css/select2-bootstrap4.css" /> --}}
-    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
     <!-- Vendors CSS -->
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/libs/perfect-scrollbar/perfect-scrollbar.css" />
@@ -55,8 +51,8 @@
 
     <!-- Scripts -->
     @livewireStyles
-    @vite(['resources/js/app.js'])
-    {{-- @vite(['resources/css/app.css', 'resources/js/app.js']) --}}
+    {{-- @vite(['resources/js/app.js']) --}}
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
@@ -101,8 +97,6 @@
     </div>
     <!-- / Layout wrapper -->
 
-
-
     <!-- Core JS -->
     <!-- build:js assets/vendor/js/core.js -->
     <script src="{{ asset('/') }}assets/vendor/libs/jquery/jquery.js"></script>
@@ -125,9 +119,6 @@
     <!-- Place this tag in your head or just before your close body tag. -->
     <script async defer src="https://buttons.github.io/buttons.js"></script>
 
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"
-        integrity="sha256-AFAYEOkzB6iIKnTYZOdUf9FFje6lOTYdwRJKwTN5mks=" crossorigin="anonymous"></script>
-
     <script>
         window.addEventListener('closeModal', event => {
             const modalId = '#' + event.detail.name;
@@ -141,17 +132,10 @@
 
         });
     </script>
-    <script>
-        $(document).ready(function() {
-            $('.select2').select2();
-        });
 
-    </script>
     <script>
         window.addEventListener('sendConfirm', event => {
-
             Swal.fire({
-
                 // icon: event.detail.type,
                 title: event.detail.title,
                 html: event.detail.message,
@@ -194,6 +178,16 @@
             const url = event.detail.url;
             printFacture(url);
         });
+    </script>
+
+    <script>
+      document.addEventListener("livewire:load", () => {
+          Livewire.hook('request.failed', ({ status }) => {
+              if (status === 419) {
+                  window.location.reload();
+              }
+          });
+      });
     </script>
 
     @stack('scripts')

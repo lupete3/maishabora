@@ -33,6 +33,9 @@ new class extends Component
             'password' => Hash::make($validated['password']),
         ]);
 
+        // Déconnexion des autres appareils
+        Auth::logoutOtherDevices($validated['password']);
+
         $this->reset('current_password', 'password', 'password_confirmation');
 
         UserLogHelper::log_user_activity('Modification Mot de passe', 'Modification du Mot de passe');

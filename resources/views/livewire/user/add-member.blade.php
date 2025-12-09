@@ -91,6 +91,18 @@
                         </div>
                     @endif
 
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Rôle</label>
+                        <select id="role" wire:model="roleAgent" class="form-select">
+                            <option value="">-- Sélectionnez un rôle --</option>
+                            @foreach($rolesAgents as $r)
+                                <option value="{{ $r }}">{{ ucfirst($r) }}</option>
+                            @endforeach
+                        </select>
+                        @error('roleAgent') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+
+
                     <div class="col-md-6 mb-1">
                         <label for="password" class="form-label">Rôles</label>
 
@@ -148,6 +160,3 @@
         });
     });
 </script>
-
-
-<!-- Table des adhésions (inchangée) -->

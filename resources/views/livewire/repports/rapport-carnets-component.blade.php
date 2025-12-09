@@ -2,7 +2,14 @@
     <h4>Rapport Statistique des Carnets</h4>
 
     <div class="row mb-3">
-        <div class="col-md-3">
+        <div class="col-md-2">
+            <select wire:model.lazy="status" class="form-control" id="status">
+                <option value="">Tous les carnets</option>
+                <option value="open">En cours</option>
+                <option value="closed">Clôturé</option>
+            </select>
+        </div>
+        <div class="col-md-2">
             <select wire:model.lazy="currency" class="form-control">
                 <option value="">Toutes les devises</option>
                 <option value="CDF">CDF</option>
@@ -10,7 +17,7 @@
             </select>
         </div>
 
-        <div class="col-md-3">
+        <div class="col-md-2">
             <select wire:model.lazy="periodFilter" class="form-control">
                 <option value="">Toutes les périodes</option>
                 <option value="today">Aujourd'hui</option>
@@ -20,12 +27,20 @@
             </select>
         </div>
 
-        <div class="col-md-3">
-            <input type="number" min="0" max="31" wire:model.lazy="minDaysFilled" class="form-control" placeholder="Min jours remplis (1-31)">
+        <div class="col-md-2">
+            <select wire:model.lazy="status" class="form-control">
+                <option value="">Touts les status</option>
+                <option value="open">Actif</option>
+                <option value="closed">Inactif</option>
+            </select>
         </div>
 
-        <div class="col-md-3">
-            <input type="number" min="0" max="31" wire:model.lazy="exactDaysFilled" class="form-control" placeholder="Jours remplis exacts (1-31)">
+        <div class="col-md-2">
+            <input type="number" min="0" max="31" wire:model.lazy="minDaysFilled" class="form-control" placeholder="Min jr remplis">
+        </div>
+
+        <div class="col-md-2">
+            <input type="number" min="0" max="31" wire:model.lazy="exactDaysFilled" class="form-control" placeholder="Jours remplis exacts">
         </div>
     </div>
 
@@ -78,7 +93,7 @@
             <h5>Liste des carnets filtrés ({{ $carnets->total() }} résultats)</h5>
             <div class="row mb-3">
                 <div class="col-md-6">
-                    <input wire:model.live="search" type="text" placeholder="Recherche membre..." class="form-control" />
+                    <input wire:model.live.debounce.300ms="search" type="text" placeholder="Recherche membre..." class="form-control" />
                 </div>
                 <div class="col-md-3">
                     <select wire:model.lazy="currency" class="form-control">
@@ -119,9 +134,9 @@
                                 <td>
                                     {{ $pourcentage }}%
                                     <div class="progress bg-label-success" style="height: 6px;">
-                                        <div class="progress-bar bg-success" role="progressbar" 
-                                            style="width: {{ $pourcentage }}%" 
-                                            aria-valuenow="{{ $pourcentage }}" 
+                                        <div class="progress-bar bg-success" role="progressbar"
+                                            style="width: {{ $pourcentage }}%"
+                                            aria-valuenow="{{ $pourcentage }}"
                                             aria-valuemin="0" aria-valuemax="100">
                                         </div>
                                     </div>

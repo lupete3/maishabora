@@ -55,17 +55,40 @@ class PermissionSeeder extends Seeder
 
             "afficher-caisse-agent",
             "afficher-rapport-credit",
+            "afficher-rapport-comptable",
             "afficher-simulation-credit",
             "afficher-tableaudebord-admin",
             "afficher-tableaudebord-receptionist",
             "afficher-tableaudebord-recouvreur",
             "afficher-tableaudebord-client",
 
+            "afficher-compte-membre",
             "depot-compte-membre",
             "retrait-compte-membre",
 
             "afficher-rapport-client",
             "afficher-rapport-carnet",
+
+            "effectuer-virement",
+
+            "ajouter-compte-comptable",
+            "ajouter-type-journal",
+            "ajouter-ecriture-journal",
+            "modifier-compte-comptable",
+            "modifier-type-journal",
+            "supprimer-compte-comptable",
+            "supprimer-type-journal",
+
+            "afficher-paye",
+            "ajouter-paye",
+
+            "afficher-salaire",
+            "ajouter-salaire",
+            "modifier-salaire",
+            "supprimer-salaire",
+
+            "afficher-logs",
+
         ];
 
         foreach ($permissions as $key => $permission) {

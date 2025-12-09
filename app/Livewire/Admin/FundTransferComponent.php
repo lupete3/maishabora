@@ -2,10 +2,14 @@
 
 namespace App\Livewire\Admin;
 
+use App\Helpers\UserLogHelper;
 use App\Models\MainCashRegister;
 use App\Models\AgentAccount;
 use App\Models\Account;
+use App\Models\Notification;
 use App\Models\Transaction;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
@@ -22,10 +26,48 @@ class FundTransferComponent extends Component
     public $description;
     public $recipient_id;
     public $search = '';
+    public $searchagent = '';
     public $perPage = 10;
     protected $paginationTheme = 'bootstrap';
 
+    public $members = [];
+    public $results = [];
 
+    public $showPreview = false; // contrôle du modal
+    public $previewData = [];
+
+    public function updatedSearchagent()
+    {
+        $query = trim($this->searchagent);
+        if ($query !== '') {
+            $this->results = User::query()
+                ->where(function ($q) use ($query) {
+                    $q->where('role', 'membre')
+                        ->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+        } else {
+            $this->results = [];
+        }
+    }
+
+    public function selectResult(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->searchagent = "{$user->name} {$user->postnom}";
+            $this->results = [];
+
+            $this->recipient_id = $user->id;
+            $this->dispatch('userSelected', $user->id);
+        }
+    }
 
     public function updatedTransferType()
     {
@@ -47,6 +89,7 @@ class FundTransferComponent extends Component
 
                 if ($mainCash->balance < $this->amount) {
                     notyf()->error('Solde insuffisant dans la caisse centrale');
+                    return;
                 }
 
                 // Débit caisse centrale
@@ -63,6 +106,8 @@ class FundTransferComponent extends Component
                     'description' => 'Virement sortant vers ' . $this->transfer_type,
                 ]);
 
+                $transfer = '';
+
                 if ($this->transfer_type === 'agent') {
                     $agent = AgentAccount::firstOrCreate(
                         ['user_id' => $this->recipient_id, 'currency' => $this->currency],
@@ -72,7 +117,7 @@ class FundTransferComponent extends Component
                     $agent->balance += $this->amount;
                     $agent->save();
 
-                    Transaction::create([
+                    $transfer = Transaction::create([
                         'user_id' => $this->recipient_id,
                         'agent_account_id' => $agent->id,
                         'type' => 'virement_caisse_entrant',
@@ -90,7 +135,7 @@ class FundTransferComponent extends Component
                     $account->balance += $this->amount;
                     $account->save();
 
-                    Transaction::create([
+                    $transfer = Transaction::create([
                         'user_id' => $this->recipient_id,
                         'account_id' => $account->id,
                         'type' => 'virement_caisse_entrant',
@@ -100,10 +145,25 @@ class FundTransferComponent extends Component
                         'description' => $this->description ?? 'Virement reçu depuis caisse centrale',
                     ]);
                 }
+
+                UserLogHelper::log_user_activity(
+                    action: 'virement_caisse',
+                    description: "Virement de {$this->amount} {$this->currency} vers {$this->transfer_type} ID:{$this->recipient_id}"
+                );
+
+                Notification::create([
+                    'user_id' => $this->recipient_id,
+                    'title' => 'Virement reçu',
+                    'message' => "Vous avez reçu un virement de {$this->amount} {$this->currency} dans votre compte.",
+                    'read' => false,
+                ]);
+
+                $this->reset(['amount', 'description', 'recipient_id']);
+                $this->dispatch('refreshComponent');
+                notyf()->success('Virement effectué avec succès.');
+
             });
 
-            $this->reset(['amount', 'description', 'recipient_id']);
-            notyf()->success('Virement effectué avec succès.');
         } catch (\Throwable $e) {
             // Journaliser l’erreur pour le debug si nécessaire
             report($e);
@@ -121,6 +181,23 @@ class FundTransferComponent extends Component
             ->paginate($this->perPage);
     }
 
+    public function exportReceipt($transactionId)
+    {
+        $transfer = Transaction::with('user')->findOrFail($transactionId);
+
+        // Si c’est un transfert entrant, l’agent est le destinataire
+        $agent = $transfer->user ?? User::find($transfer->user_id);
+
+        $pdf = Pdf::loadView('receipts.transfer-compte', [
+            'transfer' => $transfer,
+            'agent' => $agent,
+        ])->setPaper([0, 0, 226.77, 600], 'portrait'); // 80mm x ~210mm
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, 'recu_virement_' . $transactionId . '.pdf');
+    }
+
     public function render()
     {
         return view('livewire.admin.fund-transfer-component', [
@@ -128,5 +205,42 @@ class FundTransferComponent extends Component
                 ? AgentAccount::with('user')->where('currency', $this->currency)->get()
                 : Account::with('user')->where('currency', $this->currency)->get(),
         ]);
+    }
+
+    public function previewTransfer()
+    {
+        // Validation simple avant prévisualisation
+        $this->validate([
+            'transfer_type' => 'required|in:agent,member',
+            'recipient_id' => 'required|integer',
+            'amount' => 'required|numeric|min:0.01',
+            'currency' => 'required|in:CDF,USD',
+        ]);
+
+        // Trouver le bénéficiaire
+        $user = User::find($this->recipient_id);
+
+        if (!$user) {
+            notyf()->error('Bénéficiaire introuvable');
+            return;
+        }
+
+        // Préparer les données à afficher
+        $this->previewData = [
+            'type' => $this->transfer_type === 'agent' ? 'Agent' : 'Membre',
+            'devise' => $this->currency,
+            'montant' => number_format($this->amount, 2, ',', ' '),
+            'beneficiaire' => "{$user->name} {$user->postnom} {$user->prenom}",
+            'description' => $this->description ?: 'Aucune remarque',
+        ];
+
+        // Ouvrir le modal
+        $this->showPreview = true;
+    }
+
+    public function confirmTransfer()
+    {
+        $this->showPreview = false;
+        $this->submitTransfer();
     }
 }

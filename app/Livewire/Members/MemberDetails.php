@@ -2,56 +2,121 @@
 
 namespace App\Livewire\Members;
 
+use App\Helpers\UserLogHelper;
 use App\Models\Account;
 use App\Models\AgentAccount;
-use App\Models\DailyContribution;
-use App\Models\MainCashRegister;
 use App\Models\MembershipCard;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Transaction;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-
 
 class MemberDetails extends Component
 {
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
+    // Variables publiques utilisées dans Blade
     public $memberId;
     public $search = '';
     public $perPage = 10;
-
     public $currency;
     public $description = '';
-
     public $card_id;
     public $cards = [];
+    public $allCards = [];
     public $selectedCard;
     public $contribution_date;
     public $amount = 0;
     public $a_retenir = 0;
     public $operation_type;
-
     public $type;
+    public $cardDetail = [];
+    public $openConfirmDepositNormal = false;
+    public $openConfirmRetraitNormal = false;
+
+    // Constantes pour éviter les "magic strings"
+    const DEPOSIT_TYPE_NORMAL = 'normal';
+    const DEPOSIT_TYPE_CARD = 'carte';
+    const TRANSACTION_TYPE_DEPOSIT = 'dépôt';
+    const TRANSACTION_TYPE_WITHDRAWAL = 'retrait';
+    const TRANSACTION_TYPE_DAILY_CONTRIBUTION = 'mise_quotidienne';
+    const TRANSACTION_TYPE_CARD_WITHDRAWAL = 'retrait_carte_adhesion';
+    const RETAINED_ACCOUNT_USER_ID = 195;
 
     public function mount($id)
     {
         Gate::authorize('afficher-client', User::class);
-
         $this->memberId = $id;
+        $this->loadMemberCards();
+    }
 
+    /**
+     * Charge les cartes du membre
+     */
+    private function loadMemberCards()
+    {
         $this->cards = MembershipCard::where('member_id', $this->memberId)
             ->where('is_active', true)
             ->with(['contributions'])
             ->get();
+
+        $this->allCards = MembershipCard::where('member_id', $this->memberId)
+            ->with(['contributions'])
+            ->latest()
+            ->get();
     }
 
-    //Make Deposit to customer Account
+    // Gestion des modales
+    public function showConfirmDepositNormal()
+    {
+        $this->openConfirmDepositNormal = true;
+    }
+
+    public function closeDepositConfirmationModal()
+    {
+        $this->openConfirmDepositNormal = false;
+    }
+
+    public function makeDeposit()
+    {
+        $this->openConfirmDepositNormal = false;
+        match ($this->operation_type) {
+            self::DEPOSIT_TYPE_NORMAL => $this->submit(),
+            self::DEPOSIT_TYPE_CARD => $this->contribute(),
+            default => null
+        };
+    }
+
+    public function showConfirmRetraitNormal()
+    {
+        if ($this->operation_type === self::DEPOSIT_TYPE_CARD) {
+            $this->cardDetail = MembershipCard::find($this->card_id);
+        }
+        $this->openConfirmRetraitNormal = true;
+    }
+
+    public function closeRetraitConfirmationModal()
+    {
+        $this->openConfirmRetraitNormal = false;
+    }
+
+    public function makeRetrait()
+    {
+        $this->openConfirmRetraitNormal = false;
+        match ($this->operation_type) {
+            self::DEPOSIT_TYPE_NORMAL => $this->submitRetrait(),
+            self::DEPOSIT_TYPE_CARD => $this->submitRetraitCarte(),
+            default => null
+        };
+    }
+
+    /**
+     * Effectue un dépôt sur le compte du membre
+     */
     public function submit()
     {
         Gate::authorize('depot-compte-membre', User::class);
@@ -65,76 +130,52 @@ class MemberDetails extends Component
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
-
-            // Récupération ou création du compte du membre
-            $account = Account::firstOrCreate(
-                ['user_id' => $user->id, 'currency' => $this->currency],
-                ['balance' => 0]
-            );
-
-            // Récupération de la caisse de l'agent
-            $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::id(), 'currency' => $this->currency],
-                ['balance' => 0]
-            );
+            $account = $this->getOrCreateAccount($user->id, $this->currency);
+            $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
             // Mise à jour des soldes
             $account->balance += $this->amount;
             $agentAccount->balance += $this->amount;
-
             $account->save();
             $agentAccount->save();
 
-            // Création de la transaction
-            $transaction = Transaction::create([
-                'account_id'     => null,
-                'user_id'        => Auth::id(),
-                'type'           => 'dépôt',
-                'currency'       => $this->currency,
-                'amount'         => $this->amount,
-                'balance_after'  => $agentAccount->balance,
-                'description'    => $this->description ?: "DEPOT du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
-            ]);
+            // Création des transactions
+            $this->createTransaction(
+                null,
+                Auth::id(),
+                self::TRANSACTION_TYPE_DEPOSIT,
+                $this->currency,
+                $this->amount,
+                $agentAccount->balance,
+                $this->getDepositDescription($user, true)
+            );
 
-            // Création de la transaction
-            $transaction = Transaction::create([
-                'account_id'     => $account->id,
-                'user_id'        => $user->id,
-                'type'           => 'dépôt',
-                'currency'       => $this->currency,
-                'amount'         => $this->amount,
-                'balance_after'  => $account->balance,
-                'description'    => $this->description ?: "DEPOT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
-            ]);
+            $transaction = $this->createTransaction(
+                $account->id,
+                $user->id,
+                self::TRANSACTION_TYPE_DEPOSIT,
+                $this->currency,
+                $this->amount,
+                $account->balance,
+                $this->getDepositDescription($user, false)
+            );
 
-            // Finalisation de la transaction
+            UserLogHelper::log_user_activity(
+                action: self::TRANSACTION_TYPE_DEPOSIT,
+                description: "Dépôt de {$this->amount} {$this->currency} sur le compte de {$user->name} {$user->postnom} ({$user->code})",
+            );
+
             DB::commit();
-
-            $this->reset(['amount', 'description']);
-            $this->dispatch('closeModal', name: 'modalDepositMembre');
-            $this->dispatch('$refresh');
-            notyf()->success('Dépôt effectué avec succès !');
-            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+            $this->afterTransactionSuccess($transaction, 'modalDepositMembre', 'Dépôt effectué avec succès !');
 
         } catch (\Throwable $th) {
-            DB::rollBack();
-            report($th);
-            notyf()->error('Une erreur est survenue lors du dépôt. Veuillez réessayer plus tard.');
+            $this->handleTransactionError($th, 'dépôt');
         }
     }
 
-    public function updatedCardId()
-    {
-        $this->selectedCard = MembershipCard::find($this->card_id);
-        $amount = $this->selectedCard;
-        $this->amount = $amount->subscription_amount;
-    }
-
-    public function updatedType()
-    {
-        $this->operation_type = $this->type;
-    }
-
+    /**
+     * Effectue une contribution sur une carte
+     */
     public function contribute()
     {
         Gate::authorize('depot-compte-membre', User::class);
@@ -147,11 +188,7 @@ class MemberDetails extends Component
         DB::beginTransaction();
         try {
             $card = MembershipCard::findOrFail($this->card_id);
-
-            // Montant d'une mise quotidienne
             $dailyAmount = $card->subscription_amount;
-
-            // Nombre de mises à payer selon le montant entré
             $numberOfDaysToPay = floor($this->amount / $dailyAmount);
 
             if ($numberOfDaysToPay <= 0) {
@@ -159,7 +196,6 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Trouver les prochaines X contributions non payées
             $contributionsToPay = $card->contributions()
                 ->where('is_paid', false)
                 ->orderBy('contribution_date', 'asc')
@@ -176,68 +212,98 @@ class MemberDetails extends Component
                 notyf()->warning("Seulement {$contributionsToPay->count()} mises restantes. Paiement partiel effectué.");
             }
 
-            // Mettre à jour les mises sélectionnées
-            foreach ($contributionsToPay as $contribution) {
-                $contribution->is_paid = true;
-                $contribution->save();
-            }
+            // Marquer les contributions comme payées
+            $contributionsToPay->each->update(['is_paid' => true]);
 
-            // Calculer le montant réel utilisé
             $totalPaid = $contributionsToPay->count() * $dailyAmount;
 
-            // Créditer le compte du membre et de l'agent
-            $account = Account::firstOrCreate(
-                ['user_id' => $card->member_id, 'currency' => $card->currency],
-                ['balance' => 0]
-            );
+            if ($this->amount > $totalPaid) {
+                notyf()->info("Le montant saisi ({$this->amount}) dépasse le reste dû ({$totalPaid}). Montant ajusté automatiquement.");
+            }
 
-            $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::id(), 'currency' => $card->currency],
-                ['balance' => 0]
-            );
+            // Mettre à jour les comptes
+            $account = $this->getOrCreateAccount($card->member_id, $card->currency);
+            $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
-            $agentAccount->balance += $totalPaid;
             $account->balance += $totalPaid;
-            $agentAccount->save();
+            $agentAccount->balance += $totalPaid;
             $account->save();
+            $agentAccount->save();
 
-            Transaction::create([
-                'account_id'     => null,
-                'user_id'        => Auth::id(),
-                'type'           => 'mise_quotidienne',
-                'currency'       => $card->currency,
-                'amount'         => $this->amount,
-                'balance_after'  => $agentAccount->balance,
-                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
-                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name,
-            ]);
+            // Créer les transactions
+            $this->createTransaction(
+                null,
+                Auth::id(),
+                self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
+                $card->currency,
+                $totalPaid,
+                $agentAccount->balance,
+                $this->getContributionDescription($card, $contributionsToPay->count(), true)
+            );
 
-            $transaction = Transaction::create([
-                'account_id'     => $account->id,
-                'user_id'        => $card->member_id,
-                'type'           => 'mise_quotidienne',
-                'currency'       => $card->currency,
-                'amount'         => $this->amount,
-                'balance_after'  => $account->balance,
-                'description' => "Paiement groupé de {$contributionsToPay->count()} mises sur la carte #{$card->id}
-                                pour le client: {$card->member->name} {$card->member->postnom} par " . Auth::user()->name,
-            ]);
+            $transaction = $this->createTransaction(
+                $account->id,
+                $card->member_id,
+                self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
+                $card->currency,
+                $totalPaid,
+                $account->balance,
+                $this->getContributionDescription($card, $contributionsToPay->count(), false)
+            );
+
+            // --------------------------------------------------------
+            // COMMISSION AGENT : première mise dans ce carnet
+            // --------------------------------------------------------
+            $firstEverContribution = $card->contributions()
+                ->where('is_paid', true)
+                ->orderBy('contribution_date', 'asc')
+                ->first();
+
+            // Si c'est la toute première mise payée
+            if ($firstEverContribution && $firstEverContribution->id == $contributionsToPay->first()->id) {
+
+                $commissionAmount = $dailyAmount; // La première mise vaut commission
+
+                // Créditer le compte du membre et de l'agent
+                $account = $this->getOrCreateAccount($card->member_id, $card->currency);
+                $account->balance -= $commissionAmount;
+                $account->save();
+
+                $commissionAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
+                $commissionAccount->balance += $commissionAmount;
+                $commissionAccount->save();
+
+                $card->first_mise_retained = true;
+                $card->save();
+
+                $this->createTransaction(
+                    null,
+                    self::RETAINED_ACCOUNT_USER_ID,
+                    'depot',
+                    $card->currency,
+                    $commissionAmount,
+                    $commissionAccount->balance,
+                    $this->getCardRetainedDescription($card)
+                );
+
+            }
+
+            UserLogHelper::log_user_activity(
+                action: self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
+                description: "Paiement de {$contributionsToPay->count()} mises pour la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code})",
+            );
 
             DB::commit();
-
-            $this->reset(['contribution_date', 'amount']);
-            $this->dispatch('closeModal', name: 'modalDepositMembre');
-            $this->dispatch('$refresh');
-            notyf()->success("Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
-            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+            $this->afterTransactionSuccess($transaction, 'modalDepositMembre', "Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
 
         } catch (\Throwable $th) {
-            DB::rollBack();
-            report($th);
-            notyf()->error('Une erreur est survenue lors du dépôt. Veuillez réessayer.');
+            $this->handleTransactionError($th, 'dépôt');
         }
     }
 
+    /**
+     * Effectue un retrait du compte du membre
+     */
     public function submitRetrait()
     {
         Gate::authorize('retrait-compte-membre', User::class);
@@ -252,30 +318,17 @@ class MemberDetails extends Component
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
+            $account = $this->getOrCreateAccount($user->id, $this->currency);
+            $agentAccount = $this->getOrCreateAgentAccount($this->currency);
+            $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
-            // Récupération ou création du compte du membre
-            $account = Account::firstOrCreate(
-                ['user_id' => $user->id, 'currency' => $this->currency],
-                ['balance' => 0]
-            );
+            $totalAmount = $this->amount + $this->a_retenir;
 
-            if ($account->balance < ($this->amount + $this->a_retenir)) {
+            if ($account->balance < $totalAmount) {
                 DB::rollBack();
                 notyf()->error('Le solde du compte est insuffisant.');
                 return;
             }
-
-            // Récupération de la caisse de l'agent
-            $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::id(), 'currency' => $this->currency],
-                ['balance' => 0]
-            );
-
-            // Récupération de la caisse de l'agent
-            $retenuMiseAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 195, 'currency' => $this->currency],
-                ['balance' => 0]
-            );
 
             if ($agentAccount->balance < $this->amount) {
                 DB::rollBack();
@@ -283,75 +336,64 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Débit du compte du membre
-            $account->balance -= ($this->amount + $this->a_retenir);
+            // Mettre à jour les soldes
+            $account->balance -= $totalAmount;
             $agentAccount->balance -= $this->amount;
-            if (
-                $this->a_retenir > 0
-            ) {
-                $retenuMiseAccount->balance += $this->a_retenir;
-                $retenuMiseAccount->save();
-            }
-            
+            $retainedAccount->balance += $this->a_retenir;
 
             $account->save();
             $agentAccount->save();
-            
+            $retainedAccount->save();
 
-            // Création de la transaction
-            $transaction = Transaction::create([
-                'account_id' => null,
-                'user_id' => Auth::id(),
-                'type' => 'retrait',
-                'currency' => $this->currency,
-                'amount' => $this->amount,
-                'balance_after' => $agentAccount->balance,
-                'description' => $this->description ?: "RETRAIT du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " Retenu de ". $this->a_retenir. " ".$this->currency." par " . Auth::user()->name,
-            ]);
+            // Créer les transactions
+            $this->createTransaction(
+                null,
+                Auth::id(),
+                self::TRANSACTION_TYPE_WITHDRAWAL,
+                $this->currency,
+                $this->amount,
+                $agentAccount->balance,
+                $this->getWithdrawalDescription($user, true)
+            );
 
-            // Création de la transaction
-            $transaction = Transaction::create([
-                'account_id' => $account->id,
-                'user_id' => $user->id,
-                'type' => 'retrait',
-                'currency' => $this->currency,
-                'amount' => $this->amount,
-                'balance_after' => $account->balance,
-                'description' => $this->description ?: "RETRAIT dans votre compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " Retenu de ". $this->a_retenir. " ".$this->currency." par " . Auth::user()->name,
-            ]);
+            $transaction = $this->createTransaction(
+                $account->id,
+                $user->id,
+                self::TRANSACTION_TYPE_WITHDRAWAL,
+                $this->currency,
+                $this->amount,
+                $account->balance,
+                $this->getWithdrawalDescription($user, false)
+            );
 
-            if (
-                $this->a_retenir > 0
-            ) {
-                
-                // Création de la transaction
-                $retenuMiseAccount = Transaction::create([
-                    'account_id' => null,
-                    'user_id' => 195,
-                    'type' => 'depot',
-                    'currency' => $this->currency,
-                    'amount' => $this->a_retenir,
-                    'balance_after' => $retenuMiseAccount->balance,
-                    'description' => $this->description ?: "Entree Retenu du compte " . $user->code . " Client: " . $user->name . " " . $user->postnom . " par " . Auth::user()->name,
-                ]);
+            if ($this->a_retenir > 0) {
+                $this->createTransaction(
+                    null,
+                    self::RETAINED_ACCOUNT_USER_ID,
+                    'depot',
+                    $this->currency,
+                    $this->a_retenir,
+                    $retainedAccount->balance,
+                    $this->getRetainedDescription($user)
+                );
+            }
 
-            }   
+            UserLogHelper::log_user_activity(
+                action: self::TRANSACTION_TYPE_WITHDRAWAL,
+                description: "Retrait de {$this->amount} {$this->currency} du compte de {$user->name} {$user->postnom} ({$user->code}), retenu de {$this->a_retenir} {$this->currency}",
+            );
 
             DB::commit();
-
-            $this->reset(['amount', 'description']);
-            $this->dispatch('closeModal', name: 'modalRetraitMembre');
-            $this->dispatch('$refresh');
-            notyf()->success('Retrait effectué avec succès !');
-            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+            $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
 
         } catch (\Throwable $th) {
-            DB::rollBack();
-            report($th);
-            notyf()->error('Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.');
+            $this->handleTransactionError($th, 'retrait');
         }
     }
 
+    /**
+     * Effectue un retrait de carte
+     */
     public function submitRetraitCarte()
     {
         Gate::authorize('retrait-compte-membre', User::class);
@@ -362,110 +404,126 @@ class MemberDetails extends Component
 
         DB::beginTransaction();
         try {
-
             $card = MembershipCard::findOrFail($this->card_id);
 
-            if ($card->is_active == 0) {
-                notyf()->error( 'Retrait déjà effectué.');
+            if (!$card->is_active) {
+                notyf()->error('Retrait déjà effectué.');
                 return;
             }
 
-            $aretenir = $card->subscription_amount;
+            if (!$card->first_mise_retained) {
+                $toRetain = $card->subscription_amount;
+                $total = $card->contributions->where('is_paid', true)->sum('amount');
 
-            // Retirer la mise totale
-            $total = $card->contributions->where('is_paid', true)->sum('amount');
+            } else {
+                $toRetain = 0;
+                $total = $card->contributions->where('is_paid', true)->sum('amount') - $card->subscription_amount;
+            }
 
-            // Ajouter au compte du membre
+            if ($total < $toRetain) {
+                notyf()->error('Cette carte ne peut pas être retirée car le solde est insuffisant.');
+                return;
+            }
+
             $account = Account::where('user_id', $card->member_id)
                 ->where('currency', $card->currency)
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            // Récupération de la caisse de l'agent
-            $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::id(), 'currency' => $card->currency],
-                ['balance' => 0]
-            );
+            if ($account->balance < $total) {
+                DB::rollBack();
+                notyf()->error('Le solde du compte est insuffisant.');
+                return;
+            }
 
-            // Récupération de la caisse de l'agent
-            $retenuMiseAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 195, 'currency' => $card->currency],
-                ['balance' => 0]
-            );
+            $agentAccount = $this->getOrCreateAgentAccount($card->currency);
+            $retainedAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
 
-            if ($agentAccount->balance < $total) {
+            if ($agentAccount->balance < ($total - $toRetain)) {
                 DB::rollBack();
                 notyf()->error('Le solde de la caisse est insuffisant.');
                 return;
             }
 
+            // Mettre à jour les soldes
             $account->balance -= $total;
-            $agentAccount->balance -= ($total - $aretenir);
-            $retenuMiseAccount->balance += $aretenir;
+            $agentAccount->balance -= ($total - $toRetain);
+            $retainedAccount->balance += $toRetain;
 
             $account->save();
             $agentAccount->save();
-            // Credite du compte retenu mise
-            $retenuMiseAccount->save();
+            $retainedAccount->save();
 
-            // Marquer comme retiré
-            $card->is_active = 0;
+            // Marquer la carte comme inactive
+            $card->is_active = false;
             $card->save();
 
-            // Enregistrer la transaction
-            $transaction = Transaction::create([
-                'account_id' => $account->id,
-                'user_id' => $card->member_id,
-                'type' => 'retrait_carte_adhesion',
-                'currency' => $card->currency,
-                'amount' => $total - $aretenir,
-                'balance_after' => $account->balance,
-                'description' => $this->description ?: "Retrait carnet #{$card->id} " . $card->member->code ." ". $card->member->name . " " . $card->member->postnom . " Retenu de ". $aretenir. " ".$card->currency. " par " . Auth::user()->name,
-            ]);
+            // Créer les transactions
+            $transaction = $this->createTransaction(
+                $account->id,
+                $card->member_id,
+                self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
+                $card->currency,
+                $total - $toRetain,
+                $account->balance,
+                $this->getCardWithdrawalDescription($card, true)
+            );
 
-            // Enregistrer la transaction
-            Transaction::create([
-                'account_id' => NULL,
-                'user_id' => Auth::user()->id,
-                'type' => 'retrait_carte_adhesion',
-                'currency' => $card->currency,
-                'amount' => $total - $aretenir,
-                'balance_after' => $agentAccount->balance,
-                'description' => $this->description ?: "Retrait carnet #{$card->id} " . " Client: " . $card->member->code ." ". $card->member->name . " " . $card->member->postnom . " Retenu de ". $aretenir. " ".$card->currency. " par " . Auth::user()->name,
+            $this->createTransaction(
+                null,
+                Auth::user()->id,
+                self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
+                $card->currency,
+                $total - $toRetain,
+                $agentAccount->balance,
+                $this->getCardWithdrawalDescription($card, false)
+            );
 
-            ]);
+            $this->createTransaction(
+                null,
+                self::RETAINED_ACCOUNT_USER_ID,
+                'depot',
+                $card->currency,
+                $toRetain,
+                $retainedAccount->balance,
+                $this->getCardRetainedDescription($card)
+            );
 
-            Transaction::create([
-                'account_id' => null,
-                'user_id' => 195,
-                'type' => 'depot',
-                'currency' => $card->currency,
-                'amount' => $aretenir,
-                'balance_after' => $retenuMiseAccount->balance,
-                'description' => $this->description ?: "Entree Retenu de la carte #{$card->id} du compte " . $card->member->code . " Client: " . $card->member->name . " " . $card->member->postnom . " par " . Auth::user()->name,
-
-            ]);
+            UserLogHelper::log_user_activity(
+                action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
+                description: "Retrait de la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code}), montant total {$total} {$card->currency}, retenu de {$toRetain} {$card->currency}",
+            );
 
             DB::commit();
-
-            $this->reset(['type','amount', 'description']);
-            $this->dispatch('closeModal', name: 'modalRetraitMembre');
-            $this->dispatch('$refresh');
-            notyf()->success('Retrait effectué avec succès !');
-            $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+            $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
 
         } catch (\Throwable $th) {
-            DB::rollBack();
-            report($th);
-            notyf()->error('Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.');
+            $this->handleTransactionError($th, 'retrait');
         }
     }
 
+    /**
+     * Met à jour la carte sélectionnée et le montant
+     */
+    public function updatedCardId()
+    {
+        $this->selectedCard = MembershipCard::find($this->card_id);
+        $this->amount = $this->selectedCard->subscription_amount ?? 0;
+    }
+
+    /**
+     * Met à jour le type d'opération
+     */
+    public function updatedType()
+    {
+        $this->operation_type = $this->type;
+    }
+
+    // Gestion des modales
     public function closeDepositModal()
     {
         $this->dispatch('closeModal', name: 'modalDepositMembre');
         $this->reset(['type']);
-
     }
 
     public function closeRetraitModal()
@@ -477,11 +535,22 @@ class MemberDetails extends Component
     {
         $this->type = '';
         $this->dispatch('openModal', name: 'modalDepositMembre');
-
     }
+
     public function openRetraitModal()
     {
         $this->dispatch('openModal', name: 'modalRetraitMembre');
+    }
+
+    public function openCardViewModal($cardId = null)
+    {
+        $this->cardDetail = MembershipCard::with(['contributions', 'member'])->find($cardId);
+        $this->dispatch('openModal', name: 'modalCardDetails');
+    }
+
+    public function closeCardViewModal()
+    {
+        $this->dispatch('closeModal', name: 'modalCardDetails');
     }
 
     public function placeholder()
@@ -489,10 +558,12 @@ class MemberDetails extends Component
         return view('livewire.placeholder');
     }
 
+    /**
+     * Affiche la vue avec les données du membre
+     */
     public function render()
     {
         $member = User::findOrFail($this->memberId);
-
         $accountIds = $member->accounts->pluck('id')->toArray();
 
         $transactions = Transaction::whereIn('account_id', $accountIds)
@@ -500,17 +571,157 @@ class MemberDetails extends Component
                 $searchTerm = "%{$this->search}%";
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('type', 'like', $searchTerm)
-                    ->orWhere('currency', 'like', $searchTerm);
+                        ->orWhere('currency', 'like', $searchTerm);
                 });
             })
             ->latest()
             ->paginate($this->perPage);
 
-        return view('livewire.members.member-details',[
+        return view('livewire.members.member-details', [
             'member' => $member,
             'transactions' => $transactions,
             'cards' => $this->cards
         ]);
     }
 
+    /**
+     * Réinitialise les champs de saisie
+     */
+    public function resetInputFields()
+    {
+        $this->amount = 0;
+        $this->currency = '';
+        $this->description = '';
+        $this->card_id = null;
+        $this->selectedCard = null;
+        $this->contribution_date = null;
+        $this->operation_type = null;
+        $this->type = null;
+    }
+
+    /**
+     * Obtient ou crée un compte utilisateur
+     */
+    private function getOrCreateAccount($userId, $currency)
+    {
+        return Account::firstOrCreate(
+            ['user_id' => $userId, 'currency' => $currency],
+            ['balance' => 0]
+        );
+    }
+
+    /**
+     * Obtient ou crée un compte agent
+     */
+    private function getOrCreateAgentAccount($currency, $userId = null)
+    {
+        $userId = $userId ?? Auth::id();
+        return AgentAccount::firstOrCreate(
+            ['user_id' => $userId, 'currency' => $currency],
+            ['balance' => 0]
+        );
+    }
+
+    /**
+     * Crée une transaction
+     */
+    private function createTransaction($accountId, $userId, $type, $currency, $amount, $balanceAfter, $description)
+    {
+        return Transaction::create([
+            'account_id' => $accountId,
+            'user_id' => $userId,
+            'type' => $type,
+            'currency' => $currency,
+            'amount' => $amount,
+            'balance_after' => $balanceAfter,
+            'description' => $description,
+        ]);
+    }
+
+    /**
+     * Génère la description pour un dépôt
+     */
+    private function getDepositDescription($user, $isAgent = false)
+    {
+        $action = $isAgent ? 'DEPOT du compte' : 'DEPOT dans votre compte';
+        $defaultDescription = "{$action} {$user->code} Client: {$user->name} {$user->postnom} par " . Auth::user()->name . " " . Auth::user()->postnom;
+        return $this->description ?: $defaultDescription;
+    }
+
+    /**
+     * Génère la description pour une contribution
+     */
+    private function getContributionDescription($card, $count, $isAgent = false)
+    {
+        $authUser = Auth::user();
+        $clientInfo = "{$card->member->name} {$card->member->postnom}";
+        $action = $isAgent ? "Paiement groupé de {$count} mises sur la carte #{$card->id} pour le client: {$clientInfo} par" : "Paiement groupé de {$count} mises sur la carte #{$card->id} pour le client: {$clientInfo} par";
+        return "{$action} {$authUser->name} {$authUser->postnom}";
+    }
+
+    /**
+     * Génère la description pour un retrait
+     */
+    private function getWithdrawalDescription($user, $isAgent = false)
+    {
+        $action = $isAgent ? 'RETRAIT du compte' : 'RETRAIT dans votre compte';
+        $defaultDescription = "{$action} {$user->code} Client: {$user->name} {$user->postnom} Retenu de {$this->a_retenir} {$this->currency} par " . Auth::user()->name . " " . Auth::user()->postnom;
+        return $this->description ?: $defaultDescription;
+    }
+
+    /**
+     * Génère la description pour un montant retenu
+     */
+    private function getRetainedDescription($user)
+    {
+        $defaultDescription = "Entree Retenu du compte {$user->code} Client: {$user->name} {$user->postnom} par " . Auth::user()->name . " " . Auth::user()->postnom;
+        return $this->description ?: $defaultDescription;
+    }
+
+    /**
+     * Génère la description pour un retrait de carte
+     */
+    private function getCardWithdrawalDescription($card, $isAgent = false)
+    {
+        $authUser = Auth::user();
+        $clientInfo = "{$card->member->code} {$card->member->name} {$card->member->postnom}";
+        $action = $isAgent ? "Retrait carnet #{$card->id}" : "Retrait carnet #{$card->id}";
+        return "{$action} Client: {$clientInfo} Retenu de {$card->subscription_amount} {$card->currency} par {$authUser->name} {$authUser->postnom}";
+    }
+
+    /**
+     * Génère la description pour un montant retenu de carte
+     */
+    private function getCardRetainedDescription($card)
+    {
+        $authUser = Auth::user();
+        $clientInfo = "{$card->member->code} Client: {$card->member->name} {$card->member->postnom}";
+        return "Entree Retenu de la carte #{$card->id} du compte {$clientInfo} par {$authUser->name} {$authUser->postnom}";
+    }
+
+    /**
+     * Actions à effectuer après une transaction réussie
+     */
+    private function afterTransactionSuccess($transaction, $modalName, $successMessage)
+    {
+        $this->reset(['amount', 'description']);
+        $this->dispatch('closeModal', name: $modalName);
+        $this->dispatch('$refresh');
+        notyf()->success($successMessage);
+        $this->resetInputFields();
+        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+    }
+
+    /**
+     * Gère les erreurs de transaction
+     */
+    private function handleTransactionError($th, $operationType)
+    {
+        DB::rollBack();
+        report($th);
+        $errorMessage = $operationType === 'dépôt'
+            ? 'Une erreur est survenue lors du dépôt. Veuillez réessayer plus tard.'
+            : 'Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.';
+        notyf()->error($errorMessage);
+    }
 }

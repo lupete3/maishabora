@@ -4,14 +4,27 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div class="lg:col-span-1 space-y-6">
                 <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="flex flex-col space-y-1.5 p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-user h-6 w-6 text-primary">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>Informations du client</div>
+                    <div class="">
+                        <div class="card-header border-bottom">
+
+                        </div>
+
+                        <div class="tab-content p-4" id="profileTabsContent">
+                            <!-- Onglet Photo -->
+
+
+                            <!-- Onglet Signature -->
+                            <div class="tab-pane fade text-center" id="signature" role="tabpanel"
+                                aria-labelledby="signature-tab">
+                                @if ($member->scan_piece)
+                                    <img src="{{ asset('storage/' . $member->scan_piece) }}" alt="Signature"
+                                        class="img-fluid rounded border shadow-sm" style="max-width: 90%;">
+                                @else
+                                    <span class="text-sm text-primary card p-2">Aucune signature enregistrée pour ce
+                                        client</span>
+                                @endif
+                            </div>
+                        </div>
                     </div>
 
                     <div class="p-6 pt-0 space-y-3 text-sm">
@@ -22,9 +35,9 @@
                                 <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
-                            <p><strong class="font-medium">Noms:</strong> {{ $member->name.'
-                                '.$member->postnom.'
-                                '.$member->prenom }}</p>
+                            <p><strong class="font-medium">Noms:</strong> {{ $member->name . '
+                                ' . $member->postnom . '
+                                ' . $member->prenom }}</p>
                         </div>
                         <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
                                 height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
@@ -84,24 +97,24 @@
                     </div>
                     <div class="p-6 pt-0 space-y-4">
                         @foreach(['USD', 'CDF'] as $curr)
-                        @php
-                        $balance = number_format($member->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
-                        $color = $curr === 'USD' ? 'green' : 'blue';
-                        @endphp
-                        @php
-                        $balance = (float) ($member->accounts->firstWhere('currency', $curr)?->balance ?? 0);
-                        @endphp
-                        <div
-                            class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-secondary/30 rounded-lg shadow">
-                            <div class="flex items-center gap-3 mb-2 sm:mb-0">
-                                <span class="font-bold text-xl text-{{ $color }}-600">{{ $curr }}</span>
-                                <span class="font-medium text-lg"> </span>
+                            @php
+                                $balance = number_format($member->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
+                                $color = $curr === 'USD' ? 'green' : 'blue';
+                            @endphp
+                            @php
+                                $balance = (float) ($member->accounts->firstWhere('currency', $curr)?->balance ?? 0);
+                            @endphp
+                            <div
+                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-secondary/30 rounded-lg shadow">
+                                <div class="flex items-center gap-3 mb-2 sm:mb-0">
+                                    <span class="font-bold text-xl text-{{ $color }}-600">{{ $curr }}</span>
+                                    <span class="font-medium text-lg"> </span>
+                                </div>
+                                <span class="text-2xl font-semibold text-foreground">
+                                    {{ number_format($balance, 2, '.', ' ')
+                                    }}
+                                </span>
                             </div>
-                            <span class="text-2xl font-semibold text-foreground">
-                                {{ number_format($balance, 2, '.', ' ')
-                                }}
-                            </span>
-                        </div>
                         @endforeach
 
                     </div>
@@ -126,7 +139,7 @@
 
                             </div>
 
-                            <a href="{{ route('member.transactions.export', ['id' => $member->id]) }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                            {{-- <a href="{{ route('member.transactions.export', ['id' => $member->id]) }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
                                 ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
                                 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
                                 disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
@@ -139,7 +152,7 @@
                                     <line x1="12" x2="12" y1="15" y2="3"></line>
                                 </svg>
                                 Télécharger PDF
-                            </a>
+                            </a> --}}
                         </div>
                     </div>
 
@@ -186,98 +199,98 @@
 
                                         <tbody class="[&amp;_tr:last-child]:border-0">
                                             @forelse ($transactions as $transaction)
-                                            <tr
-                                                class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                <td
-                                                    class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 font-medium">
-                                                    <div class="flex items-center gap-2">
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            class="lucide lucide-calendar-days h-4 w-4 text-muted-foreground">
-                                                            <path d="M8 2v4"></path>
-                                                            <path d="M16 2v4"></path>
-                                                            <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                                                            <path d="M3 10h18"></path>
-                                                            <path d="M8 14h.01"></path>
-                                                            <path d="M12 14h.01"></path>
-                                                            <path d="M16 14h.01"></path>
-                                                            <path d="M8 18h.01"></path>
-                                                            <path d="M12 18h.01"></path>
-                                                            <path d="M16 18h.01"></path>
-                                                        </svg>
-                                                        {{ $transaction->created_at->format('d/m/Y H:i') }}
-                                                    </div>
-                                                </td>
+                                                                                    <tr
+                                                                                        class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                                                                        <td
+                                                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 font-medium">
+                                                                                            <div class="flex items-center gap-2">
+                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                                    stroke-width="2" stroke-linecap="round"
+                                                                                                    stroke-linejoin="round"
+                                                                                                    class="lucide lucide-calendar-days h-4 w-4 text-muted-foreground">
+                                                                                                    <path d="M8 2v4"></path>
+                                                                                                    <path d="M16 2v4"></path>
+                                                                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                                                                    <path d="M3 10h18"></path>
+                                                                                                    <path d="M8 14h.01"></path>
+                                                                                                    <path d="M12 14h.01"></path>
+                                                                                                    <path d="M16 14h.01"></path>
+                                                                                                    <path d="M8 18h.01"></path>
+                                                                                                    <path d="M12 18h.01"></path>
+                                                                                                    <path d="M16 18h.01"></path>
+                                                                                                </svg>
+                                                                                                {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                                                                            </div>
+                                                                                        </td>
 
-                                                <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                    {{ $transaction->description }}
-                                                </td>
+                                                                                        <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                                                                            {{ $transaction->description }}
+                                                                                        </td>
 
-                                                <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                    <div class="rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors
-                                                        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                                                        text-foreground flex items-center gap-2 capitalize">
-                                                        @if ($transaction->type === 'dépôt')
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            class="lucide lucide-arrow-down-to-line h-5 w-5 text-green-500">
-                                                            <path d="M12 17V3"></path>
-                                                            <path d="m6 11 6 6 6-6"></path>
-                                                            <path d="M19 21H5"></path>
-                                                        </svg>
-                                                        <span>{{ ucfirst($transaction->type) }}</span>
-                                                        @elseif ($transaction->type === 'retrait')
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            class="lucide lucide-arrow-up-from-line h-5 w-5 text-red-500">
-                                                            <path d="m18 9-6-6-6 6"></path>
-                                                            <path d="M12 3v14"></path>
-                                                            <path d="M5 21h14"></path>
-                                                        </svg>
-                                                        <span>{{ ucfirst($transaction->type) }}</span>
-                                                        @else
-                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                            stroke-width="2" stroke-linecap="round"
-                                                            stroke-linejoin="round"
-                                                            class="lucide lucide-arrow-right-left h-5 w-5 text-blue-500">
-                                                            <path d="m16 3 4 4-4 4"></path>
-                                                            <path d="M20 7H4"></path>
-                                                            <path d="m8 21-4-4 4-4"></path>
-                                                            <path d="M4 17h16"></path>
-                                                        </svg>
-                                                        <span>{{ ucfirst($transaction->type) }}</span>
-                                                        @endif
-                                                    </div>
-                                                </td>
+                                                                                        <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                                                                            <div class="rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors
+                                                                                                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                                                                                                text-foreground flex items-center gap-2 capitalize">
+                                                                                                @if ($transaction->type === 'dépôt')
+                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                                        stroke-width="2" stroke-linecap="round"
+                                                                                                        stroke-linejoin="round"
+                                                                                                        class="lucide lucide-arrow-down-to-line h-5 w-5 text-green-500">
+                                                                                                        <path d="M12 17V3"></path>
+                                                                                                        <path d="m6 11 6 6 6-6"></path>
+                                                                                                        <path d="M19 21H5"></path>
+                                                                                                    </svg>
+                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                                                @elseif ($transaction->type === 'retrait')
+                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                                        stroke-width="2" stroke-linecap="round"
+                                                                                                        stroke-linejoin="round"
+                                                                                                        class="lucide lucide-arrow-up-from-line h-5 w-5 text-red-500">
+                                                                                                        <path d="m18 9-6-6-6 6"></path>
+                                                                                                        <path d="M12 3v14"></path>
+                                                                                                        <path d="M5 21h14"></path>
+                                                                                                    </svg>
+                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                                                @else
+                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                                                        stroke-width="2" stroke-linecap="round"
+                                                                                                        stroke-linejoin="round"
+                                                                                                        class="lucide lucide-arrow-right-left h-5 w-5 text-blue-500">
+                                                                                                        <path d="m16 3 4 4-4 4"></path>
+                                                                                                        <path d="M20 7H4"></path>
+                                                                                                        <path d="m8 21-4-4 4-4"></path>
+                                                                                                        <path d="M4 17h16"></path>
+                                                                                                    </svg>
+                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                                                @endif
+                                                                                            </div>
+                                                                                        </td>
 
-                                                <td
-                                                    class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                    @if($transaction->type === 'retrait') -@endif{{
-                                                    number_format($transaction->amount, 2) }} {{ $transaction->currency
-                                                    }}
-                                                </td>
+                                                                                        <td
+                                                                                            class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
+                                                                                            @if($transaction->type === 'retrait') -@endif{{
+                                                number_format($transaction->amount, 2) }} {{ $transaction->currency
+                                                                                            }}
+                                                                                        </td>
 
-                                                <td
-                                                    class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                    {{ number_format($transaction->balance_after, 2) }} {{
-                                                    $transaction->currency }}
-                                                </td>
-                                            </tr>
+                                                                                        <td
+                                                                                            class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
+                                                                                            {{ number_format($transaction->balance_after, 2) }} {{
+                                                $transaction->currency }}
+                                                                                        </td>
+                                                                                    </tr>
                                             @empty
-                                            <tr>
-                                                <td colspan="6" class="p-4 align-middle text-center">
-                                                    <div class="alert alert-danger" role="alert">
-                                                        Aucune transaction trouvée.
-                                                    </div>
-                                                </td>
-                                            </tr>
+                                                <tr>
+                                                    <td colspan="6" class="p-4 align-middle text-center">
+                                                        <div class="alert alert-danger" role="alert">
+                                                            Aucune transaction trouvée.
+                                                        </div>
+                                                    </td>
+                                                </tr>
                                             @endforelse
                                         </tbody>
                                     </table>
@@ -316,19 +329,19 @@
                 </div>
                 <div class="card-body">
                     @forelse ($credits as $credit)
-                    <div class="mb-3 border-bottom pb-2">
-                        <strong>{{ $credit->currency }}</strong><br>
-                        Montant : {{ number_format($credit->amount, 2) }}<br>
-                        Début : {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}<br>
-                        Status :
-                        @if ($credit->is_paid)
-                        <span class="badge bg-label-success">Remboursé</span>
-                        @else
-                        <span class="badge bg-label-warning">En cours</span>
-                        @endif
-                    </div>
+                        <div class="mb-3 border-bottom pb-2">
+                            <strong>{{ $credit->currency }}</strong><br>
+                            Montant : {{ number_format($credit->amount, 2) }}<br>
+                            Début : {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}<br>
+                            Status :
+                            @if ($credit->is_paid)
+                                <span class="badge bg-label-success">Remboursé</span>
+                            @else
+                                <span class="badge bg-label-warning">En cours</span>
+                            @endif
+                        </div>
                     @empty
-                    <p class="text-muted">Aucun crédit trouvé.</p>
+                        <p class="text-muted">Aucun crédit trouvé.</p>
                     @endforelse
                 </div>
             </div>
@@ -340,30 +353,30 @@
                 </div>
                 <div class="card-body table-responsive">
                     @if ($overdueRepayments->isEmpty())
-                    <p class="text-muted">Aucune échéance en retard.</p>
+                        <p class="text-muted">Aucune échéance en retard.</p>
                     @else
-                    <table class="table table-hover table-sm">
-                        <thead>
-                            <tr>
-                                <th>Date d’échéance</th>
-                                <th>Montant</th>
-                                <th>Pénalité</th>
-                                <th>Total dû</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($overdueRepayments as $r)
-                            <tr>
-                                <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
-                                <td>{{ number_format($r->expected_amount, 2) }}</td>
-                                <td>{{ number_format($r->penalty, 2) }}</td>
-                                <td>{{ number_format($r->total_due, 2) }}</td>
-                                <td><span class="badge bg-danger">En retard</span></td>
-                            </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date d’échéance</th>
+                                    <th>Montant</th>
+                                    <th>Pénalité</th>
+                                    <th>Total dû</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($overdueRepayments as $r)
+                                    <tr>
+                                        <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                        <td>{{ number_format($r->expected_amount, 2) }}</td>
+                                        <td>{{ number_format($r->penalty, 2) }}</td>
+                                        <td>{{ number_format($r->total_due, 2) }}</td>
+                                        <td><span class="badge bg-danger">En retard</span></td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
                     @endif
                 </div>
             </div>
