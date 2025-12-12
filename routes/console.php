@@ -8,6 +8,5 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
-Schedule::command('check:overdue-repayments')->dailyAt('23:59');
-// Schedule::command('check:overdue-repayments')->twiceDaily(1, 7);
+Schedule::command('check:overdue-repayments')->dailyAt('11:54');
 
