@@ -3,6 +3,7 @@
 namespace App\Livewire\Credit;
 
 use App\Helpers\UserLogHelper;
+use App\Models\Notification;
 use Livewire\Component;
 use App\Models\User;
 use App\Models\Account;
@@ -280,6 +281,19 @@ class GrantCredit extends Component
                 'balance_after' => $cassisierAccount->balance,
                 'description' => "Frais à retirer du dossier du credit #{$credit->id} - Montant: {$this->amount} {$credit->currency} du client {$member->name} {$member->postnom}",
             ]);
+
+            // Notifier les utilisateurs concernés
+            $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+            $notificationMessage = "Un crédit de " . number_format($this->amount, 2) . " {$this->currency} a été octroyé à {$member->name} {$member->postnom} ({$member->code}) par " . Auth::user()->name . " " . Auth::user()->postnom . ".";
+
+            foreach ($usersToNotify as $notifyUser) {
+                Notification::create([
+                    'user_id' => $notifyUser->id,
+                    'title' => 'Crédit octroyé',
+                    'message' => $notificationMessage,
+                    'read' => false,
+                ]);
+            }
 
             // Définition de l'échéancier selon le type de remboursement
             $startDate = Carbon::parse($this->start_date);

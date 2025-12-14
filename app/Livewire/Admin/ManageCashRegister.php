@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\WithPagination;
 
+use App\Models\Notification;
 class ManageCashRegister extends Component
 {
     use WithPagination;
@@ -31,7 +32,7 @@ class ManageCashRegister extends Component
     protected $rules = [
         'currency' => 'required|in:USD,CDF',
         'type' => 'required|in:in,out',
-        'amount' => 'required|numeric|min:0.01',
+        'amount' => 'required|numeric|min:0',
         'description' => 'nullable|string|max:255',
     ];
 
@@ -59,6 +60,10 @@ class ManageCashRegister extends Component
                 notyf()->error(__(key: 'Le solde de la caisse est insuffisant.'));
                 return;
             }
+            if ($this->amount == 0) {
+                notyf()->error(__(key: 'Le montant doit etre superieur a 0.'));
+                return;
+            }
             $cashRegister->balance -= $this->amount;
         }
 
@@ -84,6 +89,20 @@ class ManageCashRegister extends Component
                 !empty($this->description) ? '. ' . __('Description') . ': ' . $this->description : ''
             )
         );
+
+        // Notifier les utilisateurs concernés
+        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();        
+        $typeOperation = $this->type === 'in' ? 'Entrée de fonds' : 'Sortie de fonds';
+        $message = "Une opération de {$typeOperation} d'un montant de " . number_format($this->amount, 2) . " {$this->currency} a été effectuée par " . Auth::user()->name . ".";
+
+        foreach ($usersToNotify as $user) {
+            Notification::create([
+                'user_id' => $user->id,
+                'title' => 'Mouvement de Caisse',
+                'message' => $message,
+                'read' => false,
+            ]);
+        }
 
         notyf()->success(message: __('Opération effectuée avec succès !'));
 
@@ -118,16 +137,15 @@ class ManageCashRegister extends Component
         $registers = MainCashRegister::all();
 
         $transactions = Transaction::where(function ($query) {
-                $query->where('type', 'like', '%fonds%')
-                    ->orWhere('type', 'like', '%sortie%')
-                    ->orWhere('type', 'like', '%virement vers caisse centrale%')
-                    ->orWhere('type', 'like', '%octroi_de_credit_client%')
-                    ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
-                    ->orWhere('type', 'like', '%octroi_de_credit_client%')
-                    ->orWhere('type', 'like', '%virement_caisse_sortant%')
-                    ->orWhere('type', 'like', '%paie_sortant%');
-
-            })
+            $query->where('type', 'like', '%fonds%')
+                ->orWhere('type', 'like', '%sortie%')
+                ->orWhere('type', 'like', '%virement vers caisse centrale%')
+                ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
+                ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                ->orWhere('type', 'like', '%paie_sortant%');
+        })
             ->where(function ($query) {
                 $query->where('description', 'like', '%' . $this->search . '%')
                     ->orWhere('currency', 'like', '%' . $this->search . '%')
@@ -137,6 +155,5 @@ class ManageCashRegister extends Component
             ->paginate($this->perPage);
 
         return view('livewire.admin.manage-cash-register', compact('registers', 'transactions'));
-
     }
 }

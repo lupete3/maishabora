@@ -13,6 +13,7 @@ use App\Models\Transaction;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Models\Notification;
 
 class MemberDetails extends Component
 {
@@ -383,6 +384,19 @@ class MemberDetails extends Component
                 description: "Retrait de {$this->amount} {$this->currency} du compte de {$user->name} {$user->postnom} ({$user->code}), retenu de {$this->a_retenir} {$this->currency}",
             );
 
+            // Notifier les utilisateurs concernés
+            $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+            $notificationMessage = "Un retrait de " . number_format($this->amount, 2) . " {$this->currency} a été effectué pour le membre {$user->name} {$user->postnom} ({$user->code}) par " . Auth::user()->name . "." . Auth::user()->postnom . ".";
+
+            foreach ($usersToNotify as $notifyUser) {
+                Notification::create([
+                    'user_id' => $notifyUser->id,
+                    'title' => 'Retrait effectué',
+                    'message' => $notificationMessage,
+                    'read' => false,
+                ]);
+            }
+
             DB::commit();
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
 
@@ -493,6 +507,19 @@ class MemberDetails extends Component
                 action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
                 description: "Retrait de la carte #{$card->id} du membre {$card->member->name} {$card->member->postnom} ({$card->member->code}), montant total {$total} {$card->currency}, retenu de {$toRetain} {$card->currency}",
             );
+
+            // Notifier les utilisateurs concernés
+            $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+            $notificationMessage = "Un retrait de carte (Total: " . number_format($total, 2) . " {$card->currency}) a été effectué pour le membre {$card->member->name} {$card->member->postnom} ({$card->member->code}) par " . Auth::user()->name . "." . Auth::user()->postnom . ".";
+
+            foreach ($usersToNotify as $notifyUser) {
+                Notification::create([
+                    'user_id' => $notifyUser->id,
+                    'title' => 'Retrait Carte effectué',
+                    'message' => $notificationMessage,
+                    'read' => false,
+                ]);
+            }
 
             DB::commit();
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
