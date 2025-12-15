@@ -24,7 +24,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         UserLogHelper::log_user_activity('Connexion', 'Utilisateur déconnecté');
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: true);
+        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: false);
     }
 }; ?>
 
