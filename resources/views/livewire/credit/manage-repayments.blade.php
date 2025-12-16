@@ -63,53 +63,55 @@
                 <div class="mt-4">
                     <h5>Calendrier de remboursement</h5>
                     <a href="{{ route('schedule.generate', ['creditId' => $selectedCredit->id]) }}" target="_blank"
-                        class="btn btn-sm btn-secondary">
+                        class="btn btn-sm btn-secondary mb-3">
                         Imprimer le plan
                     </a>
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Date d'échéance</th>
-                                <th>Montant dû</th>
-                                <th>Pénalité</th>
-                                <th>Total</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($selectedCredit->repayments as $r)
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
                                 <tr>
-                                    <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
-                                    <td>{{ number_format($r->expected_amount, 2) }}</td>
-                                    <td>{{ number_format($r->penalty, 2) }}</td>
-                                    <td>{{ number_format($r->total_due, 2) }}</td>
-                                    <td>
-                                        @if ($r->is_paid)
-                                            <span class="badge bg-success">Payé</span>
-                                        @else
-                                            <span class="badge bg-warning">En attente</span>
-                                        @endif
-                                    </td>
-                                    <td>
-                                        @if (!$r->is_paid)
-                                            <button wire:click="confirmRepayment({{ $r->id }})"
-                                                class="btn btn-sm btn-success">
-                                                <span wire:loading class="spinner-border spinner-border-sm me-2"
-                                                    role="status"></span>
-                                                Payer
-                                            </button>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
+                                    <th>Date d'échéance</th>
+                                    <th>Montant dû</th>
+                                    <th>Pénalité</th>
+                                    <th>Total</th>
+                                    <th>Status</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="5" class="text-center">Aucune échéance trouvée.</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse($selectedCredit->repayments as $r)
+                                    <tr>
+                                        <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                        <td>{{ number_format($r->expected_amount, 2) }}</td>
+                                        <td>{{ number_format($r->penalty, 2) }}</td>
+                                        <td>{{ number_format($r->total_due, 2) }}</td>
+                                        <td>
+                                            @if ($r->is_paid)
+                                                <span class="badge bg-success">Payé</span>
+                                            @else
+                                                <span class="badge bg-warning">En attente</span>
+                                            @endif
+                                        </td>
+                                        <td>
+                                            @if (!$r->is_paid)
+                                                <button wire:click="confirmRepayment({{ $r->id }})"
+                                                    class="btn btn-sm btn-success">
+                                                    <span wire:loading class="spinner-border spinner-border-sm me-2"
+                                                        role="status"></span>
+                                                    Payer
+                                                </button>
+                                            @else
+                                                -
+                                            @endif
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">Aucune échéance trouvée.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             @endif
         </div>

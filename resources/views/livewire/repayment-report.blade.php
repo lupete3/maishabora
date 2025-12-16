@@ -1,21 +1,21 @@
 <div>
     <div class="row mb-4">
-    @foreach ($totals as $currency => $t)
-        <div class="col-md-4">
-            <div class="card text-center shadow-sm">
-                <div class="card-body">
-                    <h6 class="card-title">Devise : {{ $currency }}</h6>
-                    <p class="mb-1 text-success">
-                        <strong>Total Remboursé :</strong> {{ number_format($t['total_paid'], 2) }}
-                    </p>
-                    <p class="mb-0 text-danger">
-                        <strong>Total Pénalités :</strong> {{ number_format($t['total_penality'], 2) }}
-                    </p>
+        @foreach ($totals as $currency => $t)
+            <div class="col-md-4 ">
+                <div class="card text-center shadow-sm">
+                    <div class="card-body">
+                        <h6 class="card-title">Devise : {{ $currency }}</h6>
+                        <p class="mb-1 text-success">
+                            <strong>Total Remboursé :</strong> {{ number_format($t['total_paid'], 2) }}
+                        </p>
+                        <p class="mb-0 text-danger">
+                            <strong>Total Pénalités :</strong> {{ number_format($t['total_penality'], 2) }}
+                        </p>
+                    </div>
                 </div>
             </div>
-        </div>
-    @endforeach
-</div>
+        @endforeach
+    </div>
 
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
