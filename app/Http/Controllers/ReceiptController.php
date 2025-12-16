@@ -24,7 +24,8 @@ class ReceiptController extends Controller
         return $pdf->stream("receipt_{$id}.pdf");
     }
 
-    public function generate($id){
+    public function generate($id)
+    {
 
         $transaction = Transaction::with(['account.user'])->findOrFail($id);
         $member = $transaction->account->user;
@@ -37,11 +38,12 @@ class ReceiptController extends Controller
         // Générer le QR code en base64
 
 
-        return view('receipts.receipt', compact('transaction','agent', 'member', 'qrCodeDataUri'));
+        return view('receipts.receipt', compact('transaction', 'agent', 'member', 'qrCodeDataUri'));
 
     }
 
-    public function generatePos($id){
+    public function generatePos($id)
+    {
 
         $transaction = Transaction::with(['account.user'])->findOrFail($id);
         $member = $transaction->account->user;
@@ -56,11 +58,13 @@ class ReceiptController extends Controller
 
         // return view('receipts.receipt', compact('transaction','agent', 'member', 'qrCodeDataUri'));
 
-        $data = compact('transaction','agent', 'member', 'qrCodeDataUri');
+        $data = compact('transaction', 'agent', 'member', 'qrCodeDataUri');
 
-        $pdf = Pdf::loadView('receipts.receipt_pos', $data);
+        // $pdf = Pdf::loadView('receipts.receipt_pos', $data);
 
-        return $pdf->stream("receipt_{$id}.pdf");
+        // return $pdf->stream("receipt_{$id}.pdf");
+
+        return view('receipts.receipt_pos', $data);
 
     }
 

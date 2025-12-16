@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
   <meta charset="UTF-8">
   <title>Reçu #{{ $transaction->id }}</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @media print {
       @page {
         margin: 0;
       }
+
       body {
         margin: 0;
         padding: 0;
@@ -55,14 +58,15 @@
     }
   </style>
 </head>
+
 <body>
 
   <!-- Logo -->
   {{-- <div class="center">
-    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
-        width="100px" alt="" />
+    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" width="100px"
+      alt="" />
   </div>}}
-      {{-- <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset=""> --}}
+  {{-- <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset=""> --}}
 
 
   <!-- En-tête -->
@@ -121,10 +125,23 @@
 
   <!-- Impression auto -->
   <script>
-    window.onload = function () {
+    // Fonction pour l'impression
+    function printReceipt() {
       window.print();
-    };
+    }
+
+    window.onload = function () {
+      // Tentative d'impression automatique
+      setTimeout(function () {
+        try {
+          printReceipt();
+        } catch (e) {
+          console.error("Erreur d'impression : ", e);
+        }
+      }, 500);
+    }
   </script>
 
 </body>
+
 </html>
