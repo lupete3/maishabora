@@ -88,8 +88,8 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-agent'])-
 });
 
 Route::middleware(['auth', 'auth.session'])->group(function () {
-Route::get('/agent/{userId}/transactions/export/{filter?}', [AgentDashboardController::class, 'exportTransactions'])
-     ->name('agent.transactions.export');    
+    Route::get('/agent/{userId}/transactions/export/{filter?}', [AgentDashboardController::class, 'exportTransactions'])
+        ->name('agent.transactions.export');
 });
 
 Route::middleware(['auth', 'auth.session', 'permission:ajouter-credit'])->group(function () {
@@ -173,6 +173,10 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 Route::view('profile', 'profile')
     ->middleware(['auth', 'auth.session'])
     ->name('profile');
+
+Route::get('/notifications', [DashboardController::class, 'notifications'])
+    ->middleware(['auth', 'auth.session'])
+    ->name('notifications.index');
 
 Route::post('/logout', function () {
     UserLogHelper::log_user_activity('Déconnexion', 'Utilisateur déconnecté');

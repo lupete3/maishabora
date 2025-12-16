@@ -44,8 +44,7 @@ class NotificationNavbar extends Component
     public function markAllAsRead()
     {
         Notification::where('user_id', Auth::user()->id)
-            ->where('read', false)
-            ->update(['read' => true]);
+            ->where('read', false) -> update(['read'=> true]);
 
         $this->loadNotifications();
     }

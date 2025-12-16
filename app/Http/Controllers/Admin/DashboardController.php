@@ -22,4 +22,9 @@ class DashboardController extends Controller
         return view('rapport-logs');
     }
 
+    public function notifications()
+    {
+        return view('notifications');
+    }
+
 }

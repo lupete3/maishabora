@@ -12,7 +12,7 @@
                 max-width: 380px;
             }
 
-            
+
 
             /* Item spacing */
             .dropdown-notifications-item {
@@ -83,7 +83,6 @@
             font-size: 0.65rem;
             padding: 4px 6px;
         }
-
     </style>
 
     <li class="nav-item dropdown-notifications navbar-dropdown dropdown me-3 me-xl-2" wire:poll.30s>
@@ -110,12 +109,13 @@
                             </span>
                         @endif
 
-                        <a href="#"
-                           wire:click.prevent="markAllAsRead"
-                           class="dropdown-notifications-all p-2"
-                           data-bs-toggle="tooltip"
-                           title="Tout marquer comme lu">
+                        <a href="#" wire:click.prevent="markAllAsRead" class="dropdown-notifications-all p-2"
+                            data-bs-toggle="tooltip" title="Tout marquer comme lu">
                             <i class="bx bx-envelope-open fs-4"></i>
+                        </a>
+                        <a href="{{ route('notifications.index') }}" class="dropdown-notifications-all p-2"
+                            data-bs-toggle="tooltip" title="Voir toutes les notifications">
+                            <i class="bx bx-list-ul fs-4"></i>
                         </a>
                     </div>
                 </div>
@@ -126,9 +126,8 @@
                 <ul class="list-group list-group-flush">
 
                     @forelse ($notifications as $notification)
-                        <li
-                            class="list-group-item list-group-item-action dropdown-notifications-item
-                            {{ !$notification->read ? 'notification-unread' : 'marked-as-read' }}">
+                        <li class="list-group-item list-group-item-action dropdown-notifications-item
+                                {{ !$notification->read ? 'notification-unread' : 'marked-as-read' }}">
 
                             <div class="d-flex align-items-start gap-3">
 
@@ -150,7 +149,7 @@
                                     </p>
 
                                     <small class="notification-time">
-                                        {{ $notification->created_at->diffForHumans(). ' | ' . $notification->created_at->format('Y-m-d H:i:s') }}
+                                        {{ $notification->created_at->diffForHumans() . ' | ' . $notification->created_at->format('Y-m-d H:i:s') }}
                                     </small>
                                 </div>
 
@@ -158,18 +157,14 @@
                                 <div class="flex-shrink-0 dropdown-notifications-actions">
 
                                     @if (!$notification->read)
-                                        <button
-                                            wire:click.prevent="markAsRead({{ $notification->id }})"
-                                            class="dropdown-notifications-read"
-                                            title="Marquer comme lu">
+                                        <button wire:click.prevent="markAsRead({{ $notification->id }})"
+                                            class="dropdown-notifications-read" title="Marquer comme lu">
                                             <span class="badge badge-dot bg-primary"></span>
                                         </button>
                                     @endif
 
-                                    <button
-                                        wire:click.prevent="markAsRead({{ $notification->id }})"
-                                        class="dropdown-notifications-archive"
-                                        title="Supprimer">
+                                    <button wire:click.prevent="markAsRead({{ $notification->id }})"
+                                        class="dropdown-notifications-archive" title="Supprimer">
                                         <i class="bx bx-x fs-5"></i>
                                     </button>
 
