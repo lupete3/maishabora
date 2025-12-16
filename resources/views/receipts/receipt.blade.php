@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Reçu #{{ $transaction->id }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
         /* Format du ticket */
         @media print {
@@ -66,6 +67,12 @@
 </head>
 
 <body>
+
+    <div class="no-print center" style="margin-bottom: 20px;">
+        <button onclick="printReceipt()"
+            style="padding: 10px 20px; font-size: 16px; margin-right: 10px;">Imprimer</button>
+        <button onclick="window.history.back()" style="padding: 10px 20px; font-size: 16px;">Retour</button>
+    </div>
 
     <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset="">
     <!-- En-tête -->
@@ -133,11 +140,19 @@
     <!-- Script d'impression -->
 
     <script>
+        // Fonction pour l'impression
+        function printReceipt() {
+            window.print();
+        }
+
         window.onload = function () {
-            // Attendre un court instant pour s'assurer que tout est rendu
+            // Tentative d'impression automatique
             setTimeout(function () {
-                window.print();
-                // Optionnel : notifier le parent que l'impression est lancée/terminée si besoin
+                try {
+                    printReceipt();
+                } catch (e) {
+                    console.error("Erreur d'impression : ", e);
+                }
             }, 500);
         }
     </script>
