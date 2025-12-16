@@ -23,7 +23,7 @@
                 <div class="col-md-3">
                     <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Recherche...">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mt-2">
                     <select wire:model.lazy="filter_journal_type" class="form-control">
                         <option value="">-- Tous les journaux --</option>
                         @foreach ($journalTypes as $jt)
@@ -31,7 +31,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mt-2">
                     <select wire:model.lazy="filter_account" class="form-control">
                         <option value="">-- Tous les comptes --</option>
                         @foreach ($accounts as $acc)
@@ -39,7 +39,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mt-2">
                     <select wire:model.lazy="filter_currency" class="form-control">
                         <option value="">-- Toutes les devises --</option>
                         @foreach ($currencies as $cur)

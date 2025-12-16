@@ -4,11 +4,11 @@
 
         <div class="card-header">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-6 mt-2">
                     <input type="text" class="form-control" placeholder="Rechercher (code, intitulé)..."
                         wire:model.live.debounce.300ms="search">
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mt-2">
                     <select class="form-select" wire:model.lazy="filter_devise" style="min-width: 140px;">
                         <option value="">Toutes devises</option>
                         @foreach ($currencies as $cur)
@@ -16,7 +16,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-3 mt-2">
                     <button class="btn btn-sm btn-warning float-end" wire:click="exportPdf"
                         wire:loading.attr="disabled">
                         <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>

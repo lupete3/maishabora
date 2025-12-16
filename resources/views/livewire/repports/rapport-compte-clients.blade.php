@@ -20,14 +20,12 @@
     </div>
 
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <div class="row mb-3">
-                <div class="col-md-12">
-                    <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
-                        placeholder="Rechercher un membre (nom, code, prénom)...">
-                </div>
+        <div class="card-header row">
+            <div class="col-md-9 mb-3">
+                <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
+                    placeholder="Rechercher un membre (nom, code, prénom)...">
             </div>
-            <div class="mb-3">
+            <div class="col-md-3 mb-3">
                 <button wire:click="exportPdf" class="btn btn-danger" wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                     <i class="bi bi-file-earmark-pdf"></i> Exporter en PDF
@@ -35,9 +33,10 @@
             </div>
         </div>
         <div class="card-body">
-            <table class="table table-bordered">
-                <thead>
-                    <tr>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
                         <th>Code</th>
                         <th>Membre</th>
                         <th>Solde USD</th>

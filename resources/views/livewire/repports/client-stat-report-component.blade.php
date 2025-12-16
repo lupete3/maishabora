@@ -2,7 +2,7 @@
     <h4>Rapport Statistique des Membres</h4>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-primary h-100">
                 <div class="card-body">
                     <h6>Total Membres</h6>
@@ -10,7 +10,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-success h-100">
                 <div class="card-body">
                     <h6>Hommes</h6>
@@ -18,7 +18,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-warning h-100">
                 <div class="card-body">
                     <h6>Femmes</h6>
@@ -26,7 +26,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <div class="card border-info h-100">
                 <div class="card-body">
                     <h6>Nouveaux (30j)</h6>
@@ -39,7 +39,7 @@
     <!-- Filtres -->
     <div class="card mb-3">
         <div class="card-body row g-3 align-items-end">
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <select wire:model.lazy="sexe" class="form-select">
                     <option value="">Sexe</option>
                     <option value="Masculin">Masculin</option>
@@ -47,7 +47,7 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <select wire:model.lazy="status" class="form-select">
                     <option value="">Statut</option>
                     <option value="1">Actif</option>
@@ -55,15 +55,15 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <input type="date" wire:model.lazy="startDate" class="form-control" placeholder="Depuis le" />
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <input type="date" wire:model.lazy="endDate" class="form-control" placeholder="Jusqu'au" />
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <select wire:model.lazy="periodFilter" class="form-select">
                     <option value="">Période</option>
                     <option value="today">Aujourd'hui</option>
@@ -73,7 +73,7 @@
                 </select>
             </div>
 
-            <div class="col-md-2">
+            <div class="col-md-2 mb-3">
                 <button wire:click="exportPdf" class="btn btn-primary w-100" wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                     <i class="bx bx-download"></i> Télécharger PDF

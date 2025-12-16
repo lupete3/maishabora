@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Helpers\UserLogHelper;
+use App\Models\Notification;
 use Livewire\Component;
 use App\Models\AgentAccount;
 use App\Models\MainCashRegister;
@@ -101,6 +102,19 @@ class TransferToCentralCash extends Component
             'balance_after' => $agentAccount->balance,
             'description' => "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}",
         ]);
+
+        // Notifier les utilisateurs concernés
+        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+        $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers la caisse centrale par " . Auth::user()->name . " " . Auth::user()->postnom . ". #REF{$transfer->id}";
+
+        foreach ($usersToNotify as $notifyUser) {
+            Notification::create([
+                'user_id' => $notifyUser->id,
+                'title' => 'Virement effectué',
+                'message' => $notificationMessage,
+                'read' => false,
+            ]);
+        }
 
         UserLogHelper::log_user_activity(
             action: 'virement_caisse_centrale',
