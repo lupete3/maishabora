@@ -1,6 +1,6 @@
 <div>
     <div class="row mb-3">
-        <div class="col">
+        <div class="col mb-3">
             <select wire:model.lazy="agentId" class="form-select">
                 <option value="">-- Tous les agents --</option>
                 @foreach($agents as $agent)
@@ -8,14 +8,14 @@
                 @endforeach
             </select>
         </div>
-        <div class="col">
+        <div class="col mb-3">
             <select wire:model.lazy="currency" class="form-select">
                 <option value="">-- Toutes les devises --</option>
                 <option value="USD">USD</option>
                 <option value="CDF">CDF</option>
             </select>
         </div>
-        <div class="col">
+        <div class="col mb-3">
             <select wire:model.lazy="period" class="form-select">
                 <option value="day">Aujourd'hui</option>
                 <option value="week">Cette semaine</option>
@@ -25,22 +25,22 @@
             </select>
         </div>
         @if($period === 'interval')
-            <div class="col">
+            <div class="col mb-3">
                 <input type="date" wire:model.lazy="dateStart" class="form-control">
             </div>
-            <div class="col">
+            <div class="col mb-3">
                 <input type="date" wire:model.lazy="dateEnd" class="form-control">
             </div>
         @endif
     </div>
 
     <div class="row mb-4">
-        <div class="col-md-8">
+        <div class="col-md-8 mb-3">
             <div class="card p-3 bg-primary text-white">
                 <strong>Total Transactions :</strong> {{ number_format($totals['total'], 2) }}
             </div>
         </div>
-        <div class="col-md-4 mt-4">
+        <div class="col-md-4 mb-3">
             <button wire:click="exportPdf" class="btn btn-primary " wire:loading.attr="disabled">
                 <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                 <i class="bx bx-download"></i> Télécharger PDF

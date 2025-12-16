@@ -2,7 +2,7 @@
     <h4 class="mb-3">📊 Rapport Dépôts & Retraits</h4>
 
     <div class="row g-3 align-items-center mb-4">
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <label class="form-label">Filtrer par</label>
             <select wire:model.lazy="filterType" class="form-select">
                 <option value="today">Aujourd’hui</option>
@@ -13,16 +13,16 @@
             </select>
         </div>
         @if ($filterType === 'custom')
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <label class="form-label">Date de début</label>
                 <input wire:model.lazy="startDate" type="date" class="form-control">
             </div>
-            <div class="col-md-3">
+            <div class="col-md-3 mb-3">
                 <label class="form-label">Date de fin</label>
                 <input wire:model.lazy="endDate" type="date" class="form-control">
             </div>
         @endif
-        <div class="col-md-3">
+        <div class="col-md-3 mb-3">
             <label for="currency">Devise</label>
             <select wire:model.lazy="currency" class="form-control">
                 <option value="">Toutes</option>
@@ -31,7 +31,7 @@
             </select>
         </div>
 
-        <div class="col-md-4">
+        <div class="col-md-4 mb-3">
             <label for="user_id">Membre</label>
             <div class="table-search-input">
                 <div class="input-group input-group-merge">
@@ -58,7 +58,7 @@
     </div>
 
     <div class="row mb-4">
-        <div class="col-md-6">
+        <div class="col-md-6 mb-3">
             <div class="card bg-success text-white">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
@@ -69,7 +69,7 @@
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-6 mb-3">
             <div class="card bg-danger text-white">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
