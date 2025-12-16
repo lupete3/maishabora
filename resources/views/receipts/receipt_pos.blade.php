@@ -4,7 +4,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Reçu #{{ $transaction->id }}</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     @media print {
       @page {
@@ -125,21 +124,9 @@
 
   <!-- Impression auto -->
   <script>
-    // Fonction pour l'impression
-    function printReceipt() {
-      window.print();
-    }
-
     window.onload = function () {
-      // Tentative d'impression automatique
-      setTimeout(function () {
-        try {
-          printReceipt();
-        } catch (e) {
-          console.error("Erreur d'impression : ", e);
-        }
-      }, 500);
-    }
+      window.print();
+    };
   </script>
 
 </body>

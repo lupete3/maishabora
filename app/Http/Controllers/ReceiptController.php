@@ -60,11 +60,9 @@ class ReceiptController extends Controller
 
         $data = compact('transaction', 'agent', 'member', 'qrCodeDataUri');
 
-        // $pdf = Pdf::loadView('receipts.receipt_pos', $data);
+        $pdf = Pdf::loadView('receipts.receipt_pos', $data);
 
-        // return $pdf->stream("receipt_{$id}.pdf");
-
-        return view('receipts.receipt_pos', $data);
+        return $pdf->stream("receipt_{$id}.pdf");
 
     }
 
