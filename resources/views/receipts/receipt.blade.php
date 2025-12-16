@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Reçu #{{ $transaction->id }}</title>
@@ -30,6 +31,7 @@
             padding: 1px;
             line-height: 1;
         }
+
         .img-center {
             display: block;
             margin-left: auto;
@@ -62,6 +64,7 @@
         }
     </style>
 </head>
+
 <body>
 
     <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset="">
@@ -115,25 +118,30 @@
     <div class="footer">
         Ce reçu est valable comme preuve de transaction. Aucun remboursement ne sera effectué sans ce document.
 
-    <!-- Ajout du QR Code -->
-    <div class="center" style="margin-top: 10px;">
-        {!! $qrCodeDataUri !!}
-    </div>
+        <!-- Ajout du QR Code -->
+        <div class="center" style="margin-top: 10px;">
+            {!! $qrCodeDataUri !!}
+        </div>
 
-    <div class="row">
-        <div>Signature Client.</div>
-        <div>Signature Agent</div>
-    </div>
+        <div class="row">
+            <div>Signature Client.</div>
+            <div>Signature Agent</div>
+        </div>
 
     </div>
 
     <!-- Script d'impression -->
 
     <script>
-        window.onload = function() {
-            window.print();
-        };
+        window.onload = function () {
+            // Attendre un court instant pour s'assurer que tout est rendu
+            setTimeout(function () {
+                window.print();
+                // Optionnel : notifier le parent que l'impression est lancée/terminée si besoin
+            }, 500);
+        }
     </script>
 
 </body>
+
 </html>

@@ -359,7 +359,23 @@
                                                             <path d="M6 9V2h12v7"></path>
                                                             <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
                                                             <path d="M6 14h12v4H6v-4z"></path>
-                                                        </svg>
+                                                        </svg> POS
+                                                    </button>
+                                                    <button type="button"
+                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
+                                                        class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                                                            ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
+                                                            focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
+                                                            disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
+                                                            h-9 rounded-md px-3 mt-1">
+                                                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                            stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                                            class="lucide lucide-printer mr-2 h-4 w-4 ">
+                                                            <path d="M6 9V2h12v7"></path>
+                                                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                                                            <path d="M6 14h12v4H6v-4z"></path>
+                                                        </svg>PC
                                                     </button>
                                                 </td>
                                             </tr>
