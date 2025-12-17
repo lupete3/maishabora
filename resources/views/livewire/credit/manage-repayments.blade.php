@@ -61,11 +61,28 @@
 
             @if ($selectedCredit)
                 <div class="mt-4">
-                    <h5>Calendrier de remboursement</h5>
-                    <a href="{{ route('schedule.generate', ['creditId' => $selectedCredit->id]) }}" target="_blank"
-                        class="btn btn-sm btn-secondary mb-3">
-                        Imprimer le plan
-                    </a>
+                    <div class="d-flex justify-content-between">
+                        <div class="">
+                            Solde :
+                            @foreach (['USD', 'CDF'] as $curr)
+                                @php
+                                    $balance = (float) ($selectedCredit->user->accounts->firstWhere(
+                                        'currency',
+                                        $curr,
+                                    )?->balance ?? 0);
+                                @endphp
+                                <small class="" style="font-size: 16px;">
+                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
+                                </small>
+                            @endforeach
+                        </div>
+
+                        <a href="{{ route('schedule.generate', ['creditId' => $selectedCredit->id]) }}" target="_blank"
+                            class="btn btn-sm btn-secondary mb-3">
+                            Imprimer le plan
+                        </a>
+
+                    </div>
                     <div class="table-responsive">
                         <table class="table table-bordered">
                             <thead>
@@ -93,8 +110,7 @@
                                         </td>
                                         <td>
                                             @if (!$r->is_paid)
-                                                <button wire:click="confirmRepayment({{ $r->id }})"
-                                                    class="btn btn-sm btn-success">
+                                                <button wire:click="confirmRepayment({{ $r->id }})" class="btn btn-sm btn-success">
                                                     <span wire:loading class="spinner-border spinner-border-sm me-2"
                                                         role="status"></span>
                                                     Payer
