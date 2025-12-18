@@ -1,107 +1,153 @@
 <!DOCTYPE html>
-<html>
+<html lang="fr">
+
 <head>
-    <meta charset="utf-8">
-    <title>Reçu #{{ $transfer->id }}</title>
+    <meta charset="UTF-8">
+    <title>Reçu Virement #{{ $transfer->id }}</title>
+
     <style>
+        /* Format ticket thermique */
+        @media print {
+            @page {
+                margin: 0;
+                size: 58mm auto;
+            }
+
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Courier New', monospace;
+                font-size: 10px !important;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
         body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            margin: 0 auto;
-            padding: 10px;
-            max-width: 320px; /* Largeur typique pour reçu 80mm */
-            line-height: 1.4;
+            width: 50mm;
+            margin: -1px;
+            padding: 1px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;      /* 👈 Taille globale */
+            line-height: 1.4;   /* 👈 Très important pour ticket */
         }
 
-        .header,
-        .footer {
-            text-align: center;
-            margin-bottom: 10px;
-        }
-
-        h2 {
-            font-size: 16px;
-            margin: 0;
-            padding: 0;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-bottom: 10px;
-        }
-
-        th, td {
-            padding: 4px 0;
-            text-align: left;
-        }
-
-        .bold {
-            font-weight: bold;
+        .img-center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .center {
             text-align: center;
         }
 
-        .line {
-            border-top: 1px dashed #000;
-            margin: 10px 0;
+        .bold {
+            font-weight: bold;
         }
 
-        @media print {
-            body {
-                max-width: 100%;
-            }
+        .line {
+            border-top: 1px dashed #000;
+            margin: 4px 0;
+        }
+
+        .row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .footer {
+            font-size: 10px;
+            text-align: center;
+            margin-top: 10px;
+            margin-bottom: 30px;
         }
     </style>
 </head>
+
 <body>
 
+    <!-- Logo -->
+
+
     <!-- En-tête -->
-    <div class="header">
-        <h2>{{ config('app.name') }}</h2>
-        <p><strong>Reçu de Virement</strong></p>
-        <p>Date : {{ now()->format('d/m/Y H:i') }}</p>
+    <div class="center bold">{{ config('app.name') }}</div>
+    <div class="center">N° ID : {{ env('APP_RCCM', '000-000-000') }}</div>
+    <div class="center">Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}</div>
+    <div class="center">Tél : {{ env('APP_PHONE', '+243 000 000 000') }}</div>
+
+    <div class="line"></div>
+
+    <!-- Titre -->
+    <div class="center bold">REÇU DE VIREMENT</div>
+    <div class="center">{{ now()->format('d/m/Y H:i') }}</div>
+
+    <div class="line"></div>
+
+    <!-- Détails du virement -->
+    <div class="row">
+        <div>Type</div>
+        <div class="bold">Virement</div>
     </div>
 
-    <hr class="line">
+    <div class="row">
+        <div>Destinnation</div>
+        <div>Caisse Centrale</div>
+    </div>
 
-    <!-- Informations du transfert -->
-    <table>
-        <tr>
-            <td class="bold">Type</td>
-            <td>Virement Caisse Centrale</td>
-        </tr>
-        <tr>
-            <td class="bold">Devise</td>
-            <td>{{ $transfer->currency }}</td>
-        </tr>
-        <tr>
-            <td class="bold">Montant</td>
-            <td>{{ number_format($transfer->amount, 2) }} {{ $transfer->currency }}</td>
-        </tr>
-        <tr>
-            <td class="bold">Agent</td>
-            <td>{{ $agent->name }}</td>
-        </tr>
-        <tr>
-            <td class="bold">Réf.</td>
-            <td>#{{ $transfer->id }}</td>
-        </tr>
-        <tr>
-            <td class="bold">Date</td>
-            <td>{{ $transfer->created_at->format('d/m/Y H:i') }}</td>
-        </tr>
-    </table>
+    <div class="row">
+        <div>Montant</div>
+        <div class="bold">
+            {{ number_format($transfer->amount, 2, ',', ' ') }}
+            {{ $transfer->currency }}
+        </div>
+    </div>
 
-    <hr class="line">
+    <div class="row">
+        <div>Devise</div>
+        <div>{{ $transfer->currency }}</div>
+    </div>
+
+    <div class="row">
+        <div>Date</div>
+        <div>{{ $transfer->created_at->format('d/m/Y H:i') }}</div>
+    </div>
+
+    <div class="row">
+        <div>Réf.</div>
+        <div>#{{ $transfer->id }}</div>
+    </div>
+
+    <div class="row">
+        <div>Agent</div>
+        <div>{{ $agent->name. ' '. $agent->postnom }}</div>
+    </div>
+
+    <div class="line"></div>
+
+    <div class="center">Merci pour votre collaboration</div>
 
     <!-- Pied de page -->
     <div class="footer">
-        <p>Fait par : {{ $agent->name.' '.$agent->postnom }}</p>
-        <p class="center">Merci pour votre travail diligent !</p>
+        Ce reçu fait foi de l’opération de virement effectuée.
+
+        <div class="row" style="margin-top: 10px;">
+            <div>Signature Agent</div>
+            <div>Signature Admin</div>
+        </div>
     </div>
 
+    <!-- Impression automatique -->
+    <script>
+        window.onload = function () {
+            setTimeout(function () {
+                window.print();
+            }, 500);
+        }
+    </script>
+
 </body>
+
 </html>
