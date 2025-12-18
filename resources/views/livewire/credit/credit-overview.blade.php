@@ -6,7 +6,7 @@
                 {{-- NOUVEAU: Affichage des totaux en retard --}}
                 @if ($overdueTotals->isNotEmpty())
                     <span class="float-end small fw-normal">
-                        **Total dû :**
+                        Total dû :
                         @foreach ($overdueTotals as $currency => $total)
                             <span class="badge bg-danger">
                                 {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
@@ -26,7 +26,7 @@
                             @endphp
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name }}</strong><br>
+                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name. ' ' . $r->credit->user->postnom. ' ' . $r->credit->user->prenom ?? '' }}</strong><br>
                                     <small class="text-muted">
                                         Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>
@@ -72,7 +72,7 @@
                 {{-- NOUVEAU: Affichage des totaux à venir --}}
                 @if ($upcomingTotals->isNotEmpty())
                     <span class="float-end small fw-normal">
-                        **Total dû :**
+                        Total dû :
                         @foreach ($upcomingTotals as $currency => $total)
                             <span class="badge bg-warning text-dark">
                                 {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
@@ -92,7 +92,7 @@
                             @endphp
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name }}</strong><br>
+                                    <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name. ' ' . $r->credit->user->postnom. ' ' . $r->credit->user->prenom ?? '' }}</strong><br>
                                     <small class="text-muted">
                                         Montant : {{ $r->total_due . ' ' . $r->credit->currency }}
                                     </small><br>

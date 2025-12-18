@@ -26,7 +26,8 @@ class NotificationNavbar extends Component
             ->take(5)
             ->get();
 
-        $this->unreadCount = $this->notifications->count();
+        $this->unreadCount = Notification::where('user_id', Auth::user()->id)
+            ->where('read', false)->count();
     }
 
     public function markAsRead($notificationId)
