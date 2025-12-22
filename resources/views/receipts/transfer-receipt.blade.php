@@ -27,7 +27,7 @@
 
         body {
             width: 50mm;
-            margin: -1px;
+            margin: 1px;
             padding: 1px;
             font-family: 'Courier New', monospace;
             font-size: 12px;      /* 👈 Taille globale */
