@@ -185,13 +185,14 @@ class CurrencyConversion extends Component
                     ->first();
 
                 if (!$fromAccount || !$toAccount) {
+                    notyf()->error("Le client n'a pas les deux comptes requis.");
                     $this->addError('amount', "Le client n'a pas les deux comptes requis.");
                     return;
                 }
 
                 if ($fromAccount->balance < $this->amount) {
-                    $this->addError('amount', 'Solde insuffisant sur le compte du client.');
                     notyf()->error('Solde insuffisant client.');
+                    $this->addError('amount', 'Solde insuffisant sur le compte du client.');
                     return;
                 }
 

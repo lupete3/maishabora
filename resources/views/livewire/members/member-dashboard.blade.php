@@ -1,387 +1,278 @@
 <div class="container-xxl flex-grow-1 container-p-y">
 
-    <main class="flex-grow mx-auto  py-0">
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div class="lg:col-span-1 space-y-6">
-                <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="">
-                        <div class="card-header border-bottom">
+    <!-- Header & Quick Actions -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pb-4 mb-4 border-bottom">
+        <div>
+            <h3 class="fw-bold mb-0 text-primary">Tableau de bord</h3>
+            <p class="text-muted mb-0">Bienvenue, {{ $member->name }} {{ $member->postnom }}</p>
+        </div>
+        <div class="mt-3 mt-md-0">
+            <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
+                <i class="fas fa-paper-plane me-2"></i> Faire un virement
+            </button>
+        </div>
+    </div>
 
+    <div class="row g-4">
+
+        <!-- Sidebar: Profile & Contact -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 sticky-top" style="top: 2rem; z-index: 1;">
+                <div class="card-body text-center pt-5 pb-4">
+                    <div class="mb-3">
+                        <div class="avatar avatar-xl rounded-circle bg-label-primary fs-2 mx-auto d-flex align-items-center justify-content-center shadow-sm"
+                            style="width: 80px; height: 80px;">
+                            {{ strtoupper(substr($member->name, 0, 1)) }}{{ strtoupper(substr($member->postnom, 0, 1)) }}
                         </div>
+                    </div>
+                    <h5 class="fw-bold mb-1">{{ $member->name }} {{ $member->postnom }}</h5>
+                    <span class="badge bg-label-secondary mb-4">CODE: {{ $member->code }}</span>
 
-                        <div class="tab-content p-4" id="profileTabsContent">
-                            <!-- Onglet Photo -->
-
-
-                            <!-- Onglet Signature -->
-                            <div class="tab-pane fade text-center" id="signature" role="tabpanel"
-                                aria-labelledby="signature-tab">
-                                @if ($member->scan_piece)
-                                    <img src="{{ asset('storage/' . $member->scan_piece) }}" alt="Signature"
-                                        class="img-fluid rounded border shadow-sm" style="max-width: 90%;">
-                                @else
-                                    <span class="text-sm text-primary card p-2">Aucune signature enregistrée pour ce
-                                        client</span>
-                                @endif
+                    <div class="text-start border-top pt-4">
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="fas fa-map-marker-alt text-primary mt-1 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Adresse</small>
+                                <span class="fw-medium">{{ $member->adresse_physique }}</span>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="p-6 pt-0 space-y-3 text-sm">
-                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-user h-4 w-4 text-muted-foreground">
-                                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
-                                <circle cx="12" cy="7" r="4"></circle>
-                            </svg>
-                            <p><strong class="font-medium">Noms:</strong> {{ $member->name . '
-                                ' . $member->postnom . '
-                                ' . $member->prenom }}</p>
-                        </div>
-                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-map-pin h-4 w-4 text-muted-foreground">
-                                <path
-                                    d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0">
-                                </path>
-                                <circle cx="12" cy="10" r="3"></circle>
-                            </svg>
-                            <p><strong class="font-medium">Addresse:</strong> {{ $member->adresse_physique }}</p>
-                        </div>
-                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-phone h-4 w-4 text-muted-foreground">
-                                <path
-                                    d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
-                                </path>
-                            </svg>
-                            <p><strong class="font-medium">Téléphone:</strong> {{ $member->telephone }}</p>
-                        </div>
-                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-mail h-4 w-4 text-muted-foreground">
-                                <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-                            </svg>
-                            <p><strong class="font-medium">Email:</strong> {{ $member->email }}</p>
-                        </div>
-                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
-                                class="lucide lucide-info h-4 w-4 text-muted-foreground">
-                                <circle cx="12" cy="12" r="10"></circle>
-                                <path d="M12 16v-4"></path>
-                                <path d="M12 8h.01"></path>
-                            </svg>
-                            <p><strong class="font-medium">ID Client:</strong> {{ $member->code }}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="flex flex-col space-y-1.5 p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-landmark h-6 w-6 text-primary">
-                                <line x1="3" x2="21" y1="22" y2="22"></line>
-                                <line x1="6" x2="6" y1="18" y2="11"></line>
-                                <line x1="10" x2="10" y1="18" y2="11"></line>
-                                <line x1="14" x2="14" y1="18" y2="11"></line>
-                                <line x1="18" x2="18" y1="18" y2="11"></line>
-                                <polygon points="12 2 20 7 4 7"></polygon>
-                            </svg>Balances des comptes</div>
-                    </div>
-                    <div class="p-6 pt-0 space-y-4">
-                        @foreach(['USD', 'CDF'] as $curr)
-                            @php
-                                $balance = number_format($member->accounts->firstWhere('currency', $curr)?->balance ?? 0, 2);
-                                $color = $curr === 'USD' ? 'green' : 'blue';
-                            @endphp
-                            @php
-                                $balance = (float) ($member->accounts->firstWhere('currency', $curr)?->balance ?? 0);
-                            @endphp
-                            <div
-                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-secondary/30 rounded-lg shadow">
-                                <div class="flex items-center gap-3 mb-2 sm:mb-0">
-                                    <span class="font-bold text-xl text-{{ $color }}-600">{{ $curr }}</span>
-                                    <span class="font-medium text-lg"> </span>
-                                </div>
-                                <span class="text-2xl font-semibold text-foreground">
-                                    {{ number_format($balance, 2, '.', ' ')
-                                    }}
-                                </span>
+                        <div class="d-flex align-items-start mb-3">
+                            <i class="fas fa-phone text-primary mt-1 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Téléphone</small>
+                                <span class="fw-medium">{{ $member->telephone }}</span>
                             </div>
-                        @endforeach
-
+                        </div>
+                        <div class="d-flex align-items-start">
+                            <i class="fas fa-envelope text-primary mt-1 me-3"></i>
+                            <div>
+                                <small class="text-muted d-block">Email</small>
+                                <span class="fw-medium">{{ $member->email ?? 'Non renseigné' }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
-            <div class="lg:col-span-2 space-y-2">
-                <div class="bg-card p-4 sm:p-6 rounded-lg shadow-lg">
-                    <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2">
-                        <h4 class="text-xl font-semibold flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-list-filter h-6 w-6 text-primary">
-                                <path d="M3 6h18"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M10 18h4"></path>
-                            </svg>
-                            Historique des transactions
-                        </h4>
+        </div>
 
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <div class="relative w-full sm:w-64">
+        <!-- Main Content: Financials & Stats -->
+        <div class="col-lg-8">
 
+            <!-- Section: Comptes Bancaires -->
+            <div class="mb-4">
+                <h5 class="fw-bold mb-3 text-muted text-uppercase fs-7 ls-1">Mes Comptes</h5>
+                <div class="row g-4">
+                    @foreach(['USD', 'CDF'] as $curr)
+                        @php
+                            $account = $member->accounts->firstWhere('currency', $curr);
+                            $balance = $account ? $account->balance : 0;
+                            $isUsd = $curr === 'USD';
+                            $bgClass = $isUsd ? 'bg-success' : 'bg-primary';
+                            $icon = $isUsd ? 'fas fa-dollar-sign' : 'fas fa-money-bill-wave';
+                        @endphp
+                        <div class="col-md-6">
+                            <div class="card border-0 shadow-sm h-100 overflow-hidden position-relative">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-4">
+                                        <div>
+                                            <span class="badge bg-label-{{ $isUsd ? 'success' : 'primary' }} mb-2">Compte
+                                                {{ $curr }}</span>
+                                            <h2 class="mb-0 fw-bold {{ $balance < 0 ? 'text-danger' : 'text-dark' }}">
+                                                {{ number_format($balance, 2, '.', ' ') }} <small
+                                                    class="fs-6 text-muted">{{ $curr }}</small></h2>
+                                        </div>
+                                        <div
+                                            class="avatar avatar-md bg-{{ $isUsd ? 'success-subtle' : 'primary-subtle' }} text-{{ $isUsd ? 'success' : 'primary' }} rounded p-2 d-flex align-items-center justify-content-center">
+                                            <i class="{{ $icon }} fs-4"></i>
+                                        </div>
+                                    </div>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar {{ $bgClass }}" role="progressbar" style="width: 70%"
+                                            aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                </div>
                             </div>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
 
-                            {{-- <a href="{{ route('member.transactions.export', ['id' => $member->id]) }}" class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
-                                ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
-                                focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
-                                disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
-                                h-9 rounded-md px-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-download mr-2 h-4 w-4">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" x2="12" y1="15" y2="3"></line>
-                                </svg>
-                                Télécharger PDF
-                            </a> --}}
+            <!-- Section: Statistiques Carnets -->
+            <div class="mb-4" wire:ignore>
+                <h5 class="fw-bold mb-3 text-muted text-uppercase fs-7 ls-1">Statistiques Carnets</h5>
+                <livewire:membership-card-stats wire:key="membership-stats" />
+            </div>
+
+            <div class="row g-4 mb-4">
+                <!-- Section: Crédits Actifs -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <h5 class="card-title fw-bold mb-0"><i
+                                    class="fas fa-hand-holding-usd me-2 text-warning"></i> Crédits en cours</h5>
+                        </div>
+                        <div class="card-body">
+                            @if($credits->where('is_paid', false)->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-check-circle fa-2x mb-2 text-success opacity-50"></i>
+                                    <p class="mb-0">Aucun crédit en cours.</p>
+                                </div>
+                            @else
+                                <div class="list-group list-group-flush">
+                                    @foreach ($credits->where('is_paid', false) as $credit)
+                                        <div class="list-group-item px-0 py-3 border-bottom-dashed">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">{{ number_format($credit->amount, 2) }}
+                                                        {{ $credit->currency }}</h6>
+                                                    <small class="text-muted"><i class="far fa-calendar-alt me-1"></i>
+                                                        {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</small>
+                                                </div>
+                                                <span class="badge bg-label-warning">En cours</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     </div>
+                </div>
 
-                    <div dir="ltr" class="relative overflow-hidden h-[400px] w-full rounded-md border"
-                        style="position: relative; --radix-scroll-area-corner-width: 0px; --radix-scroll-area-corner-height: 0px;">
-                        <style>
-                            [data-radix-scroll-area-viewport] {
-                                scrollbar-width: none;
-                                -ms-overflow-style: none;
-                                -webkit-overflow-scrolling: touch;
-                            }
-
-                            [data-radix-scroll-area-viewport]::-webkit-scrollbar {
-                                display: none
-                            }
-                        </style>
-
-                        <div data-radix-scroll-area-viewport="" class="h-full w-full rounded-[inherit]"
-                            style="overflow: scroll;">
-                            <div style="min-width: 100%; display: table;">
-                                <div class="relative w-full overflow-auto">
-                                    <table class="w-full caption-bottom text-sm">
-                                        <thead class="[&amp;_tr]:border-b sticky top-0 bg-card z-10">
-                                            <tr
-                                                class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                <th
-                                                    class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 w-[150px]">
-                                                    Date</th>
-                                                <th
-                                                    class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0">
-                                                    Description</th>
-                                                <th
-                                                    class="h-12 px-4 text-left align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 w-[150px]">
-                                                    Type</th>
-                                                <th
-                                                    class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 text-right w-[150px]">
-                                                    Montant</th>
-                                                <th
-                                                    class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 text-right w-[150px]">
-                                                    Solde après</th>
-
+                <!-- Section: Échéances en retard -->
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <h5 class="card-title fw-bold mb-0 text-danger"><i
+                                    class="fas fa-exclamation-triangle me-2"></i> Échéances en retard</h5>
+                        </div>
+                        <div class="card-body">
+                            @if($overdueRepayments->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-smile fa-2x mb-2 text-success opacity-50"></i>
+                                    <p class="mb-0">Aucun retard de paiement.</p>
+                                </div>
+                            @else
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-borderless mb-0 align-middle">
+                                        <thead class="text-muted border-bottom">
+                                            <tr>
+                                                <th class="fw-normal">Date</th>
+                                                <th class="fw-normal text-end">Total dû</th>
                                             </tr>
                                         </thead>
-
-                                        <tbody class="[&amp;_tr:last-child]:border-0">
-                                            @forelse ($transactions as $transaction)
-                                                                                    <tr
-                                                                                        class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                                                        <td
-                                                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 font-medium">
-                                                                                            <div class="flex items-center gap-2">
-                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                    stroke-width="2" stroke-linecap="round"
-                                                                                                    stroke-linejoin="round"
-                                                                                                    class="lucide lucide-calendar-days h-4 w-4 text-muted-foreground">
-                                                                                                    <path d="M8 2v4"></path>
-                                                                                                    <path d="M16 2v4"></path>
-                                                                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                                                                                                    <path d="M3 10h18"></path>
-                                                                                                    <path d="M8 14h.01"></path>
-                                                                                                    <path d="M12 14h.01"></path>
-                                                                                                    <path d="M16 14h.01"></path>
-                                                                                                    <path d="M8 18h.01"></path>
-                                                                                                    <path d="M12 18h.01"></path>
-                                                                                                    <path d="M16 18h.01"></path>
-                                                                                                </svg>
-                                                                                                {{ $transaction->created_at->format('d/m/Y H:i') }}
-                                                                                            </div>
-                                                                                        </td>
-
-                                                                                        <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                                                            {{ $transaction->description }}
-                                                                                        </td>
-
-                                                                                        <td class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                                                            <div class="rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors
-                                                                                                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                                                                                                text-foreground flex items-center gap-2 capitalize">
-                                                                                                @if ($transaction->type === 'dépôt')
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-down-to-line h-5 w-5 text-green-500">
-                                                                                                        <path d="M12 17V3"></path>
-                                                                                                        <path d="m6 11 6 6 6-6"></path>
-                                                                                                        <path d="M19 21H5"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @elseif ($transaction->type === 'retrait')
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-up-from-line h-5 w-5 text-red-500">
-                                                                                                        <path d="m18 9-6-6-6 6"></path>
-                                                                                                        <path d="M12 3v14"></path>
-                                                                                                        <path d="M5 21h14"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @else
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-right-left h-5 w-5 text-blue-500">
-                                                                                                        <path d="m16 3 4 4-4 4"></path>
-                                                                                                        <path d="M20 7H4"></path>
-                                                                                                        <path d="m8 21-4-4 4-4"></path>
-                                                                                                        <path d="M4 17h16"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @endif
-                                                                                            </div>
-                                                                                        </td>
-
-                                                                                        <td
-                                                                                            class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                                                            @if($transaction->type === 'retrait') -@endif{{
-                                                number_format($transaction->amount, 2) }} {{ $transaction->currency
-                                                                                            }}
-                                                                                        </td>
-
-                                                                                        <td
-                                                                                            class="p-2 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                                                            {{ number_format($transaction->balance_after, 2) }} {{
-                                                $transaction->currency }}
-                                                                                        </td>
-                                                                                    </tr>
-                                            @empty
+                                        <tbody>
+                                            @foreach ($overdueRepayments as $r)
                                                 <tr>
-                                                    <td colspan="6" class="p-4 align-middle text-center">
-                                                        <div class="alert alert-danger" role="alert">
-                                                            Aucune transaction trouvée.
-                                                        </div>
-                                                    </td>
+                                                    <td class="text-danger fw-medium">
+                                                        {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                                    <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }}</td>
                                                 </tr>
-                                            @endforelse
+                                            @endforeach
                                         </tbody>
                                     </table>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div
-                        class="card-footer d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2">
-                        <div class="d-flex justify-content-between align-items-center gap-3">
-                            <div class="text-muted">
-                                Affichage de {{ $transactions->firstItem() }} à {{ $transactions->lastItem() }} sur
-                                <span class="badge bg-primary">{{ $transactions->total() }}</span> transactions
-                            </div>
-                        </div>
-
-                        <div class="d-flex justify-content-center">
-                            {{ $transactions->links() }}
-                        </div>
-                    </div>
-                </div>
-                <livewire:membership-card-stats>
-            </div>
-
-
-        </div>
-
-    </main>
-
-    <div class="row mb-4">
-
-        <div class="col-md-4 mt-2">
-            <div class="card ">
-                <div class="card-header">
-                    <h6 class="mb-0">Crédits</h6>
-                </div>
-                <div class="card-body">
-                    @forelse ($credits as $credit)
-                        <div class="mb-3 border-bottom pb-2">
-                            <strong>{{ $credit->currency }}</strong><br>
-                            Montant : {{ number_format($credit->amount, 2) }}<br>
-                            Début : {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}<br>
-                            Status :
-                            @if ($credit->is_paid)
-                                <span class="badge bg-label-success">Remboursé</span>
-                            @else
-                                <span class="badge bg-label-warning">En cours</span>
                             @endif
                         </div>
-                    @empty
-                        <p class="text-muted">Aucun crédit trouvé.</p>
-                    @endforelse
+                    </div>
                 </div>
             </div>
-        </div>
-        <div class="col-md-8">
-            <div class="card mt-4">
-                <div class="card-header bg-label-danger">
-                    <h6 class="mb-0 text-danger">Échéances en retard</h6>
-                </div>
-                <div class="card-body table-responsive">
-                    @if ($overdueRepayments->isEmpty())
-                        <p class="text-muted">Aucune échéance en retard.</p>
-                    @else
-                        <table class="table table-hover table-sm">
-                            <thead>
-                                <tr>
-                                    <th>Date d’échéance</th>
-                                    <th>Montant</th>
-                                    <th>Pénalité</th>
-                                    <th>Total dû</th>
-                                    <th>Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach ($overdueRepayments as $r)
-                                    <tr>
-                                        <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
-                                        <td>{{ number_format($r->expected_amount, 2) }}</td>
-                                        <td>{{ number_format($r->penalty, 2) }}</td>
-                                        <td>{{ number_format($r->total_due, 2) }}</td>
-                                        <td><span class="badge bg-danger">En retard</span></td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                </div>
-            </div>
-        </div>
 
+
+            <!-- Section: Historique Transactions -->
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold mb-0"><i class="fas fa-history me-2 text-muted"></i> Transactions Récentes</h5>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-nowrap ps-4">Date</th>
+                                <th>Description</th>
+                                <th class="text-center">Type</th>
+                                <th class="text-end">Montant</th>
+                                <th class="text-end pe-4">Solde</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($transactions as $transaction)
+                                <tr>
+                                    <td class="ps-4">
+                                        <span
+                                            class="fw-medium text-dark">{{ $transaction->created_at->format('d/m/Y') }}</span>
+                                        <small
+                                            class="d-block text-muted">{{ $transaction->created_at->format('H:i') }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="text-wrap d-block" style="max-width: 300px;">
+                                            {{ $transaction->description }}
+                                            @if(in_array($transaction->type, ['transfert_entrant', 'transfert_sortant']))
+                                                <br><small
+                                                    class="text-muted fst-italic">{{ $transaction->counterparty_name }}</small>
+                                            @endif
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        @php
+                                            $typeMap = [
+                                                'dépôt' => ['icon' => 'fas fa-arrow-down', 'color' => 'success', 'label' => 'Dépôt'],
+                                                'retrait' => ['icon' => 'fas fa-arrow-up', 'color' => 'danger', 'label' => 'Retrait'],
+                                                'transfert_entrant' => ['icon' => 'fas fa-long-arrow-alt-down', 'color' => 'info', 'label' => 'Reçu'],
+                                                'transfert_sortant' => ['icon' => 'fas fa-paper-plane', 'color' => 'warning', 'label' => 'Envoyé'],
+                                            ];
+                                            $t = $typeMap[$transaction->type] ?? ['icon' => 'fas fa-circle', 'color' => 'secondary', 'label' => $transaction->type];
+                                         @endphp
+                                        <span class="badge bg-label-{{ $t['color'] }} rounded-pill text-uppercase fs-xs">
+                                            <i class="{{ $t['icon'] }} me-1"></i> {{ $t['label'] }}
+                                        </span>
+                                    </td>
+                                    <td
+                                        class="text-end fw-bold {{ in_array($transaction->type, ['retrait', 'transfert_sortant']) ? 'text-danger' : 'text-success' }}">
+                                        {{ in_array($transaction->type, ['retrait', 'transfert_sortant']) ? '-' : '+' }}{{ number_format($transaction->amount, 2) }}
+                                        <small>{{ $transaction->currency }}</small>
+                                    </td>
+                                    <td class="text-end pe-4 text-muted fw-medium">
+                                        {{ number_format($transaction->balance_after, 2) }}
+                                        <small>{{ $transaction->currency }}</small>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center py-5">
+                                        <div class="mb-2"><i class="fas fa-wallet fa-3x text-muted opacity-25"></i></div>
+                                        <p class="text-muted mb-0">Aucune transaction trouvée.</p>
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                <div class="card-footer bg-white border-top py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        {{ $transactions->links(data: ['scrollTo' => false]) }}
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Transfer Modal -->
+    <div class="modal fade" id="transferModal" tabindex="-1" aria-labelledby="transferModalLabel" aria-hidden="true"
+        wire:ignore.self>
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold text-white" id="transferModalLabel"><i
+                            class="fas fa-exchange-alt me-2"></i> Virement Inter-Membres</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4 bg-light">
+                    <livewire:members.member-transfer />
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>

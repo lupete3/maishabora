@@ -31,13 +31,16 @@
                             <!-- Onglet Photo -->
                             <div class="tab-pane fade show active text-center" id="photo" role="tabpanel"
                                 aria-labelledby="photo-tab">
-                                @if ($member->photo_profil)
+                                @if ($member->photo_profil && file_exists(public_path('storage/' . $member->photo_profil)))
                                     <img src="{{ asset('storage/' . $member->photo_profil) }}" alt="Photo de profil"
                                         alt="Photo de profil" class="shadow" width="90%">
                                 @else
-                                    <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="rounded-circle shadow"
-                                        width="120">
-                                    <p class="text-muted mt-2">Aucune photo de profil disponible</p>
+                                    <div class="mb-3">
+                                        <div class="avatar avatar-xl rounded-circle bg-label-primary fs-2 mx-auto d-flex align-items-center justify-content-center shadow-sm"
+                                            style="width: 80px; height: 80px;">
+                                            {{ strtoupper(substr($member->name, 0, 1)) }}{{ strtoupper(substr($member->postnom, 0, 1)) }}
+                                        </div>
+                                    </div>
                                 @endif
                             </div>
 

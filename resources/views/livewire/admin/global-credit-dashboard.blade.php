@@ -109,8 +109,8 @@
                         <div class="card-header bg-label-secondary fw-bold">
                             Statistiques des Cartes de Membre
                         </div>
-                        <div class="card-body p-2" wire:ignore>
-                            <livewire:membership-card-stats />
+                        <div class="m-4" wire:ignore>
+                            <livewire:membership-card-stats wire:key="card-stats" />
                         </div>
                     </div>
                 </div>
@@ -118,8 +118,8 @@
         </div>
     </div>
 
-    <div>
-        <livewire:credit.credit-overview />
+    <div class="mb-4" wire:ignore>
+        <livewire:credit.credit-overview wire:key="credit-overview" />
     </div>
 
     <!-- Liste des crédits -->
