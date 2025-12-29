@@ -75,20 +75,22 @@
         <p><strong>Date d'impression :</strong> {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 
-    <div class="balances">
-        <h4 style="text-align:center;">Soldes Actuels</h4>
-        <ul>
-            @foreach(['USD', 'CDF'] as $curr)
-                @php
-                    $account = $member->accounts->firstWhere('currency', $curr);
-                @endphp
-                <li>
-                    <span>{{ $curr }}</span>
-                    <span>{{ number_format($account?->balance ?? 0, 2) }} {{ $curr }}</span>
-                </li>
-            @endforeach
-        </ul>
-    </div>
+    @if ($member->visible_account)
+        <div class="balances">
+            <h4 style="text-align:center;">Soldes Actuels</h4>
+            <ul>
+                @foreach(['USD', 'CDF'] as $curr)
+                    @php
+                        $account = $member->accounts->firstWhere('currency', $curr);
+                    @endphp
+                    <li>
+                        <span>{{ $curr }}</span>
+                        <span>{{ number_format($account?->balance ?? 0, 2) }} {{ $curr }}</span>
+                    </li>
+                @endforeach
+            </ul>
+        </div>
+    @endif
 
     <table>
         <thead>
@@ -97,7 +99,9 @@
                 <th>Type</th>
                 <th>Devise</th>
                 <th>Montant</th>
-                <th>Solde après</th>
+                @if ($member->visible_account)
+                    <th>Solde après</th>
+                @endif
                 <th>Description</th>
             </tr>
         </thead>
@@ -108,11 +112,13 @@
                     <td>{{ ucfirst($t->type) }}</td>
                     <td>{{ $t->currency }}</td>
                     <td>{{ number_format($t->amount, 2) }}</td>
-                    <td>{{ number_format($t->balance_after, 2) }}</td>
+                    @if ($member->visible_account)
+                        <td>{{ number_format($t->balance_after, 2) }}</td>
+                    @endif
                     <td>{{ $t->description ?? '-' }}</td>
                 </tr>
             @empty
-                <tr><td colspan="6" style="text-align:center;">Aucune transaction trouvée.</td></tr>
+                <tr><td colspan="{{ $member->visible_account ? 6 : 5 }}" style="text-align:center;">Aucune transaction trouvée.</td></tr>
             @endforelse
         </tbody>
     </table>

@@ -113,6 +113,10 @@
                         <div class="flex items-center gap-3">
                             <a href="{{ route('member.print', $member->id) }}" wire:navigate
                                 class="btn btn-primary btn-sm"> Imprimer Fiche Client</a>
+                            @can('modifier-visible-compte')
+                                <button wire:click="toggleVisibleAccount({{ $member->id }})"
+                                    class="btn {{ $member->visible_account ? 'btn-danger' : 'btn-primary' }} btn-sm">{{ $member->visible_account ? 'Masquer les soldes' : 'Afficher les soldes' }}</button>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -146,8 +150,11 @@
                                     <span class="font-medium text-lg"> </span>
                                 </div>
                                 <span class="text-2xl font-semibold text-foreground">
-                                    {{ number_format($balance, 2, '.', ' ')
-                                    }}
+                                    @if ($member->visible_account)
+                                        {{ number_format($balance, 2, '.', ' ') }}
+                                    @else
+                                        ****
+                                    @endif
                                 </span>
                             </div>
                         @endforeach
@@ -261,9 +268,11 @@
                                                 <th
                                                     class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 text-right w-[150px]">
                                                     Montant</th>
-                                                <th
-                                                    class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 text-right w-[150px]">
-                                                    Solde après</th>
+                                                @if ($member->visible_account)
+                                                    <th
+                                                        class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 text-right w-[150px]">
+                                                        Solde après</th>
+                                                @endif
                                                 <th
                                                     class="h-12 px-4 align-middle font-medium text-muted-foreground [&amp;:has([role=checkbox])]:pr-0 w-[100px]">
                                                     Action</th>
@@ -272,134 +281,137 @@
 
                                         <tbody class="[&amp;_tr:last-child]:border-0">
                                             @forelse ($transactions as $transaction)
-                                                                                    <tr
-                                                                                        class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                                                                        <td
-                                                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 font-medium">
-                                                                                            <div class="flex items-center gap-2">
-                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                    stroke-width="2" stroke-linecap="round"
-                                                                                                    stroke-linejoin="round"
-                                                                                                    class="lucide lucide-calendar-days h-4 w-4 text-muted-foreground">
-                                                                                                    <path d="M8 2v4"></path>
-                                                                                                    <path d="M16 2v4"></path>
-                                                                                                    <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-                                                                                                    <path d="M3 10h18"></path>
-                                                                                                    <path d="M8 14h.01"></path>
-                                                                                                    <path d="M12 14h.01"></path>
-                                                                                                    <path d="M16 14h.01"></path>
-                                                                                                    <path d="M8 18h.01"></path>
-                                                                                                    <path d="M12 18h.01"></path>
-                                                                                                    <path d="M16 18h.01"></path>
-                                                                                                </svg>
-                                                                                                {{ $transaction->created_at->format('d/m/Y H:i') }}
-                                                                                            </div>
-                                                                                        </td>
+                                                <tr
+                                                    class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                                                    <td
+                                                        class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 font-medium">
+                                                        <div class="flex items-center gap-2">
+                                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                stroke-width="2" stroke-linecap="round"
+                                                                stroke-linejoin="round"
+                                                                class="lucide lucide-calendar-days h-4 w-4 text-muted-foreground">
+                                                                <path d="M8 2v4"></path>
+                                                                <path d="M16 2v4"></path>
+                                                                <rect width="18" height="18" x="3" y="4" rx="2"></rect>
+                                                                <path d="M3 10h18"></path>
+                                                                <path d="M8 14h.01"></path>
+                                                                <path d="M12 14h.01"></path>
+                                                                <path d="M16 14h.01"></path>
+                                                                <path d="M8 18h.01"></path>
+                                                                <path d="M12 18h.01"></path>
+                                                                <path d="M16 18h.01"></path>
+                                                            </svg>
+                                                                {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                                            </div>
+                                                        </td>
 
-                                                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                                                            {{ $transaction->description }}
-                                                                                        </td>
+                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                                            {{ $transaction->description }}
+                                                        </td>
 
-                                                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                                                            <div class="rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors
-                                                                                                focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
-                                                                                                text-foreground flex items-center gap-2 capitalize">
-                                                                                                @if ($transaction->type === 'dépôt')
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-down-to-line h-5 w-5 text-green-500">
-                                                                                                        <path d="M12 17V3"></path>
-                                                                                                        <path d="m6 11 6 6 6-6"></path>
-                                                                                                        <path d="M19 21H5"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @elseif ($transaction->type === 'retrait')
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-up-from-line h-5 w-5 text-red-500">
-                                                                                                        <path d="m18 9-6-6-6 6"></path>
-                                                                                                        <path d="M12 3v14"></path>
-                                                                                                        <path d="M5 21h14"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @else
-                                                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                        stroke-width="2" stroke-linecap="round"
-                                                                                                        stroke-linejoin="round"
-                                                                                                        class="lucide lucide-arrow-right-left h-5 w-5 text-blue-500">
-                                                                                                        <path d="m16 3 4 4-4 4"></path>
-                                                                                                        <path d="M20 7H4"></path>
-                                                                                                        <path d="m8 21-4-4 4-4"></path>
-                                                                                                        <path d="M4 17h16"></path>
-                                                                                                    </svg>
-                                                                                                    <span>{{ ucfirst($transaction->type) }}</span>
-                                                                                                @endif
-                                                                                            </div>
-                                                                                        </td>
+                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                                            <div
+                                                                class="rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors
+                                                                        focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2
+                                                                        text-foreground flex items-center gap-2 capitalize">
+                                                                @if ($transaction->type === 'dépôt')
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                        stroke-width="2" stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        class="lucide lucide-arrow-down-to-line h-5 w-5 text-green-500">
+                                                                        <path d="M12 17V3"></path>
+                                                                        <path d="m6 11 6 6 6-6"></path>
+                                                                        <path d="M19 21H5"></path>
+                                                                    </svg>
+                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                @elseif ($transaction->type === 'retrait')
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                        stroke-width="2" stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        class="lucide lucide-arrow-up-from-line h-5 w-5 text-red-500">
+                                                                        <path d="m18 9-6-6-6 6"></path>
+                                                                        <path d="M12 3v14"></path>
+                                                                        <path d="M5 21h14"></path>
+                                                                    </svg>
+                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                @else
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                        stroke-width="2" stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        class="lucide lucide-arrow-right-left h-5 w-5 text-blue-500">
+                                                                        <path d="m16 3 4 4-4 4"></path>
+                                                                        <path d="M20 7H4"></path>
+                                                                        <path d="m8 21-4-4 4-4"></path>
+                                                                        <path d="M4 17h16"></path>
+                                                                    </svg>
+                                                                    <span>{{ ucfirst($transaction->type) }}</span>
+                                                                @endif
+                                                            </div>
+                                                        </td>
 
-                                                                                        <td
-                                                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                                                            @if($transaction->type === 'retrait') -@endif{{
-                                                number_format($transaction->amount, 2) }} {{ $transaction->currency
-                                                                                            }}
-                                                                                        </td>
+                                                        <td
+                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
+                                                            @if($transaction->type === 'retrait') -@endif{{
+                                                                number_format($transaction->amount, 2) }} {{ $transaction->currency
+                                                            }}
+                                                        </td>
 
-                                                                                        <td
-                                                                                            class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
-                                                                                            {{ number_format($transaction->balance_after, 2) }} {{
-                                                $transaction->currency }}
-                                                                                        </td>
+                                                        @if ($member->visible_account)
+                                                            <td
+                                                                class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0 text-right font-semibold">
+                                                                {{ number_format($transaction->balance_after, 2) }} {{
+                                                                    $transaction->currency }}
+                                                            </td>
+                                                        @endif
 
-                                                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
-                                                                                            <button type="button"
-                                                                                                wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate_pos', ['id' => $transaction->id]) }}' })"
-                                                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
-                                                                                                    ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
-                                                                                                    focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
-                                                                                                    disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
-                                                                                                    h-9 rounded-md px-3">
-                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                    stroke-width="2" stroke-linecap="round"
-                                                                                                    stroke-linejoin="round"
-                                                                                                    class="lucide lucide-printer mr-2 h-4 w-4">
-                                                                                                    <path d="M6 9V2h12v7"></path>
-                                                                                                    <path
-                                                                                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
-                                                                                                    </path>
-                                                                                                    <path d="M6 14h12v4H6v-4z"></path>
-                                                                                                </svg> POS
-                                                                                            </button>
-                                                                                            <button type="button"
-                                                                                                wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
-                                                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
-                                                                                                    ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
-                                                                                                    focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
-                                                                                                    disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
-                                                                                                    h-9 rounded-md px-3 mt-1">
-                                                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                                                                                    stroke-width="2" stroke-linecap="round"
-                                                                                                    stroke-linejoin="round"
-                                                                                                    class="lucide lucide-printer mr-2 h-4 w-4 ">
-                                                                                                    <path d="M6 9V2h12v7"></path>
-                                                                                                    <path
-                                                                                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
-                                                                                                    </path>
-                                                                                                    <path d="M6 14h12v4H6v-4z"></path>
-                                                                                                </svg>PC
-                                                                                            </button>
-                                                                                        </td>
-                                                                                    </tr>
+                                                        <td class="p-4 align-middle [&amp;:has([role=checkbox])]:pr-0">
+                                                            <button type="button"
+                                                                wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate_pos', ['id' => $transaction->id]) }}' })"
+                                                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                                                                        ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
+                                                                        focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
+                                                                        disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
+                                                                        h-9 rounded-md px-3">
+                                                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                    viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                    stroke-width="2" stroke-linecap="round"
+                                                                    stroke-linejoin="round"
+                                                                    class="lucide lucide-printer mr-2 h-4 w-4">
+                                                                    <path d="M6 9V2h12v7"></path>
+                                                                    <path
+                                                                        d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
+                                                                    </path>
+                                                                    <path d="M6 14h12v4H6v-4z"></path>
+                                                                </svg> POS
+                                                            </button>
+                                                            <button type="button"
+                                                                    wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
+                                                                    class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
+                                                                        ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
+                                                                        focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
+                                                                        disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
+                                                                        h-9 rounded-md px-3 mt-1">
+                                                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                                        viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                                                        stroke-width="2" stroke-linecap="round"
+                                                                        stroke-linejoin="round"
+                                                                        class="lucide lucide-printer mr-2 h-4 w-4 ">
+                                                                        <path d="M6 9V2h12v7"></path>
+                                                                        <path
+                                                                            d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2">
+                                                                        </path>
+                                                                        <path d="M6 14h12v4H6v-4z"></path>
+                                                                    </svg>PC
+                                                            </button>
+                                                        </td>
+                                                    </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="p-4 align-middle text-center">
+                                                    <td colspan="{{ $member->visible_account ? 6 : 5 }}" class="p-4 align-middle text-center">
                                                         <div class="alert alert-danger" role="alert">
                                                             Aucune transaction trouvée.
                                                         </div>
@@ -448,7 +460,8 @@
                                         <td>{{ $card->code }}</td>
                                         <td>{{ $card->subscription_amount }} {{ $card->currency }}</td>
                                         <td>{{ $card->contributions->where('is_paid', '=', 1)->sum('amount') }}
-                                            {{ $card->currency }}</td>
+                                            {{ $card->currency }}
+                                        </td>
                                         <td>
                                             @if($card->is_active)
                                                 <span class="badge bg-success">Active</span>

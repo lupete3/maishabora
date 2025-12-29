@@ -751,4 +751,12 @@ class MemberDetails extends Component
             : 'Une erreur est survenue lors du retrait. Veuillez réessayer plus tard.';
         notyf()->error($errorMessage);
     }
+
+    public function toggleVisibleAccount($memberId)
+    {
+        $member = User::findOrFail($memberId);
+        $member->visible_account = !$member->visible_account;
+        $member->save();
+        $this->dispatch('$refresh');
+    }
 }

@@ -88,6 +88,8 @@ class PermissionSeeder extends Seeder
             "supprimer-salaire",
 
             "afficher-logs",
+            "afficher-visible-compte",
+            "modifier-visible-compte",
 
         ];
 
