@@ -25,7 +25,7 @@ class RegisterMember extends Component
     public string $name = '';
     public string $postnom = '';
     public ?string $prenom = null;
-    public ?string $sexe;
+    public ?string $sexe = null;
     public ?string $date_naissance = null;
     public ?string $lieu_naissance = null;
     public string $telephone = '';
@@ -120,7 +120,7 @@ class RegisterMember extends Component
                         'string',
                         'max:20',
                         'regex:/^\+243\d{9}$/',
-                        Rule::unique('users')->where(fn ($query) => $query
+                        Rule::unique('users')->where(fn($query) => $query
                             ->where('name', $this->name)
                             ->where('postnom', $this->postnom)
                             ->where('telephone', $this->telephone)),
@@ -224,7 +224,7 @@ class RegisterMember extends Component
                 'string',
                 'max:20',
                 'regex:/^\+243\d{9}$/',
-                Rule::unique('users')->where(fn ($query) => $query
+                Rule::unique('users')->where(fn($query) => $query
                     ->where('name', $this->name)
                     ->where('postnom', $this->postnom)
                     ->where('telephone', $this->telephone)),
@@ -277,7 +277,7 @@ class RegisterMember extends Component
 
         if ($validator->fails()) {
             $this->setErrorBag($validator->errors());
-            notyf()->error($validator->errors().'Veuillez corriger les erreurs dans le formulaire.');
+            notyf()->error($validator->errors() . 'Veuillez corriger les erreurs dans le formulaire.');
             return;
         }
 
@@ -312,16 +312,41 @@ class RegisterMember extends Component
         );
 
         $this->reset([
-            'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
-            'telephone', 'adresse_physique', 'province', 'ville', 'commune', 'quartier',
-            'profession', 'revenu_mensuel', 'source_revenu', 'nom_employeur',
-            'type_piece', 'numero_piece', 'date_expiration_piece',
-            'etat_civil', 'nombre_dependants',
-            'nom_conjoint', 'telephone_conjoint',
-            'nom_reference', 'telephone_reference', 'lien_reference',
-            'date_adhesion', 'nationalite', 'niveau_etude', 'remarque',
-            'email', 'role', 'status',
-            'photo_profil', 'scan_piece'
+            'name',
+            'postnom',
+            'prenom',
+            'sexe',
+            'date_naissance',
+            'lieu_naissance',
+            'telephone',
+            'adresse_physique',
+            'province',
+            'ville',
+            'commune',
+            'quartier',
+            'profession',
+            'revenu_mensuel',
+            'source_revenu',
+            'nom_employeur',
+            'type_piece',
+            'numero_piece',
+            'date_expiration_piece',
+            'etat_civil',
+            'nombre_dependants',
+            'nom_conjoint',
+            'telephone_conjoint',
+            'nom_reference',
+            'telephone_reference',
+            'lien_reference',
+            'date_adhesion',
+            'nationalite',
+            'niveau_etude',
+            'remarque',
+            'email',
+            'role',
+            'status',
+            'photo_profil',
+            'scan_piece'
         ]);
 
         $this->dispatch('closeModal', name: 'modalMembre');
@@ -447,7 +472,11 @@ class RegisterMember extends Component
                 'remarque' => ['nullable', 'string'],
 
                 'email' => [
-                    'required', 'string', 'lowercase', 'email', 'max:255',
+                    'required',
+                    'string',
+                    'lowercase',
+                    'email',
+                    'max:255',
                     Rule::unique('users')->ignore($this->userId),
                 ],
                 'role' => ['nullable', 'in:admin,caissier,recouvreur,comptable,receptionniste,membre'],
@@ -527,16 +556,41 @@ class RegisterMember extends Component
     {
         try {
             $this->reset([
-                'name', 'postnom', 'prenom','sexe', 'date_naissance', 'lieu_naissance',
-                'telephone', 'adresse_physique', 'province', 'ville', 'commune', 'quartier',
-                'profession', 'revenu_mensuel', 'source_revenu', 'nom_employeur',
-                'type_piece', 'numero_piece', 'date_expiration_piece',
-                'etat_civil', 'nombre_dependants',
-                'nom_conjoint', 'telephone_conjoint',
-                'nom_reference', 'telephone_reference', 'lien_reference',
-                'date_adhesion', 'nationalite', 'niveau_etude', 'remarque',
-                'email', 'role', 'status',
-                'photo_profil', 'scan_piece'
+                'name',
+                'postnom',
+                'prenom',
+                'sexe',
+                'date_naissance',
+                'lieu_naissance',
+                'telephone',
+                'adresse_physique',
+                'province',
+                'ville',
+                'commune',
+                'quartier',
+                'profession',
+                'revenu_mensuel',
+                'source_revenu',
+                'nom_employeur',
+                'type_piece',
+                'numero_piece',
+                'date_expiration_piece',
+                'etat_civil',
+                'nombre_dependants',
+                'nom_conjoint',
+                'telephone_conjoint',
+                'nom_reference',
+                'telephone_reference',
+                'lien_reference',
+                'date_adhesion',
+                'nationalite',
+                'niveau_etude',
+                'remarque',
+                'email',
+                'role',
+                'status',
+                'photo_profil',
+                'scan_piece'
             ]);
             $this->dispatch('openModal', name: 'modalMembre');
 
