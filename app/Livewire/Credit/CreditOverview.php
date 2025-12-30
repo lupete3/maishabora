@@ -10,11 +10,11 @@ class CreditOverview extends Component
 {
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
-    
+
     //Paiements en retard
     public function getOverdueCreditsProperty()
     {
-        return Repayment::with(['credit.user'])
+        return Repayment::with(['credit.user.accounts'])
             ->where('due_date', '<', now())
             ->where('is_paid', false)
             ->latest()
@@ -24,7 +24,7 @@ class CreditOverview extends Component
     //Paiements à venir
     public function getUpcomingCreditsProperty()
     {
-        return Repayment::with(['credit.user'])
+        return Repayment::with(['credit.user.accounts'])
             ->whereBetween('due_date', [now(), now()->addDays(7)])
             ->where('is_paid', false)
             ->orderBy('due_date', 'asc')

@@ -1,7 +1,7 @@
 <!-- resources/views/livewire/agent-dashboard.blade.php -->
-<div class="mt-0">
+<div class="mt-4">
     <h3>Caisse des agents</h3>
-    <div class="row g-4">
+    <div class="row g-4 mt-2">
         <!-- Soldes -->
         @foreach ($agentAccounts as $agent)
             <div class="col-md-4 order-2">
@@ -167,4 +167,8 @@
             @endif
         </div>
     @endif
+
+    <div class="mb-4 mt-4" wire:ignore>
+        <livewire:credit.credit-overview wire:key="credit-overview" />
+    </div>
 </div>
