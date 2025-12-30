@@ -91,6 +91,9 @@ class PermissionSeeder extends Seeder
             "afficher-visible-compte",
             "modifier-visible-compte",
 
+            "modifier-solde-compte",
+            "modifier-transaction-compte",
+
         ];
 
         foreach ($permissions as $key => $permission) {

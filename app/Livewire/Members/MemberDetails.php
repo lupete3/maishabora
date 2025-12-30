@@ -44,6 +44,19 @@ class MemberDetails extends Component
     public $date_from;
     public $date_to;
 
+    // Modification de solde
+    public $editingAccountId;
+    public $newBalance;
+    public $modificationReason;
+    public $openModifyBalance = false;
+
+    // Modification de transaction
+    public $editingTransactionId;
+    public $editAmount;
+    public $editDescription;
+    public $openEditTransaction = false;
+    public $openConfirmDeleteTransaction = false;
+
     // Constantes pour éviter les "magic strings"
     const DEPOSIT_TYPE_NORMAL = 'normal';
     const DEPOSIT_TYPE_CARD = 'carte';
@@ -586,6 +599,33 @@ class MemberDetails extends Component
         $this->dispatch('closeModal', name: 'modalCardDetails');
     }
 
+    public function toggleContributionStatus($contributionId)
+    {
+        Gate::authorize('modifier-transaction-compte');
+
+        $contribution = \App\Models\DailyContribution::find($contributionId);
+        if (!$contribution) {
+            $this->dispatch('notyf', type: 'error', message: 'Contribution non trouvée.');
+            return;
+        }
+
+        $oldStatus = $contribution->is_paid ? 'Payé' : 'Non payé';
+        $contribution->is_paid = !$contribution->is_paid;
+        $contribution->save();
+        $newStatus = $contribution->is_paid ? 'Payé' : 'Non payé';
+
+        // Rafraîchir les détails du carnet
+        $this->cardDetail = MembershipCard::with(['contributions', 'member'])->find($contribution->membership_card_id);
+
+        // Journalisation
+        UserLogHelper::log_user_activity(
+            "Modification du statut d'une contribution",
+            "Statut passé de {$oldStatus} à {$newStatus} pour la contribution ID {$contributionId} (Carnet: {$this->cardDetail->code})"
+        );
+
+        $this->dispatch('notyf', type: 'success', message: 'Statut de contribution mis à jour.');
+    }
+
     public function placeholder()
     {
         return view('livewire.placeholder');
@@ -768,6 +808,136 @@ class MemberDetails extends Component
         $member->visible_account = !$member->visible_account;
         $member->save();
         $this->dispatch('$refresh');
+    }
+
+    // --- GESTION DIRECTE DES SOLDES ---
+
+    public function confirmUpdateBalance($accountId)
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+        $account = Account::findOrFail($accountId);
+        $this->editingAccountId = $accountId;
+        $this->newBalance = $account->balance;
+        $this->modificationReason = '';
+        $this->openModifyBalance = true;
+    }
+
+    public function updateBalance()
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'newBalance' => 'required|numeric|min:0',
+            'modificationReason' => 'required|string|min:5',
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $account = Account::findOrFail($this->editingAccountId);
+            $oldBalance = $account->balance;
+            $account->balance = $this->newBalance;
+            $account->save();
+
+            // Créer une transaction de rectification
+            $this->createTransaction(
+                $account->id,
+                $account->user_id,
+                'rectification_solde',
+                $account->currency,
+                abs($this->newBalance - $oldBalance),
+                $account->balance,
+                "RECTIFICATION MANUELLE DU SOLDE: " . ($this->newBalance >= $oldBalance ? "+" : "-") . " " . abs($this->newBalance - $oldBalance) . " " . $account->currency . ". Raison: " . $this->modificationReason
+            );
+
+            UserLogHelper::log_user_activity(
+                action: 'modifier_solde',
+                description: "Modification manuelle du solde {$account->currency} de {$account->user->name} ({$account->user->code}). Ancien: {$oldBalance}, Nouveau: {$this->newBalance}. Raison: {$this->modificationReason}",
+            );
+
+            DB::commit();
+            $this->openModifyBalance = false;
+            notyf()->success('Solde mis à jour avec succès !');
+            $this->dispatch('$refresh');
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            report($th);
+            notyf()->error('Erreur lors de la mise à jour du solde.');
+        }
+    }
+
+    // --- GESTION DES TRANSACTIONS ---
+
+    public function confirmEditTransaction($transactionId)
+    {
+        Gate::authorize('modifier-transaction-compte', User::class);
+        $transaction = Transaction::findOrFail($transactionId);
+        $this->editingTransactionId = $transactionId;
+        $this->editAmount = $transaction->amount;
+        $this->editDescription = $transaction->description;
+        $this->openEditTransaction = true;
+    }
+
+    public function updateTransaction()
+    {
+        Gate::authorize('modifier-transaction-compte', User::class);
+
+        $this->validate([
+            'editAmount' => 'required|numeric|min:0',
+            'editDescription' => 'required|string|min:5',
+        ]);
+
+        try {
+            $transaction = Transaction::findOrFail($this->editingTransactionId);
+            $oldAmount = $transaction->amount;
+            $oldDescription = $transaction->description;
+
+            $transaction->amount = $this->editAmount;
+            $transaction->description = $this->editDescription;
+            $transaction->save();
+
+            UserLogHelper::log_user_activity(
+                action: 'modifier_transaction',
+                description: "Modification de la transaction #{$transaction->id}. Montant: {$oldAmount} -> {$this->editAmount}, description: '{$oldDescription}' -> '{$this->editDescription}'",
+            );
+
+            $this->openEditTransaction = false;
+            notyf()->success('Transaction mise à jour avec succès !');
+            $this->dispatch('$refresh');
+        } catch (\Throwable $th) {
+            report($th);
+            notyf()->error('Erreur lors de la modification de la transaction.');
+        }
+    }
+
+    public function confirmDeleteTransaction($transactionId)
+    {
+        Gate::authorize('modifier-transaction-compte', User::class);
+        $this->editingTransactionId = $transactionId;
+        $this->openConfirmDeleteTransaction = true;
+    }
+
+    public function deleteTransaction()
+    {
+        Gate::authorize('modifier-transaction-compte', User::class);
+
+        try {
+            $transaction = Transaction::findOrFail($this->editingTransactionId);
+            $details = "ID: #{$transaction->id}, Type: {$transaction->type}, Montant: {$transaction->amount} {$transaction->currency}";
+
+            $transaction->delete();
+
+            UserLogHelper::log_user_activity(
+                action: 'supprimer_transaction',
+                description: "Suppression de la transaction: {$details}",
+            );
+
+            $this->openConfirmDeleteTransaction = false;
+            notyf()->success('Transaction supprimée avec succès !');
+            $this->dispatch('$refresh');
+        } catch (\Throwable $th) {
+            report($th);
+            notyf()->error('Erreur lors de la suppression de la transaction.');
+        }
     }
 
     /**

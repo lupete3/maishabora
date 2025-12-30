@@ -29,6 +29,12 @@ class AgentDashboard extends Component
     public $endDate;
     public $periodLabel;
 
+    // Propriétés pour la modification du solde
+    public $editingAccountId;
+    public $newBalance;
+    public $modificationReason;
+    public $openModifyBalance = false;
+
 
     public function mount()
     {
@@ -53,7 +59,7 @@ class AgentDashboard extends Component
             case 'custom':
                 if ($this->startDate && $this->endDate) {
                     $start = Carbon::parse($this->startDate)->startOfDay();
-                    $end   = Carbon::parse($this->endDate)->endOfDay();
+                    $end = Carbon::parse($this->endDate)->endOfDay();
                     $this->periodLabel = "Du " . $start->format('d/m/Y') . " au " . $end->format('d/m/Y');
                     return $query->whereBetween('created_at', [$start, $end]);
                 }
@@ -65,7 +71,7 @@ class AgentDashboard extends Component
 
             case 'week':
                 $start = $now->startOfWeek();
-                $end   = $now->endOfWeek();
+                $end = $now->endOfWeek();
                 $this->periodLabel = "Semaine";
                 return $query->whereBetween('created_at', [$start, $end]);
 
@@ -115,15 +121,19 @@ class AgentDashboard extends Component
 
         if ($user->can('afficher-caisse-agent')) {
             $agentAccounts = User::whereHas('agentAccounts')
-                ->with(['agentAccounts' => function ($query) {
-                    $query->orderBy('currency');
-                }])
+                ->with([
+                    'agentAccounts' => function ($query) {
+                        $query->orderBy('currency');
+                    }
+                ])
                 ->get();
         } else {
             $agentAccounts = User::where('id', $user->id)
-                ->with(['agentAccounts' => function ($query) {
-                    $query->orderBy('currency');
-                }])
+                ->with([
+                    'agentAccounts' => function ($query) {
+                        $query->orderBy('currency');
+                    }
+                ])
                 ->get();
         }
 
@@ -183,5 +193,66 @@ class AgentDashboard extends Component
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->output();
         }, 'transactions_' . $this->user_id . '.pdf');
+    }
+
+    public function confirmUpdateBalance($accountId)
+    {
+        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+        $account = \App\Models\AgentAccount::findOrFail($accountId);
+        $this->editingAccountId = $accountId;
+        $this->newBalance = $account->balance;
+        $this->modificationReason = '';
+        $this->openModifyBalance = true;
+    }
+
+    public function updateBalance()
+    {
+        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'newBalance' => 'required|numeric|min:0',
+            'modificationReason' => 'required|string|min:5',
+        ]);
+
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $account = \App\Models\AgentAccount::findOrFail($this->editingAccountId);
+            $oldBalance = $account->balance;
+            $account->balance = $this->newBalance;
+            $account->save();
+
+            // Créer une transaction de rectification pour l'agent
+            Transaction::create([
+                'user_id' => $account->user_id,
+                'type' => 'rectification_solde_agent',
+                'currency' => $account->currency,
+                'amount' => abs($this->newBalance - $oldBalance),
+                'balance_after' => $account->balance,
+                'description' => "RECTIFICATION MANUELLE DU SOLDE AGENT: " . ($this->newBalance >= $oldBalance ? "+" : "-") . " " . abs($this->newBalance - $oldBalance) . " " . $account->currency . ". Raison: " . $this->modificationReason
+            ]);
+
+            \App\Helpers\UserLogHelper::log_user_activity(
+                "Modification_solde_agent",
+                "Modification manuelle du solde agent {$account->currency} de {$account->user->name}. Ancien: {$oldBalance}, Nouveau: {$this->newBalance}. Raison: {$this->modificationReason}"
+            );
+
+            \Illuminate\Support\Facades\DB::commit();
+            $this->openModifyBalance = false;
+            $this->dispatch('notyf', type: 'success', message: 'Solde agent mis à jour avec succès !');
+
+            // Recharger les transactions si visibles
+            if ($this->isShowTransaction && $this->user_id == $account->user_id) {
+                $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+            }
+        } catch (\Throwable $th) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            report($th);
+            $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la mise à jour du solde.');
+        }
+    }
+
+    public function closeModifyBalanceModal()
+    {
+        $this->openModifyBalance = false;
     }
 }

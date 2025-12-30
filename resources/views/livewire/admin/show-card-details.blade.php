@@ -35,28 +35,51 @@
                             {{ \Carbon\Carbon::parse($cardDetail->end_date)->format('d/m/Y') }}</p>
                     </div>
                     <div class="col-12">
-                        <h5>{{ __('Contributions associées') }} :</h5>
-                        @if (count($cardDetail->contributions->where('is_paid', '=', 1)) > 0)
-                            <table class="table table-bordered">
-                                <thead>
+                        <hr>
+                        <h6 class="fw-bold mb-3"><i class="lucide lucide-list-check me-2"></i>{{ __('Historique des contributions') }}</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover table-bordered">
+                                <thead class="bg-light">
                                     <tr>
                                         <th>{{ __('Date') }}</th>
                                         <th>{{ __('Montant') }}</th>
+                                        <th class="text-center">{{ __('Statut') }}</th>
+                                        @can('modifier-transaction-compte')
+                                            <th class="text-center">{{ __('Action') }}</th>
+                                        @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($cardDetail->contributions->where('is_paid', '=', 1) as $contribution)
+                                    @foreach ($cardDetail->contributions->sortByDesc('updated_at') as $contribution)
                                         <tr>
-                                            <td>{{ \Carbon\Carbon::parse($contribution->updated_at)->format('d/m/Y') }}
+                                            <td class="align-middle">
+                                                {{ \Carbon\Carbon::parse($contribution->contribution_date)->format('d/m/Y') }}
                                             </td>
-                                            <td>{{ number_format($contribution->amount, 2, ',', ' ') }} </td>
+                                            <td class="align-middle fw-semibold">
+                                                {{ number_format($contribution->amount, 2, ',', ' ') }} {{ $cardDetail->currency }}
+                                            </td>
+                                            <td class="text-center align-middle">
+                                                @if ($contribution->is_paid)
+                                                    <span class="badge bg-label-success">{{ __('Payé') }}</span>
+                                                @else
+                                                    <span class="badge bg-label-danger">{{ __('Impayé') }}</span>
+                                                @endif
+                                            </td>
+                                            @can('modifier-transaction-compte')
+                                                <td class="text-center align-middle">
+                                                    <button type="button" 
+                                                        wire:click="toggleContributionStatus({{ $contribution->id }})"
+                                                        class="btn btn-xs {{ $contribution->is_paid ? 'btn-outline-danger' : 'btn-outline-success' }}"
+                                                        title="{{ $contribution->is_paid ? 'Marquer comme impayé' : 'Marquer comme payé' }}">
+                                                        {{ $contribution->is_paid ? 'Annuler' : 'Valider' }}
+                                                    </button>
+                                                </td>
+                                            @endcan
                                         </tr>
                                     @endforeach
                                 </tbody>
                             </table>
-                        @else
-                            <p>{{ __('Aucune contribution trouvée pour cette carte.') }}</p>
-                        @endif
+                        </div>
                     </div>
                 @endif
             </div>

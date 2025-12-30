@@ -1,5 +1,7 @@
-<!-- resources/views/livewire/agent-dashboard.blade.php -->
+<!-- resources/views/livewire/agent/agent-dashboard.blade.php -->
 <div class="mt-4">
+    @include('livewire.agent.partials.modals-management')
+
     <h3>Caisse des agents</h3>
     <div class="row g-4 mt-2">
         <!-- Soldes -->
@@ -12,8 +14,8 @@
                         </h6>
 
                         <div class="dropdown">
-                            <button class="btn p-0" type="button" id="dropdown-{{ $agent->id }}"
-                                data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <button class="btn p-0" type="button" id="dropdown-{{ $agent->id }}" data-bs-toggle="dropdown"
+                                aria-haspopup="true" aria-expanded="false">
                                 <i class="bx bx-dots-vertical-rounded"></i>
                             </button>
                             <div class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-{{ $agent->id }}">
@@ -42,8 +44,7 @@
                                             alt="User" class="rounded">
                                     </div>
 
-                                    <div
-                                        class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
+                                    <div class="d-flex w-100 flex-wrap align-items-center justify-content-between gap-2">
                                         <div class="me-2">
                                             <small class="text-muted d-block mb-1">Solde</small>
                                             <h6 class="mb-0">{{ $acc->currency }}</h6>
@@ -51,6 +52,13 @@
 
                                         <div class="user-progress d-flex align-items-center gap-1">
                                             <h6 class="mb-0">{{ number_format($acc->balance, 2) }}</h6>
+
+                                            @can('modifier-solde-compte')
+                                                <button type="button" wire:click="confirmUpdateBalance({{ $acc->id }})"
+                                                    class="btn btn-xs btn-outline-primary ms-1" title="Modifier le solde">
+                                                    <i class="bx bx-edit-alt"></i>
+                                                </button>
+                                            @endcan
                                         </div>
                                     </div>
                                 </li>
@@ -77,8 +85,7 @@
                         <input type="date" class="form-control" wire:model.lazy="endDate">
                     </div>
                     <div class="col-md-3 col-lg-2 align-self-end">
-                        <button class="btn btn-primary w-100" wire:click="applyCustomFilter"
-                            wire:loading.attr="disabled">
+                        <button class="btn btn-primary w-100" wire:click="applyCustomFilter" wire:loading.attr="disabled">
                             <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
                             Filtrer</button>
                     </div>
@@ -107,15 +114,13 @@
                                 </div>
 
                                 <button wire:click="exportPDF" class="btn btn-sm @if ($filter === 'year')
-                                        btn-success
-                                    @else btn-danger @endif"
-                                    wire:loading.attr="disabled">
-                                    <span class="spinner-border spinner-border-sm me-2" role="status"
-                                        wire:loading></span>
-                                    <i class="bx bx-file me-1"></i> Exporter 
+                                    btn-success
+                                @else btn-danger @endif" wire:loading.attr="disabled">
+                                    <span class="spinner-border spinner-border-sm me-2" role="status" wire:loading></span>
+                                    <i class="bx bx-file me-1"></i> Exporter
                                     @if ($filter === 'year')
                                         EXCEL
-                                    @else PDF @endif 
+                                    @else PDF @endif
                                 </button>
                             </div>
                             <div class="row mt-3">
@@ -168,7 +173,9 @@
         </div>
     @endif
 
-    <div class="mb-4 mt-4" wire:ignore>
-        <livewire:credit.credit-overview wire:key="credit-overview" />
-    </div>
+    @can('afficher-tableaudebord-recouvreur')
+        <div class="mb-4 mt-4" wire:ignore>
+            <livewire:credit.credit-overview wire:key="credit-overview" />
+        </div>
+    @endcan
 </div>
