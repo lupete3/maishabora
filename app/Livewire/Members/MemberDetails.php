@@ -39,6 +39,11 @@ class MemberDetails extends Component
     public $openConfirmDepositNormal = false;
     public $openConfirmRetraitNormal = false;
 
+    // Filtres de date pour les transactions
+    public $date_filter = '30_days';
+    public $date_from;
+    public $date_to;
+
     // Constantes pour éviter les "magic strings"
     const DEPOSIT_TYPE_NORMAL = 'normal';
     const DEPOSIT_TYPE_CARD = 'carte';
@@ -53,6 +58,7 @@ class MemberDetails extends Component
         Gate::authorize('afficher-client', User::class);
         $this->memberId = $id;
         $this->loadMemberCards();
+        $this->initializeDateFilter();
     }
 
     /**
@@ -593,7 +599,11 @@ class MemberDetails extends Component
         $member = User::findOrFail($this->memberId);
         $accountIds = $member->accounts->pluck('id')->toArray();
 
+        // Obtenir la plage de dates selon le filtre actif
+        [$dateFrom, $dateTo] = $this->getDateRange();
+
         $transactions = Transaction::whereIn('account_id', $accountIds)
+            ->whereBetween('created_at', [$dateFrom, $dateTo])
             ->when($this->search, function ($query) {
                 $searchTerm = "%{$this->search}%";
                 $query->where(function ($q) use ($searchTerm) {
@@ -758,5 +768,112 @@ class MemberDetails extends Component
         $member->visible_account = !$member->visible_account;
         $member->save();
         $this->dispatch('$refresh');
+    }
+
+    /**
+     * Initialise le filtre de date par défaut (30 derniers jours)
+     */
+    private function initializeDateFilter()
+    {
+        $this->date_filter = '30_days';
+        $this->date_from = null;
+        $this->date_to = null;
+    }
+
+    /**
+     * Calcule la plage de dates selon le filtre actif
+     * @return array [dateFrom, dateTo]
+     */
+    private function getDateRange()
+    {
+        $now = now();
+
+        switch ($this->date_filter) {
+            case '30_days':
+                return [
+                    $now->copy()->subDays(30)->startOfDay(),
+                    $now->copy()->endOfDay()
+                ];
+
+            case '3_months':
+                return [
+                    $now->copy()->subMonths(3)->startOfDay(),
+                    $now->copy()->endOfDay()
+                ];
+
+            case 'custom':
+                // Validation des dates personnalisées
+                if (!$this->date_from || !$this->date_to) {
+                    // Si les dates ne sont pas définies, utiliser 30 jours par défaut
+                    return [
+                        $now->copy()->subDays(30)->startOfDay(),
+                        $now->copy()->endOfDay()
+                    ];
+                }
+
+                try {
+                    $dateFrom = \Carbon\Carbon::parse($this->date_from)->startOfDay();
+                    $dateTo = \Carbon\Carbon::parse($this->date_to)->endOfDay();
+
+                    // Vérifier que date_from <= date_to
+                    if ($dateFrom->gt($dateTo)) {
+                        notyf()->error('La date de début doit être antérieure ou égale à la date de fin.');
+                        return [
+                            $now->copy()->subDays(30)->startOfDay(),
+                            $now->copy()->endOfDay()
+                        ];
+                    }
+
+                    return [$dateFrom, $dateTo];
+                } catch (\Exception $e) {
+                    notyf()->error('Format de date invalide.');
+                    return [
+                        $now->copy()->subDays(30)->startOfDay(),
+                        $now->copy()->endOfDay()
+                    ];
+                }
+
+            default:
+                return [
+                    $now->copy()->subDays(30)->startOfDay(),
+                    $now->copy()->endOfDay()
+                ];
+        }
+    }
+
+    /**
+     * Hook Livewire appelé quand date_filter change
+     */
+    public function updatedDateFilter()
+    {
+        // Réinitialiser la pagination
+        $this->resetPage();
+
+        // Si on revient à un preset, réinitialiser les dates personnalisées
+        if ($this->date_filter !== 'custom') {
+            $this->date_from = null;
+            $this->date_to = null;
+        }
+    }
+
+    /**
+     * Applique le filtre de date personnalisé
+     */
+    public function applyCustomFilter()
+    {
+        $this->validate([
+            'date_from' => 'required|date',
+            'date_to' => 'required|date|after_or_equal:date_from',
+        ], [
+            'date_from.required' => 'La date de début est requise.',
+            'date_from.date' => 'Format de date invalide.',
+            'date_to.required' => 'La date de fin est requise.',
+            'date_to.date' => 'Format de date invalide.',
+            'date_to.after_or_equal' => 'La date de fin doit être postérieure ou égale à la date de début.',
+        ]);
+
+        $this->date_filter = 'custom';
+        $this->resetPage();
+        notyf()->success('Filtre personnalisé appliqué avec succès.');
     }
 }
