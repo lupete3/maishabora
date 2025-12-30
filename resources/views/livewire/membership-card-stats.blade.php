@@ -17,7 +17,10 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center border-bottom-dashed px-0 py-2">
                         <span class="text-muted">En cours</span>
-                        <span class="badge bg-success-subtle text-success rounded-pill">{{ $activeCardsUsd }}</span>
+                        <div class="text-end">
+                            <span class="badge bg-success-subtle text-success rounded-pill">{{ $activeCardsUsd }}</span>
+                            <div class="text-success small fw-bold">{{ number_format($activeCardsValueUsd, 2) }} $</div>
+                        </div>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center border-bottom-dashed px-0 py-2">
                         <span class="text-muted">Fermés</span>
@@ -49,7 +52,10 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center border-bottom-dashed px-0 py-2">
                          <span class="text-muted">En cours</span>
-                        <span class="badge bg-primary-subtle text-primary rounded-pill">{{ $activeCardsCdf }}</span>
+                         <div class="text-end">
+                            <span class="badge bg-primary-subtle text-primary rounded-pill">{{ $activeCardsCdf }}</span>
+                            <div class="text-primary small fw-bold">{{ number_format($activeCardsValueCdf, 2) }} FC</div>
+                         </div>
                     </li>
                     <li class="list-group-item d-flex justify-content-between align-items-center border-bottom-dashed px-0 py-2">
                          <span class="text-muted">Fermés</span>

@@ -10,11 +10,13 @@ class MembershipCardStats extends Component
 {
     public $totalCardsUsd = 0;
     public $activeCardsUsd = 0;
+    public $activeCardsValueUsd = 0;
     public $closedCardsUsd = 0;
     public $totalContributionsUsd = 0;
 
     public $totalCardsCdf = 0;
     public $activeCardsCdf = 0;
+    public $activeCardsValueCdf = 0;
     public $closedCardsCdf = 0;
     public $totalContributionsCdf = 0;
 
@@ -53,7 +55,11 @@ class MembershipCardStats extends Component
 
         // Statistiques USD
         $this->totalCardsUsd = $cardsUsd->count();
-        $this->activeCardsUsd = $cardsUsd->where('is_active', true)->count();
+        $activeUsd = $cardsUsd->where('is_active', true);
+        $this->activeCardsUsd = $activeUsd->count();
+        $this->activeCardsValueUsd = $activeUsd->sum(function ($card) {
+            return $card->getTotalSavedAttribute();
+        });
         $this->closedCardsUsd = $cardsUsd->where('is_active', false)->count();
         $this->totalContributionsUsd = $cardsUsd->sum(function ($card) {
             return $card->getTotalSavedAttribute();
@@ -61,7 +67,11 @@ class MembershipCardStats extends Component
 
         // Statistiques CDF
         $this->totalCardsCdf = $cardsCdf->count();
-        $this->activeCardsCdf = $cardsCdf->where('is_active', true)->count();
+        $activeCdf = $cardsCdf->where('is_active', true);
+        $this->activeCardsCdf = $activeCdf->count();
+        $this->activeCardsValueCdf = $activeCdf->sum(function ($card) {
+            return $card->getTotalSavedAttribute();
+        });
         $this->closedCardsCdf = $cardsCdf->where('is_active', false)->count();
         $this->totalContributionsCdf = $cardsCdf->sum(function ($card) {
             return $card->getTotalSavedAttribute();

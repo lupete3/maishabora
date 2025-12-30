@@ -3,54 +3,93 @@
 <div class="container mt-4">
     <!-- Statistiques des crédits -->
     <div class="row g-2 mb-4">
-        <div class="col-md-2 ">
-            <div class="card card-border-shadow border-start-primary">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Crédits totaux</h6>
-                        <h5 class="mb-0">{{ $totalCredits }}</h5>
+        <!-- Crédits Totaux -->
+        <div class="col-md-4">
+            <div class="card card-border-shadow border-start-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">Crédits Totaux</h6>
+                        <div class="avatar bg-primary text-white rounded-circle shadow">
+                            <i class="bx bx-money fs-4 m-2"></i>
+                        </div>
                     </div>
-                    <div class="avatar bg-primary text-white rounded-circle shadow">
-                        <i class="bx bx-money fs-4 m-2"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-2 ">
-            <div class="card card-border-shadow border-start-success">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">En cours</h6>
-                        <h5 class="mb-0">{{ $creditsInProgress }}</h5>
-                    </div>
-                    <div class="avatar bg-success text-white rounded-circle shadow">
-                        <i class="bx bx-hourglass fs-4 m-2"></i>
+                    <div class="row text-center mt-3">
+                        <div class="col-6 border-end">
+                            <div class="fw-bold text-dark fs-5">{{ $totalCreditsCount['USD'] ?? 0 }}</div>
+                            <small class="text-success fw-bold">{{ number_format($totalCreditsValue['USD'] ?? 0, 2) }}
+                                $</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-dark fs-5">{{ $totalCreditsCount['CDF'] ?? 0 }}</div>
+                            <small class="text-primary fw-bold">{{ number_format($totalCreditsValue['CDF'] ?? 0, 0) }}
+                                FC</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-2 ">
-            <div class="card card-border-shadow border-start-danger">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">En retard</h6>
-                        <h5 class="mb-0">{{ $overdueCreditsCount }}</h5>
+        <!-- En cours -->
+        <div class="col-md-4">
+            <div class="card card-border-shadow border-start-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">En cours</h6>
+                        <div class="avatar bg-success text-white rounded-circle shadow">
+                            <i class="bx bx-hourglass fs-4 m-2"></i>
+                        </div>
                     </div>
-                    <div class="avatar bg-danger text-white rounded-circle shadow">
-                        <i class="bx bx-error fs-4 m-2"></i>
+                    <div class="row text-center mt-3">
+                        <div class="col-6 border-end">
+                            <div class="fw-bold text-dark fs-5">{{ $creditsInProgressCount['USD'] ?? 0 }}</div>
+                            <small
+                                class="text-success fw-bold">{{ number_format($creditsInProgressValue['USD'] ?? 0, 2) }}
+                                $</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-dark fs-5">{{ $creditsInProgressCount['CDF'] ?? 0 }}</div>
+                            <small
+                                class="text-primary fw-bold">{{ number_format($creditsInProgressValue['CDF'] ?? 0, 0) }}
+                                FC</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-3 ">
+        <!-- En retard -->
+        <div class="col-md-4">
+            <div class="card card-border-shadow border-start-danger h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">En retard</h6>
+                        <div class="avatar bg-danger text-white rounded-circle shadow">
+                            <i class="bx bx-error fs-4 m-2"></i>
+                        </div>
+                    </div>
+                    <div class="row text-center mt-3">
+                        <div class="col-6 border-end">
+                            <div class="fw-bold text-dark fs-5">{{ $overdueCreditsCount['USD'] ?? 0 }}</div>
+                            <small class="text-success fw-bold">{{ number_format($overdueCreditsValue['USD'] ?? 0, 2) }}
+                                $</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="fw-bold text-dark fs-5">{{ $overdueCreditsCount['CDF'] ?? 0 }}</div>
+                            <small class="text-primary fw-bold">{{ number_format($overdueCreditsValue['CDF'] ?? 0, 0) }}
+                                FC</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pénalités -->
+        <div class="col-md-6 mt-2">
             <div class="card card-border-shadow border-start-warning">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Pénalités cumulées USD</h6>
-                        <h5 class="mb-0">{{ number_format($totalPenalties['USD'], 2) }}</h5>
+                        <h5 class="mb-0">{{ number_format($totalPenalties['USD'] ?? 0, 2) }} $</h5>
                     </div>
                     <div class="avatar bg-warning text-white rounded-circle shadow">
                         <i class="bx bx-dollar fs-4 m-2"></i>
@@ -59,12 +98,12 @@
             </div>
         </div>
 
-        <div class="col-md-3 ">
+        <div class="col-md-6 mt-2">
             <div class="card card-border-shadow border-start-info">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Pénalités cumulées CDF</h6>
-                        <h5 class="mb-0">{{ number_format($totalPenalties['CDF'], 2) }}</h5>
+                        <h5 class="mb-0">{{ number_format($totalPenalties['CDF'] ?? 0, 0) }} FC</h5>
                     </div>
                     <div class="avatar bg-info text-white rounded-circle shadow">
                         <i class="bx bx-wallet fs-4 m-2"></i>
@@ -159,8 +198,8 @@
                                     @endif
                                 </td>
                                 <td>
-                                    <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}"
-                                        target="_blank" class="btn btn-sm btn-secondary">
+                                    <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}" target="_blank"
+                                        class="btn btn-sm btn-secondary">
                                         Imprimer le plan
                                     </a>
                                 </td>
@@ -181,7 +220,7 @@
     </div>
 
     <script>
-        document.addEventListener('livewire:load', function() {
+        document.addEventListener('livewire:load', function () {
 
             // Crédits par mois
             new ApexCharts(document.querySelector("#creditsByMonthChart"), {

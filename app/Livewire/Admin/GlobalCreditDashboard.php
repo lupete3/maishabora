@@ -16,10 +16,15 @@ class GlobalCreditDashboard extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
-    public $totalCredits;
-    public $creditsInProgress;
-    public $overdueCreditsCount;
-    public $totalPenalties;
+    public $totalCredits = 0;
+    public $creditsInProgress = 0;
+    public $totalCreditsCount = [];
+    public $totalCreditsValue = [];
+    public $creditsInProgressCount = [];
+    public $creditsInProgressValue = [];
+    public $overdueCreditsCount = [];
+    public $overdueCreditsValue = [];
+    public $totalPenalties = [];
     public $cashRegisters = [];
 
     public function mount()
@@ -30,26 +35,37 @@ class GlobalCreditDashboard extends Component
         // Caisse centrale
         $this->cashRegisters = MainCashRegister::all();
 
-        // Statistiques générales
-        $this->totalCredits = Credit::count();
-        $this->creditsInProgress = Credit::where('is_paid', false)->count();
-        // $this->totalPenalties = Repayment::whereHas('credit')->where('penalty', '>', 0)->sum('penalty');
-        $this->totalPenalties = [
-            'CDF' => Repayment::whereHas('credit', fn($q) => $q->where('currency', 'CDF'))
-                            ->where('penalty', '>', 0)
-                            ->sum('penalty'),
+        // Statistiques par devise
+        foreach (['USD', 'CDF'] as $curr) {
+            // Totaux
+            $totalQuery = Credit::where('currency', $curr);
+            $this->totalCreditsCount[$curr] = $totalQuery->count();
+            $this->totalCreditsValue[$curr] = $totalQuery->sum('amount');
 
-            'USD' => Repayment::whereHas('credit', fn($q) => $q->where('currency', 'USD'))
-                            ->where('penalty', '>', 0)
-                            ->sum('penalty'),
-        ];
+            // En cours
+            $inProgressQuery = Credit::where('currency', $curr)->where('is_paid', false);
+            $this->creditsInProgressCount[$curr] = $inProgressQuery->count();
+            $this->creditsInProgressValue[$curr] = $inProgressQuery->sum('amount');
 
+            // En retard (Crédits ayant au moins une échéance non payée et dépassée)
+            $overdueCreditIds = Repayment::where('due_date', '<', now())
+                ->where('is_paid', false)
+                ->whereHas('credit', fn($q) => $q->where('currency', $curr))
+                ->distinct()
+                ->pluck('credit_id');
 
-        // Crédits en retard
-        $this->overdueCreditsCount = Repayment::where('due_date', '<', now())
-            ->where('is_paid', false)
-            ->distinct()
-            ->count('credit_id');
+            $this->overdueCreditsCount[$curr] = $overdueCreditIds->count();
+            $this->overdueCreditsValue[$curr] = Credit::whereIn('id', $overdueCreditIds)->sum('amount');
+
+            // Pénalités
+            $this->totalPenalties[$curr] = Repayment::whereHas('credit', fn($q) => $q->where('currency', $curr))
+                ->where('penalty', '>', 0)
+                ->sum('penalty');
+        }
+
+        // Totaux globaux (toutes devises confondues)
+        $this->totalCredits = array_sum($this->totalCreditsCount);
+        $this->creditsInProgress = array_sum($this->creditsInProgressCount);
     }
 
     public function render()
