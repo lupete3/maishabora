@@ -16,7 +16,7 @@ class MigrateMemberAccounts extends Command
     {
         $dryRun = $this->option('dry-run');
 
-        $members = User::role('membre')->get();
+        $members = User::where('role','membre')->get();
         $this->info('Membres trouvés : ' . $members->count());
 
         foreach ($members as $user) {
