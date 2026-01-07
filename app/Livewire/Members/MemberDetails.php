@@ -626,19 +626,6 @@ class MemberDetails extends Component
     {
         $this->selectedCard = MembershipCard::find($this->card_id);
         $this->amount = $this->selectedCard->subscription_amount ?? 0;
-
-        if (!$this->selectedCard) {
-            return false;
-        }
-
-        if($this->selectedCard->created_at->lt(
-            Carbon::parse('2026-01-08')
-        )
-        && !$this->selectedCard->first_mise_retained){
-            notyf()->error('Le carnet a été créé avant ce changement.
-             La première mise de ' . $this->selectedCard->subscription_amount . ' '. $this->selectedCard->currency. ' n\'ayant pas été retenue, le retrait doit se faire via un retrait normal et 
-             le retenu est de : ' . $this->selectedCard->subscription_amount . ' '. $this->selectedCard->currency);
-        }
     }
 
     /**
