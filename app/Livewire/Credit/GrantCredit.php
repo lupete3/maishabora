@@ -155,6 +155,7 @@ class GrantCredit extends Component
 
             $account = Account::where('user_id', $this->member_id)
                 ->where('currency', $this->currency)
+                ->where('type', 'current')
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -200,40 +201,40 @@ class GrantCredit extends Component
 
             // Création de l'enregistrement du crédit
             $credit = Credit::create([
-                'user_id'       => $member->id,
-                'account_id'    => $account->id,
-                'currency'      => $this->currency,
-                'amount'        => $this->amount,
+                'user_id' => $member->id,
+                'account_id' => $account->id,
+                'currency' => $this->currency,
+                'amount' => $this->amount,
                 'interest_rate' => $this->interest_rate,
-                'installments'  => $this->installments,
-                'start_date'    => $this->start_date,
-                'due_date'      => Carbon::parse($this->start_date),
+                'installments' => $this->installments,
+                'start_date' => $this->start_date,
+                'due_date' => Carbon::parse($this->start_date),
                 'credit_type' => $this->repayment_type,
-                'frais_credit'  => $this->creditFrisFix,
+                'frais_credit' => $this->creditFrisFix,
                 'repayment_type' => $this->frequency,
-                'is_paid'       => false,
-                'agent_id'      => $this->agent_id,
+                'is_paid' => false,
+                'agent_id' => $this->agent_id,
             ]);
 
             // Enregistrement des transactions pour l'octroi du crédit
             Transaction::create([
-                'user_id'       => $member->id,
-                'type'           => 'octroi_de_credit',
-                'currency'       => $this->currency,
-                'amount'        => $this->amount,
+                'user_id' => $member->id,
+                'type' => 'octroi_de_credit',
+                'currency' => $this->currency,
+                'amount' => $this->amount,
                 'balance_after' => $account->balance,
-                'account_id'    => $account->id,
-                'description'    => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'account_id' => $account->id,
+                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             Transaction::create([
-                'account_id'    => NULL,
-                'user_id'       => Auth::user()->id,
-                'type'           => 'octroi_de_credit_client',
-                'currency'       => $credit->currency,
-                'amount'        => $this->amount,
+                'account_id' => NULL,
+                'user_id' => Auth::user()->id,
+                'type' => 'octroi_de_credit_client',
+                'currency' => $credit->currency,
+                'amount' => $this->amount,
                 'balance_after' => $mainCash->balance,
-                'description'    => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Envoyer les frais de commission du crédit au compte 94
@@ -315,10 +316,10 @@ class GrantCredit extends Component
                     }
 
                     Repayment::create([
-                        'credit_id'        => $credit->id,
-                        'due_date'         => $currentDate->toDateString(),
-                        'expected_amount'  => round($installmentTotal, 2),
-                        'total_due'        => round($installmentTotal, 2),
+                        'credit_id' => $credit->id,
+                        'due_date' => $currentDate->toDateString(),
+                        'expected_amount' => round($installmentTotal, 2),
+                        'total_due' => round($installmentTotal, 2),
                     ]);
 
                     $remainingCapital -= $capitalPart;
@@ -374,10 +375,10 @@ class GrantCredit extends Component
                     }
 
                     Repayment::create([
-                        'credit_id'          => $credit->id,
-                        'due_date'           => $currentDate->toDateString(),
-                        'expected_amount'    => round($annuity, 2),
-                        'total_due'          => round($annuity, 2),
+                        'credit_id' => $credit->id,
+                        'due_date' => $currentDate->toDateString(),
+                        'expected_amount' => round($annuity, 2),
+                        'total_due' => round($annuity, 2),
                     ]);
 
                     // Déduction du capital remboursé

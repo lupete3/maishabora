@@ -58,12 +58,12 @@ class ManageRepayments extends Component
         $query = trim($this->search);
         if ($query !== '') {
             $this->results = User::query()
-                ->where(function($q) use ($query) {
+                ->where(function ($q) use ($query) {
                     $q->where('code', 'like', "%{$query}%")
-                      ->orWhere('name', 'like', "%{$query}%")
-                      ->orWhere('postnom', 'like', "%{$query}%")
-                      ->orWhere('prenom', 'like', "%{$query}%")
-                      ->orWhere('telephone', 'like', "%{$query}%");
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])
@@ -115,7 +115,7 @@ class ManageRepayments extends Component
 
                 // Récupération ou création du compte membre
                 $account = Account::firstOrCreate(
-                    ['user_id' => $member->id, 'currency' => $credit->currency],
+                    ['user_id' => $member->id, 'currency' => $credit->currency, 'type' => 'current'],
                     ['balance' => 0]
                 );
 

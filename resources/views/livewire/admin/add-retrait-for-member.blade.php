@@ -13,8 +13,8 @@
                 <div class="col-md-12">
                     <select name="type" wire:model.lazy='type' class="form-control">
                         <option value="">Choisir type d'operation</option>
-                        <option value="carte">Carte</option>
-                        <option value="normal">Normal</option>
+                        <option value="carte">Compte Epargne (Carnet)</option>
+                        <option value="normal">Compte Courant</option>
                     </select>
                 </div>
             </div>
@@ -77,7 +77,7 @@
 
                         <div class="col-md-12 mb-3">
                             <label>Choisir une carte</label>
-                            <select wire:model="card_id" class="form-control">
+                            <select wire:model.lazy="card_id" class="form-control">
                                 <option value="">Sélectionner une carte</option>
                                 @foreach ($cards as $card)
                                     <option value="{{ $card->id }}">
@@ -90,6 +90,12 @@
                             @enderror
                         </div>
 
+                        @if ($this->selectedCard && !$this->selectedCard->first_mise_retained)
+                            <p class="text-danger">Le carnet a été créé avant ce changement.
+                             La première mise de {{ $this->selectedCard->subscription_amount }} {{ $this->selectedCard->currency }} n'ayant pas été retenue, le retrait doit se faire via un retrait normal et 
+                             le retenu est de : {{ $this->selectedCard->subscription_amount }} {{ $this->selectedCard->currency }} </p>
+                        @endif
+
                         {{-- <div class="col-md-12 mb-3">
                                 <label>Description (facultatif)</label>
                                 <input type="text" wire:model="description" class="form-control" />
@@ -100,10 +106,12 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary"
                             wire:click='closeRetraitModal'>{{ __('Fermer') }}</button>
-                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
-                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            {{ __('Rétirer') }}
-                        </button>
+                        
+                            <button type="button" class="btn btn-primary" @disab wire:loading.attr="disabled"
+                            @disabled($this->selectedCard && !$this->selectedCard->first_mise_retained)>
+                                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                {{ __('Rétirer') }}
+                            </button>
                     </div>
                 </form>
             @endif

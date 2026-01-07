@@ -6,6 +6,7 @@ use App\Helpers\UserLogHelper;
 use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\MembershipCard;
+use Carbon\Carbon;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\User;
@@ -66,6 +67,8 @@ class MemberDetails extends Component
     const TRANSACTION_TYPE_CARD_WITHDRAWAL = 'retrait_carte_adhesion';
     const RETAINED_ACCOUNT_USER_ID = 195;
 
+    const CARD_MIGRATION_DATE = '2026-01-08';
+
     public function mount($id)
     {
         Gate::authorize('afficher-client', User::class);
@@ -88,6 +91,64 @@ class MemberDetails extends Component
             ->with(['contributions'])
             ->latest()
             ->get();
+    }
+
+    /*
+     * Migre les comptes du membre vers la nouvelle structure
+     */
+    public function migrateAccounts()
+    {
+        Gate::authorize('migrer-comptes');
+
+        $user = User::findOrFail($this->memberId);
+        $migrated = false;
+
+        foreach (['USD', 'CDF'] as $currency) {
+            // Check/Create Current Account
+            $current = Account::where('user_id', $user->id)
+                ->where('currency', $currency)
+                ->where('type', 'current')
+                ->first();
+
+            if (!$current) {
+                // S'il existe un compte 'normal' ou null (ancien système), on le convertit ou on en crée un nouveau
+                $legacy = Account::where('user_id', $user->id)
+                    ->where('currency', $currency)
+                    ->where(function ($q) {
+                        $q->whereNull('type')->orWhere('type', 'normal');
+                    })
+                    ->first();
+
+                if ($legacy) {
+                    $legacy->type = 'current';
+                    $legacy->save();
+                    $migrated = true;
+                } else {
+                    Account::create([
+                        'user_id' => $user->id,
+                        'currency' => $currency,
+                        'type' => 'current',
+                        'balance' => 0
+                    ]);
+                    $migrated = true;
+                }
+            }
+
+            // Check/Create Savings Account
+            $savings = Account::firstOrCreate([
+                'user_id' => $user->id,
+                'currency' => $currency,
+                'type' => 'savings'
+            ], ['balance' => 0]);
+        }
+
+        if ($migrated) {
+            notyf()->success('Comptes migrés avec succès.');
+        } else {
+            notyf()->info('Les comptes sont déjà à jour.');
+        }
+
+        $this->dispatch('$refresh');
     }
 
     // Gestion des modales
@@ -150,7 +211,7 @@ class MemberDetails extends Component
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
-            $account = $this->getOrCreateAccount($user->id, $this->currency);
+            $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
             // Mise à jour des soldes
@@ -241,8 +302,11 @@ class MemberDetails extends Component
                 notyf()->info("Le montant saisi ({$this->amount}) dépasse le reste dû ({$totalPaid}). Montant ajusté automatiquement.");
             }
 
+            $useCurrentAccount = $card->created_at->lt(Carbon::parse(self::CARD_MIGRATION_DATE));
+            $accountType = $useCurrentAccount ? 'current' : 'savings';
+
             // Mettre à jour les comptes
-            $account = $this->getOrCreateAccount($card->member_id, $card->currency);
+            $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
             $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
             $account->balance += $totalPaid;
@@ -285,7 +349,7 @@ class MemberDetails extends Component
                 $commissionAmount = $dailyAmount; // La première mise vaut commission
 
                 // Créditer le compte du membre et de l'agent
-                $account = $this->getOrCreateAccount($card->member_id, $card->currency);
+                $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
                 $account->balance -= $commissionAmount;
                 $account->save();
 
@@ -338,7 +402,7 @@ class MemberDetails extends Component
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
-            $account = $this->getOrCreateAccount($user->id, $this->currency);
+            $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
             $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
@@ -458,8 +522,15 @@ class MemberDetails extends Component
                 return;
             }
 
+            $useCurrentAccount = $card->created_at->lt(
+                Carbon::parse(self::CARD_MIGRATION_DATE)
+            );
+
+            $accountType = $useCurrentAccount ? 'current' : 'savings';
+
             $account = Account::where('user_id', $card->member_id)
                 ->where('currency', $card->currency)
+                ->where('type', $accountType)
                 ->lockForUpdate()
                 ->firstOrFail();
 
@@ -555,6 +626,19 @@ class MemberDetails extends Component
     {
         $this->selectedCard = MembershipCard::find($this->card_id);
         $this->amount = $this->selectedCard->subscription_amount ?? 0;
+
+        if (!$this->selectedCard) {
+            return false;
+        }
+
+        if($this->selectedCard->created_at->lt(
+            Carbon::parse('2026-01-08')
+        )
+        && !$this->selectedCard->first_mise_retained){
+            notyf()->error('Le carnet a été créé avant ce changement.
+             La première mise de ' . $this->selectedCard->subscription_amount . ' '. $this->selectedCard->currency. ' n\'ayant pas été retenue, le retrait doit se faire via un retrait normal et 
+             le retenu est de : ' . $this->selectedCard->subscription_amount . ' '. $this->selectedCard->currency);
+        }
     }
 
     /**
@@ -679,10 +763,10 @@ class MemberDetails extends Component
     /**
      * Obtient ou crée un compte utilisateur
      */
-    private function getOrCreateAccount($userId, $currency)
+    private function getOrCreateAccount($userId, $currency, $type = 'current')
     {
         return Account::firstOrCreate(
-            ['user_id' => $userId, 'currency' => $currency],
+            ['user_id' => $userId, 'currency' => $currency, 'type' => $type],
             ['balance' => 0]
         );
     }

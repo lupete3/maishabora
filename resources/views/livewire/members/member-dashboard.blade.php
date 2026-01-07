@@ -1,5 +1,7 @@
 <div class="container-xxl flex-grow-1 container-p-y">
 
+    @can('afficher-tableaudebord-client')
+
     <!-- Header & Quick Actions -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pb-4 mb-4 border-bottom">
         <div>
@@ -58,44 +60,57 @@
         <!-- Main Content: Financials & Stats -->
         <div class="col-lg-8">
 
-            <!-- Section: Comptes Bancaires -->
+            <!-- Section: Comptes Bancaires Courant -->
             <div class="mb-4">
                 <h5 class="fw-bold mb-3 text-muted text-uppercase fs-7 ls-1">Mes Comptes</h5>
                 <div class="row g-4">
-                    @foreach(['USD', 'CDF'] as $curr)
-                        @php
-                            $account = $member->accounts->firstWhere('currency', $curr);
-                            $balance = $account ? $account->balance : 0;
-                            $isUsd = $curr === 'USD';
-                            $bgClass = $isUsd ? 'bg-success' : 'bg-primary';
-                            $icon = $isUsd ? 'fas fa-dollar-sign' : 'fas fa-money-bill-wave';
-                        @endphp
-                        <div class="col-md-6">
-                            <div class="card border-0 shadow-sm h-100 overflow-hidden position-relative">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start mb-4">
-                                        <div>
-                                            <span class="badge bg-label-{{ $isUsd ? 'success' : 'primary' }} mb-2">Compte
-                                                {{ $curr }}</span>
-                                            <h2 class="mb-0 fw-bold {{ $balance < 0 ? 'text-danger' : 'text-dark' }}">
-                                                {{ number_format($balance, 2, '.', ' ') }} <small
-                                                    class="fs-6 text-muted">{{ $curr }}</small></h2>
+                    <div class="space-y-4">
+                        <div class="row">
+                            <!-- Compte Courant -->
+                             <div class="col-md-6 p-2">
+                                <div class="border rounded-md p-3 card">
+                                    <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Courant</h6>
+                                    @foreach(['USD', 'CDF'] as $curr)
+                                        @php
+                                            $acc = $member->accounts->where('currency', $curr)->where('type', 'current')->first();
+                                            $balance = (float) ($acc?->balance ?? 0);
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
+                                            <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                            <span class="font-semibold flex items-center gap-2">
+                                                {{ number_format($balance, 2, '.', ' ') }}
+                                            </span>
                                         </div>
-                                        <div
-                                            class="avatar avatar-md bg-{{ $isUsd ? 'success-subtle' : 'primary-subtle' }} text-{{ $isUsd ? 'success' : 'primary' }} rounded p-2 d-flex align-items-center justify-content-center">
-                                            <i class="{{ $icon }} fs-4"></i>
+                                    @endforeach
+                                </div>
+                            </div>
+
+                            <!-- Compte Epargne -->
+                            <div class="col-md-6 p-2">
+                                <div class="border rounded-md p-3 card">
+                                    <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Epargne (Carnets)</h6>
+                                    @foreach(['USD', 'CDF'] as $curr)
+                                        @php
+                                            $acc = $member->accounts->where('currency', $curr)->where('type', 'savings')->first();
+                                            $balance = (float) ($acc?->balance ?? 0);
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
+                                            <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                            <span class="font-semibold flex items-center gap-2">
+                                                {{ number_format($balance, 2, '.', ' ') }}
+                                            </span>
                                         </div>
-                                    </div>
-                                    <div class="progress" style="height: 4px;">
-                                        <div class="progress-bar {{ $bgClass }}" role="progressbar" style="width: 70%"
-                                            aria-valuenow="70" aria-valuemin="0" aria-valuemax="100"></div>
-                                    </div>
+                                    @endforeach
                                 </div>
                             </div>
                         </div>
-                    @endforeach
+                    </div>
                 </div>
             </div>
+
+            
 
             <!-- Section: Statistiques Carnets -->
             <div class="mb-4" wire:ignore>
@@ -219,6 +234,8 @@
                                                 'retrait' => ['icon' => 'fas fa-arrow-up', 'color' => 'danger', 'label' => 'Retrait'],
                                                 'transfert_entrant' => ['icon' => 'fas fa-long-arrow-alt-down', 'color' => 'info', 'label' => 'Reçu'],
                                                 'transfert_sortant' => ['icon' => 'fas fa-paper-plane', 'color' => 'warning', 'label' => 'Envoyé'],
+                                                'retrait_carte_adhesion' => ['icon' => 'fas fa-arrow-up', 'color' => 'danger', 'label' => 'Retrait'],
+                                                'mise_quotidienne' => ['icon' => 'fas fa-arrow-down', 'color' => 'success', 'label' => 'Mise quotidienne']
                                             ];
                                             $t = $typeMap[$transaction->type] ?? ['icon' => 'fas fa-circle', 'color' => 'secondary', 'label' => $transaction->type];
                                          @endphp
@@ -227,8 +244,8 @@
                                         </span>
                                     </td>
                                     <td
-                                        class="text-end fw-bold {{ in_array($transaction->type, ['retrait', 'transfert_sortant']) ? 'text-danger' : 'text-success' }}">
-                                        {{ in_array($transaction->type, ['retrait', 'transfert_sortant']) ? '-' : '+' }}{{ number_format($transaction->amount, 2) }}
+                                        class="text-end fw-bold {{ in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion']) ? 'text-danger' : 'text-success' }}">
+                                        {{ in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion']) ? '-' : '+' }}{{ number_format($transaction->amount, 2) }}
                                         <small>{{ $transaction->currency }}</small>
                                     </td>
                                     <td class="text-end pe-4 text-muted fw-medium">
@@ -274,5 +291,7 @@
             </div>
         </div>
     </div>
+
+    @endcan
 
 </div>

@@ -42,7 +42,8 @@ class CheckOverdueRepayments extends Command
                         $account = Account::firstOrCreate(
                             [
                                 'user_id' => $member->id,
-                                'currency' => $credit->currency
+                                'currency' => $credit->currency,
+                                'type' => 'current'
                             ],
                             ['balance' => 0]
                         );

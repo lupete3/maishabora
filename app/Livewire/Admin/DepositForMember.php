@@ -43,7 +43,7 @@ class DepositForMember extends Component
 
         // Récupérer ou créer le compte du membre
         $account = Account::firstOrCreate(
-            ['user_id' => $user->id, 'currency' => $this->currency],
+            ['user_id' => $user->id, 'currency' => $this->currency, 'type' => 'current'],
             ['balance' => 0]
         );
 
@@ -63,7 +63,7 @@ class DepositForMember extends Component
         // Enregistrer la transaction pour le compte du membre
         Transaction::create([
             'account_id' => $account->id,
-            'user_id' =>Auth::id(),
+            'user_id' => Auth::id(),
             'type' => 'dépôt',
             'currency' => $this->currency,
             'amount' => $this->amount,
@@ -71,7 +71,7 @@ class DepositForMember extends Component
             'description' => $this->description ?: "Dépôt effectué par " . Auth::user()->name,
         ]);
 
-        notyf()->success( 'Dépôt effectué avec succès !');
+        notyf()->success('Dépôt effectué avec succès !');
 
         $this->reset(['amount', 'description']);
     }

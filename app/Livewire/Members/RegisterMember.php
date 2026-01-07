@@ -299,9 +299,19 @@ class RegisterMember extends Component
         $user = User::create($validated);
 
         foreach (['USD', 'CDF'] as $currency) {
+            // Compte Courant (Opérations courantes, crédit, dépôt/retrait standard)
             Account::create([
                 'user_id' => $user->id,
                 'currency' => $currency,
+                'type' => 'current',
+                'balance' => 0,
+            ]);
+
+            // Compte Epargne (Pour les carnets/mises)
+            Account::create([
+                'user_id' => $user->id,
+                'currency' => $currency,
+                'type' => 'savings',
                 'balance' => 0,
             ]);
         }

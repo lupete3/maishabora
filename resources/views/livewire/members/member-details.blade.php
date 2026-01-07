@@ -135,37 +135,74 @@
                             </svg>Balances des comptes</div>
                     </div>
                     <div class="p-6 pt-0 space-y-4">
-                        @foreach(['USD', 'CDF'] as $curr)
-                            @php
-                                $balance = (float) ($member->accounts->firstWhere('currency', $curr)?->balance ?? 0);
-                                $color = $curr === 'USD' ? 'green' : 'blue';
-                            @endphp
-                            <div
-                                class="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 bg-secondary/30 rounded-lg shadow">
-                                <div class="flex items-center gap-3 mb-2 sm:mb-0">
-                                    <span class="font-bold text-xl text-{{ $color }}-600">{{ $curr }}</span>
-                                </div>
-                                <span class="text-2xl font-semibold text-foreground flex items-center gap-2">
-                                    @if ($member->visible_account)
-                                        {{ number_format($balance, 2, '.', ' ') }}
-                                        @can('modifier-solde-compte')
-                                            <button
-                                                wire:click="confirmUpdateBalance({{ $member->accounts->firstWhere('currency', $curr)?->id }})"
-                                                class="btn btn-link btn-sm p-0 text-primary" title="Modifier le solde">
-                                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
-                                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                                    stroke-linejoin="round" class="lucide lucide-pencil">
-                                                    <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                                                    <path d="m15 5 4 4" />
-                                                </svg>
-                                            </button>
-                                        @endcan
-                                    @else
-                                        ****
-                                    @endif
-                                </span>
+                        <div class="space-y-4">
+                            <!-- Compte Courant -->
+                            <div class="border rounded-md p-3">
+                                <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Courant</h6>
+                                @foreach(['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'current')->first();
+                                        $balance = (float) ($acc?->balance ?? 0);
+                                        $color = $curr === 'USD' ? 'green' : 'blue';
+                                    @endphp
+                                    <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
+                                        <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                        <span class="font-semibold flex items-center gap-2">
+                                            @if ($member->visible_account)
+                                                {{ number_format($balance, 2, '.', ' ') }}
+                                                @can('modifier-solde-compte')
+                                                    @if($acc)
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="btn btn-link btn-xs p-0 text-primary">
+                                                            ✏️
+                                                        </button>
+                                                    @endif
+                                                @endcan
+                                            @else
+                                                ****
+                                            @endif
+                                        </span>
+                                    </div>
+                                @endforeach
                             </div>
-                        @endforeach
+
+                            <!-- Compte Epargne -->
+                            <div class="border rounded-md p-3">
+                                <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Epargne (Carnets)</h6>
+                                @foreach(['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'savings')->first();
+                                        $balance = (float) ($acc?->balance ?? 0);
+                                        $color = $curr === 'USD' ? 'green' : 'blue';
+                                    @endphp
+                                    <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
+                                        <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                        <span class="font-semibold flex items-center gap-2">
+                                            @if ($member->visible_account)
+                                                {{ number_format($balance, 2, '.', ' ') }}
+                                                @can('modifier-solde-compte')
+                                                    @if($acc)
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="btn btn-link btn-xs p-0 text-primary">
+                                                            ✏️
+                                                        </button>
+                                                    @endif
+                                                @endcan
+                                            @else
+                                                ****
+                                            @endif
+                                        </span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <!-- Migration Tool (Admin Only) -->
+                            @can('migrer-comptes')
+                                <div class="mt-2 text-right">
+                                    <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
+                                        ⚠️ Vérifier/Migrer Comptes
+                                    </button>
+                                </div>
+                            @endcan
+                        </div>
                     </div>
 
                     <div class="items-center p-6 pt-0 flex justify-between gap-2">

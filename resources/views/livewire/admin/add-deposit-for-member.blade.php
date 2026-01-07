@@ -12,8 +12,8 @@
                 <div class="col-md-12">
                     <select name="type" wire:model.lazy='type' class="form-control">
                         <option value="">Choisir type d'operation</option>
-                        <option value="carte">Carte</option>
-                        <option value="normal">Normal</option>
+                        <option value="carte">Compte Epargne (Carnet)</option>
+                        <option value="normal">Compte Courant</option>
                     </select>
                 </div>
             </div>

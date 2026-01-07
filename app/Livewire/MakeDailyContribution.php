@@ -42,16 +42,22 @@ class MakeDailyContribution extends Component
         $this->selectedCard = MembershipCard::find($this->card_id);
     }
 
+    const CARD_MIGRATION_DATE = '2026-01-08';
+
     public function contribute()
     {
         $this->validate();
 
         $card = MembershipCard::findOrFail($this->card_id);
 
+        // Déterminer le type de compte basé sur la date de création de la carte
+        $useCurrentAccount = $card->created_at->lt(Carbon::parse(self::CARD_MIGRATION_DATE));
+        $accountType = $useCurrentAccount ? 'current' : 'savings';
+
         // Vérifier que la date est dans la période de la carte
         $contributionDate = Carbon::parse($this->contribution_date);
         if ($contributionDate < $card->start_date || $contributionDate > $card->end_date) {
-            notyf()->error( "La date doit être entre le {$card->start_date} et le {$card->end_date}");
+            notyf()->error("La date doit être entre le {$card->start_date} et le {$card->end_date}");
 
             return;
         }
@@ -62,13 +68,13 @@ class MakeDailyContribution extends Component
             ->first();
 
         if (!$contribution) {
-            notyf()->error( "Aucune mise trouvée pour cette date.");
+            notyf()->error("Aucune mise trouvée pour cette date.");
 
             return;
         }
 
         if ($contribution->is_paid) {
-            notyf()->error( "Cette mise a déjà été effectuée.");
+            notyf()->error("Cette mise a déjà été effectuée.");
 
             return;
         }
@@ -79,7 +85,7 @@ class MakeDailyContribution extends Component
 
         // Créditer le compte du membre
         $account = Account::firstOrCreate(
-            ['user_id' => $card->member_id, 'currency' => $card->currency],
+            ['user_id' => $card->member_id, 'currency' => $card->currency, 'type' => $accountType],
             ['balance' => 0]
         );
 
@@ -108,7 +114,7 @@ class MakeDailyContribution extends Component
             'description' => "Mise quotidienne sur la carte #{$card->id} pour la date : {$this->contribution_date}"
         ]);
 
-        notyf()->success( "Mise effectuée avec succès !");
+        notyf()->success("Mise effectuée avec succès !");
 
         $this->reset(['contribution_date', 'amount']);
     }

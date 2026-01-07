@@ -24,6 +24,14 @@
                                 {{ $cardDetail->currency }}</strong>.</p>
                         <p>Retenue est de <strong>{{ number_format($cardDetail->subscription_amount, 2) }}
                                 {{ $cardDetail->currency }}</strong>.</p>
+                        @if ($cardDetail->first_mise_retained == 1)
+                            <p class="text-success">La première mise de <strong>{{ number_format($cardDetail->subscription_amount, 2) }}
+                                    {{ $cardDetail->currency }} est déjà prise</strong>.</p>
+                            @else
+                                <p class="text-danger">La première mise de <strong>{{ number_format($cardDetail->subscription_amount, 2) }} {{ $cardDetail->currency }} n'est pas retenue. <br>
+                                Retourner et faire un retrait normal puis bloquer le carnet
+                            </p>
+                        @endif
                     @else
                         <p class="text-danger">Détails de la carte non disponibles.</p>
                     @endif
@@ -38,7 +46,7 @@
                     class="px-4 py-2 font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
                     Annuler
                 </button>
-                <button wire:click="makeRetrait"
+                <button wire:click.prevent="makeRetrait"
                     class="px-4 py-2 font-semibold btn btn-success rounded-lg hover:bg-green-600"
                     wire:loading.attr="disabled">
                     <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>

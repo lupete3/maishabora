@@ -34,7 +34,9 @@ class MemberTransfer extends Component
     public function mount()
     {
         $this->sender = Auth::user();
-        $this->accounts = Account::where('user_id', $this->sender->id)->get();
+        $this->accounts = Account::where('user_id', $this->sender->id)
+            ->where('type', 'current')
+            ->get();
         // Default select first account if exists
         if ($this->accounts->isNotEmpty()) {
             $this->selectedAccountId = $this->accounts->first()->id;
@@ -109,6 +111,7 @@ class MemberTransfer extends Component
         // Find receiver account with same currency
         $receiverAccount = Account::where('user_id', $receiver->id)
             ->where('currency', $senderAccount->currency)
+            ->where('type', 'current')
             ->first();
 
         if (!$receiverAccount) {
@@ -164,10 +167,10 @@ class MemberTransfer extends Component
 
             // Notifier les utilisateurs concernés
             $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
-            $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$senderAccount->currency} a été effectué vers " . 
-                                    $receiver->code . " " . $receiver->name . " " . $receiver->postnom . " par " 
-                                    . Auth::user()->code . " " . Auth::user()->name . " " . Auth::user()->postnom . 
-                                    ". #REF{$outgoingTransaction->id}";
+            $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$senderAccount->currency} a été effectué vers " .
+                $receiver->code . " " . $receiver->name . " " . $receiver->postnom . " par "
+                . Auth::user()->code . " " . Auth::user()->name . " " . Auth::user()->postnom .
+                ". #REF{$outgoingTransaction->id}";
 
             foreach ($usersToNotify as $notifyUser) {
                 Notification::create([
@@ -180,8 +183,8 @@ class MemberTransfer extends Component
 
             UserLogHelper::log_user_activity(
                 action: 'virement_caisse_centrale',
-                description: "Virement de {$this->amount} {$senderAccount->currency} du compte de " . Auth::user()->code . " " . Auth::user()->name . " " . Auth::user()->postnom . " vers " . 
-                                    $receiver->code . " " . $receiver->name . " " . $receiver->postnom . ". #REF{$outgoingTransaction->id}"
+                description: "Virement de {$this->amount} {$senderAccount->currency} du compte de " . Auth::user()->code . " " . Auth::user()->name . " " . Auth::user()->postnom . " vers " .
+                $receiver->code . " " . $receiver->name . " " . $receiver->postnom . ". #REF{$outgoingTransaction->id}"
             );
 
             DB::commit();
