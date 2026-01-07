@@ -7,7 +7,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 10px;
+            font-size: 7px;
             margin: 5px;
             color: #000;
         }
@@ -39,14 +39,14 @@
         .table td,
         .table th {
             border: 1px solid;
-            padding: 4px;
+            padding: 2px;
         }
 
         .signature {
             margin-top: 30px;
             display: flex;
             justify-content: space-between;
-            font-size: 10px;
+            font-size: 8px;
         }
 
         .signature-block {
@@ -58,7 +58,7 @@
             display: inline-block;
             padding: 2px 6px;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8px;
             font-weight: bold;
             margin-top: 2px;
         }
@@ -89,10 +89,13 @@
         }
 
         .section-title {
-            margin-top: 10px;
+            margin-top: 5px;
             font-weight: bold;
             text-align: center;
-            font-size: 11px;
+            font-size: 9px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            padding: 2px;
         }
     </style>
 </head>
