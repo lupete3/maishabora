@@ -3,6 +3,7 @@
 namespace App\Livewire\Cash;
 
 use App\Models\Cloture;
+use App\Models\Transaction;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -88,9 +89,45 @@ class CashClosingHistory extends Component
 
     public function exportPdf()
     {
-        $cloture = Cloture::with(['user', 'validatedBy', 'billetages'])->get();
+        // Get all closings based on the same visibility logic as render()
+        if (Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier') {
+            $closings = Cloture::with(['user', 'validatedBy', 'billetages'])->latest()->get();
+        } else {
+            $closings = Cloture::with(['user', 'validatedBy', 'billetages'])
+                ->where('user_id', Auth::user()->id)
+                ->latest()
+                ->get();
+        }
 
-        $pdf = Pdf::loadView('pdf.cloture-pdf', ['cloture' => $cloture])
+        foreach ($closings as $cl) {
+            // Fetch daily transactions for deposits and withdrawals
+            $cl->deposits = Transaction::where('user_id', $cl->user_id)
+                ->whereDate('created_at', $cl->closing_date)
+                ->whereIn('type', ['mise_quotidienne', 'dépôt'])
+                ->get();
+
+            $cl->withdrawals = Transaction::where('user_id', $cl->user_id)
+                ->whereDate('created_at', $cl->closing_date)
+                ->whereIn('type', ['retrait_carte_adhesion', 'retrait'])
+                ->get();
+
+            // Fetch previous closure for the same agent
+            $previousCloture = Cloture::where('user_id', $cl->user_id)
+                ->where('closing_date', '<', $cl->closing_date)
+                ->latest('closing_date')
+                ->first();
+
+            $cl->previous_logical_usd = $previousCloture ? $previousCloture->logical_usd : 0;
+            $cl->previous_logical_cdf = $previousCloture ? $previousCloture->logical_cdf : 0;
+            
+            // Totals for accounting proof
+            $cl->total_deposits_usd = $cl->deposits->where('currency', 'USD')->sum('amount');
+            $cl->total_deposits_cdf = $cl->deposits->where('currency', 'CDF')->sum('amount');
+            $cl->total_withdrawals_usd = $cl->withdrawals->where('currency', 'USD')->sum('amount');
+            $cl->total_withdrawals_cdf = $cl->withdrawals->where('currency', 'CDF')->sum('amount');
+        }
+
+        $pdf = Pdf::loadView('pdf.cloture-pdf', ['cloture' => $closings])
                 ->setPaper('A4', 'portrait');
 
         return response()->streamDownload(function () use ($pdf) {

@@ -31,7 +31,6 @@ return new class extends Migration
             // Validation
             $table->foreignId('validated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamp('validated_at')->nullable();
-            $table->text('note')->nullable();
             $table->enum('status', ['pending','validated','rejected'])->default('pending')->nullable();
             $table->text('rejection_reason')->nullable();
 

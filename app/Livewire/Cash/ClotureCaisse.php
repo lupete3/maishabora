@@ -7,6 +7,7 @@ use App\Models\Cloture;
 use App\Models\Transaction;
 use App\Models\Billetage;
 use App\Models\UserLog;
+use App\Models\AgentAccount;
 use Livewire\Component;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Carbon;
@@ -25,6 +26,7 @@ class ClotureCaisse extends Component
 
     public $gap_usd = 0;
     public $gap_cdf = 0;
+    public $note;
 
     public $denominations_usd = [100, 50, 20, 10, 5, 1];
     public $denominations_cdf = [20000, 10000, 5000, 1000, 500, 200, 100];
@@ -54,20 +56,17 @@ class ClotureCaisse extends Component
     public function calculateLogicalBalances()
     {
         $userId = Auth::id();
-        $today = Carbon::parse($this->date)->startOfDay();
 
-        $usd = Transaction::where('user_id', $userId)
+        $usdAccount = AgentAccount::where('user_id', $userId)
             ->where('currency', 'USD')
-            ->whereDate('created_at', $today)
-            ->sum('amount');
+            ->first();
 
-        $cdf = Transaction::where('user_id', $userId)
+        $cdfAccount = AgentAccount::where('user_id', $userId)
             ->where('currency', 'CDF')
-            ->whereDate('created_at', $today)
-            ->sum('amount');
+            ->first();
 
-        $this->logical_usd = $usd;
-        $this->logical_cdf = $cdf;
+        $this->logical_usd = $usdAccount ? $usdAccount->balance : 0;
+        $this->logical_cdf = $cdfAccount ? $cdfAccount->balance : 0;
 
         $this->calculatePhysicalAndGap();
     }
@@ -114,6 +113,7 @@ class ClotureCaisse extends Component
             'physical_cdf' => $this->physical_cdf,
             'gap_usd' => $this->gap_usd,
             'gap_cdf' => $this->gap_cdf,
+            'note' => $this->note,
         ]);
 
         foreach ($this->billetages_usd as $denomination => $qty) {

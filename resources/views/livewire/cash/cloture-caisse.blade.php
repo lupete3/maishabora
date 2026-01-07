@@ -69,6 +69,12 @@
                     </div>
                 </div>
             </div>
+            
+            {{-- Description détaillée --}}
+            <div class="mt-4">
+                <label for="note" class="form-label"><strong>Description détaillée / Justification (facultatif)</strong></label>
+                <textarea wire:model.defer="note" id="note" class="form-control" rows="4" placeholder="Justifiez vos chiffres ici..."></textarea>
+            </div>
 
             {{-- Clôturer --}}
             <div class="text-end mt-3">
