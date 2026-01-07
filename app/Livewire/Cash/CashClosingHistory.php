@@ -13,7 +13,7 @@ class CashClosingHistory extends Component
 {
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
-    
+
     public $selectedClosing;
     public $rejection_reason = '';
     public $showRejetModalFlag = false, $clotureId, $motif_rejet;
@@ -103,7 +103,7 @@ class CashClosingHistory extends Component
             // Fetch daily transactions for deposits and withdrawals
             $cl->deposits = Transaction::where('user_id', $cl->user_id)
                 ->whereDate('created_at', $cl->closing_date)
-                ->whereIn('type', ['mise_quotidienne', 'dépôt'])
+                ->whereIn('type', ['mise_quotidienne', 'dépôt', 'Vente_carte_adhesion'])
                 ->get();
 
             $cl->withdrawals = Transaction::where('user_id', $cl->user_id)
@@ -119,7 +119,7 @@ class CashClosingHistory extends Component
 
             $cl->previous_logical_usd = $previousCloture ? $previousCloture->logical_usd : 0;
             $cl->previous_logical_cdf = $previousCloture ? $previousCloture->logical_cdf : 0;
-            
+
             // Totals for accounting proof
             $cl->total_deposits_usd = $cl->deposits->where('currency', 'USD')->sum('amount');
             $cl->total_deposits_cdf = $cl->deposits->where('currency', 'CDF')->sum('amount');
@@ -128,10 +128,10 @@ class CashClosingHistory extends Component
         }
 
         $pdf = Pdf::loadView('pdf.cloture-pdf', ['cloture' => $closings])
-                ->setPaper('A4', 'portrait');
+            ->setPaper('A4', 'portrait');
 
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->stream();
-        }, 'fiche_cloture_'.date('d-m-Y').'.pdf');
+        }, 'fiche_cloture_' . date('d-m-Y') . '.pdf');
     }
 }
