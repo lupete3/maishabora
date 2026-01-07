@@ -61,19 +61,18 @@
 
             @if ($selectedCredit)
                 <div class="mt-4">
-                    <div class="d-flex justify-content-between">
-                        <div class="">
+                        <div class="small">
                             Solde :
                             @foreach (['USD', 'CDF'] as $curr)
                                 @php
-                                    $balance = (float) ($selectedCredit->user->accounts->firstWhere(
-                                        'currency',
-                                        $curr,
-                                    )?->balance ?? 0);
+                                    $currentBal = (float) ($selectedCredit->user->accounts->where('currency', $curr)->where('type', 'current')->first()?->balance ?? 0);
+                                    $savingsBal = (float) ($selectedCredit->user->accounts->where('currency', $curr)->where('type', 'savings')->first()?->balance ?? 0);
                                 @endphp
-                                <small class="" style="font-size: 16px;">
-                                    {{ number_format($balance, 2, '.', ' ') }}{{ $curr }} |
-                                </small>
+                                <span class="badge border text-dark me-1">
+                                    {{ $curr }} | 
+                                    <span class="text-primary" title="Courant">C: {{ number_format($currentBal, 2, '.', ' ') }}</span> | 
+                                    <span class="text-success" title="Epargne">E: {{ number_format($savingsBal, 2, '.', ' ') }}</span>
+                                </span>
                             @endforeach
                         </div>
 
