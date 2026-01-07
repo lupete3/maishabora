@@ -528,11 +528,7 @@ class MemberDetails extends Component
 
             $accountType = $useCurrentAccount ? 'current' : 'savings';
 
-            $account = Account::where('user_id', $card->member_id)
-                ->where('currency', $card->currency)
-                ->where('type', $accountType)
-                ->lockForUpdate()
-                ->firstOrFail();
+            $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
 
             if ($account->balance < $total) {
                 DB::rollBack();

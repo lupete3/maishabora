@@ -10,8 +10,16 @@ class MembershipCard extends Model
     use HasFactory;
 
     protected $fillable = [
-        'code', 'member_id', 'user_id', 'currency', 'price',
-        'subscription_amount', 'start_date', 'end_date', 'is_active'
+        'code',
+        'member_id',
+        'user_id',
+        'currency',
+        'price',
+        'subscription_amount',
+        'start_date',
+        'end_date',
+        'is_active',
+        'first_mise_retained'
     ];
 
     // Membre propriétaire du carnet

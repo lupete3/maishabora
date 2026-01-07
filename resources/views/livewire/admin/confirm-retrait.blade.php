@@ -4,7 +4,7 @@
         <div class="w-full max-w-md p-6 bg-white rounded-lg shadow-lg m-2">
             <div class="flex items-center justify-between pb-4 border-b">
                 <h3 class="text-lg font-semibold">Confirmer le Retrait</h3>
-                <button wire:click="closeWithdrawalConfirmationModal" class="text-gray-500 hover:text-gray-700">
+                <button wire:click="closeRetraitConfirmationModal" class="text-gray-500 hover:text-gray-700">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"
                         xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
@@ -19,25 +19,44 @@
                 @if ($operation_type == 'carte')
                     <p>Retrait depuis la carte <strong>{{ $cardDetail->code ?? 'N/A' }}</strong>.</p>
                     @if($cardDetail)
-                        <p>Solde disponible :
-                            <strong>{{ number_format($cardDetail->contributions->where('is_paid', true)->sum('amount'), 2) }}
-                                {{ $cardDetail->currency }}</strong>.</p>
-                        <p>Retenue est de <strong>{{ number_format($cardDetail->subscription_amount, 2) }}
-                                {{ $cardDetail->currency }}</strong>.</p>
+                        <div class="bg-light p-3 rounded mb-3">
+                            <p class="mb-1 d-flex justify-content-between">
+                                <span>Total épargné :</span>
+                                <strong>{{ number_format($cardDetail->contributions->where('is_paid', true)->sum('amount'), 2) }} {{ $cardDetail->currency }}</strong>
+                            </p>
+                            
+                            @php
+                                $toRetainNow = $cardDetail->first_mise_retained ? 0 : $cardDetail->subscription_amount;
+                                $netAmount = $cardDetail->contributions->where('is_paid', true)->sum('amount') - $cardDetail->subscription_amount;
+                            @endphp
+
+                            <p class="mb-1 d-flex justify-content-between text-danger">
+                                <span>Retenue (Commission) :</span>
+                                <strong>- {{ number_format($cardDetail->subscription_amount, 2) }} {{ $cardDetail->currency }}</strong>
+                            </p>
+                            <hr class="my-2">
+                            <p class="mb-0 d-flex justify-content-between text-success fw-bold">
+                                <span>Net à percevoir :</span>
+                                <span>{{ number_format($netAmount, 2) }} {{ $cardDetail->currency }}</span>
+                            </p>
+                        </div>
+
                         @if ($cardDetail->first_mise_retained == 1)
-                            <p class="text-success">La première mise de <strong>{{ number_format($cardDetail->subscription_amount, 2) }}
-                                    {{ $cardDetail->currency }} est déjà prise</strong>.</p>
-                            @else
-                                <p class="text-danger">La première mise de <strong>{{ number_format($cardDetail->subscription_amount, 2) }} {{ $cardDetail->currency }} n'est pas retenue. <br>
-                                Retourner et faire un retrait normal puis bloquer le carnet
+                            <p class="text-success small">
+                                <i class="bx bx-check-double"></i> La première mise est déjà retenue.
+                            </p>
+                        @else
+                            <p class="text-warning small italic">
+                                <i class="bx bx-info-circle"></i> La première mise sera retenue maintenant.
                             </p>
                         @endif
                     @else
                         <p class="text-danger">Détails de la carte non disponibles.</p>
                     @endif
                 @else
-                    <p>Retrait normal de <strong>{{ $amount }} {{ $currency }}</strong>.</p>
-                    <p>Retenu <strong>{{ $a_retenir }} {{ $currency }}</strong>.</p>
+                    <p>Retrait normal de <strong>{{ number_format($amount, 2) }} {{ $currency }}</strong>.</p>
+                    <p>Retenu : <strong>{{ number_format($a_retenir, 2) }} {{ $currency }}</strong></p>
+                    <p class="fw-bold text-success">Net à percevoir : {{ number_format($amount - $a_retenir, 2) }} {{ $currency }}</p>
                 @endif
                 <p>Voulez-vous vraiment continuer ?</p>
             </div>

@@ -91,9 +91,12 @@
                         </div>
 
                         @if ($this->selectedCard && !$this->selectedCard->first_mise_retained)
-                            <p class="text-danger">Le carnet a été créé avant ce changement.
-                             La première mise de {{ $this->selectedCard->subscription_amount }} {{ $this->selectedCard->currency }} n'ayant pas été retenue, le retrait doit se faire via un retrait normal et 
-                             le retenu est de : {{ $this->selectedCard->subscription_amount }} {{ $this->selectedCard->currency }} </p>
+                            <p class="text-warning border p-2 rounded">
+                                <i class="bx bx-info-circle me-1"></i>
+                                Ce carnet a été créé avant le changement de système (08/01/2026). 
+                                La première mise de <strong>{{ number_format($this->selectedCard->subscription_amount, 2) }} {{ $this->selectedCard->currency }}</strong> 
+                                n'avait pas été retenue à l'époque. Elle sera automatiquement retenue lors de ce retrait.
+                            </p>
                         @endif
 
                         {{-- <div class="col-md-12 mb-3">
@@ -106,12 +109,10 @@
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary"
                             wire:click='closeRetraitModal'>{{ __('Fermer') }}</button>
-                        
-                            <button type="button" class="btn btn-primary" @disab wire:loading.attr="disabled"
-                            @disabled($this->selectedCard && !$this->selectedCard->first_mise_retained)>
-                                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                                {{ __('Rétirer') }}
-                            </button>
+                        <button type="submit" class="btn btn-primary" wire:loading.attr="disabled">
+                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            {{ __('Rétirer') }}
+                        </button>
                     </div>
                 </form>
             @endif
