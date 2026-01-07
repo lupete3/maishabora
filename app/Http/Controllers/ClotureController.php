@@ -27,7 +27,7 @@ class ClotureController extends Controller
         // Fetch daily transactions for deposits and withdrawals
         $cloture->deposits = Transaction::where('user_id', $cloture->user_id)
             ->whereDate('created_at', $cloture->closing_date)
-            ->whereIn('type', ['mise_quotidienne', 'dépôt'])
+            ->whereIn('type', ['mise_quotidienne', 'dépôt', 'vente_carte_adhesion'])
             ->get();
 
         $cloture->withdrawals = Transaction::where('user_id', $cloture->user_id)
