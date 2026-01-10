@@ -56,7 +56,7 @@
                 @else
                     <p>Retrait normal de <strong>{{ number_format($amount, 2) }} {{ $currency }}</strong>.</p>
                     <p>Retenu : <strong>{{ number_format($a_retenir, 2) }} {{ $currency }}</strong></p>
-                    <p class="fw-bold text-success">Net à percevoir : {{ number_format($amount - $a_retenir, 2) }} {{ $currency }}</p>
+                    <p class="fw-bold text-success">Net à percevoir : {{ number_format($amount, 2) }} {{ $currency }}</p>
                 @endif
                 <p>Voulez-vous vraiment continuer ?</p>
             </div>

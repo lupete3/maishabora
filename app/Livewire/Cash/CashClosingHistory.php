@@ -108,7 +108,7 @@ class CashClosingHistory extends Component
 
             $cl->withdrawals = Transaction::where('user_id', $cl->user_id)
                 ->whereDate('created_at', $cl->closing_date)
-                ->whereIn('type', ['retrait_carte_adhesion', 'retrait'])
+                ->whereIn('type', ['retrait_carte_adhesion', 'retrait', 'décaissement'])
                 ->get();
 
             // Fetch previous closure for the same agent

@@ -94,6 +94,9 @@ class PermissionSeeder extends Seeder
             "modifier-solde-compte",
             "modifier-transaction-compte",
             "migrer-comptes",
+            "decaissement",
+            "ajouter-type-decaissement",
+
 
         ];
 

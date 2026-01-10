@@ -32,7 +32,7 @@ class ClotureController extends Controller
 
         $cloture->withdrawals = Transaction::where('user_id', $cloture->user_id)
             ->whereDate('created_at', $cloture->closing_date)
-            ->whereIn('type', ['retrait_carte_adhesion', 'retrait'])
+            ->whereIn('type', ['retrait_carte_adhesion', 'retrait', 'décaissement'])
             ->get();
 
         // Fetch previous closure for the same agent

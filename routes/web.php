@@ -133,6 +133,10 @@ Route::middleware(['auth', 'auth.session', 'permission:retrait-compte-membre'])-
     Route::get('/membres/retrait-carnet', [MembershipCardController::class, 'withdrawfromcard'])->name('members.withdrawfrom-card');
 });
 
+Route::middleware(['auth', 'auth.session', 'permission:decaissement'])->group(function () {
+    Route::get('/gestion-decaissements', [App\Http\Controllers\DisbursementController::class, 'index'])->name('disbursement.index');
+});
+
 Route::middleware(['auth', 'auth.session', 'permission:depot-compte-membre'])->group(function () {
     Route::get('/cloture-caisse', [ClotureController::class, 'index'])->name('agent.cloture');
     Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');
