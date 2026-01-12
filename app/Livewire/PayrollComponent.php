@@ -186,13 +186,13 @@ class PayrollComponent extends Component
 
             // Crédit compte agent
             $account = Account::firstOrCreate(
-                ['user_id' => $userId, 'currency' => $this->currency],
+                ['user_id' => $userId, 'currency' => $this->currency, 'type' => 'current'],
                 ['balance' => 0]
             );
 
             // Crédit compte agent
             $accountRetenuSalaire = Account::firstOrCreate(
-                ['user_id' => 328, 'currency' => $this->currency],
+                ['user_id' => 328, 'currency' => $this->currency, 'type' => 'current'],
                 ['balance' => 0]
             );
 
