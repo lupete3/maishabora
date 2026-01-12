@@ -26,7 +26,7 @@
     <div class="card">
         <div class="card-header border-bottom">
             <div class="row g-3">
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <label class="form-label small fw-bold">Recherche</label>
                     <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
                         placeholder="Nom, code, prénom...">
@@ -64,7 +64,7 @@
                     <label class="form-label small fw-bold">Solde Min</label>
                     <input type="number" wire:model.live.debounce.500ms="minBalance" class="form-control" placeholder="0.00">
                 </div>
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-md-1 d-flex align-items-end">
                     <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
                         target="_blank" class="btn btn-danger w-100">
                         <i class="bi bi-file-earmark-pdf"></i> PDF
