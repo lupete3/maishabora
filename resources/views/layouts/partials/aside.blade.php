@@ -62,7 +62,7 @@
         @can('decaissement')
             <li class="menu-item @if (request()->routeIs('disbursement.index')) active @endif">
                 <a href="{{ route('disbursement.index') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-money-withdraw"></i> <!-- Décaissements -->
+                    <i class="menu-icon tf-icons bx bx-wallet-alt"></i> <!-- Décaissements -->
                     <div data-i18n="Analytics">Décaissements</div>
                 </a>
             </li>
