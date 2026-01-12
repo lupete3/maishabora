@@ -15,6 +15,9 @@ class RapportCompteClients extends Component
     public $perPage = 10;
     public $search = '';
     public $currencyFilter = 'all'; // all, USD, CDF
+    public $accountType = 'all';    // all, current, savings
+    public $minBalance = 0;         // Filtrer par solde minimum
+    public $alphabetRange = 'all';  // all, A-D, E-H, etc.
     public $sortByBalance = false;  // true = classer par solde le plus élevé
 
     public function updatingSearch()
@@ -22,45 +25,6 @@ class RapportCompteClients extends Component
         $this->resetPage();
     }
 
-    public function exportPdf()
-    {
-        // On récupère tous les membres avec leurs soldes
-        $members = User::with(['accounts'])->where('role', 'membre')->orderBy('name', 'asc')->get();
-
-        $balances = $members->map(function ($member) {
-            $usd = 0;
-            $cdf = 0;
-
-            foreach ($member->accounts as $account) {
-                if ($account->currency === 'USD') {
-                    $usd += $account->balance;
-                } elseif ($account->currency === 'CDF') {
-                    $cdf += $account->balance;
-                }
-            }
-
-            return [
-                'member' => $member,
-                'usd_balance' => $usd,
-                'cdf_balance' => $cdf,
-            ];
-        });
-
-        // Totaux globaux
-        $globalUsd = $balances->sum('usd_balance');
-        $globalCdf = $balances->sum('cdf_balance');
-
-        // Génération du PDF
-        $pdf = Pdf::loadView('pdf.rapport-comptes-membres', [
-            'balances' => $balances,
-            'globalUsd' => $globalUsd,
-            'globalCdf' => $globalCdf,
-        ])->setPaper('a4', 'portrait');
-
-        return response()->streamDownload(function () use ($pdf) {
-            echo $pdf->stream();
-        }, 'rapport_comptes_membres.pdf');
-    }
 
     public function render()
     {
@@ -69,19 +33,47 @@ class RapportCompteClients extends Component
             ->where('role', 'membre')
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
-                  ->orWhere('postnom', 'like', "%{$this->search}%")
-                  ->orWhere('prenom', 'like', "%{$this->search}%")
-                  ->orWhere('code', 'like', "%{$this->search}%");
+                    ->orWhere('postnom', 'like', "%{$this->search}%")
+                    ->orWhere('prenom', 'like', "%{$this->search}%")
+                    ->orWhere('code', 'like', "%{$this->search}%");
             });
+
+        if ($this->alphabetRange !== 'all') {
+            [$start, $end] = explode('-', $this->alphabetRange);
+            $query->where(function ($q) use ($start, $end) {
+                $q->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
+            });
+        }
+
+        // 🎯 Apply account and balance filters in SQL for correct pagination
+        $query->whereHas('accounts', function ($q) {
+            if ($this->accountType !== 'all') {
+                $q->where('type', $this->accountType);
+            }
+            if ($this->currencyFilter !== 'all') {
+                $q->where('currency', $this->currencyFilter);
+            }
+            if ($this->minBalance > 0) {
+                $q->where('balance', '>=', $this->minBalance);
+            }
+        });
 
         $members = $query->paginate($this->perPage);
 
         // Soldes par membre (applique le filtre devise + tri solde)
-        $balances = $members->map(function ($member) {
+        $balances = $members->getCollection()->map(function ($member) {
             $usd = 0;
             $cdf = 0;
 
             foreach ($member->accounts as $account) {
+                if ($this->accountType !== 'all' && $account->type !== $this->accountType) {
+                    continue;
+                }
+
+                if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter) {
+                    continue;
+                }
+
                 if ($account->currency === 'USD') {
                     $usd += $account->balance;
                 } elseif ($account->currency === 'CDF') {
@@ -96,13 +88,38 @@ class RapportCompteClients extends Component
             ];
         });
 
-        // Totaux globaux
+        // Repaginate manually if balance filtering is applied on the page
+        // Note: For large datasets, filtering by balance should ideally be done in SQL, 
+        // but since balances are in a related table, we have a challenge without complex joins/subqueries.
+        // For now, we filter in memory for the *paginated* results.
+
+        // Totaux globaux basés sur les mêmes filtres
         $globalUsd = 0;
         $globalCdf = 0;
 
-        User::with('accounts')->chunk(100, function ($chunk) use (&$globalUsd, &$globalCdf) {
+        $totalQuery = User::where('role', 'membre')
+            ->whereHas('accounts', function ($q) {
+                if ($this->accountType !== 'all') {
+                    $q->where('type', $this->accountType);
+                }
+                if ($this->currencyFilter !== 'all') {
+                    $q->where('currency', $this->currencyFilter);
+                }
+                if ($this->minBalance > 0) {
+                    $q->where('balance', '>=', $this->minBalance);
+                }
+            });
+
+        $totalQuery->with('accounts')->chunk(200, function ($chunk) use (&$globalUsd, &$globalCdf) {
             foreach ($chunk as $member) {
                 foreach ($member->accounts as $account) {
+                    if ($this->accountType !== 'all' && $account->type !== $this->accountType) {
+                        continue;
+                    }
+                    if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter) {
+                        continue;
+                    }
+
                     if ($account->currency === 'USD') {
                         $globalUsd += $account->balance;
                     } elseif ($account->currency === 'CDF') {

@@ -160,6 +160,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
 
 Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
     Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');
+    Route::get('/rapport-compte-clients-pdf', [ClientStatReportController::class, 'compteClientsPdf'])->name('rapports.compte-clients.pdf');
     Route::get('/rapport-carnets', [ClientStatReportController::class, 'rapportCarnets'])->name('rapports.carnets');
     Route::get('/rapport-transactions', [AgentTransactionsReportController::class, 'rapportTransactions'])->name('rapports.transactions');
     Route::get('/rapport-depot-retrait', [AgentTransactionsReportController::class, 'rapportDepotRetrait'])->name('rapports.depot_retrait');
