@@ -27,30 +27,27 @@ class ManageRepayments extends Component
     public string $search = '';
     public array $results = [];
 
-    protected $rules = [
-        'member_id' => 'required|exists:users,id',
-        'credit_id' => 'required|exists:credits,id',
-    ];
-
     public $repaymentToPay = null;
     public $applyInterest = true; // valeur par défaut
 
     public $penality = 0;
 
-    public function confirmRepayment($repaymentId)
+    public $openModalConfirm = false;
+
+    protected $rules = [
+        'member_id' => 'required|exists:users,id',
+        'credit_id' => 'required|exists:credits,id',
+    ];
+
+    public function render()
     {
-        $this->repaymentToPay = $repaymentId;
-        $repayment = Repayment::findOrFail($repaymentId);
-        $this->penality = floatval($repayment->penalty);
-        $this->dispatch('openModal', name: 'confirm-repayment'); // JS pour ouvrir le modal
+        return view('livewire.credit.manage-repayments');
     }
 
     public function mount()
     {
         $user = Auth::user();
         Gate::authorize('afficher-credit', User::class);
-
-        $this->members = User::where('role', 'membre')->get();
     }
 
     public function updatedSearch()
@@ -94,6 +91,15 @@ class ManageRepayments extends Component
         if ($this->credit_id) {
             $this->selectedCredit = Credit::with('repayments')->find($this->credit_id);
         }
+    }
+    
+    public function confirmRepayment($repaymentId)
+    {
+        $this->repaymentToPay = $repaymentId;
+        $repayment = Repayment::findOrFail($repaymentId);
+        $this->penality = floatval($repayment->penalty);
+        $this->openModalConfirm = true;
+        //$this->dispatch('openModal', name: 'confirm-repayment'); // JS pour ouvrir le modal
     }
 
     public function payRepayment($withInterest = true)
@@ -201,9 +207,11 @@ class ManageRepayments extends Component
                     'message' => "Votre échéance du {$repayment->due_date->format('d/m/Y')} a été remboursée manuellement.",
                     'read' => false,
                 ]);
+
+                $this->openModalConfirm = false;
+                notyf()->success(__('Échéance remboursée avec succès !'));
             });
 
-            notyf()->success(__('Échéance remboursée avec succès !'));
             $this->updatedCreditId(); // Rafraîchir l’affichage
 
         } catch (\Throwable $e) {
@@ -212,8 +220,4 @@ class ManageRepayments extends Component
         }
     }
 
-    public function render()
-    {
-        return view('livewire.credit.manage-repayments');
-    }
 }

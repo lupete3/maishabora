@@ -121,14 +121,15 @@
 
     <script>
         window.addEventListener('closeModal', event => {
+            console.log('Closing modal:', event.detail.name);
             const modalId = '#' + event.detail.name;
             $(modalId).find('.select2').val(null).trigger('change');
             $(modalId).modal('hide');
         });
 
-         window.addEventListener('openModal', event => {
-
-            $('#'+event.detail.name).modal('show'); // Affiche la modale
+        window.addEventListener('openModal', event => {
+            console.log('Opening modal:', event.detail.name);
+            $('#' + event.detail.name).modal('show'); // Affiche la modale
 
         });
     </script>
@@ -148,14 +149,14 @@
 
             })
 
-            .then((result) => {
+                .then((result) => {
 
-                if (result.isConfirmed) {
-                    Livewire.dispatch(event.detail.action, {id: event.detail.id});
-                } else {
-                    Livewire.dispatch('makeActionCancel', {id: event.detail.id});
-                }
-            });
+                    if (result.isConfirmed) {
+                        Livewire.dispatch(event.detail.action, { id: event.detail.id });
+                    } else {
+                        Livewire.dispatch('makeActionCancel', { id: event.detail.id });
+                    }
+                });
 
         });
 
@@ -181,13 +182,13 @@
     </script>
 
     <script>
-      document.addEventListener("livewire:load", () => {
-          Livewire.hook('request.failed', ({ status }) => {
-              if (status === 419) {
-                  window.location.reload();
-              }
-          });
-      });
+        document.addEventListener("livewire:load", () => {
+            Livewire.hook('request.failed', ({ status }) => {
+                if (status === 419) {
+                    window.location.reload();
+                }
+            });
+        });
     </script>
 
     @stack('scripts')

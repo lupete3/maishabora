@@ -1,12 +1,7 @@
 <!-- resources/views/livewire/manage-repayments.blade.php -->
 <div class="mt-0">
-    @if (session()->has('message'))
-        <div class="alert alert-success">{{ session('message') }}</div>
-    @endif
+        @include('livewire.credit.partials.modals-management')
 
-    @if (session()->has('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
-    @endif
 
     <h3>Gestion Remboursement Crédits</h3>
 
@@ -60,7 +55,7 @@
             </form>
 
             @if ($selectedCredit)
-                <div class="mt-4">
+                    <div class="mt-4">
                         <div class="small">
                             Solde :
                             @foreach (['USD', 'CDF'] as $curr)
@@ -69,9 +64,11 @@
                                     $savingsBal = (float) ($selectedCredit->user->accounts->where('currency', $curr)->where('type', 'savings')->first()?->balance ?? 0);
                                 @endphp
                                 <span class="badge border text-dark me-1">
-                                    {{ $curr }} | 
-                                    <span class="text-primary" title="Courant">C: {{ number_format($currentBal, 2, '.', ' ') }}</span> | 
-                                    <span class="text-success" title="Epargne">E: {{ number_format($savingsBal, 2, '.', ' ') }}</span>
+                                    {{ $curr }} |
+                                    <span class="text-primary" title="Courant">C:
+                                        {{ number_format($currentBal, 2, '.', ' ') }}</span> |
+                                    <span class="text-success" title="Epargne">E:
+                                        {{ number_format($savingsBal, 2, '.', ' ') }}</span>
                                 </span>
                             @endforeach
                         </div>
@@ -129,36 +126,35 @@
                     </div>
                 </div>
             @endif
-        </div>
     </div>
+</div>
 
 
 
 
-    <!-- Modal de confirmation -->
-    <div wire:ignore.self class="modal fade" id="confirm-repayment" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Confirmation remboursement</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Modal de confirmation -->
+<div wire:ignore.self class="modal fade" id="confirm-repayment" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Confirmation remboursement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
+                <div>
+                    <label>Penalités à payer : </label>
+                    <input type="number" class="form-control" value="{{ number_format($penality, 2) }}"
+                        wire:model="penality">
                 </div>
-                <div class="modal-body">
-                    <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
-                    <div>
-                        <label>Penalités à payer : </label>
-                        <input type="number" class="form-control" value="{{ number_format($penality, 2) }}"
-                            wire:model="penality">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button wire:click="payRepayment(false)" class="btn btn-warning" data-bs-dismiss="modal">
-                        Non, solder sans intérêts
-                    </button>
-                    <button wire:click="payRepayment(true)" class="btn btn-success" data-bs-dismiss="modal">
-                        Oui, appliquer les intérêts
-                    </button>
-                </div>
+            </div>
+            <div class="modal-footer">
+                <button wire:click="payRepayment(false)" class="btn btn-warning" data-bs-dismiss="modal">
+                    Non, solder sans intérêts
+                </button>
+                <button wire:click="payRepayment(true)" class="btn btn-success" data-bs-dismiss="modal">
+                    Oui, appliquer les intérêts
+                </button>
             </div>
         </div>
     </div>
