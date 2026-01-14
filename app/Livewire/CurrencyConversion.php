@@ -89,8 +89,8 @@ class CurrencyConversion extends Component
         }
 
         // Récupérer le taux de change actuel pour l’afficher dans le modal
-        $rateRecord = \App\Models\ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
-        
+        $rateRecord = ExchangeRate::getLatestRate($this->from_currency, $this->to_currency);
+
 
         if (!$rateRecord) {
             $this->addError('amount', 'Aucun taux de change défini pour cette conversion.');
@@ -178,10 +178,12 @@ class CurrencyConversion extends Component
 
                 $fromAccount = \App\Models\Account::where('user_id', $this->selected_user_id)
                     ->where('currency', $this->from_currency)
+                    ->where('type', 'current')
                     ->first();
 
                 $toAccount = \App\Models\Account::where('user_id', $this->selected_user_id)
                     ->where('currency', $this->to_currency)
+                    ->where('type', 'current')
                     ->first();
 
                 if (!$fromAccount || !$toAccount) {
@@ -288,6 +290,7 @@ class CurrencyConversion extends Component
 
         if ($this->conversion_type === 'client' && $this->selected_user_id) {
             $balances = Account::where('user_id', $this->selected_user_id)
+                ->where('type', 'current')
                 ->get()
                 ->keyBy('currency');
         } else {
