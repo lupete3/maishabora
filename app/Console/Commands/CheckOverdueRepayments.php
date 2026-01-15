@@ -89,16 +89,18 @@ class CheckOverdueRepayments extends Command
 
 
                 //Enregistrement de la transaction
-                Transaction::create([
-                    'account_id' => NULL,
-                    'agent_account_id' => $penalityAccount->id,
-                    'user_id' => 472,
-                    'type' => 'Interêt du credit',
-                    'currency' => $credit->currency,
-                    'amount' => $penaltyAmount,
-                    'balance_after' => $penalityAccount->balance,
-                    'description' => "Interêt du credit #{$credit->id} - Montant: {$penaltyAmount} {$credit->currency} du compte client {$member->code} {$member->name} {$member->postnom}",
-                ]);
+                if ($penaltyAmount > 0) {
+                    Transaction::create([
+                        'account_id' => NULL,
+                        'agent_account_id' => $penalityAccount->id,
+                        'user_id' => 472,
+                        'type' => 'Pénalité du credit',
+                        'currency' => $credit->currency,
+                        'amount' => $penaltyAmount,
+                        'balance_after' => $penalityAccount->balance,
+                        'description' => "Pénalité du credit #{$credit->id} - Montant: {$penaltyAmount} {$credit->currency} du compte client {$member->code} {$member->name} {$member->postnom}",
+                    ]);
+                }
 
                 //Enregistrement de la transaction
                 Transaction::create([

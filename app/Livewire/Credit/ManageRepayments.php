@@ -192,15 +192,17 @@ class ManageRepayments extends Component
                     ]);
 
                     // Transaction agent
-                    Transaction::create([
-                        'agent_account_id' => $penalityAccount->id,
-                        'user_id' => 472,
-                        'type' => 'encaissement_agent',
-                        'currency' => $credit->currency,
-                        'amount' => ($penality),
-                        'balance_after' => $penalityAccount->balance,
-                        'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
-                    ]);
+                    if ($penality > 0) {
+                        Transaction::create([
+                            'agent_account_id' => $penalityAccount->id,
+                            'user_id' => 472,
+                            'type' => 'encaissement_agent',
+                            'currency' => $credit->currency,
+                            'amount' => $penality,
+                            'balance_after' => $penalityAccount->balance,
+                            'description' => "Encaissement pénalité pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
+                        ]);
+                    }
                 }
 
                 // Transaction client (débit)
