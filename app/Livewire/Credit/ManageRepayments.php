@@ -92,7 +92,7 @@ class ManageRepayments extends Component
             $this->selectedCredit = Credit::with('repayments')->find($this->credit_id);
         }
     }
-    
+
     public function confirmRepayment($repaymentId)
     {
         $this->repaymentToPay = $repaymentId;
@@ -165,11 +165,20 @@ class ManageRepayments extends Component
                         ['balance' => 0]
                     );
 
+                    //Crediter la caisse centrale
+                    $penalityAccount = AgentAccount::firstOrCreate(
+                        ['user_id' => 472, 'currency' => $credit->currency],
+                        ['balance' => 0]
+                    );
+
                     $interestPart = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
                     $penality = floatval($repayment->penalty);
 
-                    $agentAccount->balance = floatval($agentAccount->balance) + ($interestPart + $penality);
+                    $agentAccount->balance = floatval($agentAccount->balance) + ($interestPart);
+                    $penalityAccount->balance = floatval($penalityAccount->balance) + ($penality);
+
                     $agentAccount->save();
+                    $penalityAccount->save();
 
                     // Transaction agent
                     Transaction::create([
@@ -177,8 +186,19 @@ class ManageRepayments extends Component
                         'user_id' => 95,
                         'type' => 'encaissement_agent',
                         'currency' => $credit->currency,
-                        'amount' => ($interestPart + $penality),
+                        'amount' => ($interestPart),
                         'balance_after' => $agentAccount->balance,
+                        'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
+                    ]);
+
+                    // Transaction agent
+                    Transaction::create([
+                        'agent_account_id' => $penalityAccount->id,
+                        'user_id' => 472,
+                        'type' => 'encaissement_agent',
+                        'currency' => $credit->currency,
+                        'amount' => ($penality),
+                        'balance_after' => $penalityAccount->balance,
                         'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
                     ]);
                 }
@@ -212,12 +232,11 @@ class ManageRepayments extends Component
                 notyf()->success(__('Échéance remboursée avec succès !'));
             });
 
-            $this->updatedCreditId(); // Rafraîchir l’affichage
+            $this->updatedCreditId();
 
         } catch (\Throwable $e) {
             report($e);
             notyf()->error('Erreur lors du remboursement : ' . $e->getMessage());
         }
     }
-
 }
