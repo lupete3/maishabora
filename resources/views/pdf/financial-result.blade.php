@@ -131,6 +131,12 @@
         <h3 class="text-center" style="text-decoration: underline; margin-bottom: 5px; text-transform: uppercase;">
             COMPTE DE RÉSULTAT ({{ $currency }})
         </h3>
+        @if(isset($date_debut) && isset($date_fin) && $period_type !== 'tout')
+            <p class="text-center" style="margin: 0; font-size: 11px;">
+                Période : du {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }}
+                au {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}
+            </p>
+        @endif
     </div>
 
     <div class="row">
