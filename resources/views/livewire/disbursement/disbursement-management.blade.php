@@ -86,7 +86,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="6" class="text-center py-5">
+                                <td colspan="7" class="text-center py-5">
                                     <div class="text-muted">
                                         <i class="bx bx-folder-open fs-1 d-block mb-2"></i>
                                         Aucun décaissement enregistré.
