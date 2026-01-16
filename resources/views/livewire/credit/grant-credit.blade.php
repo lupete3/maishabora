@@ -107,13 +107,14 @@
 
                     <div class="col-md-4 mb-3">
                         <div class="position-relative">
-                            <label>Agent Crédit</label>
+                            <label>Agent Crédit (Gestionnaire)</label>
                             <div class="table-search-input">
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31"><i
                                             class="icon-base bx bx-search"></i></span>
                                     <input type="search" wire:model.live.debounce.300ms="agent" class="form-control"
-                                        placeholder="Rechercher Agent Crédit....." aria-label="Rechercher Agent Crédit....."
+                                        placeholder="Rechercher Agent Crédit....."
+                                        aria-label="Rechercher Agent Crédit....."
                                         aria-describedby="basic-addon-search31">
                                 </div>
                             </div>
@@ -135,7 +136,35 @@
                         </div>
                     </div>
 
-                    <div class="col-md-8 mb-3">
+                    <div class="col-md-4 mb-3">
+                        <div class="position-relative">
+                            <label>Source de financement (Caissier)</label>
+                            <div class="table-search-input">
+                                <div class="input-group input-group-merge">
+                                    <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
+                                    <input type="search" wire:model.live.debounce.300ms="disbursing_agent"
+                                        class="form-control" placeholder="Rechercher Caissier..."
+                                        aria-label="Rechercher Caissier...">
+                                </div>
+                            </div>
+
+                            @if (!empty($resultsDisbursingAgent))
+                                <ul class="list-group w-100" style="z-index: 1000;">
+                                    @foreach ($resultsDisbursingAgent as $agent)
+                                        <li class="list-group-item list-group-item-action"
+                                            wire:click="selectResultDisbursingAgent({{ $agent['id'] }})">
+                                            {{ "{$agent['code']} {$agent['name']} {$agent['postnom']}" }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+                            @error('disbursing_agent_id')
+                                <span class="text-danger">{{ $message }}</span>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
                         <label>Description (facultatif)</label>
                         <input type="text" wire:model="description" class="form-control" />
                     </div>
@@ -164,7 +193,8 @@
                 </div>
 
                 <div class="modal-body">
-                    <p class="fw-bold text-center mb-3">Merci de vérifier les détails ci-dessous avant de confirmer :</p>
+                    <p class="fw-bold text-center mb-3">Merci de vérifier les détails ci-dessous avant de confirmer :
+                    </p>
                     <table class="table table-bordered">
                         <tbody>
                             <tr>
@@ -202,6 +232,10 @@
                             <tr>
                                 <th>Agent Crédit</th>
                                 <td>{{ $creditSummary['agent'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Source (Caissier)</th>
+                                <td>{{ $creditSummary['disbursing_agent'] ?? '' }}</td>
                             </tr>
                             <tr>
                                 <th>Description</th>

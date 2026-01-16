@@ -40,6 +40,10 @@ class GrantCredit extends Component
     public $resultsAgent;
     public $agent_id;
 
+    public $disbursing_agent;
+    public $resultsDisbursingAgent = [];
+    public $disbursing_agent_id;
+
     public $showConfirmModal = false;
     public $creditSummary = [];
 
@@ -54,6 +58,7 @@ class GrantCredit extends Component
         'frequency' => 'required|in:daily,monthly,weekly',
         'repayment_type' => 'required|in:constant,degressif',
         'creditFrisFix' => 'required|numeric|min:0.0|max:100',
+        'disbursing_agent_id' => 'required|exists:users,id',
     ];
 
     public function mount()
@@ -142,6 +147,43 @@ class GrantCredit extends Component
 
             $this->agent_id = $user->id;
             $this->dispatch('userSelected', $user->id);
+        }
+    }
+    public function selectResultDisbursingAgent(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->disbursing_agent = "{$user->name} {$user->postnom}";
+            $this->resultsDisbursingAgent = [];
+
+            $this->disbursing_agent_id = $user->id;
+        }
+    }
+
+    public function updatedDisbursingAgent()
+    {
+        $query = trim($this->disbursing_agent);
+
+        if ($query !== '') {
+            $terms = preg_split('/\s+/', $query);
+
+            $this->resultsDisbursingAgent = User::whereIn('role', ['Caissier', 'Receptionniste'])
+                ->where(function ($mainQuery) use ($terms) {
+                    foreach ($terms as $term) {
+                        $mainQuery->where(function ($q) use ($term) {
+                            $q->where('code', 'like', "%{$term}%")
+                                ->orWhere('name', 'like', "%{$term}%")
+                                ->orWhere('postnom', 'like', "%{$term}%")
+                                ->orWhere('prenom', 'like', "%{$term}%")
+                                ->orWhere('telephone', 'like', "%{$term}%");
+                        });
+                    }
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+        } else {
+            $this->resultsDisbursingAgent = [];
         }
     }
 
@@ -245,9 +287,9 @@ class GrantCredit extends Component
             $commissionCreditAccount->balance += $creditFrisFix;
             $commissionCreditAccount->save();
 
-            // Envoyer le montant du crédit au compte 2 du caissier pour attente du retrait
+            // Envoyer le montant du crédit au compte du caissier sélectionné pour attente du retrait
             $cassisierAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 2, 'currency' => $credit->currency],
+                ['user_id' => $this->disbursing_agent_id, 'currency' => $credit->currency],
                 ['balance' => 0]
             );
             $cassisierAccount->balance += $this->amount;
@@ -275,7 +317,7 @@ class GrantCredit extends Component
             Transaction::create([
                 'account_id' => null,
                 'agent_account_id' => $cassisierAccount->id,
-                'user_id' => 2,
+                'user_id' => $this->disbursing_agent_id,
                 'type' => 'frais_credit_pour_retrait',
                 'currency' => $credit->currency,
                 'amount' => $this->amount,
@@ -438,6 +480,7 @@ class GrantCredit extends Component
             'echeances' => "{$this->installments} × {$this->frequency}",
             'type' => ucfirst($this->repayment_type),
             'agent' => User::find($this->agent_id) ? User::find($this->agent_id)->name . ' ' . User::find($this->agent_id)->postnom : 'Inconnu',
+            'disbursing_agent' => User::find($this->disbursing_agent_id) ? User::find($this->disbursing_agent_id)->name . ' ' . User::find($this->disbursing_agent_id)->postnom : 'Inconnu',
             'description' => $this->description ?: '—',
         ];
 
