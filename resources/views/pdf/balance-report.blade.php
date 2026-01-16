@@ -68,7 +68,13 @@
 
     <hr style="margin: 10px 0; border-bottom: 2px solid #ed8d0f;">
     <h3 class="text-center" style="margin: 2px 0; text-decoration: underline;">BALANCES COMPTABLES</h3>
-    <p class="text-center"></p><strong>Devise :</strong> {{ $currency ?: 'Toutes' }}</p>
+    @if(isset($date_debut) && isset($date_fin) && $period_type !== 'tout')
+        <p class="text-center" style="margin: 0; font-size: 11px;">
+            Période : du {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }}
+            au {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}
+        </p>
+    @endif
+    <p class="text-center"><strong>Devise :</strong> {{ $currency ?: 'Toutes' }}</p>
 
     <table class="table">
         <thead>
@@ -88,11 +94,22 @@
                     <td>{{ $compte['intitule'] }}</td>
                     <td>{{ number_format($compte['total_debit'], 2, ',', ' ') }}</td>
                     <td>{{ number_format($compte['total_credit'], 2, ',', ' ') }}</td>
-                    <td>{{ number_format($compte['solde_debiteur'], 2, ',', ' ') }}</td>
-                    <td>{{ number_format($compte['solde_crediteur'], 2, ',', ' ') }}</td>
+                    <td>{{ $compte['solde_debiteur'] > 0 ? number_format($compte['solde_debiteur'], 2, ',', ' ') : '' }}
+                    </td>
+                    <td>{{ $compte['solde_crediteur'] > 0 ? number_format($compte['solde_crediteur'], 2, ',', ' ') : '' }}
+                    </td>
                 </tr>
             @endforeach
         </tbody>
+        <tfoot>
+            <tr style="background-color: #eee; font-weight: bold;">
+                <td colspan="2" class="text-center">TOTAUX</td>
+                <td>{{ number_format($totals['total_debit'], 2, ',', ' ') }}</td>
+                <td>{{ number_format($totals['total_credit'], 2, ',', ' ') }}</td>
+                <td>{{ number_format($totals['solde_debiteur'], 2, ',', ' ') }}</td>
+                <td>{{ number_format($totals['solde_crediteur'], 2, ',', ' ') }}</td>
+            </tr>
+        </tfoot>
     </table>
 
 

@@ -4,17 +4,45 @@
 
         <div class="card-header">
             <div class="row">
-                <div class="col-md-6 mt-2">
-                    <input type="text" class="form-control" placeholder="Rechercher (code, intitulé)..."
-                        wire:model.live.debounce.300ms="search">
+            <div class="row align-items-center">
+                <div class="col-md-5 mt-2">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" class="form-control" placeholder="Rechercher..." wire:model.live.debounce.300ms="search">
+                    </div>
                 </div>
-                <div class="col-md-3 mt-2">
-                    <select class="form-select" wire:model.lazy="filter_devise" style="min-width: 140px;">
-                        <option value="">Toutes devises</option>
-                        @foreach ($currencies as $cur)
-                            <option value="{{ $cur }}">{{ $cur }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-md-7 mt-2 text-end">
+                    <div class="d-flex justify-content-end gap-2 align-items-center">
+                        {{-- Filtre Période --}}
+                        <select wire:model.live="period_type" class="form-select form-select-sm" style="width: 130px;">
+                            <option value="tout">Tout</option>
+                            <option value="jour">Aujourd'hui</option>
+                            <option value="semaine">Cette semaine</option>
+                            <option value="mois">Ce mois</option>
+                            <option value="trimestre">Ce trimestre</option>
+                            <option value="annee">Cette année</option>
+                            <option value="intervalle">Intervalle</option>
+                        </select>
+
+                        {{-- Dates personnalisées --}}
+                        @if($period_type === 'intervalle')
+                            <input type="date" wire:model.live="date_debut" class="form-control form-control-sm" style="width: 130px;">
+                            <span class="fw-bold">-</span>
+                            <input type="date" wire:model.live="date_fin" class="form-control form-control-sm" style="width: 130px;">
+                        @elseif($date_debut && $date_fin && $period_type !== 'tout')
+                            <span class="badge bg-info text-dark">
+                                {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}
+                            </span>
+                        @endif
+
+                        {{-- Devise --}}
+                        <select class="form-select form-select-sm" wire:model.lazy="filter_devise" style="width: 100px;">
+                            <option value="">Devise</option>
+                            @foreach ($currencies as $cur)
+                                <option value="{{ $cur }}">{{ $cur }}</option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
                 <div class="col-md-3 mt-2">
                     <button class="btn btn-sm btn-warning float-end" wire:click="exportPdf"
