@@ -1,136 +1,117 @@
 <div>
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h4 class="text-uppercase fw-bold text-primary">Compte de Résultat</h4>
+        </div>
+        <div class="col-md-6 text-end">
+            <div class="d-flex justify-content-end gap-2">
+                <input type="text" wire:model.live.debounce.300ms="search" class="form-control w-50" placeholder="Rechercher...">
+                <select wire:model.lazy="filter_currency" class="form-select w-25">
+                    <option value="">Toutes devises</option>
+                    <option value="USD">USD</option>
+                    <option value="CDF">CDF</option>
+                </select>
+                <button class="btn btn-danger" wire:click="export" wire:loading.attr="disabled">
+                    <i class="bx bxs-file-pdf"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+
     <div class="row">
-        <div class="col-md-6 mt-2">
-            <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Rechercher un compte...">
+        <!-- CHARGES -->
+        <div class="col-md-6">
+            <div class="card border-top border-0 border-4 border-danger">
+                <div class="card-body">
+                    <h5 class="card-title text-danger mb-3 fw-bold">CHARGES (DÉPENSES)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Intitulé</th>
+                                    <th class="text-end">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data['Charge'] as $charge)
+                                    <tr>
+                                        <td>{{ $charge['code'] }}</td>
+                                        <td>{{ $charge['intitule'] }}</td>
+                                        <td class="text-end">{{ number_format($charge['solde'], 2, ',', ' ') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">Aucune charge</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td colspan="2" class="text-uppercase">Total Charges</td>
+                                    <td class="text-end text-danger">{{ number_format($totals['Charge'], 2, ',', ' ') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3 mt-2">
-            <select wire:model.lazy="filter_currency" class="form-select">
-                <option value="">Toutes devises</option>
-                <option value="USD">USD</option>
-                <option value="CDF">CDF</option>
-            </select>
-        </div>
-        <div class="col-md-3 mt-2">
-            <button class="btn btn-danger" wire:click="export" wire:loading.attr="disabled">
-                <i class="bx bxs-file-pdf"></i> Exporter PDF
-            </button>
+
+        <!-- PRODUITS -->
+        <div class="col-md-6">
+            <div class="card border-top border-0 border-4 border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-success mb-3 fw-bold">PRODUITS (RECETTES)</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Intitulé</th>
+                                    <th class="text-end">Montant</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($data['Produit'] as $produit)
+                                    <tr>
+                                        <td>{{ $produit['code'] }}</td>
+                                        <td>{{ $produit['intitule'] }}</td>
+                                        <td class="text-end">{{ number_format($produit['solde'], 2, ',', ' ') }}</td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="3" class="text-center text-muted">Aucun produit</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                            <tfoot class="table-light fw-bold">
+                                <tr>
+                                    <td colspan="2" class="text-uppercase">Total Produits</td>
+                                    <td class="text-end text-success">{{ number_format($totals['Produit'], 2, ',', ' ') }}</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    {{-- Tableau principal avec 4 colonnes --}}
-    <div class="table-responsive mt-2">
-        <table class="table table-bordered text-center align-middle">
-            <thead class="table-light">
-                <tr>
-                    <th colspan="3">ACTIFS</th>
-                    <th colspan="3">PASSIFS</th>
-                    <th colspan="3">PRODUITS</th>
-                    <th colspan="3">CHARGES</th>
-                </tr>
-                <tr>
-                    {{-- Actifs --}}
-                    <th>Code</th>
-                    <th>Intitulé</th>
-                    <th>Solde</th>
-                    {{-- Passifs --}}
-                    <th>Code</th>
-                    <th>Intitulé</th>
-                    <th>Solde</th>
-                    {{-- Produits --}}
-                    <th>Code</th>
-                    <th>Intitulé</th>
-                    <th>Solde</th>
-                    {{-- Charges --}}
-                    <th>Code</th>
-                    <th>Intitulé</th>
-                    <th>Solde</th>
-                </tr>
-            </thead>
-            <tbody>
-                @php
-                    $max = max(
-                        $accounts->where('type', 'Actif')->count(),
-                        $accounts->where('type', 'Passif')->count(),
-                        $accounts->where('type', 'Produit')->count(),
-                        $accounts->where('type', 'Charge')->count(),
-                    );
-                @endphp
-
-                @for ($i = 0; $i < $max; $i++)
-                    <tr>
-                        {{-- Actif --}}
-                        @if (isset($accounts->where('type', 'Actif')->values()[$i]))
-                            @php $a = $accounts->where('type','Actif')->values()[$i]; @endphp
-                            <td>{{ $a->code }}</td>
-                            <td>{{ $a->intitule }}</td>
-                            <td>{{ number_format($a->journals->sum('montant_debit') - $a->journals->sum('montant_credit'), 2, ',', ' ') }}
-                            </td>
-                        @else
-                            <td colspan="3"></td>
-                        @endif
-
-                        {{-- Passif --}}
-                        @if (isset($accounts->where('type', 'Passif')->values()[$i]))
-                            @php $p = $accounts->where('type','Passif')->values()[$i]; @endphp
-                            <td>{{ $p->code }}</td>
-                            <td>{{ $p->intitule }}</td>
-                            <td>{{ number_format($p->journals->sum('montant_debit') - $p->journals->sum('montant_credit'), 2, ',', ' ') }}
-                            </td>
-                        @else
-                            <td colspan="3"></td>
-                        @endif
-
-                        {{-- Produit --}}
-                        @if (isset($accounts->where('type', 'Produit')->values()[$i]))
-                            @php $pr = $accounts->where('type','Produit')->values()[$i]; @endphp
-                            <td>{{ $pr->code }}</td>
-                            <td>{{ $pr->intitule }}</td>
-                            <td>{{ number_format($pr->journals->sum('montant_debit') - $pr->journals->sum('montant_credit'), 2, ',', ' ') }}
-                            </td>
-                        @else
-                            <td colspan="3"></td>
-                        @endif
-
-                        {{-- Charge --}}
-                        @if (isset($accounts->where('type', 'Charge')->values()[$i]))
-                            @php $c = $accounts->where('type','Charge')->values()[$i]; @endphp
-                            <td>{{ $c->code }}</td>
-                            <td>{{ $c->intitule }}</td>
-                            <td>{{ number_format($c->journals->sum('montant_debit') - $c->journals->sum('montant_credit'), 2, ',', ' ') }}
-                            </td>
-                        @else
-                            <td colspan="3"></td>
-                        @endif
-                    </tr>
-                @endfor
-            </tbody>
-            <tfoot class="fw-bold table-secondary">
-                <tr>
-                    <td colspan="2">Total Actif</td>
-                    <td>{{ number_format($totals['Actif']['solde'], 2, ',', ' ') }}</td>
-
-                    <td colspan="2">Total Passif</td>
-                    <td>{{ number_format($totals['Passif']['solde'], 2, ',', ' ') }}</td>
-
-                    <td colspan="2">Total Produits</td>
-                    <td>{{ number_format($totals['Produit']['solde'], 2, ',', ' ') }}</td>
-
-                    <td colspan="2">Total Charges</td>
-                    <td>{{ number_format($totals['Charge']['solde'], 2, ',', ' ') }}</td>
-                </tr>
-            </tfoot>
-        </table>
-    </div>
-
-    {{-- Résumés --}}
-    <div class="mt-3">
-        <div class="alert alert-info">
-            Différence Bilan (Actif - Passif) :
-            <strong>{{ number_format($differences['bilan'], 2, ',', ' ') }}</strong>
-        </div>
-        <div class="alert alert-success">
-            Résultat Net (Produits - Charges) :
-            <strong>{{ number_format($differences['resultat'], 2, ',', ' ') }}</strong>
+    <!-- RESULTAT -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card {{ $resultat >= 0 ? 'bg-success' : 'bg-danger' }} text-white">
+                <div class="card-body text-center">
+                    <h3 class="fw-bold mb-0">
+                        RÉSULTAT NET : 
+                        {{ number_format($resultat, 2, ',', ' ') }}
+                        <span class="fs-6 opacity-75">
+                            ({{ $resultat >= 0 ? 'BÉNÉFICE' : 'PERTE' }})
+                        </span>
+                    </h3>
+                </div>
+            </div>
         </div>
     </div>
 </div>

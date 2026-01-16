@@ -17,98 +17,124 @@ class FinancialResult extends Component
 
     public function render()
     {
-        // Charger tous les comptes groupés par type
-        $accounts = Compte::with(['journals' => function($q) {
+        // Charger uniquement les comptes de type Produit et Charge
+        $accounts = Compte::with([
+            'journals' => function ($q) {
                 if ($this->filter_currency) {
                     $q->where('devise', $this->filter_currency);
                 }
-            }])
-            ->when($this->search, function($q) {
-                $q->where('code', 'like', "%{$this->search}%")
-                  ->orWhere('intitule', 'like', "%{$this->search}%");
+            }
+        ])
+            ->whereIn('type', ['Produit', 'Charge'])
+            ->when($this->search, function ($q) {
+                $q->where(function ($qq) {
+                    $qq->where('code', 'like', "%{$this->search}%")
+                        ->orWhere('intitule', 'like', "%{$this->search}%");
+                });
             })
             ->orderBy('type')
             ->orderBy('code')
             ->get();
 
-        // Totaux par type
+        // Totaux
         $totals = [
-            'Actif'    => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Passif'   => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Produit' => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Charge'  => ['debit' => 0, 'credit' => 0, 'solde' => 0],
+            'Produit' => 0,
+            'Charge' => 0,
+        ];
+
+        // Préparer les données pour la vue
+        $data = [
+            'Produit' => [],
+            'Charge' => [],
         ];
 
         foreach ($accounts as $account) {
-            $debit  = $account->journals->sum('montant_debit');
+            $debit = $account->journals->sum('montant_debit');
             $credit = $account->journals->sum('montant_credit');
-            $solde  = $debit - $credit;
 
-            if (isset($totals[$account->type])) {
-                $totals[$account->type]['debit']  += $debit;
-                $totals[$account->type]['credit'] += $credit;
-                $totals[$account->type]['solde']  += $solde;
+            // Calcul du solde selon la nature du compte
+            if ($account->type === 'Charge') {
+                // Charges : Solde Débiteur naturel
+                $solde = $debit - $credit;
+            } else {
+                // Produits : Solde Créditeur naturel
+                $solde = $credit - $debit;
             }
+
+            $totals[$account->type] += $solde;
+
+            $data[$account->type][] = [
+                'code' => $account->code,
+                'intitule' => $account->intitule,
+                'solde' => $solde
+            ];
         }
 
-        // Différences
-        $differences = [
-            'bilan'   => $totals['Actif']['solde'] - $totals['Passif']['solde'],
-            'resultat' => $totals['Produit']['solde'] - $totals['Charge']['solde'],
-        ];
+        // Résultats
+        $resultat = $totals['Produit'] - $totals['Charge'];
 
         return view('livewire.comptabilite.financial-result', [
-            'accounts'    => $accounts,
-            'totals'      => $totals,
-            'differences' => $differences,
+            'data' => $data,
+            'totals' => $totals,
+            'resultat' => $resultat,
         ]);
     }
 
     public function export()
     {
-        $accounts = Compte::with(['journals' => function($q) {
+        $accounts = Compte::with([
+            'journals' => function ($q) {
                 if ($this->filter_currency) {
                     $q->where('devise', $this->filter_currency);
                 }
-            }])
+            }
+        ])
+            ->whereIn('type', ['Produit', 'Charge'])
             ->orderBy('type')
             ->orderBy('code')
             ->get();
 
         $totals = [
-            'Actif'    => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Passif'   => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Produit' => ['debit' => 0, 'credit' => 0, 'solde' => 0],
-            'Charge'  => ['debit' => 0, 'credit' => 0, 'solde' => 0],
+            'Produit' => 0,
+            'Charge' => 0,
+        ];
+
+        $data = [
+            'Produit' => [],
+            'Charge' => [],
         ];
 
         foreach ($accounts as $account) {
-            $debit  = $account->journals->sum('montant_debit');
+            $debit = $account->journals->sum('montant_debit');
             $credit = $account->journals->sum('montant_credit');
-            $solde  = $debit - $credit;
 
-            if (isset($totals[$account->type])) {
-                $totals[$account->type]['debit']  += $debit;
-                $totals[$account->type]['credit'] += $credit;
-                $totals[$account->type]['solde']  += $solde;
+            if ($account->type === 'Charge') {
+                $solde = $debit - $credit;
+            } else {
+                $solde = $credit - $debit;
             }
+
+            $totals[$account->type] += $solde;
+
+            $data[$account->type][] = [
+                'code' => $account->code,
+                'intitule' => $account->intitule,
+                'solde' => $solde
+            ];
         }
 
-        $differences = [
-            'bilan'   => $totals['Actif']['solde'] - $totals['Passif']['solde'],
-            'resultat' => $totals['Produit']['solde'] - $totals['Charge']['solde'],
-        ];
+        $resultat = $totals['Produit'] - $totals['Charge'];
 
         $pdf = Pdf::loadView('pdf.financial-result', [
-            'accounts'    => $accounts,
-            'totals'      => $totals,
-            'differences' => $differences,
-            'currency'    => $this->filter_currency ?? "Toutes devises",
+            'data' => $data,
+            'totals' => $totals,
+            'resultat' => $resultat,
+            'currency' => $this->filter_currency ?? "Toutes devises",
         ])->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
-            fn() => print($pdf->output()),
-            'resultat-financier-'.now()->format('Ymd-His').'.pdf'
+            fn() => print ($pdf->output()),
+            'compte-de-resultat-' . now()->format('Ymd-His') . '.pdf'
         );
     }
 }
