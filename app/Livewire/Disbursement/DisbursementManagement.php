@@ -179,4 +179,24 @@ class DisbursementManagement extends Component
             'disbursementTypes' => DisbursementType::all(),
         ]);
     }
+
+    public function printReceipt($transactionId, $format = 'a4')
+    {
+        $transaction = Transaction::with(['user', 'disbursementType'])->findOrFail($transactionId);
+
+        $view = $format === 'pos' ? 'pdf.disbursement_pos' : 'pdf.disbursement_a4';
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView($view, ['transaction' => $transaction]);
+
+        if ($format === 'pos') {
+            $pdf->setPaper([0, 0, 164.409, 600], 'portrait'); // ~58mm width, variable height
+        } else {
+            $pdf->setPaper('a4', 'portrait');
+        }
+
+        return response()->streamDownload(
+            fn() => print ($pdf->output()),
+            "ticket-decaissement-{$transaction->id}-{$format}.pdf"
+        );
+    }
 }

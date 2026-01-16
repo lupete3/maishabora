@@ -12,7 +12,8 @@
                 </div>
                 <div class="col-md-4 d-flex justify-content-end gap-2">
                     @can('ajouter-type-decaissement')
-                        <button wire:click="openTypeModal" class="btn btn-outline-primary d-flex align-items-center shadow-sm">
+                        <button wire:click="openTypeModal"
+                            class="btn btn-outline-primary d-flex align-items-center shadow-sm">
                             <i class="bx bx-list-plus me-1"></i> Type
                         </button>
                     @endcan
@@ -43,6 +44,7 @@
                             <th>Devise</th>
                             <th>Description</th>
                             <th>Agent</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
@@ -67,7 +69,19 @@
                                 </td>
                                 <td class="text-sm">
                                     <i class="bx bx-user-circle me-1"></i>
-                                    {{ Auth::user()->name }}
+                                    {{ $disbursement->user->name ?? 'N/A' }}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1 justify-content-end">
+                                        <button wire:click="printReceipt({{ $disbursement->id }}, 'pos')"
+                                            class="btn btn-xs btn-outline-dark" title="Reçu POS">
+                                            <i class="bx bx-printer"></i> POS
+                                        </button>
+                                        <button wire:click="printReceipt({{ $disbursement->id }}, 'a4')"
+                                            class="btn btn-xs btn-outline-primary" title="Reçu Normal">
+                                            <i class="bx bxs-file-pdf"></i> A4
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty
