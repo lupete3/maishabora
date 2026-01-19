@@ -165,14 +165,26 @@ class DisbursementManagement extends Component
 
     public function render()
     {
-        $disbursements = Transaction::where('user_id', Auth::id())
-            ->where('type', 'décaissement')
-            ->with('disbursementType')
-            ->when($this->search, function ($query) {
-                $query->where('description', 'like', '%' . $this->search . '%');
-            })
-            ->latest()
+        $user = Auth::user();
+
+        if ($user->can('ajouter-type-decaissement')) {
+            $disbursements = Transaction::where('type', 'décaissement')
+                ->with('disbursementType')
+                ->when($this->search, function ($query) {
+                    $query->where('description', 'like', '%' . $this->search . '%');
+                })
+                ->latest()
+                ->paginate($this->perPage);
+        } else {
+            $disbursements = Transaction::where('user_id', Auth::id())
+                ->where('type', 'décaissement')
+                ->with('disbursementType')
+                ->when($this->search, function ($query) {
+                    $query->where('description', 'like', '%' . $this->search . '%');
+                })
+                ->latest()
             ->paginate($this->perPage);
+        }
 
         return view('livewire.disbursement.disbursement-management', [
             'disbursements' => $disbursements,
