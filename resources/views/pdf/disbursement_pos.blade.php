@@ -4,12 +4,12 @@
 <head>
     <style>
         @page {
-            margin: 0;
+            margin: 5;
         }
 
         body {
             font-family: 'Courier New', Courier, monospace;
-            font-size: 10px;
+            font-size: 12px;
             margin: 0;
             padding: 5px;
             width: 100%;
@@ -40,13 +40,13 @@
         .row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 2px;
+            margin-bottom: 4px;
         }
 
         .footer {
             text-align: center;
             margin-top: 10px;
-            font-size: 8px;
+            font-size: 10px;
         }
     </style>
 </head>
