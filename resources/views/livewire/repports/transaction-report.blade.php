@@ -60,23 +60,43 @@
     <div class="row mb-4">
         <div class="col-md-6 mb-3">
             <div class="card bg-success text-white">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-white">Total Dépôts</h6>
-                        <h4 class="mb-0">{{ number_format($deposits, 2) }}</h4>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="text-white">Total Dépôts</h6>
+                            <h4 class="mb-0">{{ number_format($deposits, 2) }}</h4>
+                        </div>
+                        <i class="bx bx-down-arrow-circle bx-lg"></i>
                     </div>
-                    <i class="bx bx-down-arrow-circle bx-lg"></i>
+                    <div class="d-flex gap-2 mt-3">
+                        <button wire:click="exportDepositsPdf" class="btn btn-sm btn-light">
+                            <i class="bx bxs-file-pdf"></i> PDF
+                        </button>
+                        <button wire:click="exportDepositsExcel" class="btn btn-sm btn-light">
+                            <i class="bx bxs-file"></i> Excel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-3">
             <div class="card bg-danger text-white">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-white">Total Retraits</h6>
-                        <h4 class="mb-0">{{ number_format($withdrawals, 2) }}</h4>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <h6 class="text-white">Total Retraits</h6>
+                            <h4 class="mb-0">{{ number_format($withdrawals, 2) }}</h4>
+                        </div>
+                        <i class="bx bx-up-arrow-circle bx-lg"></i>
                     </div>
-                    <i class="bx bx-up-arrow-circle bx-lg"></i>
+                    <div class="d-flex gap-2 mt-3">
+                        <button wire:click="exportWithdrawalsPdf" class="btn btn-sm btn-light">
+                            <i class="bx bxs-file-pdf"></i> PDF
+                        </button>
+                        <button wire:click="exportWithdrawalsExcel" class="btn btn-sm btn-light">
+                            <i class="bx bxs-file"></i> Excel
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

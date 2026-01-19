@@ -24,7 +24,11 @@
                             @php
                                 $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
                             @endphp
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="cursor: pointer;" 
+                                @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
+                                    onclick="window.location.href='{{ route('member.details', $r->credit->user->id) }}'"
+                                @endcanany
+                            >
                                 <div>
                                     <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name. ' ' . $r->credit->user->postnom. ' ' . $r->credit->user->prenom ?? '' }}</strong><br>
                                     <small class="text-muted">
@@ -90,8 +94,11 @@
                             @php
                                 $daysRemaining = now()->diffInDays(\Carbon\Carbon::parse($r->due_date), false);
                             @endphp
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
+                            <li class="list-group-item d-flex justify-content-between align-items-center" style="cursor: pointer;" 
+                                @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
+                                    onclick="window.location.href='{{ route('member.details', $r->credit->user->id) }}'"
+                                @endcanany
+                            >                                <div>
                                     <strong>{{ $r->credit->user->code . ' ' . $r->credit->user->name. ' ' . $r->credit->user->postnom. ' ' . $r->credit->user->prenom ?? '' }}</strong><br>
                                     <small class="text-muted">
                                         Montant : {{ $r->total_due . ' ' . $r->credit->currency }}

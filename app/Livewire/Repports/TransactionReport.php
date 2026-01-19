@@ -7,6 +7,10 @@ use App\Models\User;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Illuminate\Support\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DepositsExport;
+use App\Exports\WithdrawalsExport;
 
 class TransactionReport extends Component
 {
@@ -32,7 +36,8 @@ class TransactionReport extends Component
     public function getFilteredQuery()
     {
         $query = Transaction::with('user')
-            ->whereHas('user', fn($q) => $q->where('role', 'membre'));
+            ->whereHas('user', fn($q) => $q->where('role', 'membre'))
+            ->whereIn('type', ['dépôt', 'mise_quotidienne', 'retrait', 'retrait_carte_adhesion']);
 
         // Filtres temporels
         switch ($this->filterType) {
@@ -73,13 +78,13 @@ class TransactionReport extends Component
         $query = trim($this->search);
         if ($query !== '') {
             $this->results = User::query()
-                ->where(function($q) use ($query) {
+                ->where(function ($q) use ($query) {
                     $q->where('role', 'membre')
-                    ->where('code', 'like', "%{$query}%")
-                      ->orWhere('name', 'like', "%{$query}%")
-                      ->orWhere('postnom', 'like', "%{$query}%")
-                      ->orWhere('prenom', 'like', "%{$query}%")
-                      ->orWhere('telephone', 'like', "%{$query}%");
+                        ->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
                 })
                 ->limit(10)
                 ->get(['id', 'code', 'name', 'postnom', 'prenom'])
@@ -105,14 +110,13 @@ class TransactionReport extends Component
     {
         $query = $this->getFilteredQuery();
 
-        $deposits = (clone $query)->where(function ($q) {
-            $q->where('type', 'dépôt')->orWhere('type', 'mise_quotidienne');
-        })->sum('amount');
+        // Calcul des dépôts (dépôt + mise_quotidienne)
+        $deposits = (clone $query)->whereIn('type', ['dépôt', 'mise_quotidienne'])->sum('amount');
 
-        $withdrawals = (clone $query)->where(function ($q) {
-            $q->where('type', 'retrait')->orWhere('type', 'retrait_carte_adhesion');
-        })->sum('amount');
+        // Calcul des retraits (retrait + retrait_carte_adhesion)
+        $withdrawals = (clone $query)->whereIn('type', ['retrait', 'retrait_carte_adhesion'])->sum('amount');
 
+        // Récupération des transactions paginées
         $transactions = $query->latest()->paginate(10);
 
         $members = User::where('role', 'membre')->orderBy('name', 'ASC')->get();
@@ -123,5 +127,73 @@ class TransactionReport extends Component
             'transactions' => $transactions,
             'members' => $members,
         ]);
+    }
+
+    // Export PDF des dépôts
+    public function exportDepositsPdf()
+    {
+        $query = $this->getFilteredQuery();
+        $depositsData = (clone $query)->whereIn('type', ['dépôt', 'mise_quotidienne'])->latest()->get();
+        $total = $depositsData->sum('amount');
+
+        $pdf = Pdf::loadView('pdf.deposits-report', [
+            'deposits' => $depositsData,
+            'total' => $total,
+            'filterType' => $this->filterType,
+            'currency' => $this->currency,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+        ])->setPaper('A4', 'portrait');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, "rapport_depots_" . now()->format('Ymd_His') . ".pdf");
+    }
+
+    // Export Excel des dépôts
+    public function exportDepositsExcel()
+    {
+        $query = $this->getFilteredQuery();
+        $depositsData = (clone $query)->whereIn('type', ['dépôt', 'mise_quotidienne'])->latest()->get();
+        $total = $depositsData->sum('amount');
+
+        return Excel::download(
+            new DepositsExport($depositsData, $total),
+            'rapport_depots_' . now()->format('Ymd_His') . '.xlsx'
+        );
+    }
+
+    // Export PDF des retraits
+    public function exportWithdrawalsPdf()
+    {
+        $query = $this->getFilteredQuery();
+        $withdrawalsData = (clone $query)->whereIn('type', ['retrait', 'retrait_carte_adhesion'])->latest()->get();
+        $total = $withdrawalsData->sum('amount');
+
+        $pdf = Pdf::loadView('pdf.withdrawals-report', [
+            'withdrawals' => $withdrawalsData,
+            'total' => $total,
+            'filterType' => $this->filterType,
+            'currency' => $this->currency,
+            'startDate' => $this->startDate,
+            'endDate' => $this->endDate,
+        ])->setPaper('A4', 'portrait');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->stream();
+        }, "rapport_retraits_" . now()->format('Ymd_His') . ".pdf");
+    }
+
+    // Export Excel des retraits
+    public function exportWithdrawalsExcel()
+    {
+        $query = $this->getFilteredQuery();
+        $withdrawalsData = (clone $query)->whereIn('type', ['retrait', 'retrait_carte_adhesion'])->latest()->get();
+        $total = $withdrawalsData->sum('amount');
+
+        return Excel::download(
+            new WithdrawalsExport($withdrawalsData, $total),
+            'rapport_retraits_' . now()->format('Ymd_His') . '.xlsx'
+        );
     }
 }

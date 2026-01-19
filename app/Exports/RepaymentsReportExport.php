@@ -16,8 +16,8 @@ class RepaymentsReportExport implements FromCollection, WithHeadings, WithMappin
     }
 
     /**
-    * @return \Illuminate\Support\Collection
-    */
+     * @return \Illuminate\Support\Collection
+     */
     public function collection()
     {
         return $this->data;
@@ -38,11 +38,11 @@ class RepaymentsReportExport implements FromCollection, WithHeadings, WithMappin
     public function map($repayment): array
     {
         return [
-            \Carbon\Carbon::parse($repayment->paid_at)->format('d/m/Y'),
+            \Carbon\Carbon::parse($repayment->paid_date)->format('d/m/Y'),
             $repayment->credit->user->code,
-            $repayment->credit->user->name. ' ' . $repayment->credit->user->postnom . ' ' . $repayment->credit->user->prenom,
-            $repayment->expected_amount,
-            $repayment->total_penalty,
+            $repayment->credit->user->name . ' ' . $repayment->credit->user->postnom . ' ' . $repayment->credit->user->prenom,
+            $repayment->total_due,
+            $repayment->penalty,
             $repayment->credit->currency,
         ];
     }

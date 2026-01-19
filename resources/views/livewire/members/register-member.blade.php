@@ -59,7 +59,12 @@
                         </thead>
                         <tbody>
                             @forelse ($members as $member)
-                                <tr>
+                                <tr style="cursor: pointer;" 
+                                    @if ($member->status)
+                                        @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
+                                            onclick="window.location.href='{{ route('member.details', $member->id) }}'"
+                                        @endcanany
+                                    @endif >
                                     <td>{{ $member->code }}</td>
                                     <td>{{ $member->name . ' ' . $member->postnom . ' ' . $member->prenom }}</td>
                                     <td>{{ $member->sexe }}</td>
@@ -71,7 +76,7 @@
                                             <span class="badge bg-danger">Inactif</span>
                                         @endif
                                     </td>
-                                    <td>
+                                    <td onclick="event.stopPropagation();">
                                         <div class="d-flex align-items-center gap-1">
                                             @if ($member->status)
                                                 @canany(['afficher-compte-membre', 'depot-compte-membre',

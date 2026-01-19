@@ -106,8 +106,10 @@ class RepaymentReport extends Component
 
     public function exportExcel()
     {
+        $report = $this->generateReport();
+
         return Excel::download(
-            new RepaymentsReportExport($this->generateReport()),
+            new RepaymentsReportExport($report['data']),
             'repayments_report_' . now()->format('Ymd_His') . '.xlsx'
         );
     }
