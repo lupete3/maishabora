@@ -183,10 +183,7 @@
                     </thead>
                     <tbody>
                         @forelse ($credits as $credit)
-                            <tr style="cursor: pointer;" 
-                                @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
-                                    onclick="window.location.href='{{ route('member.details', $credit->user->id) }}'"
-                                @endcanany>
+                            <tr>
                                 <td>{{ $credit->user->name . ' ' . $credit->user->postnom }}</td>
                                 <td>{{ $credit->currency }}</td>
                                 <td>{{ number_format($credit->amount, 2) }}</td>
