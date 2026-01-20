@@ -47,6 +47,11 @@
                     @error('editAmount') <span class="text-danger text-xs">{{ $message }}</span> @enderror
                 </div>
                 <div class="mb-3">
+                    <label class="form-label font-bold">Solde Après</label>
+                    <input type="number" step="0.01" class="form-control" wire:model="editBalanceAfter">
+                    @error('editBalanceAfter') <span class="text-danger text-xs">{{ $message }}</span> @enderror
+                </div>
+                <div class="mb-3">
                     <label class="form-label font-bold">Description</label>
                     <textarea class="form-control" wire:model="editDescription"></textarea>
                     @error('editDescription') <span class="text-danger text-xs">{{ $message }}</span> @enderror

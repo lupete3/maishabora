@@ -54,6 +54,7 @@ class MemberDetails extends Component
     // Modification de transaction
     public $editingTransactionId;
     public $editAmount;
+    public $editBalanceAfter;
     public $editDescription;
     public $openEditTransaction = false;
     public $openConfirmDeleteTransaction = false;
@@ -940,6 +941,7 @@ class MemberDetails extends Component
         $transaction = Transaction::findOrFail($transactionId);
         $this->editingTransactionId = $transactionId;
         $this->editAmount = $transaction->amount;
+        $this->editBalanceAfter = $transaction->balance_after;
         $this->editDescription = $transaction->description;
         $this->openEditTransaction = true;
     }
@@ -950,6 +952,7 @@ class MemberDetails extends Component
 
         $this->validate([
             'editAmount' => 'required|numeric|min:0',
+            'editBalanceAfter' => 'required|numeric|min:0',            
             'editDescription' => 'required|string|min:5',
         ]);
 
@@ -959,6 +962,7 @@ class MemberDetails extends Component
             $oldDescription = $transaction->description;
 
             $transaction->amount = $this->editAmount;
+            $transaction->balance_after = $this->editBalanceAfter;
             $transaction->description = $this->editDescription;
             $transaction->save();
 
