@@ -10,4 +10,9 @@ class DisbursementController extends Controller
     {
         return view('disbursement');
     }
+
+    public function approval()
+    {
+        return view('disbursement_approval');
+    }
 }

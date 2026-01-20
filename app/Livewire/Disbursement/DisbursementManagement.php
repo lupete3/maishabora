@@ -4,9 +4,11 @@ namespace App\Livewire\Disbursement;
 
 use App\Helpers\UserLogHelper;
 use App\Models\AgentAccount;
+use App\Models\DisbursementRequest;
 use App\Models\DisbursementType;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -82,66 +84,53 @@ class DisbursementManagement extends Component
 
         DB::beginTransaction();
         try {
-            $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::id(), 'currency' => $this->currency],
-                ['balance' => 0]
-            );
+            // Vérifier le solde disponible
+            $agentAccount = AgentAccount::where('user_id', Auth::id())
+                ->where('currency', $this->currency)
+                ->first();
 
-            $retainedAccount = AgentAccount::firstOrCreate(
-                ['user_id' => self::RETAINED_ACCOUNT_USER_ID, 'currency' => $this->currency],
-                ['balance' => 0]
-            );
-
-            if ($agentAccount->balance < $this->amount) {
+            if (!$agentAccount || $agentAccount->balance < $this->amount) {
                 notyf()->error('Solde de caisse insuffisant.');
                 return;
             }
 
-            // 1. Décrémenter le compte agent
-            $agentAccount->balance -= $this->amount;
-            $agentAccount->save();
-
-            // 2. Incrémenter le compte de retenue/sortie
-            $retainedAccount->balance += $this->amount;
-            $retainedAccount->save();
-
-            // 3. Créer la transaction de sortie (Caisse Agent)
-            $transaction = Transaction::create([
-                'agent_account_id' => $agentAccount->id,
+            // Créer la demande de décaissement
+            $request = DisbursementRequest::create([
                 'user_id' => Auth::id(),
-                'type' => 'décaissement',
-                'currency' => $this->currency,
-                'amount' => $this->amount,
-                'balance_after' => $agentAccount->balance,
-                'description' => "Décaissement: " . $this->description,
                 'disbursement_type_id' => $this->disbursement_type_id,
+                'amount' => $this->amount,
+                'currency' => $this->currency,
+                'description' => $this->description,
+                'status' => 'pending',
             ]);
 
-            // 4. Créer la transaction d'entrée pour le compte 195
-            Transaction::create([
-                'agent_account_id' => $retainedAccount->id,
-                'user_id' => self::RETAINED_ACCOUNT_USER_ID,
-                'type' => 'depot',
-                'currency' => $this->currency,
-                'amount' => $this->amount,
-                'balance_after' => $retainedAccount->balance,
-                'description' => "Sortie Indication (Décaissement): " . $this->description . " par " . Auth::user()->name,
-                'disbursement_type_id' => $this->disbursement_type_id,
-            ]);
+            // Notifier les approbateurs (Comptable et Gérant)
+            $approvers = User::permission('approuver-decaissement')->get();
+
+            foreach ($approvers as $approver) {
+                Notification::create([
+                    'user_id' => $approver->id,
+                    'title' => 'Nouvelle demande de décaissement',
+                    'message' => Auth::user()->name . ' a créé une demande de décaissement de ' .
+                        number_format($this->amount, 2) . ' ' . $this->currency .
+                        ' pour: ' . $this->description,
+                    'read' => false,
+                ]);
+            }
 
             UserLogHelper::log_user_activity(
-                action: 'décaissement',
-                description: "Décaissement de {$this->amount} {$this->currency} pour: {$this->description}",
+                action: 'demande-décaissement',
+                description: "Demande de décaissement de {$this->amount} {$this->currency} pour: {$this->description}",
             );
 
             DB::commit();
 
             $this->closeModal();
-            notyf()->success('Décaissement enregistré avec succès.');
+            notyf()->success('Demande de décaissement créée avec succès. En attente d\'approbation.');
 
         } catch (\Throwable $th) {
             DB::rollBack();
-            notyf()->error('Une erreur est survenue lors du décaissement.');
+            notyf()->error('Une erreur est survenue lors de la création de la demande.');
             throw $th;
         }
     }
@@ -167,27 +156,29 @@ class DisbursementManagement extends Component
     {
         $user = Auth::user();
 
+        // Afficher toutes les demandes pour les gestionnaires, sinon seulement celles de l'utilisateur
         if ($user->can('ajouter-type-decaissement')) {
-            $disbursements = Transaction::where('type', 'décaissement')
-                ->with('disbursementType')
+            $disbursementRequests = DisbursementRequest::with(['user', 'disbursementType', 'approvedBy'])
+                ->when($this->search, function ($query) {
+                    $query->where('description', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('user', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%');
+                        });
+                })
+                ->latest()
+                ->paginate($this->perPage);
+        } else {
+            $disbursementRequests = DisbursementRequest::where('user_id', Auth::id())
+                ->with(['user', 'disbursementType', 'approvedBy'])
                 ->when($this->search, function ($query) {
                     $query->where('description', 'like', '%' . $this->search . '%');
                 })
                 ->latest()
                 ->paginate($this->perPage);
-        } else {
-            $disbursements = Transaction::where('user_id', Auth::id())
-                ->where('type', 'décaissement')
-                ->with('disbursementType')
-                ->when($this->search, function ($query) {
-                    $query->where('description', 'like', '%' . $this->search . '%');
-                })
-                ->latest()
-            ->paginate($this->perPage);
         }
 
         return view('livewire.disbursement.disbursement-management', [
-            'disbursements' => $disbursements,
+            'disbursementRequests' => $disbursementRequests,
             'disbursementTypes' => DisbursementType::all(),
         ]);
     }

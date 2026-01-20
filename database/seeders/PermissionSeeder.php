@@ -96,6 +96,8 @@ class PermissionSeeder extends Seeder
             "migrer-comptes",
             "decaissement",
             "ajouter-type-decaissement",
+            "approuver-decaissement",
+            "rejeter-decaissement"
 
 
         ];

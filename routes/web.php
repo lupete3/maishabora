@@ -137,6 +137,10 @@ Route::middleware(['auth', 'auth.session', 'permission:decaissement'])->group(fu
     Route::get('/gestion-decaissements', [App\Http\Controllers\DisbursementController::class, 'index'])->name('disbursement.index');
 });
 
+Route::middleware(['auth', 'auth.session', 'permission:approuver-decaissement'])->group(function () {
+    Route::get('/approbation-decaissements', [App\Http\Controllers\DisbursementController::class, 'approval'])->name('disbursement.approval');
+});
+
 Route::middleware(['auth', 'auth.session', 'permission:depot-compte-membre'])->group(function () {
     Route::get('/cloture-caisse', [ClotureController::class, 'index'])->name('agent.cloture');
     Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');

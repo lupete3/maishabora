@@ -7,7 +7,7 @@
             <div class="row">
                 <div class="col-md-8">
                     <h5 class="mb-0 text-primary fw-bold">
-                        <i class="bx bx-money-withdraw me-2"></i> Historique des Décaissements
+                        <i class="bx bx-money-withdraw me-2"></i> Mes Demandes de Décaissement
                     </h5>
                 </div>
                 <div class="col-md-4 d-flex justify-content-end gap-2">
@@ -18,7 +18,7 @@
                         </button>
                     @endcan
                     <button wire:click="openModal" class="btn btn-primary d-flex align-items-center shadow-sm">
-                        <i class="bx bx-plus me-1"></i> Décaissement
+                        <i class="bx bx-plus me-1"></i> Nouvelle Demande
                     </button>
                 </div>
             </div>
@@ -43,53 +43,93 @@
                             <th>Montant</th>
                             <th>Devise</th>
                             <th>Description</th>
-                            <th>Agent</th>
+                            @can('ajouter-type-decaissement')
+                                <th>Demandeur</th>
+                            @endcan
+                            <th>Statut</th>
                             <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody class="table-border-bottom-0">
-                        @forelse($disbursements as $disbursement)
+                        @forelse($disbursementRequests as $request)
                             <tr>
                                 <td class="text-xs text-muted">
-                                    {{ $disbursement->created_at->format('d/m/Y H:i') }}
+                                    {{ $request->created_at->format('d/m/Y H:i') }}
                                 </td>
                                 <td>
                                     <span class="badge bg-label-info">
-                                        {{ $disbursement->disbursementType->name ?? 'N/A' }}
+                                        {{ $request->disbursementType->name ?? 'N/A' }}
                                     </span>
                                 </td>
                                 <td class="fw-bold">
-                                    <span class="text-danger">-{{ number_format($disbursement->amount, 2) }}</span>
+                                    <span class="text-danger">-{{ number_format($request->amount, 2) }}</span>
                                 </td>
-                                <td>{{ $disbursement->currency }}</td>
+                                <td>{{ $request->currency }}</td>
                                 <td>
                                     <span class="text-wrap d-inline-block" style="max-width: 300px;">
-                                        {{ $disbursement->description }}
+                                        {{ $request->description }}
                                     </span>
                                 </td>
-                                <td class="text-sm">
-                                    <i class="bx bx-user-circle me-1"></i>
-                                    {{ $disbursement->user->name ?? 'N/A' }}
+                                @can('ajouter-type-decaissement')
+                                    <td class="text-sm">
+                                        <i class="bx bx-user-circle me-1"></i>
+                                        {{ $request->user?->name .' '.$request->user?->postnom }}
+                                    </td>
+                                @endcan
+                                <td>
+                                    @if ($request->status === 'pending')
+                                        <span class="badge bg-warning">
+                                            <i class="bx bx-time-five"></i> En attente
+                                        </span>
+                                    @elseif($request->status === 'approved')
+                                        <span class="badge bg-success">
+                                            <i class="bx bx-check-circle"></i> Approuvé
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
+                                        </small>
+                                    @elseif($request->status === 'rejected')
+                                        <span class="badge bg-danger">
+                                            <i class="bx bx-x-circle"></i> Rejeté
+                                        </span>
+                                        <br>
+                                        <small class="text-muted">
+                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
+                                        </small>
+                                        @if($request->rejection_reason)
+                                            <br>
+                                            <small class="text-danger">
+                                                <strong>Motif:</strong> {{ $request->rejection_reason }}
+                                            </small>
+                                        @endif
+                                    @endif
                                 </td>
                                 <td>
                                     <div class="d-flex gap-1 justify-content-end">
-                                        <button wire:click="printReceipt({{ $disbursement->id }}, 'pos')"
-                                            class="btn btn-xs btn-outline-dark" title="Reçu POS">
-                                            <i class="bx bx-printer"></i> POS
-                                        </button>
-                                        <button wire:click="printReceipt({{ $disbursement->id }}, 'a4')"
-                                            class="btn btn-xs btn-outline-primary" title="Reçu Normal">
-                                            <i class="bx bxs-file-pdf"></i> A4
-                                        </button>
+                                        @if($request->status === 'approved' && $request->transaction_id)
+                                            <button wire:click="printReceipt({{ $request->transaction_id }}, 'pos')"
+                                                class="btn btn-xs btn-outline-dark" title="Reçu POS">
+                                                <i class="bx bx-printer"></i> POS
+                                            </button>
+                                            <button wire:click="printReceipt({{ $request->transaction_id }}, 'a4')"
+                                                class="btn btn-xs btn-outline-primary" title="Reçu Normal">
+                                                <i class="bx bxs-file-pdf"></i> A4
+                                            </button>
+                                        @else
+                                            <span class="text-muted small">-</span>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center py-5">
+                                <td colspan="8" class="text-center py-5">
                                     <div class="text-muted">
                                         <i class="bx bx-folder-open fs-1 d-block mb-2"></i>
-                                        Aucun décaissement enregistré.
+                                        Aucune demande de décaissement enregistrée.
                                     </div>
                                 </td>
                             </tr>
@@ -99,7 +139,7 @@
             </div>
 
             <div class="mt-4">
-                {{ $disbursements->links() }}
+                {{ $disbursementRequests->links() }}
             </div>
         </div>
     </div>

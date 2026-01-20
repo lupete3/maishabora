@@ -68,6 +68,15 @@
             </li>
         @endcan
 
+        @can('approuver-decaissement')
+            <li class="menu-item @if (request()->routeIs('disbursement.approval')) active @endif">
+                <a href="{{ route('disbursement.approval') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-check-shield"></i> <!-- Icône d'approbation -->
+                    <div data-i18n="Analytics">Approbation Décaissements</div>
+                </a>
+            </li>
+        @endcan
+
         @can('afficher-rapport-credit')
             <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage', 'credit.applications.*')) active @endif"
                 wire:ignore.self>
