@@ -85,6 +85,7 @@ class MemberDetails extends Component
     {
         $this->cards = MembershipCard::where('member_id', $this->memberId)
             ->where('is_active', true)
+            ->where('card_type', 'epargne')
             ->with(['contributions'])
             ->get();
 
