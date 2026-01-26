@@ -19,7 +19,8 @@ class MembershipCard extends Model
         'start_date',
         'end_date',
         'is_active',
-        'first_mise_retained'
+        'first_mise_retained',
+        'card_type'
     ];
 
     // Membre propriétaire du carnet

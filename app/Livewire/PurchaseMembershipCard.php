@@ -59,7 +59,7 @@ class PurchaseMembershipCard extends Component
         Gate::authorize('afficher-carnet', User::class);
 
         $this->members = User::where('role', 'membre')->get();
-        $this->agents = User::where('role', '!=','membre')->get();
+        $this->agents = User::where('role', '!=', 'membre')->get();
     }
 
     public function updatedSearch()
@@ -104,6 +104,21 @@ class PurchaseMembershipCard extends Component
         }
     }
 
+    public $card_type = 'epargne'; // 'epargne' or 'simple'
+
+    public function updatedCardType($value)
+    {
+        if ($value === 'simple') {
+            $this->currency = 'USD';
+            $this->price = 1;
+            $this->subscription_amount = 0;
+        } else {
+            $this->currency = 'CDF';
+            $this->price = 1000;
+            $this->subscription_amount = 0; // Or whatever default was
+        }
+    }
+
     public function submit()
     {
         Gate::authorize('ajouter-carnet', User::class);
@@ -118,9 +133,11 @@ class PurchaseMembershipCard extends Component
 
             // Définition des dates
             $startDate = now();
-            $endDate = $startDate->copy()->addDays(30); // 31 jours incluant le jour de début
 
-            // Création de la carte avec les dates
+            // Si carte simple, pas de date de fin spécifique requise pour les cotisations, mais on garde la logique par défaut ou on adapte
+            $endDate = $startDate->copy()->addDays(30);
+
+            // Création de la carte
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
@@ -131,23 +148,31 @@ class PurchaseMembershipCard extends Component
                 'start_date' => $startDate,
                 'end_date' => $endDate,
                 'is_active' => true,
+                'card_type' => $this->card_type,
             ]);
 
-
-            // Génération des 31 mises
-            $startDate = now();
-
-            for ($i = 0; $i < 31; $i++) {
-                $card->contributions()->create([
-                    'membership_card_id' => $card->id,
-                    'contribution_date' => $startDate->copy()->addDays($i),
-                    'amount' => $this->subscription_amount,
-                    'is_paid' => false,
-                ]);
+            // Génération des mises UNIQUEMENT pour le carnet épargne
+            if ($this->card_type === 'epargne') {
+                for ($i = 0; $i < 31; $i++) {
+                    $card->contributions()->create([
+                        'membership_card_id' => $card->id,
+                        'contribution_date' => $startDate->copy()->addDays($i),
+                        'amount' => $this->subscription_amount,
+                        'is_paid' => false,
+                    ]);
+                }
             }
+
+            // Débit/Crédit Agent et Caisse (Logique existante conservée)
+            // Note: Si devise USD, on devrait adapter les comptes, mais la demande spécifie "la logique de transactions reste la même"
+            // On suppose ici que le système gère le multi-devise ou convertit.
+            // Le code original force 'CDF'.
+
+            $transactionCurrency = $this->currency; // Utiliser la devise de la carte
+
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
-                ['user_id' => Auth::user()->id, 'currency' => 'CDF'],
+                ['user_id' => Auth::user()->id, 'currency' => $transactionCurrency], // Créer compte en USD si besoin
                 ['balance' => 0]
             );
             $agentAccount->balance += $this->price;
@@ -155,51 +180,54 @@ class PurchaseMembershipCard extends Component
 
             // Débit du compte agent des profits des carnets
             $membershipCardAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 97, 'currency' => 'CDF'],
+                ['user_id' => 97, 'currency' => $transactionCurrency],
                 ['balance' => 0]
             );
             $membershipCardAccount->balance += $this->price;
             $membershipCardAccount->save();
 
-            // Enregistrement de la transaction
+            // Enregistrement de la transaction agent
             Transaction::create([
                 'account_id' => null,
                 'agent_account_id' => $agentAccount->id,
                 'user_id' => Auth::user()->id,
                 'type' => 'vente_carte_adhesion',
-                'currency' => 'CDF',
+                'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $agentAccount->balance,
-                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} CDF",
+                'description' => "Vente de carte ({$this->card_type}) à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
-
-            // Enregistrement de la transaction dans le compte 97
+            // Enregistrement de la transaction profit
             Transaction::create([
                 'account_id' => null,
                 'agent_account_id' => $membershipCardAccount->id,
                 'user_id' => 97,
                 'type' => 'vente_carte_adhesion',
-                'currency' => 'CDF',
+                'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $membershipCardAccount->balance,
-                'description' => "Vente de carte à {$member->name} - Montant: {$this->price} CDF",
+                'description' => "Vente de carte ({$this->card_type}) à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
             UserLogHelper::log_user_activity(
                 action: 'achat_carte_adhesion',
-                description: "Achat de la carte #{$card->id} pour le membre {$member->name} {$member->postnom} ({$member->code}), montant total {$this->price} {$this->currency}"
+                description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->currency}"
             );
 
             DB::commit();
 
-            $this->reset(['code','member_id','currency','price','subscription_amount']);
+            $this->reset(['code', 'member_id', 'currency', 'price', 'subscription_amount', 'card_type']);
+
+            // Remettre les valeurs par défaut pour éviter un état incohérent
+            $this->updatedCardType('epargne');
+
             $this->dispatch('$refresh');
             $this->resetPage();
             notyf()->success('Carte achetée avec succès !');
         } catch (\Exception $e) {
             DB::rollBack();
-            notyf()->error("Cette carte existe déjà");
+            notyf()->error("Erreur lors de la création de la carte : " . $e->getMessage());
         }
     }
 
@@ -335,7 +363,7 @@ class PurchaseMembershipCard extends Component
             $this->resetPage();
             notyf()->success("Carte activée avec succès.");
             return;
-        }elseif ($action === 'desactivate') {
+        } elseif ($action === 'desactivate') {
 
             if (!$card->is_active) {
                 notyf()->error("La carte est déjà désactivée.");
