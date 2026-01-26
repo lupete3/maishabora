@@ -158,7 +158,11 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
     Route::get('/comptes-comptabilite', [ComptabiliteController::class, 'index'])->name('comptabilite.comptes');
     Route::get('/type-journal', [ComptabiliteController::class, 'typeJournal'])->name('comptabilite.type_journal');
     Route::get('/journals', [ComptabiliteController::class, 'journals'])->name('comptabilite.journals');
+    Route::get('/grand-livre', [ComptabiliteController::class, 'grandLivre'])->name('comptabilite.grand_livre');
     Route::get('/balances', [ComptabiliteController::class, 'balanceGenerale'])->name('comptabilite.balance');
+    Route::get('/compte-resultat', [ComptabiliteController::class, 'compteResultat'])->name('comptabilite.compte_resultat');
+    Route::get('/bilan', [ComptabiliteController::class, 'bilan'])->name('comptabilite.bilan');
+    Route::get('/provisions', [ComptabiliteController::class, 'provisions'])->name('comptabilite.provisions');
     Route::get('/resultats', [ComptabiliteController::class, 'resultats'])->name('comptabilite.resultats');
 });
 

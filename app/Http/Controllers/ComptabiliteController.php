@@ -31,5 +31,23 @@ class ComptabiliteController extends Controller
         return view('comptabilite.resultats');
     }
 
-    
+    public function grandLivre()
+    {
+        return view('comptabilite.grand_livre');
+    }
+
+    public function compteResultat()
+    {
+        return view('comptabilite.compte_resultat');
+    }
+
+    public function bilan()
+    {
+        return view('comptabilite.bilan');
+    }
+
+    public function provisions()
+    {
+        return view('comptabilite.provisions');
+    }
 }

@@ -231,6 +231,41 @@ class ManageRepayments extends Component
                 ]);
 
                 $this->openModalConfirm = false;
+
+                // ÉCRITURES COMPTABLES AUTOMATIQUES
+                try {
+                    $accountingService = app(\App\Services\AccountingService::class);
+
+                    // Calcul des parts (si paiement avec intérêts)
+                    $montantInteret = 0;
+                    $montantPenalite = 0;
+                    $montantCapital = $amountToPay;
+
+                    if ($withInterest) {
+                        $montantInteret = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
+                        $montantPenalite = floatval($repayment->penalty);
+                        $montantCapital = $amountToPay - $montantInteret - $montantPenalite;
+                    }
+
+                    // 1. Enregistrer le remboursement du capital
+                    if ($montantCapital > 0) {
+                        $accountingService->recordRepayment($repayment, $montantCapital);
+                    }
+
+                    // 2. Enregistrer les intérêts
+                    if ($montantInteret > 0) {
+                        $accountingService->recordInterest($credit, $montantInteret, $credit->currency);
+                    }
+
+                    // 3. Enregistrer les pénalités
+                    if ($montantPenalite > 0) {
+                        $accountingService->recordLatePenalty($credit, $montantPenalite, $credit->currency);
+                    }
+
+                } catch (\Exception $e) {
+                    \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement crédit: " . $e->getMessage());
+                }
+
                 notyf()->success(__('Échéance remboursée avec succès !'));
             });
 

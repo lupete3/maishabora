@@ -163,7 +163,11 @@
                     'comptabilite.comptes',
                     'comptabilite.type_journal',
                     'comptabilite.journals',
+                    'comptabilite.grand_livre',
                     'comptabilite.balance',
+                    'comptabilite.compte_resultat',
+                    'comptabilite.bilan',
+                    'comptabilite.provisions',
                     'comptabilite.resultats'
                 )
             ) active @endif" wire:ignore.self>
@@ -193,11 +197,42 @@
                             <div data-i18n="Analytics">Ecritures Comptables</div>
                         </a>
                     </li>
-                    <!-- Simulation de crédit -->
+
+                    <!-- Grand Livre -->
+                    <li class="menu-item @if (request()->routeIs('comptabilite.grand_livre')) active @endif">
+                        <a href="{{ route('comptabilite.grand_livre') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-book-open"></i>
+                            <div data-i18n="Analytics">Grand Livre</div>
+                        </a>
+                    </li>
+
                     <li class="menu-item @if (request()->routeIs('comptabilite.balance')) active @endif">
                         <a href="{{ route('comptabilite.balance') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
                             <div data-i18n="Analytics">Balance Générale</div>
+                        </a>
+                    </li>
+
+                    <!-- États Financiers -->
+                    <li class="menu-item @if (request()->routeIs('comptabilite.compte_resultat')) active @endif">
+                        <a href="{{ route('comptabilite.compte_resultat') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-chart"></i>
+                            <div data-i18n="Analytics">Compte de Résultat</div>
+                        </a>
+                    </li>
+
+                    <li class="menu-item @if (request()->routeIs('comptabilite.bilan')) active @endif">
+                        <a href="{{ route('comptabilite.bilan') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-balance-scale"></i>
+                            <div data-i18n="Analytics">Bilan</div>
+                        </a>
+                    </li>
+
+                    <!-- Provisions -->
+                    <li class="menu-item @if (request()->routeIs('comptabilite.provisions')) active @endif">
+                        <a href="{{ route('comptabilite.provisions') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-shield-alt-2"></i>
+                            <div data-i18n="Analytics">Provisions & Risques</div>
                         </a>
                     </li>
                     <!-- Simulation de crédit -->

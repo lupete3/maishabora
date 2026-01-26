@@ -263,6 +263,15 @@ class PayrollComponent extends Component
             ]);
 
             notyf()->success('Salaire payé avec succès.');
+
+            // ÉCRITURE COMPTABLE AUTOMATIQUE - PAIE
+            try {
+                $accountingService = app(\App\Services\AccountingService::class);
+                // On passe le montant net effectivement payé ($amount) car recordSalaryPayment a été modifiée pour l'accepter
+                $accountingService->recordSalaryPayment($payroll, (float) $amount);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur comptable paiement salaire: " . $e->getMessage());
+            }
         });
     }
 

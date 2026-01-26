@@ -5,103 +5,103 @@
     <meta charset="UTF-8">
     <title>Compte de Résultat - {{ config('app.name') }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 10px;
-            margin: 5px;
-            color: #000;
-        }
+    body {
+    font-family: Arial, sans-serif;
+    font-size: 9px;
+    margin: 5px;
+    color: #000;
+    }
 
-        .header {
-            margin-bottom: 20px;
-        }
+    .header {
+    margin-bottom: 10px;
+    }
 
-        .footer {
-            text-align: center;
-            margin-top: 50px;
-            font-size: 9px;
-        }
+    .footer {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 8px;
+    }
 
-        .text-center {
-            text-align: center;
-        }
+    .text-center {
+    text-align: center;
+    }
 
-        .text-end {
-            text-align: right;
-        }
+    .text-end {
+    text-align: right;
+    }
 
-        .text-start {
-            text-align: left;
-        }
+    .text-start {
+    text-align: left;
+    }
 
-        /* Table Styles */
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
+    /* Table Styles */
+    .table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+    margin-bottom: 5px;
+    }
 
-        .table td,
-        .table th {
-            border: 1px solid #333;
-            padding: 4px;
-        }
+    .table td,
+    .table th {
+    border: 1px solid #666;
+    padding: 3px;
+    }
 
-        th {
-            background-color: #f1c206;
-            /* Yellow header from reference */
-            font-weight: bold;
-        }
+    th {
+    background-color: #f1c206;
+    font-weight: bold;
+    font-size: 9px;
+    }
 
-        /* Specific Layout for Resultat */
-        .row:after {
-            content: "";
-            display: table;
-            clear: both;
-        }
+    /* Specific Layout for Resultat */
+    .row:after {
+    content: "";
+    display: table;
+    clear: both;
+    }
 
-        .column {
-            float: left;
-            width: 49%;
-            margin-right: 1%;
-        }
+    .column {
+    float: left;
+    width: 48%; /* Réduit pour laisser une marge */
+    margin-right: 1%;
+    }
 
-        .column:last-child {
-            margin-right: 0;
-            margin-left: 1%;
-        }
+    .column:last-child {
+    margin-right: 0;
+    margin-left: 1%;
+    }
 
-        .title-charge {
-            color: #dc3545;
-            /* Red for charges */
-            border-bottom: 2px solid #dc3545;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            text-transform: uppercase;
-        }
+    .title-charge {
+    color: #dc3545;
+    border-bottom: 1px solid #dc3545;
+    margin-bottom: 5px;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    font-size: 11px;
+    }
 
-        .title-produit {
-            color: #28a745;
-            /* Green for products */
-            border-bottom: 2px solid #28a745;
-            margin-bottom: 10px;
-            padding-bottom: 5px;
-            text-transform: uppercase;
-        }
+    .title-produit {
+    color: #28a745;
+    border-bottom: 1px solid #28a745;
+    margin-bottom: 5px;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    font-size: 11px;
+    }
 
-        .result-box {
-            margin-top: 30px;
-            text-align: center;
-            border: 2px solid #333;
-            padding: 15px;
-            background-color: #f9f9f9;
-            font-size: 14px;
-        }
+    .result-box {
+    margin-top: 15px;
+    text-align: center;
+    border: 2px solid #333;
+    padding: 10px;
+    background-color: #f9f9f9;
+    font-size: 12px;
+    }
 
-        .logo {
-            width: 80px;
-        }
+    .logo {
+    width: 60px;
+    }
     </style>
 </head>
 

@@ -59,7 +59,7 @@ class PurchaseMembershipCard extends Component
         Gate::authorize('afficher-carnet', User::class);
 
         $this->members = User::where('role', 'membre')->get();
-        $this->agents = User::where('role', '!=','membre')->get();
+        $this->agents = User::where('role', '!=', 'membre')->get();
     }
 
     public function updatedSearch()
@@ -191,9 +191,18 @@ class PurchaseMembershipCard extends Component
                 description: "Achat de la carte #{$card->id} pour le membre {$member->name} {$member->postnom} ({$member->code}), montant total {$this->price} {$this->currency}"
             );
 
+            // ÉCRITURE COMPTABLE AUTOMATIQUE
+            try {
+                $accountingService = app(\App\Services\AccountingService::class);
+                $accountingService->recordMembershipPurchase($card, (float) $this->price, $this->currency);
+            } catch (\Exception $e) {
+                // On log l'erreur comptable mais on ne bloque pas la transaction métier
+                \Illuminate\Support\Facades\Log::error("Erreur comptable achat carte: " . $e->getMessage());
+            }
+
             DB::commit();
 
-            $this->reset(['code','member_id','currency','price','subscription_amount']);
+            $this->reset(['code', 'member_id', 'currency', 'price', 'subscription_amount']);
             $this->dispatch('$refresh');
             $this->resetPage();
             notyf()->success('Carte achetée avec succès !');
@@ -335,7 +344,7 @@ class PurchaseMembershipCard extends Component
             $this->resetPage();
             notyf()->success("Carte activée avec succès.");
             return;
-        }elseif ($action === 'desactivate') {
+        } elseif ($action === 'desactivate') {
 
             if (!$card->is_active) {
                 notyf()->error("La carte est déjà désactivée.");
