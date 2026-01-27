@@ -126,6 +126,14 @@ class DisbursementApproval extends Component
                 description: "Approbation du décaissement de {$request->amount} {$request->currency} pour {$request->user->name}",
             );
 
+            // ÉCRITURE COMPTABLE AUTOMATIQUE
+            try {
+                $accountingService = app(\App\Services\AccountingService::class);
+                $accountingService->recordDisbursementRequest($request);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement: " . $e->getMessage());
+            }
+
             DB::commit();
 
             notyf()->success('Demande de décaissement approuvée avec succès.');

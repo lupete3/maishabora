@@ -215,6 +215,14 @@ class PurchaseMembershipCard extends Component
                 description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->currency}"
             );
 
+            // ÉCRITURE COMPTABLE AUTOMATIQUE
+            try {
+                $accountingService = app(\App\Services\AccountingService::class);
+                $accountingService->recordMembershipPurchase($card, (float) $this->price, $this->currency);
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur comptable achat carte: " . $e->getMessage());
+            }
+
             DB::commit();
 
             $this->reset(['code', 'member_id', 'currency', 'price', 'subscription_amount', 'card_type']);

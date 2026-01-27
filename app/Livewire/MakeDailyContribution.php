@@ -103,16 +103,33 @@ class MakeDailyContribution extends Component
             'description' => "Mise quotidienne sur la carte #{$card->id} pour la date : {$this->contribution_date}"
         ]);
 
-        // Enregistrer la transaction
+        // Mise à jour du compte de l'agent (Caisse)
+        $agentAccount = \App\Models\AgentAccount::firstOrCreate(
+            ['user_id' => Auth::id(), 'currency' => $card->currency],
+            ['balance' => 0]
+        );
+
+        $agentAccount->balance += $this->amount;
+        $agentAccount->save();
+
+        // Enregistrer la transaction pour l'agent
         Transaction::create([
-            'account_id' => $account->id,
-            'user_id' => Auth::user()->id,
-            'type' => 'mise_quotidienne',
+            'agent_account_id' => $agentAccount->id,
+            'user_id' => Auth::id(),
+            'type' => 'encaissement_mise',
             'currency' => $card->currency,
             'amount' => $this->amount,
-            'balance_after' => $account->balance,
-            'description' => "Mise quotidienne sur la carte #{$card->id} pour la date : {$this->contribution_date}"
+            'balance_after' => $agentAccount->balance,
+            'description' => "Encaissement mise quotidienne carte #{$card->id} du membre {$card->member->name} ({$card->member->code}) pour le {$this->contribution_date}"
         ]);
+
+        // ÉCRITURE COMPTABLE AUTOMATIQUE
+        try {
+            $accountingService = app(\App\Services\AccountingService::class);
+            $accountingService->recordDailyContribution($card, (float) $this->amount, $card->currency);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur comptable daily contribution: " . $e->getMessage());
+        }
 
         notyf()->success("Mise effectuée avec succès !");
 

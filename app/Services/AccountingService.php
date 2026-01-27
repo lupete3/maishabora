@@ -266,6 +266,36 @@ class AccountingService
         );
     }
 
+    /**
+     * Enregistrer une demande de décaissement approuvée (Dépense)
+     */
+    public function recordDisbursementRequest($disbursementRequest): void
+    {
+        $currency = $disbursementRequest->currency;
+        $amount = $disbursementRequest->amount;
+        $description = $disbursementRequest->description;
+
+        // Détermination du compte de charge (Débit)
+        // TODO: Lier disbursement_type à un compte comptable spécifique
+        // Pour l'instant, on utilise un compte de charge par défaut ou spécifique selon le type
+        $debitAccountCode = '605'; // Autres charges d'exploitation par défaut
+
+        // Si le type est explicitement lié à une catégorie connue (logique temporaire)
+        // if ($disbursementRequest->disbursement_type_id == ...) { ... }
+
+        // Charges (débit) / Caisse (crédit)
+        $this->createBalancedEntry(
+            date: now()->format('Y-m-d'),
+            libelle: "Décaissement: {$description}",
+            reference: "DISB-{$disbursementRequest->id}",
+            devise: $currency,
+            debitAccount: $this->getAccount($debitAccountCode),
+            creditAccount: $this->getCaisseAccount($currency, 'agent'), // Sort de la caisse agent
+            amount: $amount,
+            journalType: 'Journal des charges'
+        );
+    }
+
     // ==================== MÉTHODES PRIVÉES HELPERS ====================
 
     /**

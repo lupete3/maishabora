@@ -71,6 +71,14 @@ class DepositForMember extends Component
             'description' => $this->description ?: "Dépôt effectué par " . Auth::user()->name,
         ]);
 
+        // ÉCRITURE COMPTABLE AUTOMATIQUE
+        try {
+            $accountingService = app(\App\Services\AccountingService::class);
+            $accountingService->recordDeposit($account, (float) $this->amount, $this->currency);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur comptable dépôt membre: " . $e->getMessage());
+        }
+
         notyf()->success('Dépôt effectué avec succès !');
 
         $this->reset(['amount', 'description']);
