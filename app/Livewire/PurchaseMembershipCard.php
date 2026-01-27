@@ -137,12 +137,14 @@ class PurchaseMembershipCard extends Component
             // Si carte simple, pas de date de fin spécifique requise pour les cotisations, mais on garde la logique par défaut ou on adapte
             $endDate = $startDate->copy()->addDays(30);
 
+            $curency_update = $this->card_type == 'epargne' ? 'CDF' : 'USD';
+
             // Création de la carte
             $card = MembershipCard::create([
                 'code' => $this->code,
                 'member_id' => $member->id,
                 'user_id' => $this->agent_id,
-                'currency' => $this->currency,
+                'currency' => $curency_update,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
                 'start_date' => $startDate,
