@@ -126,6 +126,20 @@ class FundTransferComponent extends Component
                         'balance_after' => $agent->balance,
                         'description' => $this->description ?? 'Virement reçu depuis caisse centrale',
                     ]);
+
+                    // ÉCRITURE COMPTABLE (Central -> Agent)
+                    try {
+                        $accountingService = app(\App\Services\AccountingService::class);
+                        $accountingService->recordTransfer(
+                            fromCaisse: 'centrale',
+                            toCaisse: 'agent', // TODO: Identifier l'agent spécifique si possible ? Pour l'instant Caisse Agent globale
+                            amount: (float) $this->amount,
+                            currency: $this->currency
+                        );
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error("Erreur comptable virement central->agent: " . $e->getMessage());
+                    }
+
                 } else {
                     $account = Account::firstOrCreate(
                         ['user_id' => $this->recipient_id, 'currency' => $this->currency],
@@ -144,6 +158,10 @@ class FundTransferComponent extends Component
                         'balance_after' => $account->balance,
                         'description' => $this->description ?? 'Virement reçu depuis caisse centrale',
                     ]);
+
+                    // TODO: Écriture comptable pour Central -> Membre
+                    // Attention: Crédit Caisse (Actif baisse) + Crédit Compte Membre (Dette augmente) = Déséquilibré sans contrepartie (Débit).
+                    // Nécessite clarification métier.
                 }
 
                 UserLogHelper::log_user_activity(
