@@ -144,7 +144,7 @@ class PurchaseMembershipCard extends Component
                 'code' => $this->code,
                 'member_id' => $member->id,
                 'user_id' => $this->agent_id,
-                'currency' => $curency_update,
+                'currency' => $this->currency,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
                 'start_date' => $startDate,
