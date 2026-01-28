@@ -147,7 +147,8 @@
                                             <span class="badge bg-primary">Epargne</span>
                                         @endif
                                     </td>
-                                    <td>{{ number_format($card->price, 2) }}</td>
+                                    @php $curency_update = $card->card_type == 'epargne' ? 'CDF' : 'USD'; @endphp
+                                    <td>{{ number_format($card->price, 2) }} {{ $curency_update }}</td>
                                     <td>
                                         @if($card->card_type == 'epargne')
                                             {{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}
