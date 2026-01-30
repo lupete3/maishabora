@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Exports\JournalExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class JournalsManager extends Component
 {
@@ -133,6 +135,10 @@ class JournalsManager extends Component
 
     public function export()
     {
+        // 🔹 Optimisation pour les gros rapports
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $query = Journal::with(['account', 'journalType', 'user'])
             ->when($this->search, fn($q) => $q->where(function ($s) {
                 $s->where('libelle', 'like', "%{$this->search}%")
@@ -147,31 +153,51 @@ class JournalsManager extends Component
 
         // ✅ Totaux par devise (débit/credit/net)
         $totalByCurrency = $journals->groupBy('devise')->map(function ($rows) {
-            $debit  = $rows->sum(fn($j) => (float) $j->montant_debit);
+            $debit = $rows->sum(fn($j) => (float) $j->montant_debit);
             $credit = $rows->sum(fn($j) => (float) $j->montant_credit);
             return [
-                'debit'  => $debit,
+                'debit' => $debit,
                 'credit' => $credit,
-                'net'    => $debit - $credit,
+                'net' => $debit - $credit,
             ];
         });
 
         $user = Auth::user();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.journals-report', [
-            'journals'         => $journals,
-            'user'             => $user,
-            'totalByCurrency'  => $totalByCurrency,
+            'journals' => $journals,
+            'user' => $user,
+            'totalByCurrency' => $totalByCurrency,
             'transactionCount' => $journals->count(),
-            'filter'           => $this->filter_journal_type ? "Journal"
+            'filter' => $this->filter_journal_type ? "Journal"
                 : ($this->filter_account ? "Grand Livre"
                     : ($this->filter_currency ? "Devise" : "Tous")),
-            'filter_currency'  => $this->filter_currency,
+            'filter_currency' => $this->filter_currency,
         ])->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
-            fn() => print($pdf->output()),
+            fn() => print ($pdf->output()),
             'rapport-journaux-' . now()->format('Ymd-His') . '.pdf'
+        );
+    }
+
+    public function exportExcel()
+    {
+        $query = Journal::with(['account', 'journalType', 'user'])
+            ->when($this->search, fn($q) => $q->where(function ($s) {
+                $s->where('libelle', 'like', "%{$this->search}%")
+                    ->orWhere('reference', 'like', "%{$this->search}%");
+            }))
+            ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
+            ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
+            ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->orderBy('date_operation', 'desc');
+
+        $journals = $query->get();
+
+        return Excel::download(
+            new JournalExport($journals),
+            'rapport-journaux-' . now()->format('Ymd-His') . '.xlsx'
         );
     }
 }

@@ -14,9 +14,13 @@
             <div class="row">
                 <div class="col-md-12 text-end mb-2">
                     @if ($journals->count() > 0)
-                        <button wire:click="export" class="btn btn-sm btn-success" wire:loading.attr="disabled">
-                            <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <i class="bx bx-download"></i> Exporter PDF
+                        <button wire:click="export" class="btn btn-sm btn-danger" wire:loading.attr="disabled">
+                            <span wire:loading wire:target="export" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <i class="bx bxs-file-pdf"></i> PDF
+                        </button>
+                        <button wire:click="exportExcel" class="btn btn-sm btn-success" wire:loading.attr="disabled">
+                            <span wire:loading wire:target="exportExcel" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                            <i class="bx bx-table"></i> Excel
                         </button>
                     @endif
                 </div>
