@@ -31,10 +31,14 @@ class PayrollComponent extends Component
     public $searchAgent = '';
     public $perPage = 10;
     public $perPageSalary = 3;
-
     public $members = [];
     public $results = [];
     public $resultsAgent = [];
+
+    // Properties for confirmation modal
+    public $showingConfirmationModal = false;
+    public $selectedUserName = '';
+    public $selectedSalaryAmount = 0;
 
     const CHARGE_ACCOUNT_USER_ID = 452;
     const CAISSIER_ACCOUNT_USER_ID = 2;
@@ -133,12 +137,40 @@ class PayrollComponent extends Component
         notyf()->success('Salaire attribué à l’agent.');
         $this->reset(['user_id', 'salary_amount', 'currency', 'search', 'results']);
     }
+    public function confirmPayment($userId)
+    {
+        Gate::authorize('ajouter-paye', User::class);
+
+        $this->user_id = $userId;
+        $user = User::find($userId);
+        if (!$user) {
+            notyf()->error('Agent non trouvé.');
+            return;
+        }
+
+        $salary = Salary::where('user_id', $userId)->where('currency', $this->currency)->first();
+        if (!$salary) {
+            notyf()->error('Salaire non configuré pour cet agent dans cette devise.');
+            return;
+        }
+
+        $this->selectedUserName = "{$user->name} {$user->postnom}";
+        $this->selectedSalaryAmount = $salary->amount;
+        $this->showingConfirmationModal = true;
+    }
+
+    public function closeConfirmationModal()
+    {
+        $this->showingConfirmationModal = false;
+    }
+
     public function paySalary($userId)
     {
         Gate::authorize('ajouter-paye', User::class);
 
         try {
             $this->processSalaryPayment($userId);
+            $this->closeConfirmationModal();
         } catch (\Exception $e) {
             notyf()->error('Erreur lors du paiement du salaire');
         }
