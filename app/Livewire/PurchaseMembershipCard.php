@@ -168,7 +168,7 @@ class PurchaseMembershipCard extends Component
             // On suppose ici que le système gère le multi-devise ou convertit.
             // Le code original force 'CDF'.
 
-            $transactionCurrency = $this->currency; // Utiliser la devise de la carte
+            $transactionCurrency = $this->card_type == 'epargne' ? 'CDF' : 'USD'; // Utiliser la devise de la carte
 
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
