@@ -32,12 +32,21 @@ class CurrencyConversion extends Component
     public $members = [];
     public $results = [];
 
+    public $startDate;
+    public $endDate;
+
     public $showConfirmationModal = false;
 
     public $rates = [
         'USD' => 'CDF',
         'CDF' => 'USD',
     ];
+
+    public function mount()
+    {
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
+    }
 
     public function updatedSearchclient()
     {
@@ -238,17 +247,28 @@ class CurrencyConversion extends Component
         $this->dispatch('$refresh');
     }
 
+    protected function getConversionsQuery()
+    {
+        return Transaction::whereIn('type', ['conversion_sortie', 'conversion_sortie_client'])
+            ->with('user')
+            ->when($this->startDate, function ($query) {
+                $query->whereDate('created_at', '>=', $this->startDate);
+            })
+            ->when($this->endDate, function ($query) {
+                $query->whereDate('created_at', '<=', $this->endDate);
+            })
+            ->orderByDesc('created_at');
+    }
+
     public function exportConversionsPdf()
     {
-        // Récupérer les conversions "sortie"
-        $conversions = Transaction::where('type', 'conversion_sortie')
-            ->with('user')
-            ->orderByDesc('created_at')
-            ->get();
+        // Récupérer les conversions avec filtres
+        $conversions = $this->getConversionsQuery()->get();
 
         // Associer chaque sortie à son entrée
         $conversions->transform(function ($sortie) {
-            $entree = Transaction::where('type', 'conversion_entree')
+            $entreeType = str_contains($sortie->type, 'client') ? 'conversion_entree_client' : 'conversion_entree';
+            $entree = Transaction::where('type', $entreeType)
                 ->where('user_id', $sortie->user_id)
                 ->where('created_at', '>=', $sortie->created_at)
                 ->orderBy('created_at')
@@ -268,17 +288,34 @@ class CurrencyConversion extends Component
         }, 'conversions_' . now()->format('d-m-Y_H-i') . '.pdf');
     }
 
+    public function exportConversionsExcel()
+    {
+        $query = $this->getConversionsQuery();
+
+        return \Maatwebsite\Excel\Facades\Excel::download(
+            new \App\Exports\CurrencyConversionExport($query),
+            'conversions_' . now()->format('d-m-Y_H-i') . '.xlsx'
+        );
+    }
+
     public function render()
     {
-        // Transactions des conversions caisse centrale (par défaut)
-        $conversions = Transaction::where('type', 'conversion_sortie')
+        // Transactions des conversions (CAISSE et CLIENT) avec filtres
+        $conversions = Transaction::whereIn('type', ['conversion_sortie', 'conversion_sortie_client'])
             ->with('user')
+            ->when($this->startDate, function ($query) {
+                $query->whereDate('created_at', '>=', $this->startDate);
+            })
+            ->when($this->endDate, function ($query) {
+                $query->whereDate('created_at', '<=', $this->endDate);
+            })
             ->orderByDesc('created_at')
             ->paginate(10);
 
         // Ajouter les paires "entrée"
         $conversions->getCollection()->transform(function ($sortie) {
-            $entree = Transaction::where('type', 'conversion_entree')
+            $entreeType = str_contains($sortie->type, 'client') ? 'conversion_entree_client' : 'conversion_entree';
+            $entree = Transaction::where('type', $entreeType)
                 ->where('user_id', $sortie->user_id)
                 ->where('created_at', '>=', $sortie->created_at)
                 ->orderBy('created_at')

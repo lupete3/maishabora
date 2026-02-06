@@ -11,6 +11,8 @@ class LoanAnalysisViewer extends Component
     public $loan_application_id;
     public $analysis = [];
     public $annual_rate;
+    public $aiAnalysis;
+    public $isAnalyzing = false;
 
     protected $listeners = ['refreshAnalysis' => 'loadAnalysis'];
 
@@ -23,7 +25,8 @@ class LoanAnalysisViewer extends Component
     public function loadAnalysis()
     {
         $loan = LoanApplication::with(['cashflow', 'balance', 'ratios', 'securities', 'decision'])->find($this->loan_application_id);
-        if (!$loan) return;
+        if (!$loan)
+            return;
 
         $service = new LoanAnalysisService($loan);
         $this->analysis = $service->fullAnalysis();
@@ -56,7 +59,20 @@ class LoanAnalysisViewer extends Component
         }
     }
 
-    
+
+
+    public function analyzeWithAI()
+    {
+        $this->isAnalyzing = true;
+
+        $loan = LoanApplication::find($this->loan_application_id);
+        if ($loan) {
+            $service = new \App\Services\AICreditAnalysisService();
+            $this->aiAnalysis = $service->analyze($loan);
+        }
+
+        $this->isAnalyzing = false;
+    }
 
     public function render()
     {

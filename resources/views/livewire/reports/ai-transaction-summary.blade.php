@@ -28,31 +28,53 @@
             </div>
 
             @if($loading)
-                <div class="alert alert-info text-center">
-                    <strong>Analyse en cours...</strong>
+                <div class="alert alert-info text-center border-0 shadow-sm mt-3">
+                    <span class="spinner-border spinner-border-sm me-2"></span>
+                    <strong>L'IA analyse les flux financiers...</strong>
                 </div>
             @else
-                <div class="card mb-3">
-                    <div class="card-header bg-success text-white">💰 Dépôts</div>
-                    <div class="card-body">
-                        <p>{{ $summaryDeposits }}</p>
+                <!-- Analyse Globale -->
+                <div class="card my-4 border-primary shadow-sm">
+                    <div class="card-header bg-label-primary d-flex align-items-center">
+                        <i class="bx bxs-pie-chart-alt-2 me-2"></i>
+                        <h6 class="mb-0 text-primary">Business Intelligence - Analyse Globale</h6>
+                    </div>
+                    <div class="card-body mt-3">
+                        <div class="white-space-pre-wrap lead h5">
+                            {{ $summaryGlobal }}
+                        </div>
                     </div>
                 </div>
 
-                <div class="card mb-3">
-                    <div class="card-header bg-danger text-white">💸 Retraits</div>
-                    <div class="card-body">
-                        <p>{{ $summaryWithdrawals }}</p>
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-3 shadow-none border">
+                            <div class="card-header bg-success text-white py-2">💰 Dépôts</div>
+                            <div class="card-body pt-3">
+                                <p class="mb-0 small">{{ $summaryDeposits }}</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="card mb-3">
-                    <div class="card-header bg-primary text-white">💳 Crédits</div>
-                    <div class="card-body">
-                        <p>{{ $summaryCredits }}</p>
+                    <div class="col-md-4">
+                        <div class="card mb-3 shadow-none border">
+                            <div class="card-header bg-danger text-white py-2">💸 Retraits</div>
+                            <div class="card-body pt-3">
+                                <p class="mb-0 small">{{ $summaryWithdrawals }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card mb-3 shadow-none border">
+                            <div class="card-header bg-primary text-white py-2">💳 Crédits</div>
+                            <div class="card-body pt-3">
+                                <p class="mb-0 small">{{ $summaryCredits }}</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             @endif
-        </div>
-    </div>
+</div>
+</div>
 </div>

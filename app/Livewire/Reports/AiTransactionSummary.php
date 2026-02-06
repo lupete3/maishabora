@@ -17,6 +17,7 @@ class AiTransactionSummary extends Component
     public $summaryDeposits;
     public $summaryWithdrawals;
     public $summaryCredits;
+    public $summaryGlobal;
     public $loading = false;
 
     protected $queryString = ['filterType', 'startDate', 'endDate'];
@@ -85,6 +86,7 @@ class AiTransactionSummary extends Component
         $this->summaryDeposits = $ai->summarizeTransactions($deposits, 'depots');
         $this->summaryWithdrawals = $ai->summarizeTransactions($withdrawals, 'retraits');
         $this->summaryCredits = $ai->summarizeTransactions($credits, 'credits');
+        $this->summaryGlobal = $ai->summarizeGlobal($deposits, $withdrawals, $credits);
 
         $this->loading = false;
     }
