@@ -315,16 +315,43 @@
         @endcan
 
         @can('afficher-logs', App\Models\User::class)
-            <li class="menu-item @if (request()->routeIs('ai.reports')) active @endif">
-                <a href="{{ route('ai.reports') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
-                    <div data-i18n="Analytics">Rapports AI</div>
+            <li class="menu-item @if (request()->is('ai/reports/*')) active open @endif" wire:ignore.self>
+                <a class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bxs-magic-wand"></i>
+                    <div data-i18n="Misc">Hub d'Analyse IA</div>
                 </a>
+                <ul class="menu-sub">
+                    <li class="menu-item @if (request()->routeIs('ai.reports')) active @endif">
+                        <a href="{{ route('ai.reports') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-sun"></i>
+                            <div data-i18n="Analytics">Résumé Quotidien</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.credit')) active @endif">
+                        <a href="{{ route('ai.reports.credit') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-credit-card"></i>
+                            <div data-i18n="Analytics">Santé des Crédits</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.clients')) active @endif">
+                        <a href="{{ route('ai.reports.clients') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-voice"></i>
+                            <div data-i18n="Analytics">Fidélité Clients</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.sales')) active @endif">
+                        <a href="{{ route('ai.reports.sales') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-trending-up"></i>
+                            <div data-i18n="Analytics">Ventes & Adhésions</div>
+                        </a>
+                    </li>
+                </ul>
             </li>
+
             <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
                 <a href="{{ route('rapports.logs') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
-                    <div data-i18n="Analytics">Logs</div>
+                    <i class="menu-icon tf-icons bx bx-history"></i> <!-- Icône de calculateur -->
+                    <div data-i18n="Analytics">Logs du système</div>
                 </a>
             </li>
         @endcan
