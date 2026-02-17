@@ -2,7 +2,19 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h4 class="mb-0"><i class="fas fa-shield-alt"></i> Provisions et Risques de Crédit</h4>
-            <div>
+            <div class="d-flex align-items-center gap-2">
+                {{-- Filtre de devise --}}
+                <div class="d-flex align-items-center me-3">
+                    <label class="me-2 mb-0" style="white-space: nowrap;">
+                        <i class="fas fa-dollar-sign"></i> Devise :
+                    </label>
+                    <select wire:model.live="currency" class="form-select form-select-sm" style="width: auto;">
+                        <option value="all">Toutes les devises</option>
+                        <option value="USD">USD</option>
+                        <option value="CDF">CDF</option>
+                    </select>
+                </div>
+
                 <button wire:click="calculateProvisions" class="btn btn-sm btn-primary">
                     <i class="fas fa-calculator"></i> Recalculer Provisions
                 </button>
@@ -21,9 +33,17 @@
                 <div class="col-md-3">
                     <div class="card bg-light">
                         <div class="card-body text-center">
-                            <div class="text-muted">Encours total</div>
+                            <div class="text-muted">
+                                Encours total
+                                @if($currency !== 'all')
+                                    <span class="badge bg-info ms-1">{{ $currency }}</span>
+                                @endif
+                            </div>
                             <div class="h4 mb-0 text-primary">
                                 {{ number_format($parIndicators['total_outstanding'] ?? 0, 2, ',', ' ') }}
+                                @if($currency !== 'all')
+                                    <small class="text-muted">{{ $currency }}</small>
+                                @endif
                             </div>
                         </div>
                     </div>

@@ -168,7 +168,7 @@ class PurchaseMembershipCard extends Component
             // On suppose ici que le système gère le multi-devise ou convertit.
             // Le code original force 'CDF'.
 
-            $transactionCurrency = $this->card_type == 'epargne' ? 'CDF' : 'USD'; // Utiliser la devise de la carte
+            $transactionCurrency = $this->currency; // Utiliser la devise de la carte
 
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
@@ -214,14 +214,6 @@ class PurchaseMembershipCard extends Component
                 action: 'achat_carte_adhesion',
                 description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->currency}"
             );
-
-            // ÉCRITURE COMPTABLE AUTOMATIQUE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordMembershipPurchase($card, (float) $this->price, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable achat carte: " . $e->getMessage());
-            }
 
             DB::commit();
 

@@ -446,12 +446,12 @@ class GrantCredit extends Component
             $credit->save();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - DÉCAISSEMENT CRÉDIT
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordCreditDisbursement($credit);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement crédit: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordCreditDisbursement($credit);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement crédit: " . $e->getMessage());
+            // }
 
             DB::commit();
 

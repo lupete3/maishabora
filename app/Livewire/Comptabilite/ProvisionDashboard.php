@@ -10,6 +10,7 @@ class ProvisionDashboard extends Component
     public $parIndicators = [];
     public $statsByClassification = [];
     public $totalProvisions = 0;
+    public $currency = 'all'; // Filtre de devise : 'all', 'USD', 'CDF'
 
     public function mount()
     {
@@ -22,14 +23,22 @@ class ProvisionDashboard extends Component
     }
 
     /**
+     * Mise à jour du filtre de devise
+     */
+    public function updatedCurrency()
+    {
+        $this->refreshData();
+    }
+
+    /**
      * Rafraîchir les données
      */
     public function refreshData()
     {
         $calculator = app(ProvisionCalculator::class);
 
-        $this->parIndicators = $calculator->calculatePARIndicators();
-        $this->statsByClassification = $calculator->getStatsByClassification();
+        $this->parIndicators = $calculator->calculatePARIndicators($this->currency);
+        $this->statsByClassification = $calculator->getStatsByClassification($this->currency);
         $this->totalProvisions = $this->statsByClassification->sum('provision');
     }
 

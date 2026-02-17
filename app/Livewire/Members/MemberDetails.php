@@ -251,12 +251,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordDeposit($account, (float) $this->amount, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable dépôt membre: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordDeposit($account, (float) $this->amount, $this->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable dépôt membre: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', 'Dépôt effectué avec succès !');
 
@@ -391,12 +391,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - COTISATION QUOTIDIENNE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordDailyContribution($card, (float) $totalPaid, $card->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable contribution quotidienne: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordDailyContribution($card, (float) $totalPaid, $card->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable contribution quotidienne: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', "Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
 
@@ -503,12 +503,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - RETRAIT
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordWithdrawal($account, (float) $this->amount, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable retrait membre: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordWithdrawal($account, (float) $this->amount, $this->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable retrait membre: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
 

@@ -145,9 +145,15 @@ class ProvisionCalculator
     /**
      * Calculer les indicateurs PAR (Portfolio At Risk)
      */
-    public function calculatePARIndicators(): array
+    public function calculatePARIndicators(string $currency = 'all'): array
     {
-        $credits = Credit::where('is_paid', false)->get();
+        $query = Credit::where('is_paid', false);
+
+        if ($currency !== 'all') {
+            $query->where('currency', $currency);
+        }
+
+        $credits = $query->get();
 
         $totalOutstanding = 0;
         $par30 = 0;
@@ -185,9 +191,15 @@ class ProvisionCalculator
     /**
      * Obtenir statistiques par classification
      */
-    public function getStatsByClassification(): Collection
+    public function getStatsByClassification(string $currency = 'all'): Collection
     {
-        $credits = Credit::where('is_paid', false)->get();
+        $query = Credit::where('is_paid', false);
+
+        if ($currency !== 'all') {
+            $query->where('currency', $currency);
+        }
+
+        $credits = $query->get();
 
         $stats = [
             'saine' => ['count' => 0, 'outstanding' => 0, 'provision' => 0],

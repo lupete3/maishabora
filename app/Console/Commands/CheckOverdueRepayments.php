@@ -77,28 +77,28 @@ class CheckOverdueRepayments extends Command
                 $agentAccount->save();
 
                 // ÉCRITURES COMPTABLES AUTOMATIQUES
-                try {
-                    $accountingService = app(\App\Services\AccountingService::class);
+                // try {
+                //     $accountingService = app(\App\Services\AccountingService::class);
 
-                    // 1. Constater la sortie du compte membre (Retrait épargne -> Caisse pivot)
-                    $accountingService->recordWithdrawal($account, (float) $expectedAmount, $credit->currency);
+                //     // 1. Constater la sortie du compte membre (Retrait épargne -> Caisse pivot)
+                //     $accountingService->recordWithdrawal($account, (float) $expectedAmount, $credit->currency);
 
-                    // 2. Ventiler le remboursement (Caisse pivot -> Crédit / Intérêts)
-                    // Hypothèse: expectedAmount contient Capital + Intérêts
-                    // Le script calcule $interestPart séparément, on l'utilise pour déduire le capital
-                    $capitalAmount = max(0, $expectedAmount - $interestPart);
+                //     // 2. Ventiler le remboursement (Caisse pivot -> Crédit / Intérêts)
+                //     // Hypothèse: expectedAmount contient Capital + Intérêts
+                //     // Le script calcule $interestPart séparément, on l'utilise pour déduire le capital
+                //     $capitalAmount = max(0, $expectedAmount - $interestPart);
 
-                    if ($capitalAmount > 0) {
-                        $accountingService->recordRepayment($repayment, (float) $capitalAmount);
-                    }
+                //     if ($capitalAmount > 0) {
+                //         $accountingService->recordRepayment($repayment, (float) $capitalAmount);
+                //     }
 
-                    if ($interestPart > 0) {
-                        $accountingService->recordInterest($credit, (float) $interestPart, $credit->currency);
-                    }
+                //     if ($interestPart > 0) {
+                //         $accountingService->recordInterest($credit, (float) $interestPart, $credit->currency);
+                //     }
 
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement auto échéance #{$repayment->id}: " . $e->getMessage());
-                }
+                // } catch (\Exception $e) {
+                //     \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement auto échéance #{$repayment->id}: " . $e->getMessage());
+                // }
 
                 //Enregistrer la transaction
                 Transaction::create([
