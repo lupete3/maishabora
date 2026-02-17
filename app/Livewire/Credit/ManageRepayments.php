@@ -149,6 +149,7 @@ class ManageRepayments extends Component
                 $repayment->paid_date = now()->format('Y-m-d');
                 $repayment->paid_amount = $amountToPay;
                 $repayment->total_due = $amountToPay;
+                $repayment->penalty = $this->penality;
                 $repayment->is_paid = true;
                 $repayment->save();
 

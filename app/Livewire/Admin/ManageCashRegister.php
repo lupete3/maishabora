@@ -24,8 +24,10 @@ class ManageCashRegister extends Component
 
     public $search = '';
     public $perPage = 10;
+    public $startDate;
+    public $endDate;
 
-    protected $updatesQueryString = ['search', 'perPage'];
+    protected $updatesQueryString = ['search', 'perPage', 'startDate', 'endDate'];
 
     protected $paginationTheme = 'bootstrap';
 
@@ -34,11 +36,15 @@ class ManageCashRegister extends Component
         'type' => 'required|in:in,out',
         'amount' => 'required|numeric|min:0',
         'description' => 'nullable|string|max:255',
+        'startDate' => 'nullable|date',
+        'endDate' => 'nullable|date',
     ];
 
     public function mount()
     {
         Gate::authorize('afficher-caisse-centrale', User::class);
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
     }
 
     public function updatedCurrency()
@@ -91,7 +97,7 @@ class ManageCashRegister extends Component
         );
 
         // Notifier les utilisateurs concernés
-        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();        
+        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
         $typeOperation = $this->type === 'in' ? 'Entrée de fonds' : 'Sortie de fonds';
         $message = "Une opération de {$typeOperation} d'un montant de " . number_format($this->amount, 2) . " {$this->currency} a été effectuée par " . Auth::user()->name . ".";
 
@@ -111,6 +117,16 @@ class ManageCashRegister extends Component
     }
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEndDate()
     {
         $this->resetPage();
     }
@@ -146,6 +162,12 @@ class ManageCashRegister extends Component
                 ->orWhere('type', 'like', '%virement_caisse_sortant%')
                 ->orWhere('type', 'like', '%paie_sortant%');
         })
+            ->when($this->startDate, function ($query) {
+                $query->whereDate('created_at', '>=', $this->startDate);
+            })
+            ->when($this->endDate, function ($query) {
+                $query->whereDate('created_at', '<=', $this->endDate);
+            })
             ->where(function ($query) {
                 $query->where('description', 'like', '%' . $this->search . '%')
                     ->orWhere('currency', 'like', '%' . $this->search . '%')

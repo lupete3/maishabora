@@ -176,6 +176,12 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|a
 
 Route::middleware(['auth', 'auth.session', 'permission:afficher-logs'])->group(function () {
     Route::get('/ai/reports/daily', [ReportAIController::class, 'index'])->name('ai.reports');
+    Route::get('/ai/reports/credit', function () {
+        return view('reports.ai-credit'); })->name('ai.reports.credit');
+    Route::get('/ai/reports/clients', function () {
+        return view('reports.ai-clients'); })->name('ai.reports.clients');
+    Route::get('/ai/reports/sales', function () {
+        return view('reports.ai-sales'); })->name('ai.reports.sales');
     Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
 });
 

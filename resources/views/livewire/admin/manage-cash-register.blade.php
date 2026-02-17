@@ -13,7 +13,8 @@
                                 </li>
                                 <li class="breadcrumb-item active" aria-current="page">
                                     <h1 class="mb-0 d-inline-block fs-6 lh-1">
-                                        {{ __('Situation de la caisse centrale') }}</h1>
+                                        {{ __('Situation de la caisse centrale') }}
+                                    </h1>
                                 </li>
                             </ol>
                         </nav>
@@ -55,14 +56,14 @@
                         <div class="card-body">
                             <div class="card-title d-flex align-items-start justify-content-between">
                                 <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/wallet-info.png" alt="Credit Card"
-                                        class="rounded" />
+                                    <img src="../assets/img/icons/unicons/wallet-info.png" alt="Credit Card" class="rounded" />
                                 </div>
 
                             </div>
                             <span>Compte CDF</span>
                             <h3 class="card-title text-nowrap mb-1">{{ $reg->currency }} :
-                                {{ number_format($reg->balance, 2) }}</h3>
+                                {{ number_format($reg->balance, 2) }}
+                            </h3>
                             <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
                                 +28.42%</small>
                         </div>
@@ -90,26 +91,24 @@
                                     aria-describedby="basic-addon-search31">
                             </div>
                         </div>
+
+                        <div class="d-flex align-items-center gap-1">
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: 150px;">
+                            <span class="text-muted">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: 150px;">
+                        </div>
                     </div>
                     @can('ajouter-sortie-caisse')
                         <div class="d-flex align-items-center gap-1">
-                            <button wire:click="openModal" class="btn btn-primary">
-                                + Ajouter
-                            </button>
-                            <a href="{{ route('cash.register.export.pdf') }}"
-                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium
-                                ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2
-                                focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none
-                                disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground
-                                h-9 rounded-md px-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-download mr-2 h-4 w-4">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" x2="12" y1="15" y2="3"></line>
-                                </svg>
-                                Télécharger PDF
+                            <a href="{{ route('cash.register.export.pdf', ['startDate' => $startDate, 'endDate' => $endDate, 'search' => $search, 'format' => 'pdf']) }}"
+                                class="btn btn-outline-danger btn-sm">
+                                <i class="bx bxs-file-pdf me-1"></i> PDF
+                            </a>
+                            <a href="{{ route('cash.register.export.pdf', ['startDate' => $startDate, 'endDate' => $endDate, 'search' => $search, 'format' => 'excel']) }}"
+                                class="btn btn-outline-success btn-sm">
+                                <i class="bx bxs-file-export me-1"></i> Excel
                             </a>
                         </div>
                     @endcan
@@ -136,14 +135,11 @@
                                     <td>{{ $transaction->created_at->format('d/m/Y H:i') }}</td>
                                     <td>
                                         @if ($transaction->type === 'Entrée de fonds')
-                                            <span
-                                                class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
+                                            <span class="badge bg-label-success me-1">{{ ucfirst($transaction->type) }}</span>
                                         @elseif ($transaction->type === 'virement vers caisse centrale')
-                                            <span
-                                                class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
+                                            <span class="badge bg-label-info me-1">{{ ucfirst($transaction->type) }}</span>
                                         @else
-                                            <span
-                                                class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
+                                            <span class="badge bg-label-danger me-1">{{ ucfirst($transaction->type) }}</span>
                                         @endif
                                     </td>
                                     <td>{{ $transaction->currency }}</td>
