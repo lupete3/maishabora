@@ -39,45 +39,57 @@ class BalanceSheet extends Component
      */
     private function calculateBalanceSheet()
     {
-        // ACTIF: Comptes de type Actif (Classes 1, 2, 3, 4, 5)
-        $comptesActifs = Compte::where('type', 'Actif')
-            ->where('is_active', true)
+        // On récupère tous les comptes actifs qui ont des écritures dans la devise sélectionnée
+        $comptes = Compte::where('is_active', true)
+            ->where(function ($q) {
+                $q->where('code', 'like', '1%')
+                    ->orWhere('code', 'like', '2%')
+                    ->orWhere('code', 'like', '3%')
+                    ->orWhere('code', 'like', '4%')
+                    ->orWhere('code', 'like', '5%');
+            })
             ->orderBy('code')
             ->get();
 
-        $this->actifs = $comptesActifs->map(function ($compte) {
-            $solde = $this->calculateAccountBalance($compte);
-            return [
-                'code' => $compte->code,
-                'intitule' => $compte->intitule,
-                'montant' => $solde,
-                'level' => $compte->level,
-                'classe' => substr($compte->code, 0, 1),
-            ];
-        })->filter(fn($item) => $item['montant'] != 0)
-            ->groupBy('classe')
-            ->map(fn($groupe) => $groupe->values())
-            ->toArray();
+        $this->actifs = [];
+        $this->passifs = [];
 
-        // PASSIF: Comptes de type Passif
-        $comptesPassifs = Compte::where('type', 'Passif')
-            ->where('is_active', true)
-            ->orderBy('code')
-            ->get();
-
-        $this->passifs = $comptesPassifs->map(function ($compte) {
+        foreach ($comptes as $compte) {
             $solde = $this->calculateAccountBalance($compte);
-            return [
-                'code' => $compte->code,
-                'intitule' => $compte->intitule,
-                'montant' => abs($solde), // Passif en positif pour affichage
-                'level' => $compte->level,
-                'classe' => substr($compte->code, 0, 1),
-            ];
-        })->filter(fn($item) => $item['montant'] != 0)
-            ->groupBy('classe')
-            ->map(fn($groupe) => $groupe->values())
-            ->toArray();
+
+            if (abs($solde) < 0.01)
+                continue;
+
+            $classe = substr($compte->code, 0, 1);
+
+            // LOGIQUE SYSCOHADA :
+            // Un compte est à l'ACTIF s'il a un solde DÉBITEUR (positif dans notre calcul pour les actifs)
+            // Un compte est au PASSIF s'il a un solde CRÉDITEUR (positif dans notre calcul pour les passifs, donc négatif ici)
+
+            // Note: calculateAccountBalance renvoie (Débit - Crédit) pour les types 'Actif'
+            // et (Crédit - Débit) pour les types 'Passif'.
+            // Pour harmoniser, on va regarder le solde brut si possible, 
+            // ou adapter selon le type actuel tout en respectant le signe.
+
+            if ($compte->type === 'Actif') {
+                if ($solde > 0) {
+                    // C'est bien un Actif (solde débiteur)
+                    $this->addToSection('actifs', $compte, $solde);
+                } elseif ($solde < 0) {
+                    // C'est un Actif avec solde créditeur (ex: banque à découvert) -> va au PASSIF
+                    $this->addToSection('passifs', $compte, abs($solde));
+                }
+            } else {
+                // Type Passif (Classe 1, 4...)
+                if ($solde > 0) {
+                    // C'est bien un Passif (solde créditeur)
+                    $this->addToSection('passifs', $compte, $solde);
+                } elseif ($solde < 0) {
+                    // C'veut dire solde débiteur pour un compte de passif -> va à l'ACTIF
+                    $this->addToSection('actifs', $compte, abs($solde));
+                }
+            }
+        }
 
         // Calculer résultat net et l'ajouter au passif
         $resultatNet = $this->calculateNetIncome();
@@ -97,7 +109,26 @@ class BalanceSheet extends Component
         // Totaux
         $this->totalActifs = collect($this->actifs)->flatten(1)->sum('montant');
         $this->totalPassifs = collect($this->passifs)->flatten(1)->sum('montant');
-        $this->isBalanced = abs($this->totalActifs - $this->totalPassifs) < 0.01; // Tolérance 1 centime
+        $this->isBalanced = abs($this->totalActifs - $this->totalPassifs) < 0.05; // Marge de 0.05 pour les micro-arrondis
+    }
+
+    /**
+     * Helper pour ajouter un compte à une section (actifs ou passifs)
+     */
+    private function addToSection(string $section, Compte $compte, float $montant)
+    {
+        $classe = substr($compte->code, 0, 1);
+        if (!isset($this->{$section}[$classe])) {
+            $this->{$section}[$classe] = [];
+        }
+
+        $this->{$section}[$classe][] = [
+            'code' => $compte->code,
+            'intitule' => $compte->intitule,
+            'montant' => $montant,
+            'level' => $compte->level,
+            'classe' => $classe,
+        ];
     }
 
     /**
