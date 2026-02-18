@@ -12,6 +12,10 @@ class ProvisionDashboard extends Component
     public $totalProvisions = 0;
     public $currency = 'all'; // Filtre de devise : 'all', 'USD', 'CDF'
 
+    // Modal state
+    public $selectedClassification = null;
+    public $selectedCredits = [];
+
     public function mount()
     {
         $this->refreshData();
@@ -64,5 +68,26 @@ class ProvisionDashboard extends Component
 
         notyf()->success("Écritures comptables générées pour {$provisions->count()} provisions");
         $this->refreshData();
+    }
+
+    /**
+     * Afficher les crédits d'une classification
+     */
+    public function showCredits($classification)
+    {
+        $this->selectedClassification = $classification;
+        $calculator = app(ProvisionCalculator::class);
+        $this->selectedCredits = $calculator->getCreditsByClassification($classification, $this->currency);
+
+        $this->dispatch('show-provision-modal');
+    }
+
+    /**
+     * Fermer la modal
+     */
+    public function closeModal()
+    {
+        $this->selectedClassification = null;
+        $this->selectedCredits = [];
     }
 }

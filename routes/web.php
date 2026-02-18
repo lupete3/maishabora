@@ -38,7 +38,6 @@ use App\Http\Controllers\UserController;
 use App\Http\Livewire\Credit\LoanApplicationCreate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
-use Maatwebsite\Excel\Facades\Excel;
 
 
 Route::get('/', function () {
@@ -56,7 +55,6 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-centrale'
         ->name('cash.register.export.pdf');
 });
 
-
 Route::middleware(['auth', 'auth.session', 'permission:afficher-client'])->group(function () {
     Route::get('/enregistrer-membre', [RegisterMemberController::class, 'index'])->name('member.register');
     Route::get('/membre/{id}', [MemberDetailsController::class, 'index'])->name('member.details');
@@ -64,7 +62,6 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-client'])->group
         ->name('member.transactions.export');
     Route::get('/receipt/transaction/{id}', [ReceiptController::class, 'generate'])->name('receipt.generate');
     Route::get('/receipt/transactionpos/{id}', [ReceiptController::class, 'generatePos'])->name('receipt.generate_pos');
-
 });
 
 Route::middleware(['auth', 'auth.session'])->group(function () {
@@ -163,6 +160,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
     Route::get('/compte-resultat', [ComptabiliteController::class, 'compteResultat'])->name('comptabilite.compte_resultat');
     Route::get('/bilan', [ComptabiliteController::class, 'bilan'])->name('comptabilite.bilan');
     Route::get('/provisions', [ComptabiliteController::class, 'provisions'])->name('comptabilite.provisions');
+    Route::get('/export/provisions', [App\Http\Controllers\ProvisionReportController::class, 'export'])->name('provisions.export.pdf');
     Route::get('/resultats', [ComptabiliteController::class, 'resultats'])->name('comptabilite.resultats');
 });
 
@@ -177,11 +175,14 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|a
 Route::middleware(['auth', 'auth.session', 'permission:afficher-logs'])->group(function () {
     Route::get('/ai/reports/daily', [ReportAIController::class, 'index'])->name('ai.reports');
     Route::get('/ai/reports/credit', function () {
-        return view('reports.ai-credit'); })->name('ai.reports.credit');
+        return view('reports.ai-credit');
+    })->name('ai.reports.credit');
     Route::get('/ai/reports/clients', function () {
-        return view('reports.ai-clients'); })->name('ai.reports.clients');
+        return view('reports.ai-clients');
+    })->name('ai.reports.clients');
     Route::get('/ai/reports/sales', function () {
-        return view('reports.ai-sales'); })->name('ai.reports.sales');
+        return view('reports.ai-sales');
+    })->name('ai.reports.sales');
     Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
 });
 

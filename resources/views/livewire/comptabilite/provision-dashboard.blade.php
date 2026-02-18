@@ -16,10 +16,13 @@
                 </div>
 
                 <button wire:click="calculateProvisions" class="btn btn-sm btn-primary">
-                    <i class="fas fa-calculator"></i> Recalculer Provisions
+                    <i class="bx bx-calculator"></i> Recalculer Provisions
                 </button>
+                <a href="{{ route('provisions.export.pdf', ['currency' => $currency]) }}" class="btn btn-sm btn-danger">
+                    <i class="bx bx-file"></i> Exporter en PDF
+                </a>
                 <button wire:click="generateJournalEntries" class="btn btn-sm btn-success">
-                    <i class="fas fa-file-invoice-dollar"></i> Générer Écritures
+                    <i class="bx bx-file-invoice"></i> Générer Écritures
                 </button>
             </div>
         </div>
@@ -105,6 +108,7 @@
                                     <th class="text-right">Capital restant dû</th>
                                     <th class="text-center">Taux provision</th>
                                     <th class="text-right">Montant provisionné</th>
+                                    <th class="text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -142,13 +146,19 @@
                                         <td class="text-right font-weight-bold">
                                             {{ number_format($stats['provision'], 2, ',', ' ') }}
                                         </td>
+                                        <td class="text-center">
+                                            <button wire:click="showCredits('{{ $classification }}')"
+                                                class="btn btn-sm btn-icon btn-outline-primary" title="Voir les détails">
+                                                <i class="bx bx-show"></i>
+                                            </button>
+                                        </td>
                                     </tr>
                                 @endforeach
                             </tbody>
                             <tfoot class="bg-light font-weight-bold">
                                 <tr>
                                     <td colspan="2" class="text-right">TOTAL PROVISIONS REQUISES</td>
-                                    <td colspan="2"></td>
+                                    <td colspan="3"></td>
                                     <td class="text-right text-danger">
                                         {{ number_format($totalProvisions, 2, ',', ' ') }}
                                     </td>
@@ -176,4 +186,84 @@
             </div>
         </div>
     </div>
+
+    {{-- Modal des Détails --}}
+    <div wire:ignore.self class="modal fade" id="provisionDetailModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-primary">
+                    <h5 class="modal-title text-white">
+                        <i class="bx bx-list-ul"></i> Détails des Crédits :
+                        @if($selectedClassification == 'saine') Saine (0j)
+                        @elseif($selectedClassification == '1-30') 1-30 jours
+                        @elseif($selectedClassification == '31-60') 31-60 jours
+                        @elseif($selectedClassification == '61-90') 61-90 jours
+                        @elseif($selectedClassification == '>90') +90 jours (Douteuse)
+                        @endif
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        wire:click="closeModal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Membre</th>
+                                    <th>Référence</th>
+                                    <th class="text-right">Encours</th>
+                                    <th class="text-center">Retard exact</th>
+                                    <th class="text-right">Provision</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($selectedCredits as $credit)
+                                    <tr>
+                                        <td><strong>#{{ $credit->user->code ?? '' }} {{ $credit->user->name ?? 'Inconnu' }}
+                                                {{ $credit->user->postnom ?? 'Inconnu' }}
+                                                {{ $credit->user->prenom ?? '' }}</strong></td>
+                                        <td><small class="text-muted">#{{ $credit->id }}</small></td>
+                                        <td class="text-right">{{ number_format($credit->outstanding_amount, 2, ',', ' ') }}
+                                            {{ $credit->currency }}
+                                        </td>
+                                        <td class="text-center">
+                                            @if($credit->days_overdue > 0)
+                                                <span class="text-danger font-weight-bold">{{ $credit->days_overdue }}
+                                                    jours</span>
+                                            @else
+                                                <span class="text-success">À jour</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-right font-weight-bold">
+                                            {{ number_format($credit->provision_amount, 2, ',', ' ') }}
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted italic">Aucun crédit trouvé dans
+                                            cette catégorie.</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        wire:click="closeModal">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @push('scripts')
+        <script>
+            document.addEventListener('livewire:init', () => {
+                Livewire.on('show-provision-modal', () => {
+                    var modal = new bootstrap.Modal(document.getElementById('provisionDetailModal'));
+                    modal.show();
+                });
+            });
+        </script>
+    @endpush
 </div>
