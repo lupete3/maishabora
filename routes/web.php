@@ -146,6 +146,8 @@ Route::middleware(['auth', 'auth.session', 'permission:depot-compte-membre'])->g
 Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-agent'])->group(function () {
     Route::get('/ecarts-caisse', [App\Http\Controllers\EcartCaisseController::class, 'index'])->name('ecarts.caisse');
     Route::get('/ecarts-caisse-export', [App\Http\Controllers\EcartCaisseController::class, 'exportPdf'])->name('ecarts.export');
+    Route::get('/rapport-performance-agents', [App\Http\Controllers\AgentReportController::class, 'index'])->name('reports.agent-performance');
+    Route::get('/rapport-performance-agents-export', [App\Http\Controllers\AgentReportController::class, 'export'])->name('reports.agent-performance.export');
 });
 
 Route::middleware(['auth', 'auth.session', 'permission:effectuer-virement'])->group(function () {

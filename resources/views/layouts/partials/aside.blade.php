@@ -251,6 +251,12 @@
                             <div data-i18n="Analytics">Résultat Général</div>
                         </a>
                     </li>
+                    <li class="menu-item @if (request()->routeIs('reports.agent-performance')) active @endif">
+                        <a href="{{ route('reports.agent-performance') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-check"></i>
+                            <div data-i18n="Analytics">Performance Agents</div>
+                        </a>
+                    </li>
                 </ul>
             </li>
         @endcan
