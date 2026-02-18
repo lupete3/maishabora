@@ -12,9 +12,12 @@ use App\Models\Transfert;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\WithPagination;
 
 class TransferToCentralCash extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
     public $currency = '';
     public $amount = '';
     public $currencies = ['USD', 'CDF'];
@@ -43,6 +46,30 @@ class TransferToCentralCash extends Component
     public function updated($property)
     {
         $this->validateOnly($property);
+
+        // Auto-remplissage du montant lors du choix de la devise
+        if ($property === 'currency' && $this->currency) {
+            $this->fillAmountFromBalance();
+        }
+    }
+
+    public function setFillAmount($curr, $bal)
+    {
+        $this->currency = $curr;
+        $this->amount = $bal;
+    }
+
+    private function fillAmountFromBalance()
+    {
+        $agentAccount = AgentAccount::where('user_id', Auth::id())
+            ->where('currency', $this->currency)
+            ->first();
+
+        if ($agentAccount) {
+            $this->amount = $agentAccount->balance;
+        } else {
+            $this->amount = '';
+        }
     }
 
     public function submit()
@@ -104,7 +131,7 @@ class TransferToCentralCash extends Component
         ]);
 
         // Notifier les utilisateurs concernés
-        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+        $usersToNotify = User::whereIn('role', ['admin', 'caissier', 'SUPER IT', 'comptable'])->get();
         $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers la caisse centrale par " . Auth::user()->name . " " . Auth::user()->postnom . ". #REF{$transfer->id}";
 
         foreach ($usersToNotify as $notifyUser) {
@@ -132,6 +159,15 @@ class TransferToCentralCash extends Component
     public function render()
     {
         $agentAccounts = AgentAccount::where('user_id', Auth::id())->get();
-        return view('livewire.transfer-to-central-cash', compact('agentAccounts'));
+
+        // Historique des transferts de l'agent connecté (paginé)
+        $transfers = Transfert::whereHas('fromAgentAccount', function ($q) {
+            $q->where('user_id', Auth::id());
+        })
+            ->with(['fromAgentAccount', 'toMainCashRegister'])
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.transfer-to-central-cash', compact('agentAccounts', 'transfers'));
     }
 }

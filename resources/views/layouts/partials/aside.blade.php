@@ -41,6 +41,15 @@
             </li>
         @endcan
 
+        @can('afficher-caisse-agent')
+            <li class="menu-item @if (request()->routeIs('ecarts.caisse')) active @endif">
+                <a href="{{ route('ecarts.caisse') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-error-circle"></i>
+                    <div data-i18n="Analytics">Écarts de Caisse</div>
+                </a>
+            </li>
+        @endcan
+
         @can('effectuer-virement')
             <li class="menu-item @if (request()->routeIs('transfert.ajouter')) active @endif">
                 <a href="{{ route('transfert.ajouter') }}" class="menu-link">

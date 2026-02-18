@@ -143,6 +143,11 @@ Route::middleware(['auth', 'auth.session', 'permission:depot-compte-membre'])->g
     Route::get('/cloture-impression/{id}', [ClotureController::class, 'exportFiche'])->name('cloture.print');
 });
 
+Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-agent'])->group(function () {
+    Route::get('/ecarts-caisse', [App\Http\Controllers\EcartCaisseController::class, 'index'])->name('ecarts.caisse');
+    Route::get('/ecarts-caisse-export', [App\Http\Controllers\EcartCaisseController::class, 'exportPdf'])->name('ecarts.export');
+});
+
 Route::middleware(['auth', 'auth.session', 'permission:effectuer-virement'])->group(function () {
     Route::get('/transfert-compte', [FundTransferController::class, 'index'])->name('transfert.ajouter');
 });

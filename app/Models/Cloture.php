@@ -23,14 +23,14 @@ class Cloture extends Model
     ];
 
     protected $casts = [
-        'closing_date'   => 'date',
-        'validated_at'   => 'datetime',
-        'logical_usd'    => 'decimal:2',
-        'logical_cdf'    => 'decimal:2',
-        'physical_usd'   => 'decimal:2',
-        'physical_cdf'   => 'decimal:2',
-        'gap_usd'        => 'decimal:2',
-        'gap_cdf'        => 'decimal:2',
+        'closing_date' => 'date',
+        'validated_at' => 'datetime',
+        'logical_usd' => 'decimal:2',
+        'logical_cdf' => 'decimal:2',
+        'physical_usd' => 'decimal:2',
+        'physical_cdf' => 'decimal:2',
+        'gap_usd' => 'decimal:2',
+        'gap_cdf' => 'decimal:2',
         'billetage_usd' => 'array',
         'billetage_cdf' => 'array',
     ];
@@ -46,7 +46,8 @@ class Cloture extends Model
     /**
      * L'utilisateur qui a validé la clôture.
      */
-    public function validatedBy() {
+    public function validatedBy()
+    {
         return $this->belongsTo(User::class, 'validated_by');
     }
 
@@ -56,5 +57,13 @@ class Cloture extends Model
     public function billetages()
     {
         return $this->hasMany(Billetage::class);
+    }
+
+    /**
+     * Les écarts de caisse liés à cette clôture.
+     */
+    public function ecarts()
+    {
+        return $this->hasMany(EcartCaisse::class);
     }
 }
