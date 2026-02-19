@@ -23,6 +23,10 @@ class MemberDashboard extends Component
     public $credits = [];
     public $overdueRepayments = [];
 
+    // Sécurité affichage soldes
+    public bool $showBalances = false;
+    public string $balancePassword = '';
+
     public function mount()
     {
         Gate::authorize('afficher-tableaudebord-client', User::class);
@@ -42,12 +46,35 @@ class MemberDashboard extends Component
             ->get();
     }
 
+    public function revealBalances()
+    {
+        $this->validate([
+            'balancePassword' => 'required|string',
+        ]);
+
+        if (\Illuminate\Support\Facades\Hash::check($this->balancePassword, Auth::user()->password)) {
+            $this->showBalances = true;
+            $this->balancePassword = '';
+            $this->resetErrorBag('balancePassword');
+            notyf()->success('Soldes révélés');
+        } else {
+            $this->addError('balancePassword', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+        }
+    }
+
+    public function hideBalances()
+    {
+        $this->showBalances = false;
+    }
+
     public function render()
     {
         // Dernières transactions
         $transactions = Transaction::whereIn('account_id', $this->accounts->pluck('id'))
             ->latest()
-            ->paginate(10);
+            ->limit(10)
+            ->get();
 
         return view('livewire.members.member-dashboard', ['transactions' => $transactions]);
     }

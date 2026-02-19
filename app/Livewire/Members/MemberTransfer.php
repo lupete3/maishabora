@@ -21,6 +21,7 @@ class MemberTransfer extends Component
     public $receiverName;
     public $amount;
     public $description;
+    public $password;
 
     public $step = 1; // 1: Form, 2: Confirmation
 
@@ -47,7 +48,7 @@ class MemberTransfer extends Component
     {
         $search = trim($this->receiverCode);
 
-        if (empty($search)) {
+        if (strlen($search) < 4) {
             $this->receiverName = null;
             return;
         }
@@ -103,7 +104,15 @@ class MemberTransfer extends Component
 
     public function executeTransfer()
     {
-        $this->validate();
+        $this->validate([
+            'password' => 'required|string',
+        ]);
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
 
         $senderAccount = Account::find($this->selectedAccountId);
         $receiver = User::where('code', $this->receiverCode)->firstOrFail();
