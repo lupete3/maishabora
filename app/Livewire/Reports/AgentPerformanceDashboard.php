@@ -28,6 +28,13 @@ class AgentPerformanceDashboard extends Component
         'filterCurrency' => ['except' => 'all'],
     ];
 
+    public function updatedMarginPercent($value)
+    {
+        if (!is_numeric($value) || $value === '') {
+            $this->marginPercent = 0;
+        }
+    }
+
     public function mount()
     {
         $this->filterDateFrom = Carbon::now()->startOfMonth()->format('Y-m-d');
@@ -43,52 +50,38 @@ class AgentPerformanceDashboard extends Component
 
     public function render()
     {
-        $query = User::whereIn('role', ['recouvreur', 'caissier', 'receptionniste', 'comptable']);
+        $agentsQuery = User::whereIn('role', ['recouvreur', 'caissier', 'receptionniste', 'comptable'])
+            ->orderBy('name');
 
-        $agents = $query->orderBy('name')
-            ->get(['id', 'name', 'postnom']);
+        $agentsList = (clone $agentsQuery)->get(['id', 'name', 'postnom']);
 
-        $performanceData = $this->calculatePerformance();
+        $performanceData = $this->calculatePerformance($agentsQuery);
 
         return view('livewire.reports.agent-performance-dashboard', [
-            'agents' => $agents,
+            'agents' => $agentsList,
             'performance' => $performanceData['agents'], // Paginated list
             'totals' => $performanceData['totals'],
         ]);
     }
 
-    private function calculatePerformance()
+    private function calculatePerformance($query)
     {
-        $query = User::whereIn('role', ['recouvreur', 'caissier', 'receptionniste', 'comptable']);
-
+        // Apply filters to the query
         if ($this->filterAgent) {
             $query->where('id', $this->filterAgent);
         }
 
+        // Clone query for totals BEFORE pagination
+        $totalQuery = clone $query;
+        $agentIds = $totalQuery->pluck('id');
+
+        $totals = $this->getGlobalTotals($agentIds);
+
+        // Paginate for the table
         $agents = $query->paginate(15);
 
-        $totals = [
-            'cards' => 0,
-            'card_revenue_usd' => 0,
-            'card_revenue_cdf' => 0,
-            'retained_usd' => 0,
-            'retained_cdf' => 0,
-            'collection_usd' => 0,
-            'collection_cdf' => 0,
-        ];
-
         foreach ($agents as $agent) {
-            // Metrics for this agent
             $agent->metrics = $this->getAgentMetrics($agent->id);
-
-            // Accumulate totals (simplified as we don't have currency filter on totals yet)
-            $totals['cards'] += $agent->metrics['card_count'];
-            $totals['card_revenue_usd'] += $agent->metrics['card_revenue_usd'];
-            $totals['card_revenue_cdf'] += $agent->metrics['card_revenue_cdf'];
-            $totals['retained_usd'] += $agent->metrics['retained_usd'];
-            $totals['retained_cdf'] += $agent->metrics['retained_cdf'];
-            $totals['collection_usd'] += $agent->metrics['collection_usd'];
-            $totals['collection_cdf'] += $agent->metrics['collection_cdf'];
         }
 
         return [
@@ -97,44 +90,63 @@ class AgentPerformanceDashboard extends Component
         ];
     }
 
+    private function getGlobalTotals($agentIds)
+    {
+        $dateFrom = $this->filterDateFrom;
+        $dateTo = $this->filterDateTo;
+
+        // Base queries
+        $cardsBase = MembershipCard::whereIn('user_id', $agentIds)
+            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
+
+        $collectionsBase = Transaction::whereIn('user_id', $agentIds)
+            ->where('type', 'mise_quotidienne')
+            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
+
+        if ($this->filterCurrency !== 'all') {
+            $collectionsBase->where('currency', $this->filterCurrency);
+        }
+
+        // Apply heuristic for cards: Price >= 100 is CDF, < 100 is USD
+        $cards = (clone $cardsBase)->get();
+        $card_revenue_usd = $cards->where('price', '<', 100)->sum('price');
+        $card_revenue_cdf = $cards->where('price', '>=', 100)->sum('price');
+
+        // Apply heuristic for retained (profits): subscription_amount >= 100 is CDF, < 100 is USD
+        $retainedCards = $cards->where('first_mise_retained', true);
+        $retained_usd = $retainedCards->where('subscription_amount', '<', 100)->sum('subscription_amount');
+        $retained_cdf = $retainedCards->where('subscription_amount', '>=', 100)->sum('subscription_amount');
+
+        return [
+            'cards' => $cards->count(),
+            'card_revenue_usd' => $card_revenue_usd,
+            'card_revenue_cdf' => $card_revenue_cdf,
+            'retained_usd' => $retained_usd,
+            'retained_cdf' => $retained_cdf,
+            'collection_usd' => (clone $collectionsBase)->where('currency', 'USD')->sum('amount'),
+            'collection_cdf' => (clone $collectionsBase)->where('currency', 'CDF')->sum('amount'),
+        ];
+    }
+
     private function getAgentMetrics($agentId)
     {
         $dateFrom = $this->filterDateFrom;
         $dateTo = $this->filterDateTo;
 
-        // Cards created by agent
         $cards = MembershipCard::where('user_id', $agentId)
-            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
+            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo])
+            ->get();
 
-        $cardCount = (clone $cards)->count();
-        $cardRevenueUsd = (clone $cards)->where('currency', 'USD')->sum('price');
-        $cardRevenueCdf = (clone $cards)->where('currency', 'CDF')->sum('price');
+        // Cards totals with heuristic
+        $cardCount = $cards->count();
+        $cardRevenueUsd = $cards->where('price', '<', 100)->sum('price');
+        $cardRevenueCdf = $cards->where('price', '>=', 100)->sum('price');
 
-        // Retained first deposits
-        // Based on the flag first_mise_retained and when it was set (updated_at of card or transaction?)
-        // Let's use transactions for accuracy in date range
-        $retainedQuery = Transaction::where('user_id', $agentId) // The agent who made the transaction
-            ->where('type', 'mise_quotidienne')
-            ->where('description', 'like', '%première mise retenue%') // Standard description in logic
-            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
+        // Retained totals with heuristic
+        $retainedUsd = $cards->where('first_mise_retained', true)->where('subscription_amount', '<', 100)->sum('subscription_amount');
+        $retainedCdf = $cards->where('first_mise_retained', true)->where('subscription_amount', '>=', 100)->sum('subscription_amount');
 
-        // Actually, looking at MemberDetails.php:
-        // 'description' => $this->getCardRetainedDescription($card)
-        // Let's check getCardRetainedDescription
-
-        $retainedUsd = Transaction::where('type', 'depot')
-            ->where('description', 'like', "%Retenu première mise carnet #%")
-            ->whereHas('paired', function ($q) use ($agentId) {
-                // This might be complex, let's use a simpler approach based on descriptions if available
-            })
-            // Fallback: search for agent name in description if tagged or just sum all retained if agent filter is null
-            ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
-
-        // RE-PLAN: Use MembershipCard directly for retained metrics if the flag is reliable
-        $retainedUsd = (clone $cards)->where('first_mise_retained', true)->where('currency', 'USD')->sum('subscription_amount');
-        $retainedCdf = (clone $cards)->where('first_mise_retained', true)->where('currency', 'CDF')->sum('subscription_amount');
-
-        // Total Collections (mises quotidiennes)
+        // Total Collections (trusting transactions currency)
         $collections = Transaction::where('user_id', $agentId)
             ->where('type', 'mise_quotidienne')
             ->whereBetween(DB::raw('DATE(created_at)'), [$dateFrom, $dateTo]);
@@ -143,17 +155,43 @@ class AgentPerformanceDashboard extends Component
             $collections->where('currency', $this->filterCurrency);
         }
 
-        $collectionUsd = (clone $collections)->where('currency', 'USD')->sum('amount');
-        $collectionCdf = (clone $collections)->where('currency', 'CDF')->sum('amount');
-
         return [
             'card_count' => $cardCount,
             'card_revenue_usd' => $cardRevenueUsd,
             'card_revenue_cdf' => $cardRevenueCdf,
             'retained_usd' => $retainedUsd,
             'retained_cdf' => $retainedCdf,
-            'collection_usd' => $collectionUsd,
-            'collection_cdf' => $collectionCdf,
+            'collection_usd' => (clone $collections)->where('currency', 'USD')->sum('amount'),
+            'collection_cdf' => (clone $collections)->where('currency', 'CDF')->sum('amount'),
         ];
+    }
+
+    public function exportPdf()
+    {
+        $query = User::whereIn('role', ['recouvreur', 'caissier', 'receptionniste', 'comptable']);
+
+        if ($this->filterAgent) {
+            $query->where('id', $this->filterAgent);
+        }
+
+        $agents = $query->orderBy('name')->get();
+        $totals = $this->getGlobalTotals($agents->pluck('id'));
+
+        foreach ($agents as $agent) {
+            $agent->metrics = $this->getAgentMetrics($agent->id);
+        }
+
+        $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.agent-performance', [
+            'agents' => $agents,
+            'totals' => $totals,
+            'marginPercent' => $this->marginPercent,
+            'filterDateFrom' => $this->filterDateFrom,
+            'filterDateTo' => $this->filterDateTo,
+            'filterCurrency' => $this->filterCurrency,
+        ])->setPaper('a4', 'landscape');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, 'performance-agents-' . now()->format('Y-m-d') . '.pdf');
     }
 }

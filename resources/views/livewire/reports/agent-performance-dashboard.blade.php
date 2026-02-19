@@ -34,8 +34,11 @@
                         min="0" max="100">
                 </div>
                 <div class="col-md-1 text-end">
-                    <button class="btn btn-outline-danger w-100" title="Exporter PDF">
-                        <i class="bx bxs-file-pdf fs-4"></i>
+                    <button wire:click="exportPdf" wire:loading.attr="disabled" class="btn btn-outline-danger w-100"
+                        title="Exporter PDF">
+                        <i wire:loading.remove wire:target="exportPdf" class="bx bxs-file-pdf fs-4"></i>
+                        <span wire:loading wire:target="exportPdf" class="spinner-border spinner-border-sm"
+                            role="status"></span>
                     </button>
                 </div>
             </div>
@@ -55,8 +58,8 @@
                             </div>
                             <small class="text-white-50">Nouveaux/Gérés</small>
                         </div>
-                        <div class="avatar bg-white bg-opacity-25 rounded p-2">
-                            <i class="bx bx-id-card bx-sm"></i>
+                        <div class="avatar rounded p-2">
+                            <i class="bx bx-credit-card bx-md"></i>
                         </div>
                     </div>
                 </div>
@@ -71,11 +74,12 @@
                             <div class="mt-2">
                                 <h5 class="mb-0 text-white">{{ number_format($totals['card_revenue_usd'], 2) }} USD</h5>
                                 <h5 class="mb-0 text-white">
-                                    {{ number_format($totals['card_revenue_cdf'], 0, ',', ' ') }} CDF</h5>
+                                    {{ number_format($totals['card_revenue_cdf'], 0, ',', ' ') }} CDF
+                                </h5>
                             </div>
                         </div>
-                        <div class="avatar bg-white bg-opacity-25 rounded p-2">
-                            <i class="bx bx-dollar-circle bx-sm"></i>
+                        <div class="avatar rounded p-2">
+                            <i class="bx bx-money bx-md"></i>
                         </div>
                     </div>
                 </div>
@@ -93,8 +97,8 @@
                                     CDF</h5>
                             </div>
                         </div>
-                        <div class="avatar bg-white bg-opacity-25 rounded p-2">
-                            <i class="bx bx-trending-up bx-sm"></i>
+                        <div class="avatar rounded p-2">
+                            <i class="bx bx-stats bx-md"></i>
                         </div>
                     </div>
                 </div>
@@ -112,8 +116,8 @@
                                     CDF</h5>
                             </div>
                         </div>
-                        <div class="avatar bg-white bg-opacity-25 rounded p-2">
-                            <i class="bx bx-wallet bx-sm"></i>
+                        <div class="avatar rounded p-2">
+                            <i class="bx bx-wallet-alt bx-md"></i>
                         </div>
                     </div>
                 </div>
@@ -125,7 +129,7 @@
     <div class="card shadow-sm border-0 mt-2">
         <div class="card-header bg-white py-3">
             <h5 class="card-title mb-0 fw-bold">
-                <i class="bx bx-list-ul me-2"></i>Détail des performances par agent
+                <i class="bx bxs-user-detail me-2"></i>Détail des performances par agent
             </h5>
         </div>
         <div class="table-responsive text-nowrap">
@@ -158,26 +162,31 @@
                                 <div class="small fw-bold">{{ number_format($agent->metrics['card_revenue_usd'], 2) }} $
                                 </div>
                                 <div class="text-muted" style="font-size: 0.7rem;">
-                                    {{ number_format($agent->metrics['card_revenue_cdf'], 0, ',', ' ') }} FC</div>
+                                    {{ number_format($agent->metrics['card_revenue_cdf'], 0, ',', ' ') }} FC
+                                </div>
                             </td>
                             <td class="text-end">
                                 <div class="small fw-bold">{{ number_format($agent->metrics['retained_usd'], 2) }} $</div>
                                 <div class="text-muted" style="font-size: 0.7rem;">
-                                    {{ number_format($agent->metrics['retained_cdf'], 0, ',', ' ') }} FC</div>
+                                    {{ number_format($agent->metrics['retained_cdf'], 0, ',', ' ') }} FC
+                                </div>
                             </td>
                             <td class="text-end">
                                 <div class="small fw-bold">{{ number_format($agent->metrics['collection_usd'], 2) }} $</div>
                                 <div class="text-muted" style="font-size: 0.7rem;">
-                                    {{ number_format($agent->metrics['collection_cdf'], 0, ',', ' ') }} FC</div>
+                                    {{ number_format($agent->metrics['collection_cdf'], 0, ',', ' ') }} FC
+                                </div>
                             </td>
                             <td class="text-end">
                                 @php
-                                    $earningsUsd = ($agent->metrics['retained_usd'] * $this->marginPercent) / 100;
-                                    $earningsCdf = ($agent->metrics['retained_cdf'] * $this->marginPercent) / 100;
+                                    $margin = (float) ($this->marginPercent ?: 0);
+                                    $earningsUsd = ($agent->metrics['retained_usd'] * $margin) / 100;
+                                    $earningsCdf = ($agent->metrics['retained_cdf'] * $margin) / 100;
                                 @endphp
                                 <div class="small fw-bold text-success">{{ number_format($earningsUsd, 2) }} $</div>
                                 <div class="text-muted" style="font-size: 0.7rem;">
-                                    {{ number_format($earningsCdf, 0, ',', ' ') }} FC</div>
+                                    {{ number_format($earningsCdf, 0, ',', ' ') }} FC
+                                </div>
                             </td>
                         </tr>
                     @empty
