@@ -131,13 +131,13 @@
                 @endif
             </h5>
             <a href="{{ route('ecarts.export', [
-                'filterAgent' => $filterAgent,
-                'filterStatus' => $filterStatus,
-                'filterCurrency' => $filterCurrency,
-                'filterType' => $filterType,
-                'filterDateFrom' => $filterDateFrom,
-                'filterDateTo' => $filterDateTo,
-            ]) }}" class="btn btn-danger">
+    'filterAgent' => $filterAgent,
+    'filterStatus' => $filterStatus,
+    'filterCurrency' => $filterCurrency,
+    'filterType' => $filterType,
+    'filterDateFrom' => $filterDateFrom,
+    'filterDateTo' => $filterDateTo,
+]) }}" class="btn btn-danger">
                 <i class="bx bxs-file-pdf me-1"></i>Exporter PDF
             </a>
         </div>
@@ -218,6 +218,16 @@
                                         @endif
                                     @endif
 
+                                    @if(in_array(auth()->user()->role, ['admin', 'caissier', 'comptable']))
+                                        <button wire:click="deleteEcart({{ $ecart->id }})"
+                                            wire:confirm="Êtes-vous sûr de vouloir supprimer cet écart ? Cette action est irréversible."
+                                            class="btn btn-sm btn-outline-danger" title="Supprimer">
+                                            <span wire:loading wire:target="deleteEcart({{ $ecart->id }})"
+                                                class="spinner-border spinner-border-sm me-1"></span>
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    @endif
+
                                     {{-- Show resolution note in a popover --}}
                                     @if($ecart->resolution_note)
                                         <button type="button" class="btn btn-sm btn-outline-info" title="Voir la note"
@@ -280,6 +290,33 @@
                                 <option value="cloture">Clôturé (résolu)</option>
                             </select>
                         </div>
+
+                        @if($resolutionStatus === 'cloture')
+                            <div class="mb-3 p-3 border rounded bg-light">
+                                <label class="form-label fw-bold d-block mb-2">Impact sur le solde de l'agent</label>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="adjustBalance" id="adjustTrue" value="1"
+                                        wire:model="adjustBalance" checked>
+                                    <label class="form-check-label" for="adjustTrue">
+                                        <span class="text-primary fw-bold">Ajuster le solde de l'agent</span>
+                                        <small class="d-block text-muted">Le solde sera automatiquement
+                                            {{ $selectedEcart->type === 'deficit' ? 'diminué' : 'augmenté' }} de
+                                            {{ number_format((float) $selectedEcart->amount, 2) }}
+                                            {{ $selectedEcart->currency }}. (Recommandé)</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="adjustBalance" id="adjustFalse" value="0"
+                                        wire:model="adjustBalance">
+                                    <label class="form-check-label" for="adjustFalse">
+                                        <span class="text-warning fw-bold">Régularisation simple (Aucun impact)</span>
+                                        <small class="d-block text-muted">L'écart sera marqué comme clôturé mais le solde de
+                                            l'agent ne sera pas modifié. Utile si l'erreur a été corrigée manuellement
+                                            ailleurs.</small>
+                                    </label>
+                                </div>
+                            </div>
+                        @endif
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Justification / Note de résolution <span

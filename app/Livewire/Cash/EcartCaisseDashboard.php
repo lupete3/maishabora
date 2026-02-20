@@ -29,6 +29,7 @@ class EcartCaisseDashboard extends Component
     public $selectedEcartId = null;
     public $resolutionNote = '';
     public $resolutionStatus = 'cloture';
+    public $adjustBalance = true; // Nouveau : choix d'ajuster le solde ou non
 
     protected $queryString = [
         'filterAgent' => ['except' => ''],
@@ -67,6 +68,7 @@ class EcartCaisseDashboard extends Component
         $this->selectedEcartId = $ecartId;
         $this->resolutionNote = '';
         $this->resolutionStatus = 'cloture';
+        $this->adjustBalance = true;
         $this->showResolutionModal = true;
     }
 
@@ -89,8 +91,8 @@ class EcartCaisseDashboard extends Component
 
         $ecart = EcartCaisse::findOrFail($this->selectedEcartId);
 
-        // Si on clôture l'écart, on ajuste le solde de l'agent
-        if ($this->resolutionStatus === 'cloture') {
+        // Si on clôture l'écart, on ajuste le solde de l'agent (Optionnel)
+        if ($this->resolutionStatus === 'cloture' && $this->adjustBalance) {
             $agentAccount = AgentAccount::where('user_id', $ecart->user_id)
                 ->where('currency', $ecart->currency)
                 ->first();
@@ -152,6 +154,24 @@ class EcartCaisseDashboard extends Component
         );
 
         notyf()->success('Écart réouvert.');
+    }
+
+    public function deleteEcart($ecartId)
+    {
+        if (!in_array(auth()->user()->role, ['admin', 'comptable', 'caissier'])) {
+            notyf()->error('Accès refusé.');
+            return;
+        }
+
+        $ecart = EcartCaisse::findOrFail($ecartId);
+        $ecart->delete();
+
+        UserLogHelper::log_user_activity(
+            action: 'suppression_ecart_caisse',
+            description: "Suppression de l'écart #{$ecartId} ({$ecart->type} {$ecart->amount} {$ecart->currency})"
+        );
+
+        notyf()->success('Écart supprimé avec succès.');
     }
 
     public function resetFilters()
