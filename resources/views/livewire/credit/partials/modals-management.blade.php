@@ -11,7 +11,7 @@
                 <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
                 <div>
                     <label>Penalités à payer : </label>
-                    <input type="number" class="form-control" value="{{ number_format($penality, 2) }}"
+                    <input type="number" class="form-control" value="{{ number_format((float) $penality, 2, '.', '') }}"
                         wire:model="penality">
                 </div>
             </div>

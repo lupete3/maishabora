@@ -27,7 +27,7 @@ class GrantCredit extends Component
     public $installments = 3;
     public $start_date;
     public $frequency = 'monthly'; // 'daily', 'monthly', 'weekly'
-    public $repayment_type = 'constant'; // 'constant', 'degressif'
+    public $repayment_type = 'degressif'; // 'constant', 'degressif'
     public $creditFrisFix = 3; // frais fixe de dossier
 
     public $description = '';
