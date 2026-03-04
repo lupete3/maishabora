@@ -80,8 +80,7 @@
             <div class="card-header">
                 <div class="w-100 justify-content-between d-flex flex-wrap align-items-center gap-1">
 
-                    <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-1">
-
+                    <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-2">
                         <div class="table-search-input">
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31">
@@ -92,12 +91,12 @@
                             </div>
                         </div>
 
-                        <div class="d-flex align-items-center gap-1">
-                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
-                                style="width: 150px;">
-                            <span class="text-muted">au</span>
-                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
-                                style="width: 150px;">
+                        <div class="d-flex align-items-center gap-2 flex-grow-1 flex-sm-grow-0">
+                            <input type="date" wire:model.live="startDate"
+                                class="form-control form-control-sm flex-fill" style="min-width: 130px;">
+                            <span class="text-muted small">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm flex-fill"
+                                style="min-width: 130px;">
                         </div>
                     </div>
                     @can('ajouter-sortie-caisse')
