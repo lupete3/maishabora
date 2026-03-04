@@ -27,6 +27,6 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(User::class, UserPolicy::class);
 
-        Blaze::optimize();
+        Blaze::optimize()->in(resource_path('views/components'));
     }
 }
