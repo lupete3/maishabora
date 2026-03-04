@@ -18,6 +18,23 @@ class CashClosingHistory extends Component
     public $rejection_reason = '';
     public $showRejetModalFlag = false, $clotureId, $motif_rejet;
     public $editBilletageUSD = [], $editBilletageCDF = [], $editNote;
+    public $startDate, $endDate;
+
+    public function mount()
+    {
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->endOfMonth()->format('Y-m-d');
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
 
 
     public function validateClosing($id)
@@ -76,11 +93,14 @@ class CashClosingHistory extends Component
 
     public function render()
     {
-        if (Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier') {
-            $closings = Cloture::with('user')->latest()->paginate(10);
-        } else {
-            $closings = Cloture::with('user')->where('user_id', Auth::user()->id)->latest()->paginate(10);
+        $query = Cloture::with('user')
+            ->whereBetween('closing_date', [$this->startDate, $this->endDate]);
+
+        if (!(Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier')) {
+            $query->where('user_id', Auth::user()->id);
         }
+
+        $closings = $query->latest()->paginate(10);
 
         return view('livewire.cash.cash-closing-history', [
             'closings' => $closings,
@@ -89,15 +109,14 @@ class CashClosingHistory extends Component
 
     public function exportPdf()
     {
-        // Get all closings based on the same visibility logic as render()
-        if (Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier') {
-            $closings = Cloture::with(['user', 'validatedBy', 'billetages'])->latest()->get();
-        } else {
-            $closings = Cloture::with(['user', 'validatedBy', 'billetages'])
-                ->where('user_id', Auth::user()->id)
-                ->latest()
-                ->get();
+        $query = Cloture::with(['user', 'validatedBy', 'billetages'])
+            ->whereBetween('closing_date', [$this->startDate, $this->endDate]);
+
+        if (!(Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::user()->role === 'caissier')) {
+            $query->where('user_id', Auth::user()->id);
         }
+
+        $closings = $query->latest()->get();
 
         foreach ($closings as $cl) {
             // Fetch daily transactions for deposits and withdrawals

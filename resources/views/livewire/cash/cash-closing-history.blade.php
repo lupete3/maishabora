@@ -1,10 +1,19 @@
 <div class="card mt-4">
-    <div class="card-header d-flex justify-between">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
         <h5 class="card-title mb-0">Historique des Clôtures de Caisse</h5>
-        <button wire:click="exportPdf" class="btn btn-primary btn-sm">
-            <span wire:loading wire:target="exportPdf" class="spinner-border spinner-border-sm me-2" role="status"></span>
-            Exporter PDF
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-1">
+                <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                    style="width: 140px;">
+                <span class="text-muted small">au</span>
+                <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="width: 140px;">
+            </div>
+            <button wire:click="exportPdf" class="btn btn-primary btn-sm">
+                <span wire:loading wire:target="exportPdf" class="spinner-border spinner-border-sm me-2"
+                    role="status"></span>
+                <i class="bx bxs-file-pdf"></i> Exporter PDF
+            </button>
+        </div>
     </div>
 
     <div class="card-body">
@@ -48,26 +57,27 @@
                                 @endif
                             </td>
                             <td>
-                                @if ((auth()->user()->role === 'caissier' && $closing->status === 'pending')
-                                    || (auth()->user()->role === 'admin' && $closing->status === 'pending')
-                                    || (auth()->user()->role === 'comptable' && $closing->status === 'pending'))
+                                @if (
+                                        (auth()->user()->role === 'caissier' && $closing->status === 'pending')
+                                        || (auth()->user()->role === 'admin' && $closing->status === 'pending')
+                                        || (auth()->user()->role === 'comptable' && $closing->status === 'pending')
+                                    )
                                     <button wire:click="validateClosing({{ $closing->id }})"
                                         class="btn btn-success btn-sm">Valider</button>
                                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
                                         data-bs-target="#rejectModal{{ $closing->id }}">Rejeter</button>
 
                                     {{-- Modal de rejet --}}
-                                    <div class="modal fade" id="rejectModal{{ $closing->id }}" tabindex="-1"
-                                        aria-hidden="true">
+                                    <div class="modal fade" id="rejectModal{{ $closing->id }}" tabindex="-1" aria-hidden="true">
                                         <div class="modal-dialog">
                                             <div class="modal-content">
                                                 <div class="modal-header">
                                                     <h5 class="modal-title">Motif du rejet</h5>
-                                                    <button type="button" class="btn-close"
-                                                        data-bs-dismiss="modal"></button>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                                                 </div>
                                                 <div class="modal-body">
-                                                    <textarea wire:model.defer="rejection_reason" class="form-control" rows="3"></textarea>
+                                                    <textarea wire:model.defer="rejection_reason" class="form-control"
+                                                        rows="3"></textarea>
                                                 </div>
                                                 <div class="modal-footer">
                                                     <button wire:click="rejectClosing({{ $closing->id }})"
@@ -79,12 +89,12 @@
                                 @endif
 
                                 {{-- @if (auth()->id() == $closing->user_id && $closing->status === 'pending')
-                                    <button wire:click="editClosing({{ $closing->id }})" class="btn btn-primary btn-sm">Modifier</button>
+                                <button wire:click="editClosing({{ $closing->id }})"
+                                    class="btn btn-primary btn-sm">Modifier</button>
                                 @endif --}}
 
                                 @if ($closing->status !== 'pending')
-                                    <a href="{{ route('cloture.print', $closing->id) }}"
-                                        class="btn btn-primary btn-sm">
+                                    <a href="{{ route('cloture.print', $closing->id) }}" class="btn btn-primary btn-sm">
                                         <span wire:loading class="spinner-border spinner-border-sm me-2"
                                             role="status"></span>Imprimer</button>
                                 @endif
@@ -115,8 +125,8 @@
                         @foreach ($editBilletageUSD as $valeur => $nombre)
                             <div class="col-md-2">
                                 <label class="form-label">${{ $valeur }}</label>
-                                <input type="number" wire:model.defer="editBilletageUSD.{{ $valeur }}"
-                                    class="form-control" min="0">
+                                <input type="number" wire:model.defer="editBilletageUSD.{{ $valeur }}" class="form-control"
+                                    min="0">
                             </div>
                         @endforeach
                     </div>
@@ -126,8 +136,8 @@
                         @foreach ($editBilletageCDF as $valeur => $nombre)
                             <div class="col-md-2">
                                 <label class="form-label">{{ $valeur }} Fc</label>
-                                <input type="number" wire:model.defer="editBilletageCDF.{{ $valeur }}"
-                                    class="form-control" min="0">
+                                <input type="number" wire:model.defer="editBilletageCDF.{{ $valeur }}" class="form-control"
+                                    min="0">
                             </div>
                         @endforeach
                     </div>

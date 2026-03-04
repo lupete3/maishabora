@@ -232,7 +232,7 @@
 
                     <li class="menu-item @if (request()->routeIs('comptabilite.bilan')) active @endif">
                         <a href="{{ route('comptabilite.bilan') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-balance-scale"></i>
+                            <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
                             <div data-i18n="Analytics">Bilan</div>
                         </a>
                     </li>
