@@ -37,9 +37,14 @@ class EcartCaisseController extends Controller
         }
         if ($request->filterDateFrom) {
             $query->whereDate('created_at', '>=', $request->filterDateFrom);
+        } else {
+            $query->whereDate('created_at', '>=', now()->startOfMonth()->format('Y-m-d'));
         }
+
         if ($request->filterDateTo) {
             $query->whereDate('created_at', '<=', $request->filterDateTo);
+        } else {
+            $query->whereDate('created_at', '<=', now()->endOfMonth()->format('Y-m-d'));
         }
 
         // Permissions

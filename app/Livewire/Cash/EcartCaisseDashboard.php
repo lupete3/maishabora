@@ -36,7 +36,15 @@ class EcartCaisseDashboard extends Component
         'filterStatus' => ['except' => ''],
         'filterCurrency' => ['except' => ''],
         'filterType' => ['except' => ''],
+        'filterDateFrom' => ['except' => ''],
+        'filterDateTo' => ['except' => ''],
     ];
+
+    public function mount()
+    {
+        $this->filterDateFrom = now()->startOfMonth()->format('Y-m-d');
+        $this->filterDateTo = now()->endOfMonth()->format('Y-m-d');
+    }
 
     public function updatingFilterAgent()
     {
@@ -180,8 +188,8 @@ class EcartCaisseDashboard extends Component
         $this->filterStatus = '';
         $this->filterCurrency = '';
         $this->filterType = '';
-        $this->filterDateFrom = '';
-        $this->filterDateTo = '';
+        $this->filterDateFrom = now()->startOfMonth()->format('Y-m-d');
+        $this->filterDateTo = now()->endOfMonth()->format('Y-m-d');
         $this->resetPage();
     }
 

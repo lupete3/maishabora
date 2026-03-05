@@ -4,16 +4,14 @@
             ©
             {{ date('Y') }}
             , made with ❤️ by
-            <a href="https://pdevtuto.com" target="_blank" class="footer-link fw-bolder">Pdevtuto</a>
+            <a href="https://pftecho.com" target="_blank" class="footer-link fw-bolder">PF Techno</a>
         </div>
         <div>
-            <a href="https://pdevtuto.com" class="footer-link me-4" target="_blank">License</a>
+            <a href="https://pftecho.com" class="footer-link me-4" target="_blank">License</a>
 
-            <a href="https://pdevtuto.com" target="_blank"
-                class="footer-link me-4">Documentation</a>
+            <a href="https://pftecho.com" target="_blank" class="footer-link me-4">Documentation</a>
 
-            <a href="https://pdevtuto" target="_blank"
-                class="footer-link me-4">Support</a>
+            <a href="https://pftecho" target="_blank" class="footer-link me-4">Support</a>
         </div>
     </div>
 </footer>
