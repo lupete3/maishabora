@@ -271,7 +271,8 @@
                     'report.credit.followup',
                     'report.repayments',
                     'rapports.depot_retrait',
-                    'member.accounts'
+                    'member.accounts',
+                    'members.carnet-overview'
                 )
             ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
@@ -297,6 +298,14 @@
                         <a href="{{ route('rapports.carnets') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-book-content"></i> <!-- Livre/carnet -->
                             <div data-i18n="Analytics">Rapports Carnets</div>
+                        </a>
+                    </li>
+
+                    <!-- Overview des carnets -->
+                    <li class="menu-item @if (request()->routeIs('members.carnet-overview')) active @endif">
+                        <a href="{{ route('members.carnet-overview') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-show-alt"></i>
+                            <div data-i18n="Analytics">Carnets Douteux</div>
                         </a>
                     </li>
 

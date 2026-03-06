@@ -175,6 +175,9 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|a
     Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');
     Route::get('/rapport-compte-clients-pdf', [ClientStatReportController::class, 'compteClientsPdf'])->name('rapports.compte-clients.pdf');
     Route::get('/rapport-carnets', [ClientStatReportController::class, 'rapportCarnets'])->name('rapports.carnets');
+    Route::get('/membres/overview-carnets', function () {
+        return view('members.carnet-overview');
+    })->name('members.carnet-overview');
     Route::get('/rapport-transactions', [AgentTransactionsReportController::class, 'rapportTransactions'])->name('rapports.transactions');
     Route::get('/rapport-depot-retrait', [AgentTransactionsReportController::class, 'rapportDepotRetrait'])->name('rapports.depot_retrait');
 });
