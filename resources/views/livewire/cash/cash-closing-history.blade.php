@@ -66,6 +66,11 @@
                                         class="btn btn-success btn-sm">Valider</button>
                                     <button class="btn btn-danger btn-sm" data-bs-toggle="modal"
                                         data-bs-target="#rejectModal{{ $closing->id }}">Rejeter</button>
+                                    <button wire:click="deleteClosing({{ $closing->id }})"
+                                        wire:confirm="Êtes-vous sûr de vouloir supprimer cette clôture ? Cette action est irréversible."
+                                        class="btn btn-dark btn-sm">
+                                        Supprimer
+                                    </button>
 
                                     {{-- Modal de rejet --}}
                                     <div class="modal fade" id="rejectModal{{ $closing->id }}" tabindex="-1" aria-hidden="true">

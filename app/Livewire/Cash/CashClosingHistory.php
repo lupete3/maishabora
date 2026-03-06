@@ -91,6 +91,29 @@ class CashClosingHistory extends Component
 
     }
 
+    public function deleteClosing($id)
+    {
+        $closing = Cloture::findOrFail($id);
+
+        if ($closing->status !== 'pending') {
+            notyf()->error('Seules les clôtures en attente peuvent être supprimées.');
+            return;
+        }
+
+        // Authorization check
+        if (!(Auth::user()->role === 'admin' || Auth::user()->role === 'comptable' || Auth::id() === $closing->user_id)) {
+            notyf()->error("Vous n'êtes pas autorisé à supprimer cette clôture.");
+            return;
+        }
+
+        // Delete related billetages and ecarts manually if Cascading is not enabled in DB
+        $closing->billetages()->delete();
+        $closing->ecarts()->delete();
+        $closing->delete();
+
+        notyf()->success('Clôture supprimée avec succès.');
+    }
+
     public function render()
     {
         $query = Cloture::with('user')
