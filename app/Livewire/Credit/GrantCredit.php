@@ -266,7 +266,7 @@ class GrantCredit extends Component
                 'amount' => $this->amount,
                 'balance_after' => $account->balance,
                 'account_id' => $account->id,
-                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             Transaction::create([
@@ -276,7 +276,7 @@ class GrantCredit extends Component
                 'currency' => $credit->currency,
                 'amount' => $this->amount,
                 'balance_after' => $mainCash->balance,
-                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Envoyer les frais de commission du crédit au compte 94
@@ -489,7 +489,7 @@ class GrantCredit extends Component
             'type' => ucfirst($this->repayment_type),
             'agent' => User::find($this->agent_id) ? User::find($this->agent_id)->name . ' ' . User::find($this->agent_id)->postnom : 'Inconnu',
             'disbursing_agent' => User::find($this->disbursing_agent_id) ? User::find($this->disbursing_agent_id)->name . ' ' . User::find($this->disbursing_agent_id)->postnom : 'Inconnu',
-            'description' => $this->description ?: '—',
+            'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
         ];
 
         // Ouvre le modal
