@@ -10,47 +10,73 @@
 
     <div class="card">
         <!-- Recherche -->
-        <div class="card-header">
-            <div class="row">
-                <div class="col-md-12 text-end mb-2">
-                    @if ($journals->count() > 0)
-                        <button wire:click="export" class="btn btn-sm btn-danger" wire:loading.attr="disabled">
-                            <span wire:loading wire:target="export" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <i class="bx bxs-file-pdf"></i> PDF
-                        </button>
-                        <button wire:click="exportExcel" class="btn btn-sm btn-success" wire:loading.attr="disabled">
-                            <span wire:loading wire:target="exportExcel" class="spinner-border spinner-border-sm me-2" role="status"></span>
-                            <i class="bx bx-table"></i> Excel
-                        </button>
+        <div class="card-header border-bottom">
+            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                <!-- Filtres de date et recherche -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                        <option value="day">Aujourd'hui</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                        <option value="range">Intervalle personnalisé</option>
+                    </select>
+
+                    @if ($filterType === 'range')
+                        <div class="d-flex align-items-center gap-1">
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span class="small text-muted">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        </div>
                     @endif
+
+                    <div class="input-group input-group-merge" style="width: 250px;">
+                        <span class="input-group-text"><i class="bx bx-search-alt"></i></span>
+                        <input type="text" wire:model.live.debounce.300ms="search"
+                            class="form-control form-control-sm shadow-none" placeholder="Recherche...">
+                    </div>
                 </div>
-                <div class="col-md-3">
-                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control" placeholder="Recherche...">
-                </div>
-                <div class="col-md-3 mt-2">
-                    <select wire:model.lazy="filter_journal_type" class="form-control">
-                        <option value="">-- Tous les journaux --</option>
+
+                <!-- Autres filtres et exports -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <select wire:model.live="filter_journal_type" class="form-select form-select-sm"
+                        style="width: auto;">
+                        <option value="">-- Journaux --</option>
                         @foreach ($journalTypes as $jt)
                             <option value="{{ $jt->id }}">{{ $jt->libelle }}</option>
                         @endforeach
                     </select>
-                </div>
-                <div class="col-md-3 mt-2">
-                    <select wire:model.lazy="filter_account" class="form-control">
-                        <option value="">-- Tous les comptes --</option>
+
+                    <select wire:model.live="filter_account" class="form-select form-select-sm"
+                        style="width: auto; max-width: 250px;">
+                        <option value="">-- Comptes --</option>
                         @foreach ($accounts as $acc)
                             <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->intitule }}</option>
                         @endforeach
                     </select>
-                </div>
-                <div class="col-md-3 mt-2">
-                    <select wire:model.lazy="filter_currency" class="form-control">
-                        <option value="">-- Toutes les devises --</option>
+
+                    <select wire:model.live="filter_currency" class="form-select form-select-sm" style="width: auto;">
+                        <option value="">-- Devises --</option>
                         @foreach ($currencies as $cur)
                             <option value="{{ $cur }}">{{ $cur }}</option>
                         @endforeach
-
                     </select>
+
+                    <div class="d-flex gap-2">
+                        @if ($journals->count() > 0)
+                            <button wire:click="export" class="btn btn-sm btn-danger" wire:loading.attr="disabled">
+                                <span wire:loading wire:target="export" class="spinner-border spinner-border-sm me-1"
+                                    role="status"></span>
+                                <i class="bx bxs-file-pdf"></i> PDF
+                            </button>
+                            <button wire:click="exportExcel" class="btn btn-sm btn-success" wire:loading.attr="disabled">
+                                <span wire:loading wire:target="exportExcel"
+                                    class="spinner-border spinner-border-sm me-1" role="status"></span>
+                                <i class="bx bx-table"></i> Excel
+                            </button>
+                        @endif
+                    </div>
                 </div>
             </div>
         </div>
@@ -151,18 +177,17 @@
                                 @foreach ($lines as $index => $line)
                                     <tr>
                                         <td>
-                                            <select class="form-select"
-                                                wire:model.lazy="lines.{{ $index }}.compte_id">
+                                            <select class="form-select" wire:model.lazy="lines.{{ $index }}.compte_id">
                                                 <option value="">-- Compte --</option>
                                                 @foreach ($accounts as $acc)
                                                     <option value="{{ $acc->id }}">{{ $acc->code }} -
-                                                        {{ $acc->intitule }}</option>
+                                                        {{ $acc->intitule }}
+                                                    </option>
                                                 @endforeach
                                             </select>
                                         </td>
                                         <td>
-                                            <select class="form-select"
-                                                wire:model.lazy="lines.{{ $index }}.type_operation">
+                                            <select class="form-select" wire:model.lazy="lines.{{ $index }}.type_operation">
                                                 <option value="debit">Débit</option>
                                                 <option value="credit">Crédit</option>
                                             </select>

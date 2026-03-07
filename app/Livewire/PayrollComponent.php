@@ -31,6 +31,9 @@ class PayrollComponent extends Component
     public $searchAgent = '';
     public $perPage = 10;
     public $perPageSalary = 3;
+    public $filterType = 'month';
+    public $startDate;
+    public $endDate;
     public $members = [];
     public $results = [];
     public $resultsAgent = [];
@@ -370,6 +373,24 @@ class PayrollComponent extends Component
         notyf()->success('Salaire supprimé avec succès.');
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $users = User::where('role', 'membre')->get();
@@ -377,6 +398,19 @@ class PayrollComponent extends Component
 
         $payrolls = Payroll::with('user')
             ->when($this->search, fn($q) => $q->whereHas('user', fn($uq) => $uq->where('name', 'like', "%$this->search%")))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+            })
             ->orderByDesc('created_at')
             ->paginate($this->perPage);
 

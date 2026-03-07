@@ -28,6 +28,9 @@ class FundTransferComponent extends Component
     public $search = '';
     public $searchagent = '';
     public $perPage = 10;
+    public $filterType = 'month'; // 'day', 'week', 'month', 'range'
+    public $startDate;
+    public $endDate;
     protected $paginationTheme = 'bootstrap';
 
     public $members = [];
@@ -171,11 +174,42 @@ class FundTransferComponent extends Component
         }
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function getTransactionsProperty()
     {
         return Transaction::whereIn('type', ['virement_caisse_sortant', 'virement_caisse_entrant'])
             ->when($this->search, function ($query) {
                 $query->where('description', 'like', '%' . $this->search . '%');
+            })
+            ->when($this->filterType === 'day', function ($query) {
+                $query->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($query) {
+                $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($query) {
+                $query->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($query) {
+                $query->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
             })
             ->orderByDesc('created_at')
             ->paginate($this->perPage);

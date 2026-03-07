@@ -32,6 +32,24 @@
                             placeholder="Rechercher par description...">
                     </div>
                 </div>
+                <div class="col-md-8 mt-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                            <option value="day">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="range">Intervalle personnalisé</option>
+                        </select>
+
+                        @if ($filterType === 'range')
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span>au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        @endif
+                    </div>
+                </div>
             </div>
 
             <div class="table-responsive text-nowrap">
@@ -73,7 +91,7 @@
                                 @can('ajouter-type-decaissement')
                                     <td class="text-sm">
                                         <i class="bx bx-user-circle me-1"></i>
-                                        {{ $request->user?->name .' '.$request->user?->postnom }}
+                                        {{ $request->user?->name . ' ' . $request->user?->postnom }}
                                     </td>
                                 @endcan
                                 <td>
@@ -87,7 +105,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                     @elseif($request->status === 'rejected')
@@ -96,7 +114,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                         @if($request->rejection_reason)

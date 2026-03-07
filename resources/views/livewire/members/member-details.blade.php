@@ -197,9 +197,9 @@
                             <!-- Migration Tool (Admin Only) -->
                             @can('migrer-comptes')
                                 <div class="mt-2 text-right">
-                                    <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
+                                    <!-- <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
                                         ⚠️ Vérifier/Migrer Comptes
-                                    </button>
+                                    </button> -->
                                 </div>
                             @endcan
                         </div>

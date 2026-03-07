@@ -23,6 +23,9 @@ class DisbursementManagement extends Component
 
     public $search = '';
     public $perPage = 10;
+    public $filterType = 'month'; // 'day', 'week', 'month', 'range'
+    public $startDate;
+    public $endDate;
 
     const RETAINED_ACCOUNT_USER_ID = 452;
 
@@ -152,30 +155,58 @@ class DisbursementManagement extends Component
         notyf()->success('Type de décaissement ajouté avec succès.');
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $user = Auth::user();
 
-        // Afficher toutes les demandes pour les gestionnaires, sinon seulement celles de l'utilisateur
-        if ($user->can('ajouter-type-decaissement')) {
-            $disbursementRequests = DisbursementRequest::with(['user', 'disbursementType', 'approvedBy'])
-                ->when($this->search, function ($query) {
-                    $query->where('description', 'like', '%' . $this->search . '%')
-                        ->orWhereHas('user', function ($q) {
-                            $q->where('name', 'like', '%' . $this->search . '%');
+        $query = DisbursementRequest::with(['user', 'disbursementType', 'approvedBy'])
+            ->when($this->search, function ($q) use ($user) {
+                $q->where(function ($sub) use ($user) {
+                    $sub->where('description', 'like', '%' . $this->search . '%');
+                    if ($user->can('ajouter-type-decaissement')) {
+                        $sub->orWhereHas('user', function ($u) {
+                            $u->where('name', 'like', '%' . $this->search . '%');
                         });
-                })
-                ->latest()
-                ->paginate($this->perPage);
-        } else {
-            $disbursementRequests = DisbursementRequest::where('user_id', Auth::id())
-                ->with(['user', 'disbursementType', 'approvedBy'])
-                ->when($this->search, function ($query) {
-                    $query->where('description', 'like', '%' . $this->search . '%');
-                })
-                ->latest()
-                ->paginate($this->perPage);
+                    }
+                });
+            })
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+            });
+
+        if (!$user->can('ajouter-type-decaissement')) {
+            $query->where('user_id', Auth::id());
         }
+
+        $disbursementRequests = $query->latest()->paginate($this->perPage);
 
         return view('livewire.disbursement.disbursement-management', [
             'disbursementRequests' => $disbursementRequests,

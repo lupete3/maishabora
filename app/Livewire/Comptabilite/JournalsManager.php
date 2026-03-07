@@ -23,6 +23,9 @@ class JournalsManager extends Component
     public $date_operation, $libelle, $reference, $devise = 'USD', $type_journal_id;
 
     // 🔹 Filtres
+    public $filterType = 'month';
+    public $startDate;
+    public $endDate;
     public $filter_journal_type = null; // filtre auxiliaire
     public $filter_account = null;      // filtre grand livre
     public $filter_currency = null;     // devise
@@ -36,19 +39,20 @@ class JournalsManager extends Component
         $this->date_operation = now()->format('Y-m-d');
     }
 
-    public function updatingSearch()
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
     {
         $this->resetPage();
     }
-    public function updatingFilterJournalType()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterAccount()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterCurrency()
+
+    public function updatedEndDate()
     {
         $this->resetPage();
     }
@@ -63,6 +67,19 @@ class JournalsManager extends Component
             ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
             ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
             ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
             ->orderBy('date_operation', 'desc');
 
 
@@ -147,6 +164,19 @@ class JournalsManager extends Component
             ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
             ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
             ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
             ->orderBy('date_operation', 'desc');
 
         $journals = $query->get();
@@ -191,6 +221,19 @@ class JournalsManager extends Component
             ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
             ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
             ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
             ->orderBy('date_operation', 'desc');
 
         $journals = $query->get();

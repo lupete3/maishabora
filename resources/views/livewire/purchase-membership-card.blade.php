@@ -97,14 +97,31 @@
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">
         <div class="card">
-            <div class="card-header bg-light d-flex justify-content-between">
-                <div>
-                    <h5>Historique des Cartes d'Adhésion</h4>
-                </div>
-                <!-- Barre de recherche -->
-                <div>
-                    <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control"
-                        placeholder="Rechercher une carte...">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Historique des Cartes d'Adhésion</h5>
+
+                <div class="d-flex align-items-center gap-2">
+                    <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                        <option value="day">Aujourd'hui</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                        <option value="range">Intervalle personnalisé</option>
+                    </select>
+
+                    @if ($filterType === 'range')
+                        <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                            style="width: auto;">
+                        <span class="small">au</span>
+                        <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                            style="width: auto;">
+                    @endif
+
+                    <!-- Barre de recherche -->
+                    <div class="input-group input-group-sm" style="width: 200px;">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control"
+                            placeholder="Rechercher...">
+                    </div>
                 </div>
             </div>
 
@@ -200,7 +217,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Aucune carte trouvée.</td>
+                                    <td colspan="11" class="text-center">Aucune carte trouvée.</td>
                                 </tr>
                             @endforelse
                         </tbody>

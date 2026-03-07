@@ -83,8 +83,25 @@
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white fw-bold">
-                    <i class="bx bx-history me-2"></i>Historique de vos virements récents
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center fw-bold">
+                    <span><i class="bx bx-history me-2"></i>Historique de vos virements récents</span>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                            <option value="day">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="range">Intervalle personnalisé</option>
+                        </select>
+
+                        @if ($filterType === 'range')
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span class="text-white small">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        @endif
+                    </div>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
@@ -93,6 +110,9 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Référence</th>
+                                    @if($isAdminOrFinance)
+                                        <th>Agent</th>
+                                    @endif
                                     <th>Devise</th>
                                     <th class="text-end">Montant</th>
                                     <th class="text-center">Action</th>
@@ -103,6 +123,13 @@
                                     <tr>
                                         <td>{{ $trans->created_at->format('d/m/Y H:i') }}</td>
                                         <td><span class="badge bg-label-secondary">#REF{{ $trans->id }}</span></td>
+                                        @if($isAdminOrFinance)
+                                            <td>
+                                                <small
+                                                    class="fw-bold">{{ $trans->fromAgentAccount->user->name ?? 'N/A' }} 
+                                                {{ $trans->fromAgentAccount->user->postnom ?? 'N/A' }} </small>
+                                            </td>
+                                        @endif
                                         <td class="fw-bold">{{ $trans->currency }}</td>
                                         <td class="text-end fw-bold">{{ number_format($trans->amount, 2) }}</td>
                                         <td class="text-center">

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
     <meta charset="UTF-8">
     <title>Rapport des Transactions</title>
@@ -10,54 +11,78 @@
             margin: 5px;
             color: #000;
         }
-        .footer { text-align: center; margin-top: 50px }
-        .text-center { text-align: center; }
-        .text-end { text-align: right; }
-        .text-start { text-align: left; }
+
+        .footer {
+            text-align: center;
+            margin-top: 50px
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-end {
+            text-align: right;
+        }
+
+        .text-start {
+            text-align: left;
+        }
+
         .table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
             margin-bottom: 10px;
         }
-        .table td, .table th {
+
+        .table td,
+        .table th {
             border: 1px solid;
             padding: 4px;
         }
+
         .signature {
             margin-top: 30px;
             display: flex;
             justify-content: space-between;
             font-size: 10px;
         }
+
         .signature-block {
             width: 45%;
             text-align: center;
         }
+
         th {
             background-color: #f1c206;
         }
+
         .section-title {
             margin-top: 10px;
             font-weight: bold;
             text-align: center;
             font-size: 11px;
         }
+
         .totals p {
             margin: 2px 0;
         }
+
         .logo {
             width: 80px;
         }
     </style>
 </head>
+
 <body>
 
     <div class="header" style="padding-bottom: 5px;">
         <table style="width:100%;">
             <tr>
                 <td style="width: 15%;">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" class="logo" alt="Logo">
+                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
+                        class="logo" alt="Logo">
                 </td>
                 <td style="width: 60%; text-align:center;">
                     <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
@@ -77,18 +102,23 @@
     </div>
 
     <div style="margin-bottom: 10px;">
-        <strong>Agent concerné :</strong> {{ $agent->name ?? 'N/A' }} {{ $agent->postnom ?? '' }} {{ $agent->prenom ?? '' }}<br>
+        <strong>Agent concerné :</strong> {{ $agent->name ?? 'Tous les agents' }} {{ $agent->postnom ?? '' }}
+        {{ $agent->prenom ?? '' }}<br>
         <strong>Devise :</strong> {{ $currency ?? 'Toutes' }}<br>
         <strong>Période :</strong>
-        @if ($startDate && $endDate)
-            Du {{ \Carbon\Carbon::parse($startDate)->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($endDate)->format('d/m/Y') }}
+        @if ($dateStart && $dateEnd)
+            Du {{ \Carbon\Carbon::parse($dateStart)->format('d/m/Y') }} au
+            {{ \Carbon\Carbon::parse($dateEnd)->format('d/m/Y') }}
         @else
             {{ ucfirst($period) }}
         @endif
     </div>
 
-    <div class="totals">
-        <p><strong>Total Transactions :</strong> {{ number_format($totalTransactions, 2, ',', ' ') }} {{ $currency ?? '' }}</p>
+    <div class="totals" style="margin-bottom: 15px; background: #f8f9fa; padding: 10px; border-radius: 5px;">
+        <h4 style="margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px;">RÉSUMÉ DES TOTAUX</h4>
+        @foreach($totalByCurrency as $curr => $amount)
+            <p><strong>Total {{ $curr }} :</strong> {{ number_format($amount, 2, ',', ' ') }} {{ $curr }}</p>
+        @endforeach
     </div>
 
     <table class="table" border="1" cellspacing="0" cellpadding="4">
@@ -125,4 +155,5 @@
     </div>
 
 </body>
+
 </html>

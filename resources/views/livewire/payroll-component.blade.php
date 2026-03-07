@@ -305,11 +305,27 @@
 
     {{-- HISTORIQUE DES PAIEMENTS --}}
     <div class="card has-actions has-filter">
-        <div class="card-header d-flex justify-content-between">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="mb-0 text-primary"><i class="bx bx-history me-2"></i> Historique des Salaires Payés</h5>
-            <div class="table-search-input">
-                <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
-                    placeholder="Rechercher un agent...">
+            
+            <div class="d-flex align-items-center gap-2">
+                <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                    <option value="day">Aujourd'hui</option>
+                    <option value="week">Cette semaine</option>
+                    <option value="month">Ce mois</option>
+                    <option value="range">Intervalle personnalisé</option>
+                </select>
+
+                @if ($filterType === 'range')
+                    <input type="date" wire:model.live="startDate" class="form-control form-control-sm" style="width: auto;">
+                    <span class="small">au</span>
+                    <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="width: auto;">
+                @endif
+
+                <div class="table-search-input">
+                    <input type="search" wire:model.live.debounce.300ms="search" class="form-control form-control-sm"
+                        placeholder="Rechercher un agent...">
+                </div>
             </div>
         </div>
 

@@ -18,18 +18,24 @@ class TransactionReport extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $filterType = 'today';
-    public $startDate;
-    public $endDate;
+    public $dateStart;
+    public $dateEnd;
     public $currency = '';
     public $user_id = '';
     public $results = [];
-    public $search;
+    public $search = '';
+
+    protected $queryString = [
+        'filterType' => ['except' => 'today'],
+        'currency' => ['except' => ''],
+        'user_id' => ['except' => ''],
+    ];
 
     public function updatedFilterType()
     {
         if ($this->filterType !== 'custom') {
-            $this->startDate = null;
-            $this->endDate = null;
+            $this->dateStart = null;
+            $this->dateEnd = null;
         }
     }
 
@@ -54,8 +60,8 @@ class TransactionReport extends Component
                 $query->whereYear('created_at', now()->year);
                 break;
             case 'custom':
-                if ($this->startDate && $this->endDate) {
-                    $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+                if ($this->dateStart && $this->dateEnd) {
+                    $query->whereBetween('created_at', [$this->dateStart, $this->dateEnd]);
                 }
                 break;
         }
@@ -141,8 +147,8 @@ class TransactionReport extends Component
             'total' => $total,
             'filterType' => $this->filterType,
             'currency' => $this->currency,
-            'startDate' => $this->startDate,
-            'endDate' => $this->endDate,
+            'startDate' => $this->dateStart,
+            'endDate' => $this->dateEnd,
         ])->setPaper('A4', 'portrait');
 
         return response()->streamDownload(function () use ($pdf) {
@@ -175,8 +181,8 @@ class TransactionReport extends Component
             'total' => $total,
             'filterType' => $this->filterType,
             'currency' => $this->currency,
-            'startDate' => $this->startDate,
-            'endDate' => $this->endDate,
+            'startDate' => $this->dateStart,
+            'endDate' => $this->dateEnd,
         ])->setPaper('A4', 'portrait');
 
         return response()->streamDownload(function () use ($pdf) {

@@ -27,6 +27,9 @@ class PurchaseMembershipCard extends Component
     public $price = 1000;
     public $subscription_amount = 0;
     public $code;
+    public $filterType = 'month';
+    public $startDate;
+    public $endDate;
 
     public $members = [];
     public $results = [];
@@ -247,9 +250,27 @@ class PurchaseMembershipCard extends Component
         $this->submit();
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $cards = MembershipCard::with('member')
+        $cards = MembershipCard::with(['member', 'agent'])
             ->when($this->searchCard, function ($query) {
                 // Découpe la recherche en plusieurs termes (séparés par espace)
                 $terms = explode(' ', $this->searchCard);
@@ -270,6 +291,19 @@ class PurchaseMembershipCard extends Component
                         });
                     }
                 });
+            })
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
             });
 
         return view('livewire.purchase-membership-card', [

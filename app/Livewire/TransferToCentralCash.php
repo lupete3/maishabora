@@ -21,6 +21,9 @@ class TransferToCentralCash extends Component
     public $currency = '';
     public $amount = '';
     public $currencies = ['USD', 'CDF'];
+    public $filterType = 'month'; // 'day', 'week', 'month', 'range'
+    public $startDate;
+    public $endDate;
 
     // ✅ Nouveau : contrôle d’affichage du modal
     public $showConfirmation = false;
@@ -156,18 +159,56 @@ class TransferToCentralCash extends Component
         $this->redirect(route('transfer.receipt.generate', ['id' => $transfer->id]), navigate: false);
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $agentAccounts = AgentAccount::where('user_id', Auth::id())->get();
 
-        // Historique des transferts de l'agent connecté (paginé)
-        $transfers = Transfert::whereHas('fromAgentAccount', function ($q) {
-            $q->where('user_id', Auth::id());
+        $user = Auth::user();
+        $isAdminOrFinance = in_array($user->role, ['admin', 'comptable', 'caissier', 'SUPER IT']);
+
+        // Historique des transferts
+        $query = Transfert::with(['fromAgentAccount.user', 'toMainCashRegister']);
+
+        if (!$isAdminOrFinance) {
+            $query->whereHas('fromAgentAccount', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
+
+        $transfers = $query->when($this->filterType === 'day', function ($q) {
+            $q->whereDate('created_at', now()->today());
         })
-            ->with(['fromAgentAccount', 'toMainCashRegister'])
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+            })
             ->latest()
             ->paginate(10);
 
-        return view('livewire.transfer-to-central-cash', compact('agentAccounts', 'transfers'));
+        return view('livewire.transfer-to-central-cash', compact('agentAccounts', 'transfers', 'isAdminOrFinance'));
     }
 }

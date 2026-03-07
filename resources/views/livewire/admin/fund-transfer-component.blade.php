@@ -77,7 +77,8 @@
                 {{-- Description facultative --}}
                 <div class="col-md-12 mb-3">
                     <label class="form-label fw-bold">Description (facultatif)</label>
-                    <textarea class="form-control" rows="2" wire:model="description" placeholder="Motif ou remarque du virement"></textarea>
+                    <textarea class="form-control" rows="2" wire:model="description"
+                        placeholder="Motif ou remarque du virement"></textarea>
                 </div>
             </div>
 
@@ -99,10 +100,27 @@
                         <button class="btn btn-show-table-options" type="button">Rechercher</button>
                         <div class="table-search-input">
                             <label>
-                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
+                                <input type="search" wire:model.live.debounce.300ms="search"
+                                    class="form-control input-sm" placeholder="Rechercher..." style="min-width: 120px">
                             </label>
                         </div>
+                    </div>
+
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                            <option value="day">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="range">Intervalle personnalisé</option>
+                        </select>
+
+                        @if ($filterType === 'range')
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span>au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        @endif
                     </div>
                 </div>
             </div>
@@ -131,8 +149,7 @@
                                         @elseif ($transaction->type === 'virement_caisse_sortant')
                                             <span class="badge bg-label-danger me-1">Sortant</span>
                                         @else
-                                            <span
-                                                class="badge bg-label-secondary me-1">{{ ucfirst($transaction->type) }}</span>
+                                            <span class="badge bg-label-secondary me-1">{{ ucfirst($transaction->type) }}</span>
                                         @endif
                                     </td>
                                     <td>{{ $transaction->currency }}</td>
