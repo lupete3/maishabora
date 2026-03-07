@@ -199,7 +199,13 @@ class GrantCredit extends Component
                 ->where('currency', $this->currency)
                 ->where('type', 'current')
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (!$account) {
+                DB::rollBack();
+                notyf()->error("Le membre ne possède pas de compte courant en {$this->currency}. Veuillez d'abord lui créer ce compte.");
+                return;
+            }
 
             $mainCash = MainCashRegister::where('currency', $this->currency)
                 ->lockForUpdate()
@@ -462,7 +468,6 @@ class GrantCredit extends Component
         } catch (\Throwable $th) {
             DB::rollBack();
             report($th);
-            dd($th);
             notyf()->error(__('Une erreur est survenue lors de l’octroi du crédit.'));
         }
     }
