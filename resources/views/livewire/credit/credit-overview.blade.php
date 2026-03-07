@@ -30,15 +30,15 @@
                                 $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
                             @endphp
                             <div class="list-group-item list-group-item-action border-0 border-bottom p-3"
-                                @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
+                                @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
                                     onclick="window.location.href='{{ route('member.details', $r->credit->user->id) }}'"
-                                style="cursor: pointer;" @endcanany>
+                                    style="cursor: pointer;"
+                                @endif>
                                 <div class="row align-items-center">
                                     <div class="col-12 mb-2 d-flex justify-content-between">
                                         <span class="fw-bold text-primary">{{ $r->credit->user->code }} -
                                             {{ $r->credit->user->name }} {{ $r->credit->user->postnom }}</span>
-                                        <span
-                                            class="badge bg-label-danger">{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</span>
+                                        <span class="badge bg-label-danger">{{ $r->due_date->format('d/m/Y') }}</span>
                                     </div>
                                     <div class="col-md-5">
                                         <div class="text-muted small mb-1">Montant Dû :</div>
@@ -47,7 +47,7 @@
                                         </div>
                                         <small class="text-danger">
                                             <i class="bx bx-time-five me-1"></i>Retard : {{ number_format($daysLate, 0) }}
-                                            {{ Str::plural('jour', $daysLate) }}
+                                            {{ $daysLate > 1 ? 'jours' : 'jour' }}
                                         </small>
                                     </div>
                                     <div class="col-md-7 border-start ps-md-4">
@@ -115,15 +115,16 @@
                                 $daysRemaining = now()->diffInDays(\Carbon\Carbon::parse($r->due_date), false);
                             @endphp
                             <div class="list-group-item list-group-item-action border-0 border-bottom p-3"
-                                @canany(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre'])
+                                @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
                                     onclick="window.location.href='{{ route('member.details', $r->credit->user->id) }}'"
-                                style="cursor: pointer;" @endcanany>
+                                    style="cursor: pointer;"
+                                @endif>
                                 <div class="row align-items-center">
                                     <div class="col-12 mb-2 d-flex justify-content-between">
                                         <span class="fw-bold text-primary">{{ $r->credit->user->code }} -
                                             {{ $r->credit->user->name }} {{ $r->credit->user->postnom }}</span>
                                         <span
-                                            class="badge bg-label-warning text-dark">{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</span>
+                                            class="badge bg-label-warning text-dark">{{ $r->due_date->format('d/m/Y') }}</span>
                                     </div>
                                     <div class="col-md-5">
                                         <div class="text-muted small mb-1">Montant à Payer :</div>
@@ -132,7 +133,7 @@
                                         </div>
                                         <small class="text-primary">
                                             <i class="bx bx-timer me-1"></i>Dans {{ number_format($daysRemaining, 0) }}
-                                            {{ Str::plural('jour', $daysRemaining) }}
+                                            {{ $daysRemaining > 1 ? 'jours' : 'jour' }}
                                         </small>
                                     </div>
                                     <div class="col-md-7 border-start ps-md-4">

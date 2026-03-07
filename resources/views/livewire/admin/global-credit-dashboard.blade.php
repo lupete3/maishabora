@@ -167,6 +167,34 @@
             Liste des crédits en cours
         </div>
         <div class="card-body">
+            <!-- Filtres et Recherche -->
+            <div class="row g-3 mb-4 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold">Recherche</label>
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" wire:model.live.debounce.300ms="search" class="form-control"
+                            placeholder="Nom, postnom ou code membre...">
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Devise</label>
+                    <select wire:model.live="currency" class="form-select">
+                        <option value="all">Toutes</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="CDF">CDF (FC)</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date Début</label>
+                    <input type="date" wire:model.live="dateStart" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label fw-bold">Date Fin</label>
+                    <input type="date" wire:model.live="dateEnd" class="form-control">
+                </div>
+            </div>
+
             <div class="table-responsive">
                 <table class="table table-hover table-striped">
                     <thead class="table-light">
@@ -174,29 +202,42 @@
                             <th>Membre</th>
                             <th>Devise</th>
                             <th>Montant</th>
+                            <th>Total à Rembourser</th>
+                            <th>Total Payé</th>
+                            <th>Pénalités</th>
                             <th>Taux</th>
                             <th>Échéances</th>
                             <th>Date de début</th>
-                            <th>Status</th>
                             <th></th>
                         </tr>
                     </thead>
                     <tbody>
                         @forelse ($credits as $credit)
                             <tr>
-                                <td>{{ $credit->user->name . ' ' . $credit->user->postnom }}</td>
+                                <td><span class="fw-bold text-primary">{{ $credit->user->code }}</span> -
+                                    {{ $credit->user->name . ' ' . $credit->user->postnom }}</td>
                                 <td>{{ $credit->currency }}</td>
                                 <td>{{ number_format($credit->amount, 2) }}</td>
-                                <td>{{ $credit->interest_rate }}%</td>
-                                <td>{{ $credit->installments }}</td>
-                                <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
-                                <td>
-                                    @if ($credit->is_paid)
-                                        <span class="badge bg-success">Remboursé</span>
-                                    @else
-                                        <span class="badge bg-warning">En cours</span>
-                                    @endif
+                                <td class="fw-bold">{{ number_format($credit->repayments->sum('expected_amount'), 2) }}</td>
+                                <td class="text-success">{{ number_format($credit->repayments->sum('paid_amount'), 2) }}
                                 </td>
+                                <td class="text-danger">{{ number_format($credit->repayments->sum('penalty'), 2) }}</td>
+                                <td>{{ $credit->interest_rate }}%</td>
+                                <td>
+                                    {{ $credit->installments }}
+                                    <small class="text-muted text-lowercase">
+                                        @if($credit->repayment_type == 'monthly')
+                                            {{ $credit->installments > 1 ? 'mois' : 'mois' }}
+                                        @elseif($credit->repayment_type == 'weekly')
+                                            {{ $credit->installments > 1 ? 'semaines' : 'semaine' }}
+                                        @elseif($credit->repayment_type == 'daily')
+                                            {{ $credit->installments > 1 ? 'jours' : 'jour' }}
+                                        @else
+                                            {{ $credit->repayment_type }}
+                                        @endif
+                                    </small>
+                                </td>
+                                <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
                                 <td>
                                     <a href="{{ route('schedule.generate', ['creditId' => $credit->id]) }}" target="_blank"
                                         class="btn btn-sm btn-secondary">
@@ -206,7 +247,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7" class="text-center text-muted">Aucun crédit trouvé.</td>
+                                <td colspan="11" class="text-center text-muted">Aucun crédit trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>
@@ -218,52 +259,4 @@
             </div>
         </div>
     </div>
-
-    <script>
-        document.addEventListener('livewire:load', function () {
-
-            // Crédits par mois
-            new ApexCharts(document.querySelector("#creditsByMonthChart"), {
-                chart: {
-                    type: 'bar',
-                    height: 300
-                },
-                series: [{
-                    name: 'Crédits',
-                    data: @json($creditsCounts)
-                }],
-                xaxis: {
-                    categories: @json($creditsMonths)
-                },
-                colors: ['#0d6efd']
-            }).render();
-
-            // Crédits par devise
-            new ApexCharts(document.querySelector("#creditsByCurrencyChart"), {
-                chart: {
-                    type: 'pie',
-                    height: 300
-                },
-                series: @json($currencyCounts),
-                labels: @json($currencyLabels),
-                colors: ['#198754', '#ffc107', '#dc3545', '#0dcaf0']
-            }).render();
-
-            // Remboursements par mois
-            new ApexCharts(document.querySelector("#repaymentsByMonthChart"), {
-                chart: {
-                    type: 'line',
-                    height: 300
-                },
-                series: [{
-                    name: 'Montant remboursé',
-                    data: @json($repaymentAmounts)
-                }],
-                xaxis: {
-                    categories: @json($repaymentMonths)
-                },
-                colors: ['#fd7e14']
-            }).render();
-        });
-    </script>
 </div>

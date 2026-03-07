@@ -27,50 +27,73 @@ class GlobalCreditDashboard extends Component
     public $totalPenalties = [];
     public $cashRegisters = [];
 
+    // Filtres
+    public $search = '';
+    public $dateStart;
+    public $dateEnd;
+    public $currency = 'all';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'dateStart' => ['except' => ''],
+        'dateEnd' => ['except' => ''],
+        'currency' => ['except' => 'all'],
+    ];
+
     public function mount()
     {
-        // Vérifier que seul un agent de terrain peut accéder
         Gate::authorize('afficher-tableaudebord-admin', User::class);
-
-        // Caisse centrale
         $this->cashRegisters = MainCashRegister::all();
+    }
 
-        // Statistiques par devise
+    public function updated($property)
+    {
+        if (in_array($property, ['search', 'dateStart', 'dateEnd', 'currency'])) {
+            $this->resetPage();
+        }
+    }
+
+    public function render()
+    {
+        // Calcul des statistiques réactives
         foreach (['USD', 'CDF'] as $curr) {
-            // Totaux
-            $totalQuery = Credit::where('currency', $curr);
-            $this->totalCreditsCount[$curr] = $totalQuery->count();
-            $this->totalCreditsValue[$curr] = $totalQuery->sum('amount');
+            $baseQuery = Credit::where('currency', $curr);
+            $this->applyFilters($baseQuery);
 
-            // En cours
+            $this->totalCreditsCount[$curr] = $baseQuery->count();
+            $this->totalCreditsValue[$curr] = $baseQuery->sum('amount');
+
             $inProgressQuery = Credit::where('currency', $curr)->where('is_paid', false);
+            $this->applyFilters($inProgressQuery);
             $this->creditsInProgressCount[$curr] = $inProgressQuery->count();
             $this->creditsInProgressValue[$curr] = $inProgressQuery->sum('amount');
 
-            // En retard (Crédits ayant au moins une échéance non payée et dépassée)
             $overdueCreditIds = Repayment::where('due_date', '<', now())
                 ->where('is_paid', false)
-                ->whereHas('credit', fn($q) => $q->where('currency', $curr))
+                ->whereHas('credit', function ($q) use ($curr) {
+                    $q->where('currency', $curr);
+                    $this->applyFilters($q);
+                })
                 ->distinct()
                 ->pluck('credit_id');
 
             $this->overdueCreditsCount[$curr] = $overdueCreditIds->count();
             $this->overdueCreditsValue[$curr] = Credit::whereIn('id', $overdueCreditIds)->sum('amount');
 
-            // Pénalités
-            $this->totalPenalties[$curr] = Repayment::whereHas('credit', fn($q) => $q->where('currency', $curr))
-                ->where('penalty', '>', 0)
-                ->sum('penalty');
+            $penaltyQuery = Repayment::whereHas('credit', function ($q) use ($curr) {
+                $q->where('currency', $curr);
+                $this->applyFilters($q);
+            })->where('penalty', '>', 0);
+
+            $this->totalPenalties[$curr] = $penaltyQuery->sum('penalty');
         }
 
-        // Totaux globaux (toutes devises confondues)
         $this->totalCredits = array_sum($this->totalCreditsCount);
         $this->creditsInProgress = array_sum($this->creditsInProgressCount);
-    }
 
-    public function render()
-    {
-        $credits = Credit::with(['user', 'repayments'])->where('is_paid', false)->latest()->paginate(10);
+        $creditsQuery = Credit::with(['user', 'repayments'])->where('is_paid', false)->latest();
+        $this->applyFilters($creditsQuery);
+        $credits = $creditsQuery->paginate(10);
 
         // Crédits par mois
         $creditsByMonthData = Credit::selectRaw('DATE_FORMAT(created_at, "%Y-%m") as month, COUNT(*) as count')
@@ -108,6 +131,28 @@ class GlobalCreditDashboard extends Component
             'repaymentMonths',
             'repaymentAmounts',
         ));
+    }
+
+    private function applyFilters($query)
+    {
+        if ($this->search) {
+            $query->whereHas('user', function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                    ->orWhere('postnom', 'like', '%' . $this->search . '%')
+                    ->orWhere('code', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if ($this->currency !== 'all') {
+            $query->where('currency', $this->currency);
+        }
+
+        if ($this->dateStart && $this->dateEnd) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($this->dateStart)->startOfDay(),
+                \Carbon\Carbon::parse($this->dateEnd)->endOfDay()
+            ]);
+        }
     }
 
 }
