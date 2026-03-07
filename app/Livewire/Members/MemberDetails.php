@@ -608,15 +608,17 @@ class MemberDetails extends Component
                 $this->getCardWithdrawalDescription($card, false)
             );
 
-            $this->createTransaction(
-                null,
-                self::RETAINED_ACCOUNT_USER_ID,
-                'depot',
-                $card->currency,
-                $toRetain,
-                $retainedAccount->balance,
-                $this->getCardRetainedDescription($card)
-            );
+            if ($toRetain > 0) {
+                $this->createTransaction(
+                    null,
+                    self::RETAINED_ACCOUNT_USER_ID,
+                    'depot',
+                    $card->currency,
+                    $toRetain,
+                    $retainedAccount->balance,
+                    $this->getCardRetainedDescription($card)
+                );
+            }
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
