@@ -9,14 +9,18 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class AgentDashboard extends Component
 {
     public $today;
     public $user_id;
     public $isShowTransaction = false;
-    public $transactions = [];
+    /** @var \Illuminate\Support\Collection|array */
+    public $transactions;
     public $transactionCount;
     public $totalByCurrency;
     public $selectedAgent;
@@ -38,7 +42,7 @@ class AgentDashboard extends Component
 
     public function mount()
     {
-        $user = Auth::user();
+        // Initialization if needed
     }
 
     public function applyCustomFilter()
@@ -70,8 +74,8 @@ class AgentDashboard extends Component
                 return $query->whereDate('created_at', $now);
 
             case 'week':
-                $start = $now->startOfWeek();
-                $end = $now->endOfWeek();
+                $start = $now->copy()->startOfWeek();
+                $end = $now->copy()->endOfWeek();
                 $this->periodLabel = "Semaine";
                 return $query->whereBetween('created_at', [$start, $end]);
 
@@ -197,7 +201,7 @@ class AgentDashboard extends Component
 
     public function confirmUpdateBalance($accountId)
     {
-        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+        Gate::authorize('modifier-solde-compte', User::class);
         $account = \App\Models\AgentAccount::findOrFail($accountId);
         $this->editingAccountId = $accountId;
         $this->newBalance = $account->balance;
@@ -207,14 +211,14 @@ class AgentDashboard extends Component
 
     public function updateBalance()
     {
-        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+        Gate::authorize('modifier-solde-compte', User::class);
 
         $this->validate([
             'newBalance' => 'required|numeric|min:0',
             'modificationReason' => 'required|string|min:5',
         ]);
 
-        \Illuminate\Support\Facades\DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $account = \App\Models\AgentAccount::findOrFail($this->editingAccountId);
             $oldBalance = $account->balance;
@@ -236,7 +240,7 @@ class AgentDashboard extends Component
                 "Modification manuelle du solde agent {$account->currency} de {$account->user->name}. Ancien: {$oldBalance}, Nouveau: {$this->newBalance}. Raison: {$this->modificationReason}"
             );
 
-            \Illuminate\Support\Facades\DB::commit();
+            DB::commit();
             $this->openModifyBalance = false;
             $this->dispatch('notyf', type: 'success', message: 'Solde agent mis à jour avec succès !');
 
@@ -244,8 +248,8 @@ class AgentDashboard extends Component
             if ($this->isShowTransaction && $this->user_id == $account->user_id) {
                 $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
             }
-        } catch (\Throwable $th) {
-            \Illuminate\Support\Facades\DB::rollBack();
+        } catch (Throwable $th) {
+            DB::rollBack();
             report($th);
             $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la mise à jour du solde.');
         }
