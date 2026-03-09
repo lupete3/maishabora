@@ -25,6 +25,15 @@ class GlobalCreditDashboard extends Component
     public $overdueCreditsCount = [];
     public $overdueCreditsValue = [];
     public $totalPenalties = [];
+    public $totalToRepayValue = [];
+    public $totalRepaidValue = [];
+    public $remainingBalanceValue = [];
+    public $recoveryRate = [];
+    public $overdueRate = [];
+    public $inProgressRate = [];
+    public $penaltyWeight = [];
+    public $debtRatio = [];
+    public $interestMargin = [];
     public $cashRegisters = [];
 
     // Filtres
@@ -86,6 +95,46 @@ class GlobalCreditDashboard extends Component
             })->where('penalty', '>', 0);
 
             $this->totalPenalties[$curr] = $penaltyQuery->sum('penalty');
+
+            // Nouveaux calculs
+            $repaymentBaseQuery = Repayment::whereHas('credit', function ($q) use ($curr) {
+                $q->where('currency', $curr);
+                $this->applyFilters($q);
+            });
+
+            $this->totalToRepayValue[$curr] = (clone $repaymentBaseQuery)->sum('expected_amount');
+            $this->totalRepaidValue[$curr] = (clone $repaymentBaseQuery)->sum('paid_amount');
+            $this->remainingBalanceValue[$curr] = $this->totalToRepayValue[$curr] - $this->totalRepaidValue[$curr];
+
+            // Taux de recouvrement
+            $this->recoveryRate[$curr] = $this->totalToRepayValue[$curr] > 0
+                ? ($this->totalRepaidValue[$curr] / $this->totalToRepayValue[$curr]) * 100
+                : 0;
+
+            // Taux de dossiers en retard (par rapport aux dossiers en cours)
+            $this->overdueRate[$curr] = $this->creditsInProgressCount[$curr] > 0
+                ? ($this->overdueCreditsCount[$curr] / $this->creditsInProgressCount[$curr]) * 100
+                : 0;
+
+            // Taux de dossiers en cours (par rapport au total historique)
+            $this->inProgressRate[$curr] = $this->totalCreditsCount[$curr] > 0
+                ? ($this->creditsInProgressCount[$curr] / $this->totalCreditsCount[$curr]) * 100
+                : 0;
+
+            // Poids des pénalités (par rapport au montant déjà remboursé)
+            $this->penaltyWeight[$curr] = $this->totalRepaidValue[$curr] > 0
+                ? ($this->totalPenalties[$curr] / $this->totalRepaidValue[$curr]) * 100
+                : 0;
+
+            // Ratio de dette restante (par rapport au total attendu)
+            $this->debtRatio[$curr] = $this->totalToRepayValue[$curr] > 0
+                ? ($this->remainingBalanceValue[$curr] / $this->totalToRepayValue[$curr]) * 100
+                : 0;
+
+            // Marge d'intérêt (Intérêts attendus / Principal prêté)
+            $this->interestMargin[$curr] = $this->totalCreditsValue[$curr] > 0
+                ? (($this->totalToRepayValue[$curr] - $this->totalCreditsValue[$curr]) / $this->totalCreditsValue[$curr]) * 100
+                : 0;
         }
 
         $this->totalCredits = array_sum($this->totalCreditsCount);

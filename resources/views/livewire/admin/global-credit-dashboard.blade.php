@@ -15,13 +15,13 @@
                     </div>
                     <div class="row text-center mt-3">
                         <div class="col-6 border-end">
-                            <div class="fw-bold text-dark fs-5">{{ $totalCreditsCount['USD'] ?? 0 }}</div>
-                            <small class="text-success fw-bold">{{ number_format($totalCreditsValue['USD'] ?? 0, 2) }}
+                            <div class="fw-bold text-dark fs-6">{{ $totalCreditsCount['USD'] ?? 0 }}</div>
+                            <small class="text-success fw-bold" style="font-size: 0.75rem;">{{ number_format($totalCreditsValue['USD'] ?? 0, 2) }}
                                 $</small>
                         </div>
                         <div class="col-6">
-                            <div class="fw-bold text-dark fs-5">{{ $totalCreditsCount['CDF'] ?? 0 }}</div>
-                            <small class="text-primary fw-bold">{{ number_format($totalCreditsValue['CDF'] ?? 0, 0) }}
+                            <div class="fw-bold text-dark fs-6">{{ $totalCreditsCount['CDF'] ?? 0 }}</div>
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">{{ number_format($totalCreditsValue['CDF'] ?? 0, 0) }}
                                 FC</small>
                         </div>
                     </div>
@@ -41,17 +41,24 @@
                     </div>
                     <div class="row text-center mt-3">
                         <div class="col-6 border-end">
-                            <div class="fw-bold text-dark fs-5">{{ $creditsInProgressCount['USD'] ?? 0 }}</div>
+                            <div class="fw-bold text-dark fs-6">{{ $creditsInProgressCount['USD'] ?? 0 }}</div>
                             <small
-                                class="text-success fw-bold">{{ number_format($creditsInProgressValue['USD'] ?? 0, 2) }}
+                                class="text-success fw-bold" style="font-size: 0.75rem;">{{ number_format($creditsInProgressValue['USD'] ?? 0, 2) }}
                                 $</small>
                         </div>
                         <div class="col-6">
-                            <div class="fw-bold text-dark fs-5">{{ $creditsInProgressCount['CDF'] ?? 0 }}</div>
+                            <div class="fw-bold text-dark fs-6">{{ $creditsInProgressCount['CDF'] ?? 0 }}</div>
                             <small
-                                class="text-primary fw-bold">{{ number_format($creditsInProgressValue['CDF'] ?? 0, 0) }}
+                                class="text-primary fw-bold" style="font-size: 0.75rem;">{{ number_format($creditsInProgressValue['CDF'] ?? 0, 0) }}
                                 FC</small>
                         </div>
+                    </div>
+                    <div class="mt-2 text-center">
+                        <span class="badge bg-label-success small" style="font-size: 0.7rem;">
+                            <i class="bx bx-check-circle"></i> Actifs :
+                            {{ number_format($inProgressRate['USD'] ?? 0, 1) }}% (USD) /
+                            {{ number_format($inProgressRate['CDF'] ?? 0, 1) }}% (CDF)
+                        </span>
                     </div>
                 </div>
             </div>
@@ -69,44 +76,139 @@
                     </div>
                     <div class="row text-center mt-3">
                         <div class="col-6 border-end">
-                            <div class="fw-bold text-dark fs-5">{{ $overdueCreditsCount['USD'] ?? 0 }}</div>
-                            <small class="text-success fw-bold">{{ number_format($overdueCreditsValue['USD'] ?? 0, 2) }}
+                            <div class="fw-bold text-dark fs-6">{{ $overdueCreditsCount['USD'] ?? 0 }}</div>
+                            <small class="text-success fw-bold" style="font-size: 0.75rem;">{{ number_format($overdueCreditsValue['USD'] ?? 0, 2) }}
                                 $</small>
                         </div>
                         <div class="col-6">
-                            <div class="fw-bold text-dark fs-5">{{ $overdueCreditsCount['CDF'] ?? 0 }}</div>
-                            <small class="text-primary fw-bold">{{ number_format($overdueCreditsValue['CDF'] ?? 0, 0) }}
+                            <div class="fw-bold text-dark fs-6">{{ $overdueCreditsCount['CDF'] ?? 0 }}</div>
+                            <small class="text-primary fw-bold" style="font-size: 0.75rem;">{{ number_format($overdueCreditsValue['CDF'] ?? 0, 0) }}
                                 FC</small>
                         </div>
                     </div>
+                    @if(max($overdueRate['USD'] ?? 0, $overdueRate['CDF'] ?? 0) > 0)
+                        <div class="mt-2 text-center">
+                            <span class="badge bg-label-danger">
+                                <i class="bx bx-trending-up"></i> Taux de ret. :
+                                {{ number_format($overdueRate['USD'] ?? 0, 1) }}% (USD) /
+                                {{ number_format($overdueRate['CDF'] ?? 0, 1) }}% (CDF)
+                            </span>
+                        </div>
+                    @endif
                 </div>
             </div>
         </div>
 
         <!-- Pénalités -->
         <div class="col-md-6 mt-2">
-            <div class="card card-border-shadow border-start-warning">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Pénalités cumulées USD</h6>
-                        <h5 class="mb-0">{{ number_format($totalPenalties['USD'] ?? 0, 2) }} $</h5>
+            <div class="card card-border-shadow border-start-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">Pénalités cumulées</h6>
+                        <div class="avatar bg-warning text-white rounded-circle shadow">
+                            <i class="bx bx-error-circle fs-4 m-2"></i>
+                        </div>
                     </div>
-                    <div class="avatar bg-warning text-white rounded-circle shadow">
-                        <i class="bx bx-dollar fs-4 m-2"></i>
+                    <div class="row text-center mt-3">
+                        <div class="col-6 border-end">
+                            <div class="text-muted small">USD</div>
+                            <div class="fw-bold text-dark fs-6">{{ number_format($totalPenalties['USD'] ?? 0, 2) }} $</div>
+                            <small class="text-warning fw-bold" style="font-size: 0.7rem;">{{ number_format($penaltyWeight['USD'] ?? 0, 1) }}% du recouv.</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">CDF</div>
+                            <div class="fw-bold text-dark fs-6">{{ number_format($totalPenalties['CDF'] ?? 0, 0) }} FC</div>
+                            <small class="text-warning fw-bold" style="font-size: 0.7rem;">{{ number_format($penaltyWeight['CDF'] ?? 0, 1) }}% du recouv.</small>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
+        <!-- Reste à Payer (Restant) -->
         <div class="col-md-6 mt-2">
-            <div class="card card-border-shadow border-start-info">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-1">Pénalités cumulées CDF</h6>
-                        <h5 class="mb-0">{{ number_format($totalPenalties['CDF'] ?? 0, 0) }} FC</h5>
+            <div class="card card-border-shadow border-start-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="text-muted mb-0">Reste à Payer (Global)</h6>
+                        <div class="avatar bg-info text-white rounded-circle shadow">
+                            <i class="bx bx-wallet fs-4 m-2"></i>
+                        </div>
                     </div>
-                    <div class="avatar bg-info text-white rounded-circle shadow">
-                        <i class="bx bx-wallet fs-4 m-2"></i>
+                    <div class="row text-center mt-3">
+                        <div class="col-6 border-end">
+                            <div class="text-muted small">USD</div>
+                            <div class="fw-bold text-danger fs-6">{{ number_format($remainingBalanceValue['USD'] ?? 0, 2) }} $</div>
+                            <small class="text-info fw-bold" style="font-size: 0.7rem;">{{ number_format($debtRatio['USD'] ?? 0, 1) }}% restant</small>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-muted small">CDF</div>
+                            <div class="fw-bold text-danger fs-6">{{ number_format($remainingBalanceValue['CDF'] ?? 0, 0) }} FC</div>
+                            <small class="text-info fw-bold" style="font-size: 0.7rem;">{{ number_format($debtRatio['CDF'] ?? 0, 1) }}% restant</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Nouveaux Détails Financiers -->
+    <div class="row g-2 mb-4">
+        <!-- Total à Rembourser -->
+        <div class="col-md-6">
+            <div class="card bg-label-primary border-0 shadow-none h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-primary text-white rounded p-2 me-3">
+                            <i class="bx bx-calculator fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">Total Attendu (Principal + Intérêts)</h6>
+                    </div>
+                    <div class="d-flex justify-content-around mt-3">
+                        <div class="text-center">
+                            <div class="text-muted small">USD</div>
+                            <h6 class="mb-0 fw-bold">{{ number_format($totalToRepayValue['USD'] ?? 0, 2) }} $</h6>
+                            <small class="text-primary fw-bold" style="font-size: 0.7rem;">+{{ number_format($interestMargin['USD'] ?? 0, 1) }}% d'intérêts</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="text-muted small">CDF</div>
+                            <h6 class="mb-0 fw-bold">{{ number_format($totalToRepayValue['CDF'] ?? 0, 0) }} FC</h6>
+                            <small class="text-primary fw-bold" style="font-size: 0.7rem;">+{{ number_format($interestMargin['CDF'] ?? 0, 1) }}% d'intérêts</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Total Remboursé -->
+        <div class="col-md-6">
+            <div class="card bg-label-success border-0 shadow-none h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-success text-white rounded p-2 me-3">
+                            <i class="bx bx-check-double fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">Total Déjà Remboursé</h6>
+                    </div>
+                    <div class="d-flex justify-content-around mt-3">
+                        <div class="text-center">
+                            <div class="text-muted small">USD</div>
+                            <h6 class="mb-0 fw-bold text-success">{{ number_format($totalRepaidValue['USD'] ?? 0, 2) }} $</h6>
+                            <div class="progress mt-1" style="height: 4px; width: 60px; margin: 0 auto;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $recoveryRate['USD'] ?? 0 }}%" aria-valuenow="{{ $recoveryRate['USD'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-success fw-bold" style="font-size: 0.7rem;">{{ number_format($recoveryRate['USD'] ?? 0, 1) }}%</small>
+                        </div>
+                        <div class="vr"></div>
+                        <div class="text-center">
+                            <div class="text-muted small">CDF</div>
+                            <h6 class="mb-0 fw-bold text-success">{{ number_format($totalRepaidValue['CDF'] ?? 0, 0) }} FC</h6>
+                            <div class="progress mt-1" style="height: 4px; width: 60px; margin: 0 auto;">
+                                <div class="progress-bar bg-success" role="progressbar" style="width: {{ $recoveryRate['CDF'] ?? 0 }}%" aria-valuenow="{{ $recoveryRate['CDF'] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            </div>
+                            <small class="text-success fw-bold" style="font-size: 0.7rem;">{{ number_format($recoveryRate['CDF'] ?? 0, 1) }}%</small>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -215,7 +317,8 @@
                         @forelse ($credits as $credit)
                             <tr>
                                 <td><span class="fw-bold text-primary">{{ $credit->user->code }}</span> -
-                                    {{ $credit->user->name . ' ' . $credit->user->postnom }}</td>
+                                    {{ $credit->user->name . ' ' . $credit->user->postnom }}
+                                </td>
                                 <td>{{ $credit->currency }}</td>
                                 <td>{{ number_format($credit->amount, 2) }}</td>
                                 <td class="fw-bold">{{ number_format($credit->repayments->sum('expected_amount'), 2) }}</td>
