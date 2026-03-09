@@ -175,6 +175,7 @@
             </div>
         </div>
     </div>
+    <div class="card">
             <div class="card-table table-responsive">
                 <table class="table card-table table-vcenter table-striped table-hover small">
                     <thead class="table-light">
