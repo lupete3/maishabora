@@ -113,9 +113,21 @@ class CreditFollowUpReport extends Component
         $totalUnpaidByCurrency = ['USD' => 0, 'CDF' => 0];
         $penaltyByCurrency = ['USD' => 0, 'CDF' => 0];
         $interestByCurrency = ['USD' => 0, 'CDF' => 0];
+        $recoveryRateByCurrency = ['USD' => 0, 'CDF' => 0];
+        $interestMarginByCurrency = ['USD' => 0, 'CDF' => 0];
+        $debtRatioByCurrency = ['USD' => 0, 'CDF' => 0];
 
         if ($credits->isEmpty()) {
-            return compact('totalByCurrency', 'totalPaidByCurrency', 'totalUnpaidByCurrency', 'penaltyByCurrency', 'interestByCurrency');
+            return compact(
+                'totalByCurrency',
+                'totalPaidByCurrency',
+                'totalUnpaidByCurrency',
+                'penaltyByCurrency',
+                'interestByCurrency',
+                'recoveryRateByCurrency',
+                'interestMarginByCurrency',
+                'debtRatioByCurrency'
+            );
         }
 
         $creditIds = $credits->pluck('id')->toArray();
@@ -132,9 +144,13 @@ class CreditFollowUpReport extends Component
 
             $totalByCurrency[$curr] += $credit->amount;
 
-            $paid = $credit->repayments->where('is_paid', true)->sum('paid_amount');
-            $remaining = max(0, $credit->amount - $paid);
+            $paid = $credit->repayments->sum('paid_amount');
+            $expected = $credit->repayments->sum('expected_amount');
+
             $totalPaidByCurrency[$curr] += $paid;
+
+            // Le "Reste à Payer" ici est basé sur le total attendu (Principal + Intérêt)
+            $remaining = max(0, $expected - $paid);
             $totalUnpaidByCurrency[$curr] += $remaining;
 
             $penaltyByCurrency[$curr] += $credit->repayments->sum('penalty');
@@ -153,12 +169,33 @@ class CreditFollowUpReport extends Component
             $interestByCurrency[$interest->currency] = $interest->total_interest;
         }
 
+        // 📊 Calcul des ratios finaux
+        foreach ($totalByCurrency as $curr => $principal) {
+            $totalExpected = DB::table('repayments')
+                ->join('credits', 'repayments.credit_id', '=', 'credits.id')
+                ->whereIn('credits.id', $creditIds)
+                ->where('credits.currency', $curr)
+                ->sum('expected_amount');
+
+            if ($totalExpected > 0) {
+                $recoveryRateByCurrency[$curr] = ($totalPaidByCurrency[$curr] / $totalExpected) * 100;
+                $debtRatioByCurrency[$curr] = ($totalUnpaidByCurrency[$curr] / $totalExpected) * 100;
+            }
+
+            if ($principal > 0) {
+                $interestMarginByCurrency[$curr] = ($interestByCurrency[$curr] / $principal) * 100;
+            }
+        }
+
         return [
             'totalByCurrency' => $totalByCurrency,
             'totalPaidByCurrency' => $totalPaidByCurrency,
             'totalUnpaidByCurrency' => $totalUnpaidByCurrency,
             'penaltyByCurrency' => $penaltyByCurrency,
             'interestByCurrency' => $interestByCurrency,
+            'recoveryRateByCurrency' => $recoveryRateByCurrency,
+            'interestMarginByCurrency' => $interestMarginByCurrency,
+            'debtRatioByCurrency' => $debtRatioByCurrency,
         ];
     }
 }

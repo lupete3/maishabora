@@ -1,164 +1,233 @@
 <!-- resources/views/livewire/credit-follow-up-report.blade.php -->
 <div class="container mt-4">
-    <h4>Rapport Global de crédits</h4>
-    <!-- Récapitulatif -->
-    <div class="row g-3 mt-2 mb-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0">Rapport Suivi des Crédits</h4>
+        <div>
+            <button wire:click="exportToPdf" class="btn btn-primary shadow-sm" wire:loading.attr="disabled">
+                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
+                <i class="bx bx-download"></i> Exporter PDF
+            </button>
+        </div>
+    </div>
+
+    <!-- Récapitulatif Moderne -->
+    <div class="row g-3 mb-4">
+        <!-- Crédits Totaux (Principal) -->
         <div class="col-md-6 col-lg-3">
-            <div class="card border-primary h-100">
+            <div class="card card-border-shadow border-start-primary h-100">
                 <div class="card-body">
-                    <h6 class="card-title text-primary">Crédits Totals</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-label-primary p-2 me-2 rounded">
+                            <i class="bx bx-money fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">Crédits Totaux</h6>
+                    </div>
                     @foreach ($totals['totalByCurrency'] as $curr => $total)
-                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <span class="text-muted small">{{ $curr }}</span>
+                            <span class="fw-bold fs-6">{{ number_format($total, 2) }}</span>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
 
+        <!-- Récupéré (Remboursé) -->
         <div class="col-md-6 col-lg-3">
-            <div class="card border-success h-100">
+            <div class="card card-border-shadow border-start-success h-100">
                 <div class="card-body">
-                    <h6 class="card-title text-success">Remboursés</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-label-success p-2 me-2 rounded">
+                            <i class="bx bx-check-double fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">Remboursés</h6>
+                    </div>
                     @foreach ($totals['totalPaidByCurrency'] as $curr => $total)
-                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">{{ $curr }}</span>
+                                <span class="fw-bold text-success fs-6">{{ number_format($total, 2) }}</span>
+                            </div>
+                            <div class="progress mt-1" style="height: 4px;">
+                                <div class="progress-bar bg-success" role="progressbar"
+                                    style="width: {{ $totals['recoveryRateByCurrency'][$curr] ?? 0 }}%"
+                                    aria-valuenow="{{ $totals['recoveryRateByCurrency'][$curr] ?? 0 }}" aria-valuemin="0"
+                                    aria-valuemax="100"></div>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-success fw-bold"
+                                    style="font-size: 0.7rem;">{{ number_format($totals['recoveryRateByCurrency'][$curr] ?? 0, 1) }}%
+                                    Recouv.</small>
+                            </div>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-2">
-            <div class="card border-danger h-100">
+        <!-- Reste à Payer -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-border-shadow border-start-danger h-100">
                 <div class="card-body">
-                    <h6 class="card-title text-danger">En cours</h6>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-label-danger p-2 me-2 rounded">
+                            <i class="bx bx-wallet fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">En cours (Restant)</h6>
+                    </div>
                     @foreach ($totals['totalUnpaidByCurrency'] as $curr => $total)
-                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                        <div class="mt-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted small">{{ $curr }}</span>
+                                <span class="fw-bold text-danger fs-6">{{ number_format($total, 2) }}</span>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-label-danger mt-1" style="font-size: 0.7rem;">
+                                    {{ number_format($totals['debtRatioByCurrency'][$curr] ?? 0, 1) }}% restant
+                                </span>
+                            </div>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6 col-lg-2">
-            <div class="card border-warning h-100">
+        <!-- Gains (Intérêts & Pénalités) -->
+        <div class="col-md-6 col-lg-3">
+            <div class="card card-border-shadow border-start-warning h-100">
                 <div class="card-body">
-                    <h6 class="card-title text-warning">Intérêt</h6>
-                    @foreach ($totals['interestByCurrency'] as $curr => $total)
-                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6 col-lg-2">
-            <div class="card border-warning h-100">
-                <div class="card-body">
-                    <h6 class="card-title text-warning">Pénalités</h6>
-                    @foreach ($totals['penaltyByCurrency'] as $curr => $total)
-                    <p class="card-text">{{ $curr }} : {{ number_format($total, 2) }}</p>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="avatar bg-label-warning p-2 me-2 rounded">
+                            <i class="bx bx-trending-up fs-4"></i>
+                        </div>
+                        <h6 class="mb-0">Gains & Frais</h6>
+                    </div>
+                    @foreach ($totals['totalByCurrency'] as $curr => $total)
+                        <div class="mt-2 border-bottom pb-1 mb-1 last-child-no-border">
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Intérêts ({{ $curr }})</span>
+                                <span
+                                    class="fw-bold text-warning">{{ number_format($totals['interestByCurrency'][$curr] ?? 0, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between small">
+                                <span class="text-muted">Pénalités ({{ $curr }})</span>
+                                <span
+                                    class="fw-bold text-warning">{{ number_format($totals['penaltyByCurrency'][$curr] ?? 0, 2) }}</span>
+                            </div>
+                            <div class="text-end">
+                                <small class="text-warning fw-bold"
+                                    style="font-size: 0.7rem;">+{{ number_format($totals['interestMarginByCurrency'][$curr] ?? 0, 1) }}%
+                                    gain</small>
+                            </div>
+                        </div>
                     @endforeach
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="table-wrapper">
-        <div class="card has-table ">
-            <div class="card-header bg-light d-flex justify-between">
-                <div class="row g-2 w-100">
-                    <div class="col-md-3">
+    <!-- Filtres Avancés -->
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold text-muted">Membre</label>
+                    <div class="input-group input-group-merge">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input type="text" wire:model.live.debounce.300ms="searchMember" class="form-control"
-                            placeholder="Rechercher membre..." />
-                    </div>
-
-                    <div class="col-md-2">
-                        <select wire:model.live.debounce.300ms="currency" class="form-select">
-                            <option value="">Devise</option>
-                            <option value="USD">USD</option>
-                            <option value="CDF">CDF</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <select wire:model.live.debounce.300ms="status" class="form-select">
-                            <option value="">Statut</option>
-                            <option value="paid">Remboursé</option>
-                            <option value="unpaid">En cours</option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <input type="date" wire:model.live.debounce.300ms="startDate" class="form-control" />
-                    </div>
-
-                    <div class="col-md-2">
-                        <input type="date" wire:model.live.debounce.300ms="endDate" class="form-control" />
-                    </div>
-                    <div class="col-md-4">
-                        <input type="text" wire:model.live.debounce.300ms="searchAgent" class="form-control"
-                            placeholder="Filtrer par agent..." />
+                            placeholder="Rechercher..." />
                     </div>
                 </div>
-                <div class="col-md-1">
-                    <button wire:click="exportToPdf" class="btn btn-primary " wire:loading.attr="disabled">
-                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i class="bx bx-download"></i> PDF
-                    </button>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Devise</label>
+                    <select wire:model.live.debounce.300ms="currency" class="form-select">
+                        <option value="">Toutes</option>
+                        <option value="USD">USD ($)</option>
+                        <option value="CDF">CDF (FC)</option>
+                    </select>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-muted">Statut</label>
+                    <select wire:model.live.debounce.300ms="status" class="form-select">
+                        <option value="">Tous</option>
+                        <option value="paid">Remboursé</option>
+                        <option value="unpaid">En cours</option>
+                    </select>
+                </div>
+
+                <div class="col-md-5">
+                    <label class="form-label small fw-bold text-muted">Période & Agent</label>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <input type="date" wire:model.live.debounce.300ms="startDate" class="form-control" />
+                        </div>
+                        <div class="col-4">
+                            <input type="date" wire:model.live.debounce.300ms="endDate" class="form-control" />
+                        </div>
+                        <div class="col-4">
+                            <input type="text" wire:model.live.debounce.300ms="searchAgent" class="form-control"
+                                placeholder="Agent..." />
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
             <div class="card-table table-responsive">
-                <table class="table card-table table-vcenter table-striped table-hover">
-                    <thead class="table-warning">
-                        <tr>
-                            <th>ID Crédit</th>
-                            <th>Code Membre</th>
-                            <th>Nom Membre</th>
-                            <th>Date Crédit</th>
+                <table class="table card-table table-vcenter table-striped table-hover small">
+                    <thead class="table-light">
+                        <tr class="text-uppercase" style="font-size: 0.75rem;">
+                            <th>ID</th>
+                            <th>Membre</th>
+                            <th>Date</th>
                             <th>Montant</th>
-                            <th>Solde Restant</th>
+                            <th>Restant</th>
                             <th>Pénalité</th>
-                            <th>Agent Crédit</th>
-                            <th>Status</th>
+                            <th>Agent</th>
+                            <th class="text-center">Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="fs-6">
                         @forelse ($credits as $credit)
                         <tr>
-                            <td>{{ $credit->id }}</td>
-                            <td>{{ $credit->user->code }}</td>
-                            <td>{{ $credit->user->name.' '.$credit->user->postnom.' '.$credit->user->prenom ?? '' }}
+                            <td class="text-muted">#{{ $credit->id }}</td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="fw-bold text-primary">{{ $credit->user->code }}</span>
+                                    <small>{{ $credit->user->name.' '.$credit->user->postnom }}</small>
+                                </div>
                             </td>
                             <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
-                            <td>{{ number_format($credit->amount, 2) }} {{ $credit->currency }}</td>
+                            <td class="fw-bold text-dark">{{ number_format($credit->amount, 2) }} <small>{{ $credit->currency }}</small></td>
                             <td>
-                                @if ($credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount') > 0)
-                                {{ number_format(
-                                $credit->amount - $credit->repayments->where('is_paid', true)->sum('paid_amount'), 2
-                                ) }} {{ $credit->currency }}
+                                @php
+                                    $remaining = $credit->repayments->sum('expected_amount') - $credit->repayments->sum('paid_amount');
+                                @endphp
+                                @if ($remaining > 0)
+                                    <span class="text-danger fw-bold">{{ number_format($remaining, 2) }}</span>
                                 @else
-                                +{{ number_format(
-                                $credit->repayments->where('is_paid', true)->sum('paid_amount') - $credit->amount, 2
-                                ) }} {{ $credit->currency }}
-
+                                    <span class="text-success fw-bold">SOLDE</span>
                                 @endif
-
+                            </td>
+                            <td class="text-warning">
+                                {{ number_format($credit->repayments->sum('penalty'), 2) }}
                             </td>
                             <td>
-                                {{ number_format(
-                                $credit->repayments->sum('penalty'), 2
-                                ) }} {{ $credit->currency }}
+                                <small>{{ $credit->agent ? $credit->agent->name : 'N/A' }}</small>
                             </td>
-                            <td>
-                                {{ $credit->agent ? $credit->agent->name . ' ' . $credit->agent->postnom : 'N/A' }}
-                            </td>
-                            <td>
+                            <td class="text-center">
                                 @if ($credit->is_paid)
-                                <span class="badge bg-success">Remboursé</span>
+                                    <span class="badge bg-label-success" style="font-size: 0.65rem;">PAYÉ</span>
                                 @else
-                                <span class="badge bg-warning">En cours</span>
+                                    <span class="badge bg-label-warning" style="font-size: 0.65rem;">EN COURS</span>
                                 @endif
                             </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="8" class="text-center">Aucun crédit trouvé.</td>
+                            <td colspan="8" class="text-center py-4 text-muted small">Aucun crédit trouvé.</td>
                         </tr>
                         @endforelse
                     </tbody>
@@ -166,9 +235,9 @@
             </div>
 
             <div class="card-footer d-flex justify-content-between align-items-center">
-                <div>
+                <span class="text-muted small">
                     Affichage de {{ $credits->firstItem() }} à {{ $credits->lastItem() }} sur {{ $credits->total() }}
-                </div>
+                </span>
                 <div>
                     {{ $credits->links() }}
                 </div>
