@@ -313,9 +313,62 @@ class DisbursementManagement extends Component
 
         $disbursementRequests = $query->latest()->paginate($this->perPage);
 
+        // KPI Calculations - Restricted to users with 'ajouter-type-decaissement'
+        $stats = [];
+        $breakdownUSD = collect();
+        $breakdownCDF = collect();
+
+        if ($user->can('ajouter-type-decaissement')) {
+            $totalUSD = DisbursementRequest::where('status', 'approved')->where('currency', 'USD')->sum('amount');
+            $totalCDF = DisbursementRequest::where('status', 'approved')->where('currency', 'CDF')->sum('amount');
+
+            $stats = [
+                'total_approved_usd' => $totalUSD,
+                'total_approved_cdf' => $totalCDF,
+                'pending_usd' => DisbursementRequest::where('status', 'pending')
+                    ->where('currency', 'USD')
+                    ->sum('amount'),
+                'pending_cdf' => DisbursementRequest::where('status', 'pending')
+                    ->where('currency', 'CDF')
+                    ->sum('amount'),
+            ];
+
+            // Breakdown by type (Approved only)
+            $breakdownUSD = DisbursementRequest::with('disbursementType')
+                ->where('status', 'approved')
+                ->where('currency', 'USD')
+                ->select('disbursement_type_id', DB::raw('sum(amount) as total'))
+                ->groupBy('disbursement_type_id')
+                ->get()
+                ->map(function ($item) use ($totalUSD) {
+                    return [
+                        'name' => $item->disbursementType->name ?? 'N/A',
+                        'total' => $item->total,
+                        'percentage' => $totalUSD > 0 ? ($item->total / $totalUSD) * 100 : 0
+                    ];
+                });
+
+            $breakdownCDF = DisbursementRequest::with('disbursementType')
+                ->where('status', 'approved')
+                ->where('currency', 'CDF')
+                ->select('disbursement_type_id', DB::raw('sum(amount) as total'))
+                ->groupBy('disbursement_type_id')
+                ->get()
+                ->map(function ($item) use ($totalCDF) {
+                    return [
+                        'name' => $item->disbursementType->name ?? 'N/A',
+                        'total' => $item->total,
+                        'percentage' => $totalCDF > 0 ? ($item->total / $totalCDF) * 100 : 0
+                    ];
+                });
+        }
+
         return view('livewire.disbursement.disbursement-management', [
             'disbursementRequests' => $disbursementRequests,
             'disbursementTypes' => DisbursementType::all(),
+            'stats' => $stats,
+            'breakdownUSD' => $breakdownUSD,
+            'breakdownCDF' => $breakdownCDF,
         ]);
     }
 

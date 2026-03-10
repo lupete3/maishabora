@@ -3,6 +3,68 @@
     @include('livewire.disbursement.manage-disbursement-types-modal')
     @include('livewire.disbursement.edit-disbursement-modal')
 
+    @can('ajouter-type-decaissement')
+        <!-- KPI Section: Breakdown by Type -->
+        <div class="row g-3 mb-4">
+            <!-- USD Breakdown -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-primary">Répartition des Dépenses (USD)</h6>
+                    </div>
+                    <div class="card-body">
+                        @forelse($breakdownUSD as $item)
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-sm fw-medium text-heading">{{ $item['name'] }}</span>
+                                    <span
+                                        class="text-sm fw-bold text-primary">{{ number_format($item['percentage'], 1) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                        style="width: {{ $item['percentage'] }}%" aria-valuenow="{{ $item['percentage'] }}"
+                                        aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ number_format($item['total'], 2) }} USD</small>
+                            </div>
+                        @empty
+                            <div class="text-center py-4 text-muted">Aucune donnée USD approuvée.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- CDF Breakdown -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-info">Répartition des Dépenses (CDF)</h6>
+                    </div>
+                    <div class="card-body">
+                        @forelse($breakdownCDF as $item)
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-sm fw-medium text-heading">{{ $item['name'] }}</span>
+                                    <span class="text-sm fw-bold text-info">{{ number_format($item['percentage'], 1) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-info" role="progressbar"
+                                        style="width: {{ $item['percentage'] }}%" aria-valuenow="{{ $item['percentage'] }}"
+                                        aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ number_format($item['total'], 2) }} CDF</small>
+                            </div>
+                        @empty
+                            <div class="text-center py-4 text-muted">Aucune donnée CDF approuvée.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
+
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
             <div class="row">
@@ -13,8 +75,8 @@
                 </div>
                 <div class="col-md-4 d-flex justify-content-end gap-2">
                     @can('ajouter-type-decaissement')
-                        <button class="btn btn-outline-primary d-flex align-items-center shadow-sm"
-                            data-bs-toggle="modal" data-bs-target="#modalManageDisbursementTypes">
+                        <button class="btn btn-outline-primary d-flex align-items-center shadow-sm" data-bs-toggle="modal"
+                            data-bs-target="#modalManageDisbursementTypes">
                             <i class="bx bx-list-ul me-1"></i> Gérer les Types
                         </button>
                     @endcan
