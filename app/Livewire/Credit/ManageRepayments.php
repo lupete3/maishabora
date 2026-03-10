@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 class ManageRepayments extends Component
 {
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 10000;
+
     public $member_id;
     public $credit_id;
     public $selectedCredit = null;
@@ -135,9 +138,10 @@ class ManageRepayments extends Component
                     $amountToPay = round($capitalRestant, 3);
                 }
 
-                // Vérification du solde
-                if (floatval($account->balance) < $amountToPay) {
-                    notyf()->error(__('Solde insuffisant pour effectuer ce remboursement.'));
+                // Vérification du solde minimum
+                $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+                if ((floatval($account->balance) - $amountToPay) < $minBalance) {
+                    notyf()->error("Solde insuffisant. Le solde minimum obligatoire est de {$minBalance} {$credit->currency}.");
                     return;
                 }
 

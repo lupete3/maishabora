@@ -19,6 +19,9 @@ class CheckOverdueRepayments extends Command
     protected $signature = 'check:overdue-repayments';
     protected $description = 'Vérifie les échéances en retard et applique les remboursements ou pénalités';
 
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 10000;
+
     public function handle()
     {
         $today = Carbon::today();
@@ -52,8 +55,10 @@ class CheckOverdueRepayments extends Command
             //$interestAfter = $interestPart+$penaltyAmount;
 
 
-            //Vérifier si le membre a assez de fonds
-            if ($account->balance >= $expectedAmount) {
+            //Vérifier si le membre a assez de fonds (en respectant le solde minimum)
+            $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+
+            if (($account->balance - $expectedAmount) >= $minBalance) {
                 //Débiter le compte du membre
                 $account->balance -= $expectedAmount;
                 $account->save();
