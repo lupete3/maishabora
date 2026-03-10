@@ -28,15 +28,17 @@
             </div>
         </div>
     </div>
-    <div class="row">
+    <div class="row g-2">
         @foreach ($registers as $index => $reg)
             <div class="col-md-6 mb-4">
                 <div class="card bg-{{ $reg->currency == 'USD' ? 'primary' : 'info' }} text-white overflow-hidden"
                     style="height: 100%">
                     <div class="card-body position-relative">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="avatar bg-white bg-opacity-25 rounded p-2">
-                                <i class="bx {{ $reg->currency == 'USD' ? 'bx-dollar' : 'bx-money' }} fs-3"></i>
+                            <div class="avatar flex-shrink-0">
+                                <span class="avatar-initial rounded bg-white bg-opacity-25">
+                                    <i class="tf-icons bx {{ $reg->currency == 'USD' ? 'bx-dollar' : 'bx-money' }} bx-md text-white"></i>
+                                </span>
                             </div>
                             <span class="badge bg-white bg-opacity-25 text-white">Solde Actuel</span>
                         </div>
@@ -44,8 +46,8 @@
                         <h2 class="text-white mb-0">{{ number_format($reg->balance, 2) }} {{ $reg->currency }}</h2>
 
                         <!-- Background Pattern Deco -->
-                        <div class="position-absolute end-0 bottom-0 opacity-10">
-                            <i class="bx bx-wallet" style="font-size: 100px; transform: translate(20px, 20px)"></i>
+                        <div class="position-absolute end-0 bottom-0 opacity-10" style="pointer-events: none;">
+                            <i class="tf-icons bx bx-wallet text-white" style="font-size: 80px; transform: translate(15px, 15px)"></i>
                         </div>
                     </div>
                 </div>
@@ -57,17 +59,20 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="card border-0 shadow-sm ">
-                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                <div class="card-header border-0 py-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="card-title mb-0 fw-bold text-primary"><i class="bx bx-calendar-event me-2"></i>Performance Mensuelle</h5>
+                        <h5 class="card-title mb-0 fw-bold text-primary"><i
+                                class="bx bx-calendar-event me-2"></i>Performance Mensuelle</h5>
                         <small class="text-muted">Résumé cumulé du mois en cours</small>
                     </div>
                     <ul class="nav nav-pills card-header-pills" id="pills-tab" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active btn-sm" id="pills-usd-tab" data-bs-toggle="pill" data-bs-target="#pills-usd" type="button" role="tab">USD</button>
+                            <button class="nav-link active btn-sm" id="pills-usd-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-usd" type="button" role="tab">USD</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link btn-sm" id="pills-cdf-tab" data-bs-toggle="pill" data-bs-target="#pills-cdf" type="button" role="tab">CDF</button>
+                            <button class="nav-link btn-sm" id="pills-cdf-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-cdf" type="button" role="tab">CDF</button>
                         </li>
                     </ul>
                 </div>
@@ -76,17 +81,18 @@
                     <div class="tab-content" id="pills-tabContent">
                         <!-- TAB USD -->
                         <div class="tab-pane fade show active" id="pills-usd" role="tabpanel">
-                            <div class="row g-4">
+                            <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="card bg-label-success border-0 shadow-none h-100">
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-success p-2 rounded me-3">
-                                                    <i class="bx bx-up-arrow-alt text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-up-arrow-alt text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-success">Total Entrées</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['USD']['in'] ?? 0, 2) }} USD</h3>
+                                            <h3 class="mb-0 fw-bold">
+                                                {{ number_format($this->monthlyStats['USD']['in'] ?? 0, 2) }} USD</h3>
                                             <small class="text-muted">Dépôts & Virements entrants</small>
                                         </div>
                                     </div>
@@ -96,11 +102,12 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-danger p-2 rounded me-3">
-                                                    <i class="bx bx-down-arrow-alt text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-down-arrow-alt text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-danger">Total Sorties</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['USD']['out'] ?? 0, 2) }} USD</h3>
+                                            <h3 class="mb-0 fw-bold">
+                                                {{ number_format($this->monthlyStats['USD']['out'] ?? 0, 2) }} USD</h3>
                                             <small class="text-muted">Crédits, Paies & Sorties</small>
                                         </div>
                                     </div>
@@ -110,11 +117,12 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-primary p-2 rounded me-3">
-                                                    <i class="bx bx-wallet text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-wallet text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-primary">Solde Net</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
+                                            <h3
+                                                class="mb-0 fw-bold {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
                                                 {{ number_format($this->monthlyStats['USD']['net'] ?? 0, 2) }} USD
                                             </h3>
                                             <small class="text-muted">Flux net du mois</small>
@@ -126,17 +134,18 @@
 
                         <!-- TAB CDF -->
                         <div class="tab-pane fade" id="pills-cdf" role="tabpanel">
-                            <div class="row g-4">
+                            <div class="row g-2">
                                 <div class="col-md-4">
                                     <div class="card bg-label-success border-0 shadow-none h-100">
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-success p-2 rounded me-3">
-                                                    <i class="bx bx-up-arrow-alt text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-up-arrow-alt text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-success">Total Entrées</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['CDF']['in'] ?? 0, 0) }} CDF</h3>
+                                            <h3 class="mb-0 fw-bold">
+                                                {{ number_format($this->monthlyStats['CDF']['in'] ?? 0, 0) }} CDF</h3>
                                             <small class="text-muted">Dépôts & Virements entrants</small>
                                         </div>
                                     </div>
@@ -146,11 +155,12 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-danger p-2 rounded me-3">
-                                                    <i class="bx bx-down-arrow-alt text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-down-arrow-alt text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-danger">Total Sorties</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['CDF']['out'] ?? 0, 0) }} CDF</h3>
+                                            <h3 class="mb-0 fw-bold">
+                                                {{ number_format($this->monthlyStats['CDF']['out'] ?? 0, 0) }} CDF</h3>
                                             <small class="text-muted">Crédits, Paies & Sorties</small>
                                         </div>
                                     </div>
@@ -160,11 +170,12 @@
                                         <div class="card-body">
                                             <div class="d-flex align-items-center mb-2">
                                                 <div class="avatar bg-primary p-2 rounded me-3">
-                                                    <i class="bx bx-wallet text-white fs-4"></i>
+                                                    <i class="tf-icons bx bx-wallet text-white fs-4"></i>
                                                 </div>
                                                 <span class="fw-semibold text-primary">Solde Net</span>
                                             </div>
-                                            <h3 class="mb-0 fw-bold {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
+                                            <h3
+                                                class="mb-0 fw-bold {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
                                                 {{ number_format($this->monthlyStats['CDF']['net'] ?? 0, 1) }} CDF
                                             </h3>
                                             <small class="text-muted">Flux net du mois</small>
