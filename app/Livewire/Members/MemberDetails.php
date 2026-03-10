@@ -71,7 +71,7 @@ class MemberDetails extends Component
     const CARD_MIGRATION_DATE = '2026-01-08';
 
     const MIN_BALANCE_USD = 5;
-    const MIN_BALANCE_CDF = 10000;
+    const MIN_BALANCE_CDF = 5000;
 
     public function mount($id)
     {

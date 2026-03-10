@@ -20,7 +20,7 @@ class CheckOverdueRepayments extends Command
     protected $description = 'Vérifie les échéances en retard et applique les remboursements ou pénalités';
 
     const MIN_BALANCE_USD = 5;
-    const MIN_BALANCE_CDF = 10000;
+    const MIN_BALANCE_CDF = 5000;
 
     public function handle()
     {

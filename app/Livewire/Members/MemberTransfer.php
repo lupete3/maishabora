@@ -26,7 +26,7 @@ class MemberTransfer extends Component
     public $step = 1; // 1: Form, 2: Confirmation
 
     const MIN_BALANCE_USD = 5;
-    const MIN_BALANCE_CDF = 10000;
+    const MIN_BALANCE_CDF = 5000;
 
     protected $rules = [
         'selectedAccountId' => 'required|exists:accounts,id',
