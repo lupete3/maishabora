@@ -10,9 +10,20 @@ class Credit extends Model
     use HasFactory;
 
     protected $fillable = [
-        'user_id', 'agent_id', 'account_id', 'currency', 'amount',
-        'interest_rate', 'installments', 'start_date', 'due_date',
-        'frais_credit', 'credit_type', 'repayment_type', 'is_paid'
+        'user_id',
+        'agent_id',
+        'account_id',
+        'currency',
+        'amount',
+        'interest_rate',
+        'installments',
+        'start_date',
+        'due_date',
+        'frais_credit',
+        'mutuelle',
+        'credit_type',
+        'repayment_type',
+        'is_paid'
     ];
 
     // Membre bénéficiaire

@@ -29,6 +29,9 @@ class GrantCredit extends Component
     public $frequency = 'monthly'; // 'daily', 'monthly', 'weekly'
     public $repayment_type = 'degressif'; // 'constant', 'degressif'
     public $creditFrisFix = 3; // frais fixe de dossier
+    public $mutuelle_rate = 1.0; // frais mutuelle par défaut (1%)
+
+    const MUTUELLE_ACCOUNT_USER_ID = 95; // Compte mutuelle (ID à ajuster selon le besoin)
 
     public $description = '';
 
@@ -58,6 +61,7 @@ class GrantCredit extends Component
         'frequency' => 'required|in:daily,monthly,weekly',
         'repayment_type' => 'required|in:constant,degressif',
         'creditFrisFix' => 'required|numeric|min:0.0|max:100',
+        'mutuelle_rate' => 'required|numeric|min:0.0|max:100',
         'disbursing_agent_id' => 'required|exists:users,id',
     ];
 
@@ -212,11 +216,13 @@ class GrantCredit extends Component
                 ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);
 
             $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
+            $mutuelleAmount = round($this->amount * ($this->mutuelle_rate / 100), 2);
+            $totalFees = $creditFrisFix + $mutuelleAmount;
 
             // Validation des soldes
-            if ($account->balance < $creditFrisFix) {
+            if ($account->balance < $totalFees) {
                 DB::rollBack();
-                notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier'));
+                notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier et la mutuelle'));
                 return;
             }
 
@@ -226,8 +232,8 @@ class GrantCredit extends Component
                 return;
             }
 
-            // Déduction des frais de commission du client
-            $account->balance -= $creditFrisFix;
+            // Déduction des frais (commission et mutuelle) du client
+            $account->balance -= $totalFees;
             $account->save();
 
             // Enregistrement de la transaction pour les frais de dossier
@@ -237,8 +243,19 @@ class GrantCredit extends Component
                 'type' => 'commission_credit',
                 'currency' => $this->currency,
                 'amount' => $creditFrisFix,
-                'balance_after' => $account->balance,
+                'balance_after' => $account->balance + $mutuelleAmount,
                 'description' => "Frais de commission du dossier du credit. Montant: {$creditFrisFix} {$this->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
+            // Enregistrement de la transaction pour les frais de mutuelle
+            Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $member->id,
+                'type' => 'frais_mutuelle',
+                'currency' => $this->currency,
+                'amount' => $mutuelleAmount,
+                'balance_after' => $account->balance,
+                'description' => "Frais de mutuelle (1% par defaut). Montant: {$mutuelleAmount} {$this->currency} pour le credit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Transfert du montant du crédit de la caisse centrale au compte du client
@@ -259,6 +276,7 @@ class GrantCredit extends Component
                 'due_date' => Carbon::parse($this->start_date),
                 'credit_type' => $this->repayment_type,
                 'frais_credit' => $this->creditFrisFix,
+                'mutuelle' => $mutuelleAmount,
                 'repayment_type' => $this->frequency,
                 'is_paid' => false,
                 'agent_id' => $this->agent_id,
@@ -293,6 +311,14 @@ class GrantCredit extends Component
             $commissionCreditAccount->balance += $creditFrisFix;
             $commissionCreditAccount->save();
 
+            // Envoyer les frais de mutuelle au compte MUTUELLE_ACCOUNT_USER_ID
+            $mutuelleAccount = AgentAccount::firstOrCreate(
+                ['user_id' => self::MUTUELLE_ACCOUNT_USER_ID, 'currency' => $credit->currency],
+                ['balance' => 0]
+            );
+            $mutuelleAccount->balance += $mutuelleAmount;
+            $mutuelleAccount->save();
+
             // Envoyer le montant du crédit au compte du caissier sélectionné pour attente du retrait
             $cassisierAccount = AgentAccount::firstOrCreate(
                 ['user_id' => $this->disbursing_agent_id, 'currency' => $credit->currency],
@@ -317,6 +343,18 @@ class GrantCredit extends Component
                 'amount' => $creditFrisFix,
                 'balance_after' => $commissionCreditAccount->balance,
                 'description' => "Frais de commission du dossier du credit #{$credit->id} - Montant: {$creditFrisFix} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
+            // Enregistrement de la transaction pour commission mutuelle
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $mutuelleAccount->id,
+                'user_id' => self::MUTUELLE_ACCOUNT_USER_ID,
+                'type' => 'commission_mutuelle',
+                'currency' => $credit->currency,
+                'amount' => $mutuelleAmount,
+                'balance_after' => $mutuelleAccount->balance,
+                'description' => "Frais de mutuelle du dossier du credit #{$credit->id} - Montant: {$mutuelleAmount} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Enregistrement de la transaction pour commission crédit au caissier
@@ -478,6 +516,7 @@ class GrantCredit extends Component
 
         // Calcul du montant des frais et total à rembourser (pour affichage)
         $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
+        $mutuelleAmount = round($this->amount * ($this->mutuelle_rate / 100), 2);
         $interestAmount = round(($this->amount * $this->interest_rate / 100), 2);
         $totalToRepay = $this->amount + $interestAmount;
 
@@ -488,6 +527,7 @@ class GrantCredit extends Component
             'montant' => "{$this->amount} {$this->currency}",
             'taux' => "{$this->interest_rate} %",
             'frais' => "{$creditFrisFix} {$this->currency}",
+            'mutuelle' => "{$mutuelleAmount} {$this->currency}",
             'total' => "{$totalToRepay} {$this->currency}",
             'debut' => $this->start_date,
             'echeances' => "{$this->installments} × {$this->frequency}",

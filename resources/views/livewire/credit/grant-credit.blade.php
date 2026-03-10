@@ -97,10 +97,18 @@
                         </select>
                     </div>
 
-                    <div class="col-md-4 mb-3">
-                        <label>Frais du crédit (%) </label>
+                    <div class="col-md-2 mb-3">
+                        <label>Frais dossier (%) </label>
                         <input type="number" step="0.01" wire:model="creditFrisFix" class="form-control" />
                         @error('creditFrisFix')
+                            <span class="text-danger">{{ $message }}</span>
+                        @enderror
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label>Mutuelle (%) </label>
+                        <input type="number" step="0.01" wire:model="mutuelle_rate" class="form-control" />
+                        @error('mutuelle_rate')
                             <span class="text-danger">{{ $message }}</span>
                         @enderror
                     </div>
@@ -212,6 +220,10 @@
                             <tr>
                                 <th>Frais du dossier</th>
                                 <td>{{ $creditSummary['frais'] ?? '' }}</td>
+                            </tr>
+                            <tr>
+                                <th>Frais Mutuelle</th>
+                                <td>{{ $creditSummary['mutuelle'] ?? '' }}</td>
                             </tr>
                             <tr>
                                 <th>Total à rembourser (approximatif)</th>
