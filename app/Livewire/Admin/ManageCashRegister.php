@@ -16,6 +16,10 @@ class ManageCashRegister extends Component
 {
     use WithPagination;
 
+    public $monthlyStats = [];
+    public $chartDataUSD = [];
+    public $chartDataCDF = [];
+
     public $currency = 'USD';
     public $type;
     public $amount = 0;
@@ -176,6 +180,87 @@ class ManageCashRegister extends Component
             ->latest()
             ->paginate($this->perPage);
 
+        // --- CALCUL DES STATS MENSUELLES ---
+        $this->calculateMonthlyStats();
+
         return view('livewire.admin.manage-cash-register', compact('registers', 'transactions'));
+    }
+
+    /**
+     * Calcule les statistiques mensuelles pour les KPIs et les graphiques
+     */
+    private function calculateMonthlyStats()
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        // Stats pour le mois en cours
+        foreach (['USD', 'CDF'] as $curr) {
+            $in = Transaction::where('currency', $curr)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%fonds%')
+                        ->orWhere('type', 'like', '%virement vers caisse centrale%');
+                })->sum('amount');
+
+            $out = Transaction::where('currency', $curr)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%sortie%')
+                        ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                        ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                        ->orWhere('type', 'like', '%paie_sortant%');
+                })->sum('amount');
+
+            $this->monthlyStats[$curr] = [
+                'in' => $in,
+                'out' => $out,
+                'net' => $in - $out
+            ];
+        }
+
+        // Stats pour les 6 derniers mois (pour le graphique)
+        $this->chartDataUSD = $this->getMonthlyFlowData('USD');
+        $this->chartDataCDF = $this->getMonthlyFlowData('CDF');
+    }
+
+    private function getMonthlyFlowData($currency)
+    {
+        $months = [];
+        $inflows = [];
+        $outflows = [];
+
+        for ($i = 5; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $start = $date->copy()->startOfMonth();
+            $end = $date->copy()->endOfMonth();
+
+            $months[] = $date->translatedFormat('M');
+
+            $in = Transaction::where('currency', $currency)
+                ->whereBetween('created_at', [$start, $end])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%fonds%')
+                        ->orWhere('type', 'like', '%virement vers caisse centrale%');
+                })->sum('amount');
+
+            $out = Transaction::where('currency', $currency)
+                ->whereBetween('created_at', [$start, $end])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%sortie%')
+                        ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                        ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                        ->orWhere('type', 'like', '%paie_sortant%');
+                })->sum('amount');
+
+            $inflows[] = $in;
+            $outflows[] = $out;
+        }
+
+        return [
+            'labels' => $months,
+            'inflows' => $inflows,
+            'outflows' => $outflows
+        ];
     }
 }

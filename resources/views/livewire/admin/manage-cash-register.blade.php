@@ -30,48 +30,148 @@
     </div>
     <div class="row">
         @foreach ($registers as $index => $reg)
-            @if ($index == 0)
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/chart-success.png" alt="chart success"
-                                        class="rounded" />
-                                </div>
-
+            <div class="col-md-6 mb-4">
+                <div class="card bg-{{ $reg->currency == 'USD' ? 'primary' : 'info' }} text-white overflow-hidden"
+                    style="height: 100%">
+                    <div class="card-body position-relative">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <div class="avatar bg-white bg-opacity-25 rounded p-2">
+                                <i class="bx {{ $reg->currency == 'USD' ? 'bx-dollar' : 'bx-money' }} fs-3"></i>
                             </div>
-                            <span>Compte USD</span>
-                            <h3 class="card-title mb-2">{{ $reg->currency }} : {{ number_format($reg->balance, 2) }}
-                            </h3>
-                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
-                                +72.80%</small>
+                            <span class="badge bg-white bg-opacity-25 text-white">Solde Actuel</span>
+                        </div>
+                        <h5 class="card-title text-white opacity-75 mb-1">Caisse {{ $reg->currency }}</h5>
+                        <h2 class="text-white mb-0">{{ number_format($reg->balance, 2) }} {{ $reg->currency }}</h2>
+
+                        <!-- Background Pattern Deco -->
+                        <div class="position-absolute end-0 bottom-0 opacity-10">
+                            <i class="bx bx-wallet" style="font-size: 100px; transform: translate(20px, 20px)"></i>
                         </div>
                     </div>
                 </div>
-            @endif
-            @if ($index == 1)
-                <div class="col-md-6 mb-4">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="card-title d-flex align-items-start justify-content-between">
-                                <div class="avatar flex-shrink-0">
-                                    <img src="../assets/img/icons/unicons/wallet-info.png" alt="Credit Card" class="rounded" />
-                                </div>
-
-                            </div>
-                            <span>Compte CDF</span>
-                            <h3 class="card-title text-nowrap mb-1">{{ $reg->currency }} :
-                                {{ number_format($reg->balance, 2) }}
-                            </h3>
-                            <small class="text-success fw-semibold"><i class="bx bx-up-arrow-alt"></i>
-                                +28.42%</small>
-                        </div>
-                    </div>
-                </div>
-            @endif
+            </div>
         @endforeach
     </div>
+
+    <!-- START OF MONTHLY OVERVIEW -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title mb-0 fw-bold"><i
+                                class="bx bxs-pie-chart-alt-2 me-2 text-primary"></i>Aperçu Complet & Statistiques
+                            Mensuelles</h5>
+                        <small class="text-muted">Analyse des flux financiers de la caisse centrale</small>
+                    </div>
+                    <ul class="nav nav-pills card-header-pills" id="pills-tab" role="tablist">
+                        <li class="nav-item">
+                            <button class="nav-link active btn-sm py-1 px-3" id="pills-usd-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-usd" type="button" role="tab">USD</button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link btn-sm py-1 px-3" id="pills-cdf-tab" data-bs-toggle="pill"
+                                data-bs-target="#pills-cdf" type="button" role="tab">CDF</button>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-body pt-0">
+                    <div class="tab-content" id="pills-tabContent">
+                        <!-- TAB USD -->
+                        <div class="tab-pane fade show active" id="pills-usd" role="tabpanel">
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded-3 bg-light">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="bg-success bg-opacity-10 text-success p-1 rounded"><i
+                                                    class="bx bx-trending-up"></i></div>
+                                            <span class="text-muted small fw-semibold">Entrées du mois</span>
+                                        </div>
+                                        <h4 class="mb-0 text-success">
+                                            +{{ number_format($this->monthlyStats['USD']['in'] ?? 0, 2) }} USD</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded-3 bg-light">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="bg-danger bg-opacity-10 text-danger p-1 rounded"><i
+                                                    class="bx bx-trending-down"></i></div>
+                                            <span class="text-muted small fw-semibold">Sorties du mois</span>
+                                        </div>
+                                        <h4 class="mb-0 text-danger">
+                                            -{{ number_format($this->monthlyStats['USD']['out'] ?? 0, 2) }} USD</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div
+                                        class="p-3 border rounded-3 {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="p-1 rounded bg-white shadow-sm"><i class="bx bx-bar-chart"></i>
+                                            </div>
+                                            <span class="text-muted small fw-semibold">Solde Net Mensuel</span>
+                                        </div>
+                                        <h4
+                                            class="mb-0 {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                            {{ number_format($this->monthlyStats['USD']['net'] ?? 0, 2) }} USD
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <div id="chartUSD" style="min-height: 250px;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB CDF -->
+                        <div class="tab-pane fade" id="pills-cdf" role="tabpanel">
+                            <div class="row g-3 mt-1">
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded-3 bg-light">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="bg-success bg-opacity-10 text-success p-1 rounded"><i
+                                                    class="bx bx-trending-up"></i></div>
+                                            <span class="text-muted small fw-semibold">Entrées du mois</span>
+                                        </div>
+                                        <h4 class="mb-0 text-success">
+                                            +{{ number_format($this->monthlyStats['CDF']['in'] ?? 0, 0) }} CDF</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="p-3 border rounded-3 bg-light">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="bg-danger bg-opacity-10 text-danger p-1 rounded"><i
+                                                    class="bx bx-trending-down"></i></div>
+                                            <span class="text-muted small fw-semibold">Sorties du mois</span>
+                                        </div>
+                                        <h4 class="mb-0 text-danger">
+                                            -{{ number_format($this->monthlyStats['CDF']['out'] ?? 0, 0) }} CDF</h4>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div
+                                        class="p-3 border rounded-3 {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <div class="p-1 rounded bg-white shadow-sm"><i class="bx bx-bar-chart"></i>
+                                            </div>
+                                            <span class="text-muted small fw-semibold">Solde Net Mensuel</span>
+                                        </div>
+                                        <h4
+                                            class="mb-0 {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
+                                            {{ number_format($this->monthlyStats['CDF']['net'] ?? 0, 0) }} CDF
+                                        </h4>
+                                    </div>
+                                </div>
+                                <div class="col-12 mt-4">
+                                    <div id="chartCDF" style="min-height: 250px;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END OF MONTHLY OVERVIEW -->
 
 
     <div class="table-wrapper">
@@ -188,6 +288,70 @@
     </div>
 
     @include('livewire.admin.add-cash-register')
+
+    @push('scripts')
+    <script>
+    document.addEventListener('livewire:initialized', () => {
+        const commonOptions = {
+            chart: {
+                height: 300,
+                type: 'area',
+                toolbar: { show: false },
+                zoom: { enabled: false }
+            },
+            dataLabels: { enabled: false },
+            stroke: { curve: 'smooth', width: 2 },
+            fill: {
+                type: 'gradient',
+                gradient: {
+                    shadeIntensity: 1,
+                    opacityFrom: 0.45,
+                    opacityTo: 0.05,
+                    stops: [20, 100]
+                }
+            },
+            grid: { borderColor: '#f1f1f1', strokeDashArray: 3 },
+            xaxis: {
+                axisBorder: { show: false },
+                axisTicks: { show: false }
+            }
+        };
+
+        // CHART USD
+        const optionsUSD = {
+            ...commonOptions,
+            series: [
+                { name: 'Entrées', data: @json($chartDataUSD['inflows']) },
+                { name: 'Sorties', data: @json($chartDataUSD['outflows']) }
+            ],
+            colors: ['#28a745', '#dc3545'],
+            xaxis: { ...commonOptions.xaxis, categories: @json($chartDataUSD['labels']) }
+        };
+        const chartUSD = new ApexCharts(document.querySelector("#chartUSD"), optionsUSD);
+        chartUSD.render();
+
+        // CHART CDF
+        const optionsCDF = {
+            ...commonOptions,
+            series: [
+                { name: 'Entrées', data: @json($chartDataCDF['inflows']) },
+                { name: 'Sorties', data: @json($chartDataCDF['outflows']) }
+            ],
+            colors: ['#17a2b8', '#fd7e14'],
+            xaxis: { ...commonOptions.xaxis, categories: @json($chartDataCDF['labels']) }
+        };
+        const chartCDF = new ApexCharts(document.querySelector("#chartCDF"), optionsCDF);
+        chartCDF.render();
+        
+        // Tab transition fix (ensure chart resizes if hidden on load)
+        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
+            tab.addEventListener('shown.bs.tab', () => {
+                window.dispatchEvent(new Event('resize'));
+            });
+        });
+    });
+    </script>
+    @endpush
 
     <div class="row mt-3">
         <div class="col-md-12">
