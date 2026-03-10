@@ -35,12 +35,12 @@
                     style="height: 100%">
                     <div class="card-body position-relative">
                         <div class="d-flex justify-content-between align-items-center mb-3">
-                            <div class="avatar flex-shrink-0">
-                                <span class="avatar-initial rounded bg-white bg-opacity-25">
+                            <div class="flex-shrink-0">
+                                <span class="avatar-initial rounded">
                                     <i class="tf-icons bx {{ $reg->currency == 'USD' ? 'bx-dollar' : 'bx-money' }} bx-md text-white"></i>
                                 </span>
                             </div>
-                            <span class="badge bg-white bg-opacity-25 text-white">Solde Actuel</span>
+                            <span class="badge text-white">Solde Actuel</span>
                         </div>
                         <h5 class="card-title text-white opacity-75 mb-1">Caisse {{ $reg->currency }}</h5>
                         <h2 class="text-white mb-0">{{ number_format($reg->balance, 2) }} {{ $reg->currency }}</h2>
