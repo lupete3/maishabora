@@ -38,6 +38,18 @@ class DisbursementManagement extends Component
     public $isOpen = false;
     public $newTypeName;
 
+    // Type management for Admin
+    public $isEditingType = false;
+    public $selectedTypeId;
+    public $typeName;
+
+    // Request editing
+    public $editingRequestId;
+    public $edit_disbursement_type_id;
+    public $edit_amount;
+    public $edit_currency;
+    public $edit_description;
+
     protected $rules = [
         'disbursement_type_id' => 'required|exists:disbursement_types,id',
         'amount' => 'required|numeric|min:0.01',
@@ -151,8 +163,101 @@ class DisbursementManagement extends Component
         ]);
 
         $this->newTypeName = '';
-        $this->closeTypeModal();
         notyf()->success('Type de décaissement ajouté avec succès.');
+    }
+
+    public function editType($id)
+    {
+        Gate::authorize('ajouter-type-decaissement');
+        $type = DisbursementType::findOrFail($id);
+        $this->selectedTypeId = $type->id;
+        $this->typeName = $type->name;
+        $this->isEditingType = true;
+    }
+
+    public function updateType()
+    {
+        Gate::authorize('ajouter-type-decaissement');
+        $this->validate([
+            'typeName' => 'required|string|max:255|unique:disbursement_types,name,' . $this->selectedTypeId,
+        ]);
+
+        $type = DisbursementType::findOrFail($this->selectedTypeId);
+        $type->update(['name' => $this->typeName]);
+
+        $this->cancelEditType();
+        notyf()->success('Type de décaissement mis à jour avec succès.');
+    }
+
+    public function deleteType($id)
+    {
+        Gate::authorize('ajouter-type-decaissement');
+        $type = DisbursementType::findOrFail($id);
+
+        // Vérifier si le type est utilisé
+        $count = DisbursementRequest::where('disbursement_type_id', $id)->count();
+        if ($count > 0) {
+            notyf()->error("Impossible de supprimer ce type car il est associé à {$count} demande(s).");
+            return;
+        }
+
+        $type->delete();
+        notyf()->success('Type de décaissement supprimé avec succès.');
+    }
+
+    public function cancelEditType()
+    {
+        $this->isEditingType = false;
+        $this->selectedTypeId = null;
+        $this->typeName = '';
+    }
+
+    public function editRequest($id)
+    {
+        Gate::authorize('ajouter-type-decaissement');
+        $request = DisbursementRequest::findOrFail($id);
+
+        if ($request->status !== 'pending') {
+            notyf()->error("Seules les demandes en attente peuvent être modifiées.");
+            return;
+        }
+
+        $this->editingRequestId = $request->id;
+        $this->edit_disbursement_type_id = $request->disbursement_type_id;
+        $this->edit_amount = $request->amount;
+        $this->edit_currency = $request->currency;
+        $this->edit_description = $request->description;
+
+        $this->dispatch('openModal', name: 'modalEditDisbursement');
+    }
+
+    public function updateRequest()
+    {
+        Gate::authorize('ajouter-type-decaissement');
+
+        $this->validate([
+            'edit_disbursement_type_id' => 'required|exists:disbursement_types,id',
+            'edit_amount' => 'required|numeric|min:0.01',
+            'edit_currency' => 'required|in:USD,CDF',
+            'edit_description' => 'required|string|max:255',
+        ]);
+
+        $request = DisbursementRequest::findOrFail($this->editingRequestId);
+
+        if ($request->status !== 'pending') {
+            notyf()->error("Cette demande ne peut plus être modifiée.");
+            return;
+        }
+
+        $request->update([
+            'disbursement_type_id' => $this->edit_disbursement_type_id,
+            'amount' => $this->edit_amount,
+            'currency' => $this->edit_currency,
+            'description' => $this->edit_description,
+        ]);
+
+        $this->dispatch('closeModal', name: 'modalEditDisbursement');
+        notyf()->success('Demande de décaissement mise à jour avec succès.');
     }
 
     public function updatedFilterType()

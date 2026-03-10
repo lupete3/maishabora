@@ -1,6 +1,7 @@
 <div class="mt-4">
     @include('livewire.disbursement.add-disbursement-modal')
-    @include('livewire.disbursement.add-disbursement-type-modal')
+    @include('livewire.disbursement.manage-disbursement-types-modal')
+    @include('livewire.disbursement.edit-disbursement-modal')
 
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
@@ -12,9 +13,9 @@
                 </div>
                 <div class="col-md-4 d-flex justify-content-end gap-2">
                     @can('ajouter-type-decaissement')
-                        <button wire:click="openTypeModal"
-                            class="btn btn-outline-primary d-flex align-items-center shadow-sm">
-                            <i class="bx bx-list-plus me-1"></i> Type
+                        <button class="btn btn-outline-primary d-flex align-items-center shadow-sm"
+                            data-bs-toggle="modal" data-bs-target="#modalManageDisbursementTypes">
+                            <i class="bx bx-list-ul me-1"></i> Gérer les Types
                         </button>
                     @endcan
                     <button wire:click="openModal" class="btn btn-primary d-flex align-items-center shadow-sm">
@@ -127,6 +128,15 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-1 justify-content-end">
+                                        @can('ajouter-type-decaissement')
+                                            @if($request->status === 'pending')
+                                                <button wire:click="editRequest({{ $request->id }})"
+                                                    class="btn btn-xs btn-outline-primary" title="Modifier">
+                                                    <i class="bx bx-edit"></i>
+                                                </button>
+                                            @endif
+                                        @endcan
+
                                         @if($request->status === 'approved' && $request->transaction_id)
                                             <button wire:click="printReceipt({{ $request->transaction_id }}, 'pos')"
                                                 class="btn btn-xs btn-outline-dark" title="Reçu POS">
@@ -137,7 +147,9 @@
                                                 <i class="bx bxs-file-pdf"></i> A4
                                             </button>
                                         @else
-                                            <span class="text-muted small">-</span>
+                                            @if($request->status !== 'pending' || !auth()->user()->can('ajouter-type-decaissement'))
+                                                <span class="text-muted small">-</span>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>
