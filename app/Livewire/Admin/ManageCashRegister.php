@@ -16,9 +16,10 @@ class ManageCashRegister extends Component
 {
     use WithPagination;
 
-    public $monthlyStats = [];
-    public $chartDataUSD = [];
-    public $chartDataCDF = [];
+    public $monthlyStats = [
+        'USD' => ['in' => 0, 'out' => 0, 'net' => 0],
+        'CDF' => ['in' => 0, 'out' => 0, 'net' => 0],
+    ];
 
     public $currency = 'USD';
     public $type;
@@ -218,56 +219,5 @@ class ManageCashRegister extends Component
                 'net' => $in - $out
             ];
         }
-
-        // Stats pour les 6 derniers mois (pour le graphique)
-        $this->chartDataUSD = $this->getMonthlyFlowData('USD');
-        $this->chartDataCDF = $this->getMonthlyFlowData('CDF');
-
-        // Dispatcher l'événement pour mettre à jour les graphiques
-        $this->dispatch(
-            'update-charts',
-            usd: $this->chartDataUSD,
-            cdf: $this->chartDataCDF
-        );
-    }
-
-    private function getMonthlyFlowData($currency)
-    {
-        $months = [];
-        $inflows = [];
-        $outflows = [];
-
-        for ($i = 5; $i >= 0; $i--) {
-            $date = now()->subMonths($i);
-            $start = $date->copy()->startOfMonth();
-            $end = $date->copy()->endOfMonth();
-
-            $months[] = $date->translatedFormat('M');
-
-            $in = Transaction::where('currency', $currency)
-                ->whereBetween('created_at', [$start, $end])
-                ->where(function ($q) {
-                    $q->where('type', 'like', '%fonds%')
-                        ->orWhere('type', 'like', '%virement vers caisse centrale%');
-                })->sum('amount');
-
-            $out = Transaction::where('currency', $currency)
-                ->whereBetween('created_at', [$start, $end])
-                ->where(function ($q) {
-                    $q->where('type', 'like', '%sortie%')
-                        ->orWhere('type', 'like', '%octroi_de_credit_client%')
-                        ->orWhere('type', 'like', '%virement_caisse_sortant%')
-                        ->orWhere('type', 'like', '%paie_sortant%');
-                })->sum('amount');
-
-            $inflows[] = $in;
-            $outflows[] = $out;
-        }
-
-        return [
-            'labels' => $months,
-            'inflows' => $inflows,
-            'outflows' => $outflows
-        ];
     }
 }

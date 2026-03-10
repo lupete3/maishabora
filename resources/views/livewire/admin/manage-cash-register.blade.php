@@ -56,113 +56,120 @@
     <!-- START OF MONTHLY OVERVIEW -->
     <div class="row mb-4">
         <div class="col-12">
-            <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="card border-0 shadow-sm ">
                 <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
                     <div>
-                        <h5 class="card-title mb-0 fw-bold"><i
-                                class="bx bxs-pie-chart-alt-2 me-2 text-primary"></i>Aperçu Complet & Statistiques
-                            Mensuelles</h5>
-                        <small class="text-muted">Analyse des flux financiers de la caisse centrale</small>
+                        <h5 class="card-title mb-0 fw-bold text-primary"><i class="bx bx-calendar-event me-2"></i>Performance Mensuelle</h5>
+                        <small class="text-muted">Résumé cumulé du mois en cours</small>
                     </div>
                     <ul class="nav nav-pills card-header-pills" id="pills-tab" role="tablist">
                         <li class="nav-item">
-                            <button class="nav-link active btn-sm py-1 px-3" id="pills-usd-tab" data-bs-toggle="pill"
-                                data-bs-target="#pills-usd" type="button" role="tab">USD</button>
+                            <button class="nav-link active btn-sm" id="pills-usd-tab" data-bs-toggle="pill" data-bs-target="#pills-usd" type="button" role="tab">USD</button>
                         </li>
                         <li class="nav-item">
-                            <button class="nav-link btn-sm py-1 px-3" id="pills-cdf-tab" data-bs-toggle="pill"
-                                data-bs-target="#pills-cdf" type="button" role="tab">CDF</button>
+                            <button class="nav-link btn-sm" id="pills-cdf-tab" data-bs-toggle="pill" data-bs-target="#pills-cdf" type="button" role="tab">CDF</button>
                         </li>
                     </ul>
                 </div>
                 <div class="card-body pt-0">
+                    <hr class="mt-0 mb-4 opacity-25">
                     <div class="tab-content" id="pills-tabContent">
                         <!-- TAB USD -->
                         <div class="tab-pane fade show active" id="pills-usd" role="tabpanel">
-                            <div class="row g-3 mt-1">
+                            <div class="row g-4">
                                 <div class="col-md-4">
-                                    <div class="p-3 border rounded-3 bg-light">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="bg-success bg-opacity-10 text-success p-1 rounded"><i
-                                                    class="bx bx-trending-up"></i></div>
-                                            <span class="text-muted small fw-semibold">Entrées du mois</span>
-                                        </div>
-                                        <h4 class="mb-0 text-success">
-                                            +{{ number_format($this->monthlyStats['USD']['in'] ?? 0, 2) }} USD</h4>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3 border rounded-3 bg-light">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="bg-danger bg-opacity-10 text-danger p-1 rounded"><i
-                                                    class="bx bx-trending-down"></i></div>
-                                            <span class="text-muted small fw-semibold">Sorties du mois</span>
-                                        </div>
-                                        <h4 class="mb-0 text-danger">
-                                            -{{ number_format($this->monthlyStats['USD']['out'] ?? 0, 2) }} USD</h4>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div
-                                        class="p-3 border rounded-3 {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="p-1 rounded bg-white shadow-sm"><i class="bx bx-bar-chart"></i>
+                                    <div class="card bg-label-success border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-success p-2 rounded me-3">
+                                                    <i class="bx bx-up-arrow-alt text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-success">Total Entrées</span>
                                             </div>
-                                            <span class="text-muted small fw-semibold">Solde Net Mensuel</span>
+                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['USD']['in'] ?? 0, 2) }} USD</h3>
+                                            <small class="text-muted">Dépôts & Virements entrants</small>
                                         </div>
-                                        <h4
-                                            class="mb-0 {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                            {{ number_format($this->monthlyStats['USD']['net'] ?? 0, 2) }} USD
-                                        </h4>
                                     </div>
                                 </div>
-                                <div class="col-12 mt-4">
-                                    <div id="chartUSD" wire:ignore style="min-height: 250px;"></div>
+                                <div class="col-md-4">
+                                    <div class="card bg-label-danger border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-danger p-2 rounded me-3">
+                                                    <i class="bx bx-down-arrow-alt text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-danger">Total Sorties</span>
+                                            </div>
+                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['USD']['out'] ?? 0, 2) }} USD</h3>
+                                            <small class="text-muted">Crédits, Paies & Sorties</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-label-primary border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-primary p-2 rounded me-3">
+                                                    <i class="bx bx-wallet text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-primary">Solde Net</span>
+                                            </div>
+                                            <h3 class="mb-0 fw-bold {{ ($this->monthlyStats['USD']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
+                                                {{ number_format($this->monthlyStats['USD']['net'] ?? 0, 2) }} USD
+                                            </h3>
+                                            <small class="text-muted">Flux net du mois</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
                         <!-- TAB CDF -->
                         <div class="tab-pane fade" id="pills-cdf" role="tabpanel">
-                            <div class="row g-3 mt-1">
+                            <div class="row g-4">
                                 <div class="col-md-4">
-                                    <div class="p-3 border rounded-3 bg-light">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="bg-success bg-opacity-10 text-success p-1 rounded"><i
-                                                    class="bx bx-trending-up"></i></div>
-                                            <span class="text-muted small fw-semibold">Entrées du mois</span>
-                                        </div>
-                                        <h4 class="mb-0 text-success">
-                                            +{{ number_format($this->monthlyStats['CDF']['in'] ?? 0, 0) }} CDF</h4>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="p-3 border rounded-3 bg-light">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="bg-danger bg-opacity-10 text-danger p-1 rounded"><i
-                                                    class="bx bx-trending-down"></i></div>
-                                            <span class="text-muted small fw-semibold">Sorties du mois</span>
-                                        </div>
-                                        <h4 class="mb-0 text-danger">
-                                            -{{ number_format($this->monthlyStats['CDF']['out'] ?? 0, 0) }} CDF</h4>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div
-                                        class="p-3 border rounded-3 {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'bg-label-success' : 'bg-label-danger' }}">
-                                        <div class="d-flex align-items-center gap-2 mb-1">
-                                            <div class="p-1 rounded bg-white shadow-sm"><i class="bx bx-bar-chart"></i>
+                                    <div class="card bg-label-success border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-success p-2 rounded me-3">
+                                                    <i class="bx bx-up-arrow-alt text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-success">Total Entrées</span>
                                             </div>
-                                            <span class="text-muted small fw-semibold">Solde Net Mensuel</span>
+                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['CDF']['in'] ?? 0, 0) }} CDF</h3>
+                                            <small class="text-muted">Dépôts & Virements entrants</small>
                                         </div>
-                                        <h4
-                                            class="mb-0 {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'text-success' : 'text-danger' }}">
-                                            {{ number_format($this->monthlyStats['CDF']['net'] ?? 0, 0) }} CDF
-                                        </h4>
                                     </div>
                                 </div>
-                                <div class="col-12 mt-4">
-                                    <div id="chartCDF" wire:ignore style="min-height: 250px;"></div>
+                                <div class="col-md-4">
+                                    <div class="card bg-label-danger border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-danger p-2 rounded me-3">
+                                                    <i class="bx bx-down-arrow-alt text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-danger">Total Sorties</span>
+                                            </div>
+                                            <h3 class="mb-0 fw-bold">{{ number_format($this->monthlyStats['CDF']['out'] ?? 0, 0) }} CDF</h3>
+                                            <small class="text-muted">Crédits, Paies & Sorties</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-label-primary border-0 shadow-none h-100">
+                                        <div class="card-body">
+                                            <div class="d-flex align-items-center mb-2">
+                                                <div class="avatar bg-primary p-2 rounded me-3">
+                                                    <i class="bx bx-wallet text-white fs-4"></i>
+                                                </div>
+                                                <span class="fw-semibold text-primary">Solde Net</span>
+                                            </div>
+                                            <h3 class="mb-0 fw-bold {{ ($this->monthlyStats['CDF']['net'] ?? 0) >= 0 ? 'text-primary' : 'text-danger' }}">
+                                                {{ number_format($this->monthlyStats['CDF']['net'] ?? 0, 1) }} CDF
+                                            </h3>
+                                            <small class="text-muted">Flux net du mois</small>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -289,94 +296,6 @@
 
     @include('livewire.admin.add-cash-register')
 
-    @push('scripts')
-        <script>
-            let chartUSD = null;
-            let chartCDF = null;
-
-            function initCharts(usdData, cdfData) {
-                if (typeof ApexCharts === 'undefined') return;
-
-                const commonOptions = {
-                    chart: {
-                        height: 300,
-                        type: 'area',
-                        toolbar: { show: false },
-                        animations: { enabled: true }
-                    },
-                    dataLabels: { enabled: false },
-                    stroke: { curve: 'smooth', width: 2 },
-                    fill: {
-                        type: 'gradient',
-                        gradient: {
-                            shadeIntensity: 1,
-                            opacityFrom: 0.45,
-                            opacityTo: 0.05,
-                            stops: [20, 100]
-                        }
-                    },
-                    grid: { borderColor: '#f1f1f1', strokeDashArray: 3 }
-                };
-
-                // USD Chart
-                const elUSD = document.querySelector("#chartUSD");
-                if (elUSD && usdData) {
-                    const optionsUSD = {
-                        ...commonOptions,
-                        series: [
-                            { name: 'Entrées', data: usdData.inflows },
-                            { name: 'Sorties', data: usdData.outflows }
-                        ],
-                        colors: ['#28a745', '#dc3545'],
-                        xaxis: { categories: usdData.labels }
-                    };
-                    if (chartUSD) {
-                        chartUSD.updateOptions(optionsUSD);
-                    } else {
-                        chartUSD = new ApexCharts(elUSD, optionsUSD);
-                        chartUSD.render();
-                    }
-                }
-
-                // CDF Chart
-                const elCDF = document.querySelector("#chartCDF");
-                if (elCDF && cdfData) {
-                    const optionsCDF = {
-                        ...commonOptions,
-                        series: [
-                            { name: 'Entrées', data: cdfData.inflows },
-                            { name: 'Sorties', data: cdfData.outflows }
-                        ],
-                        colors: ['#17a2b8', '#fd7e14'],
-                        xaxis: { categories: cdfData.labels }
-                    };
-                    if (chartCDF) {
-                        chartCDF.updateOptions(optionsCDF);
-                    } else {
-                        chartCDF = new ApexCharts(elCDF, optionsCDF);
-                        chartCDF.render();
-                    }
-                }
-            }
-
-            document.addEventListener('livewire:initialized', () => {
-                // Initial render with data passed from PHP
-                initCharts(@json($chartDataUSD), @json($chartDataCDF));
-
-                // Listen for updates
-                Livewire.on('update-charts', (event) => {
-                    initCharts(event.usd, event.cdf);
-                });
-                
-                // Tab resize fix
-                document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
-                    tab.addEventListener('shown.bs.tab', () => {
-                        window.dispatchEvent(new Event('resize'));
-                    });
-                });
-            });
-        </script>
-    @endpush
 
     <div class="row mt-3">
         <div class="col-md-12">
