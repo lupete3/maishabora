@@ -31,7 +31,7 @@ class GrantCredit extends Component
     public $creditFrisFix = 3; // frais fixe de dossier
     public $mutuelle_rate = 1.0; // frais mutuelle par défaut (1%)
 
-    const MUTUELLE_ACCOUNT_USER_ID = 95; // Compte mutuelle (ID à ajuster selon le besoin)
+    const MUTUELLE_ACCOUNT_USER_ID = 4; // Compte mutuelle (ID à ajuster selon le besoin)
 
     public $description = '';
 
