@@ -25,6 +25,9 @@ class MemberTransfer extends Component
 
     public $step = 1; // 1: Form, 2: Confirmation
 
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 10000;
+
     protected $rules = [
         'selectedAccountId' => 'required|exists:accounts,id',
         'receiverCode' => 'required|string|exists:users,code',
@@ -88,12 +91,13 @@ class MemberTransfer extends Component
         }
 
         $senderAccount = Account::find($this->selectedAccountId);
-        if ($senderAccount->balance < $this->amount) {
-            notyf()->error('Solde insuffisant.');
-            $this->addError('amount', 'Solde insuffisant.');
+        $minBalance = ($senderAccount->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+
+        if (($senderAccount->balance - $this->amount) < $minBalance) {
+            notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$senderAccount->currency}.");
+            $this->addError('amount', "Minimum {$minBalance} {$senderAccount->currency} requis.");
             return;
         }
-
         $this->step = 2;
     }
 
@@ -132,6 +136,12 @@ class MemberTransfer extends Component
 
         if ($senderAccount->balance < $this->amount) {
             notyf()->error('Solde insuffisant.');
+            return;
+        }
+
+        $minBalance = ($senderAccount->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+        if (($senderAccount->balance - $this->amount) < $minBalance) {
+            notyf()->error("Opération impossible. Le solde restant doit être d'au moins {$minBalance} {$senderAccount->currency}.");
             return;
         }
 

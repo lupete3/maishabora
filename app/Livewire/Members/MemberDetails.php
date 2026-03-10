@@ -70,6 +70,9 @@ class MemberDetails extends Component
 
     const CARD_MIGRATION_DATE = '2026-01-08';
 
+    const MIN_BALANCE_USD = 10;
+    const MIN_BALANCE_CDF = 10000;
+
     public function mount($id)
     {
         Gate::authorize('afficher-client', User::class);
@@ -427,6 +430,13 @@ class MemberDetails extends Component
             $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
             $totalAmount = $this->amount + $this->a_retenir;
+            $minBalance = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+
+            if (($account->balance - $totalAmount) < $minBalance) {
+                DB::rollBack();
+                notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
+                return;
+            }
 
             if ($account->balance < $totalAmount) {
                 DB::rollBack();
@@ -558,6 +568,15 @@ class MemberDetails extends Component
             $accountType = $useCurrentAccount ? 'current' : 'savings';
 
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
+
+            if ($accountType === 'current') {
+                $minBalance = ($card->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+                if (($account->balance - $total) < $minBalance) {
+                    DB::rollBack();
+                    notyf()->error("Opération impossible. Le retrait de ce carnet laisserait un solde inférieur au minimum de {$minBalance} {$card->currency} sur le compte courant.");
+                    return;
+                }
+            }
 
             if ($account->balance < $total) {
                 DB::rollBack();
