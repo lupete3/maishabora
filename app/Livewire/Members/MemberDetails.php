@@ -438,11 +438,11 @@ class MemberDetails extends Component
             $totalAmount = $this->amount + $this->a_retenir;
             $minBalance = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
 
-            // if (($account->balance - $totalAmount) < $minBalance) {
-            //     DB::rollBack();
-            //     notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
-            //     return;
-            // }
+            if (($account->balance - $totalAmount) < $minBalance) {
+                DB::rollBack();
+                notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
+                return;
+            }
 
             if ($account->balance < $totalAmount) {
                 DB::rollBack();
