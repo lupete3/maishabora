@@ -222,6 +222,13 @@ class ManageCashRegister extends Component
         // Stats pour les 6 derniers mois (pour le graphique)
         $this->chartDataUSD = $this->getMonthlyFlowData('USD');
         $this->chartDataCDF = $this->getMonthlyFlowData('CDF');
+
+        // Dispatcher l'événement pour mettre à jour les graphiques
+        $this->dispatch(
+            'update-charts',
+            usd: $this->chartDataUSD,
+            cdf: $this->chartDataCDF
+        );
     }
 
     private function getMonthlyFlowData($currency)

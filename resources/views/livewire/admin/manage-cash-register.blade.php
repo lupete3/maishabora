@@ -117,7 +117,7 @@
                                     </div>
                                 </div>
                                 <div class="col-12 mt-4">
-                                    <div id="chartUSD" style="min-height: 250px;"></div>
+                                    <div id="chartUSD" wire:ignore style="min-height: 250px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -162,7 +162,7 @@
                                     </div>
                                 </div>
                                 <div class="col-12 mt-4">
-                                    <div id="chartCDF" style="min-height: 250px;"></div>
+                                    <div id="chartCDF" wire:ignore style="min-height: 250px;"></div>
                                 </div>
                             </div>
                         </div>
@@ -290,67 +290,92 @@
     @include('livewire.admin.add-cash-register')
 
     @push('scripts')
-    <script>
-    document.addEventListener('livewire:initialized', () => {
-        const commonOptions = {
-            chart: {
-                height: 300,
-                type: 'area',
-                toolbar: { show: false },
-                zoom: { enabled: false }
-            },
-            dataLabels: { enabled: false },
-            stroke: { curve: 'smooth', width: 2 },
-            fill: {
-                type: 'gradient',
-                gradient: {
-                    shadeIntensity: 1,
-                    opacityFrom: 0.45,
-                    opacityTo: 0.05,
-                    stops: [20, 100]
+        <script>
+            let chartUSD = null;
+            let chartCDF = null;
+
+            function initCharts(usdData, cdfData) {
+                if (typeof ApexCharts === 'undefined') return;
+
+                const commonOptions = {
+                    chart: {
+                        height: 300,
+                        type: 'area',
+                        toolbar: { show: false },
+                        animations: { enabled: true }
+                    },
+                    dataLabels: { enabled: false },
+                    stroke: { curve: 'smooth', width: 2 },
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.45,
+                            opacityTo: 0.05,
+                            stops: [20, 100]
+                        }
+                    },
+                    grid: { borderColor: '#f1f1f1', strokeDashArray: 3 }
+                };
+
+                // USD Chart
+                const elUSD = document.querySelector("#chartUSD");
+                if (elUSD && usdData) {
+                    const optionsUSD = {
+                        ...commonOptions,
+                        series: [
+                            { name: 'Entrées', data: usdData.inflows },
+                            { name: 'Sorties', data: usdData.outflows }
+                        ],
+                        colors: ['#28a745', '#dc3545'],
+                        xaxis: { categories: usdData.labels }
+                    };
+                    if (chartUSD) {
+                        chartUSD.updateOptions(optionsUSD);
+                    } else {
+                        chartUSD = new ApexCharts(elUSD, optionsUSD);
+                        chartUSD.render();
+                    }
                 }
-            },
-            grid: { borderColor: '#f1f1f1', strokeDashArray: 3 },
-            xaxis: {
-                axisBorder: { show: false },
-                axisTicks: { show: false }
+
+                // CDF Chart
+                const elCDF = document.querySelector("#chartCDF");
+                if (elCDF && cdfData) {
+                    const optionsCDF = {
+                        ...commonOptions,
+                        series: [
+                            { name: 'Entrées', data: cdfData.inflows },
+                            { name: 'Sorties', data: cdfData.outflows }
+                        ],
+                        colors: ['#17a2b8', '#fd7e14'],
+                        xaxis: { categories: cdfData.labels }
+                    };
+                    if (chartCDF) {
+                        chartCDF.updateOptions(optionsCDF);
+                    } else {
+                        chartCDF = new ApexCharts(elCDF, optionsCDF);
+                        chartCDF.render();
+                    }
+                }
             }
-        };
 
-        // CHART USD
-        const optionsUSD = {
-            ...commonOptions,
-            series: [
-                { name: 'Entrées', data: @json($chartDataUSD['inflows']) },
-                { name: 'Sorties', data: @json($chartDataUSD['outflows']) }
-            ],
-            colors: ['#28a745', '#dc3545'],
-            xaxis: { ...commonOptions.xaxis, categories: @json($chartDataUSD['labels']) }
-        };
-        const chartUSD = new ApexCharts(document.querySelector("#chartUSD"), optionsUSD);
-        chartUSD.render();
+            document.addEventListener('livewire:initialized', () => {
+                // Initial render with data passed from PHP
+                initCharts(@json($chartDataUSD), @json($chartDataCDF));
 
-        // CHART CDF
-        const optionsCDF = {
-            ...commonOptions,
-            series: [
-                { name: 'Entrées', data: @json($chartDataCDF['inflows']) },
-                { name: 'Sorties', data: @json($chartDataCDF['outflows']) }
-            ],
-            colors: ['#17a2b8', '#fd7e14'],
-            xaxis: { ...commonOptions.xaxis, categories: @json($chartDataCDF['labels']) }
-        };
-        const chartCDF = new ApexCharts(document.querySelector("#chartCDF"), optionsCDF);
-        chartCDF.render();
-        
-        // Tab transition fix (ensure chart resizes if hidden on load)
-        document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
-            tab.addEventListener('shown.bs.tab', () => {
-                window.dispatchEvent(new Event('resize'));
+                // Listen for updates
+                Livewire.on('update-charts', (event) => {
+                    initCharts(event.usd, event.cdf);
+                });
+                
+                // Tab resize fix
+                document.querySelectorAll('button[data-bs-toggle="pill"]').forEach(tab => {
+                    tab.addEventListener('shown.bs.tab', () => {
+                        window.dispatchEvent(new Event('resize'));
+                    });
+                });
             });
-        });
-    });
-    </script>
+        </script>
     @endpush
 
     <div class="row mt-3">
