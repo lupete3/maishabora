@@ -74,6 +74,12 @@ class CarnetOverview extends Component
         $anomalies = $allActive->filter(function ($card) {
             $totalSaved = $card->contributions->sum('amount');
 
+            // On soutire la première mise (qui est pour la maison)
+            $firstContribution = $card->contributions->sortBy('created_at')->first();
+            if ($firstContribution) {
+                $totalSaved -= $firstContribution->amount;
+            }
+
             // On cherche le compte correspondant (priorité epargne/savings car c'est lié aux carnets)
             $account = $card->member->accounts
                 ->where('currency', $card->currency)
@@ -97,11 +103,19 @@ class CarnetOverview extends Component
         // ---------- Statistiques globales ----------
         $totalCount = $anomalies->count();
 
-        // Total épargné (carnets en anomalie) par devise
+        // Total épargné (carnets en anomalie) par devise, moins la première mise
         $totalSavedUSD = $anomalies->where('currency', 'USD')
-            ->sum(fn($c) => $c->contributions->sum('amount'));
+            ->sum(function ($c) {
+                $total = $c->contributions->sum('amount');
+                $first = $c->contributions->sortBy('created_at')->first();
+                return $first ? $total - $first->amount : $total;
+            });
         $totalSavedCDF = $anomalies->where('currency', 'CDF')
-            ->sum(fn($c) => $c->contributions->sum('amount'));
+            ->sum(function ($c) {
+                $total = $c->contributions->sum('amount');
+                $first = $c->contributions->sortBy('created_at')->first();
+                return $first ? $total - $first->amount : $total;
+            });
 
         // Soldes des comptes correspondants (savings > current) par devise
         $totalBalanceUSD = $anomalies->where('currency', 'USD')->sum(function ($c) {
