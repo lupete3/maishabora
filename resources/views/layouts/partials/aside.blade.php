@@ -106,13 +106,7 @@
                     <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
                         <a href="{{ route('credit.applications.list') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-list-ul"></i>
-                            <div data-i18n="Analytics">Demandes / Analyse</div>
-                        </a>
-                    </li>
-                    <li class="menu-item @if (request()->routeIs('credit.applications.create')) active @endif">
-                        <a href="{{ route('credit.applications.create') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-file-plus"></i>
-                            <div data-i18n="Analytics">Nouvelle Demande</div>
+                            <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
                         </a>
                     </li>
 

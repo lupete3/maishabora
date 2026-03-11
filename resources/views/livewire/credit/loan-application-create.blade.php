@@ -131,47 +131,53 @@
                     @endif
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label">Devise</label>
-                    <div class="d-flex gap-3">
-                        <div class="form-check">
-                            <input wire:model.live="currency" class="form-check-input" type="radio" value="USD"
-                                id="currencyUSD">
-                            <label class="form-check-label" for="currencyUSD">USD</label>
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Devise</label>
+                        <div class="d-flex gap-3 pt-2">
+                            <div class="form-check">
+                                <input wire:model.live="currency" class="form-check-input" type="radio" value="USD"
+                                    id="currencyUSD">
+                                <label class="form-check-label" for="currencyUSD">USD</label>
+                            </div>
+                            <div class="form-check">
+                                <input wire:model.live="currency" class="form-check-input" type="radio" value="CDF"
+                                    id="currencyCDF">
+                                <label class="form-check-label" for="currencyCDF">CDF</label>
+                            </div>
                         </div>
-                        <div class="form-check">
-                            <input wire:model.live="currency" class="form-check-input" type="radio" value="CDF"
-                                id="currencyCDF">
-                            <label class="form-check-label" for="currencyCDF">CDF</label>
+                        @error('currency') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label" for="montant_demande">Montant Demandé</label>
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="montant_demande" wire:model="montant_demande"
+                                placeholder="Montant">
+                            <span class="input-group-text">{{ $currency }}</span>
                         </div>
+                        @error('montant_demande') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
-                    @error('currency') <span class="text-danger small">{{ $message }}</span> @enderror
-                </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="montant_demande">Montant Demandé</label>
-                    <div class="input-group">
-                        <input type="number" class="form-control" id="montant_demande" wire:model="montant_demande"
-                            placeholder="Montant">
-                        <span class="input-group-text">{{ $currency }}</span>
+                    <div class="col-md-3">
+                        <label class="form-label" for="duree_mois">Durée (Mois)</label>
+                        <input type="number" class="form-control" id="duree_mois" wire:model="duree_mois"
+                            placeholder="Ex: 12">
+                        @error('duree_mois') <span class="text-danger small">{{ $message }}</span> @enderror
                     </div>
-                    @error('montant_demande') <span class="text-danger small">{{ $message }}</span> @enderror
+
+                    <div class="col-md-3">
+                        <label class="form-label" for="date_demande">Date de Demande</label>
+                        <input type="date" class="form-control" id="date_demande" wire:model="date_demande">
+                        @error('date_demande') <span class="text-danger small">{{ $message }}</span> @enderror
+                    </div>
                 </div>
 
-                <div class="mb-3">
-                    <label class="form-label" for="duree_mois">Durée (Mois)</label>
-                    <input type="number" class="form-control" id="duree_mois" wire:model="duree_mois"
-                        placeholder="Durée">
-                    @error('duree_mois') <span class="text-danger">{{ $message }}</span> @enderror
+                <div class="mt-4 text-end">
+                    <button type="submit" class="btn btn-primary px-5">
+                        <i class="bx bx-save me-1"></i> Enregistrer la Demande
+                    </button>
                 </div>
-
-                <div class="mb-3">
-                    <label class="form-label" for="date_demande">Date de Demande</label>
-                    <input type="date" class="form-control" id="date_demande" wire:model="date_demande">
-                    @error('date_demande') <span class="text-danger">{{ $message }}</span> @enderror
-                </div>
-
-                <button type="submit" class="btn btn-primary">Enregistrer</button>
             </form>
             @if (session()->has('message'))
                 <div class="alert alert-success mt-3">

@@ -114,7 +114,8 @@ Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/credit/applications', [CreditController::class, 'index'])->name('credit.applications.list');
     Route::get('/credit/applications/create', [CreditController::class, 'create'])->name('credit.applications.create');
     Route::get('/credit/applications/{id}', function ($id) {
-        return view('credit.applications.show', ['id' => $id]);
+        $loan = \App\Models\LoanApplication::with(['user', 'business', 'ratios', 'cashflow', 'balance', 'securities'])->findOrFail($id);
+        return view('credit.applications.show', compact('loan'));
     })->name('credit.applications.show');
 });
 

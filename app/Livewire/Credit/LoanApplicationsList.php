@@ -23,6 +23,15 @@ class LoanApplicationsList extends Component
         $this->resetPage();
     }
 
+    public function delete($id)
+    {
+        $loan = LoanApplication::find($id);
+        if ($loan) {
+            $loan->delete();
+            session()->flash('message', 'Demande de crédit supprimée avec succès.');
+        }
+    }
+
     public function render()
     {
         $query = LoanApplication::query();
@@ -37,7 +46,17 @@ class LoanApplicationsList extends Component
         if ($this->statusFilter)
             $query->where('statut', $this->statusFilter);
 
+        $stats = [
+            'total' => LoanApplication::count(),
+            'pending' => LoanApplication::where('statut', 'en_analyse')->count(),
+            'total_usd' => LoanApplication::where('currency', 'USD')->sum('montant_demande'),
+            'total_cdf' => LoanApplication::where('currency', 'CDF')->sum('montant_demande'),
+        ];
+
         $loans = $query->orderBy('id', 'desc')->paginate(10);
-        return view('livewire.credit.loan-applications-list', compact('loans'));
+        return view('livewire.credit.loan-applications-list', [
+            'loans' => $loans,
+            'stats' => $stats
+        ]);
     }
 }
