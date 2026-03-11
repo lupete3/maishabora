@@ -40,8 +40,22 @@ class LoanDecisionForm extends Component
         ];
 
         LoanDecision::updateOrCreate(['loan_application_id' => $this->loan_application_id], $data);
-        session()->flash('message', 'Décision enregistrée');
+
+        // Sync LoanApplication status
+        $loan = \App\Models\LoanApplication::find($this->loan_application_id);
+        if ($loan) {
+            $statusMap = [
+                'approuve' => 'approuve',
+                'rejete' => 'rejete',
+                'a_revoir' => 'en_analyse',
+            ];
+            $newStatus = $statusMap[$this->decision_finale] ?? 'en_analyse';
+            $loan->update(['statut' => $newStatus]);
+        }
+
+        session()->flash('message', 'Décision enregistrée et statut mis à jour');
         $this->dispatch('decisionSaved', $this->loan_application_id);
+        $this->dispatch('loanSaved', $this->loan_application_id); // This will refresh the list if needed
     }
 
     public function render()

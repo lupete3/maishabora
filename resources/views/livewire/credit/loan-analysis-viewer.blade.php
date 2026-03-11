@@ -9,6 +9,29 @@
     </div>
     <div class="card-body">
 
+        <!-- Résumé du Dossier -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <small class="text-muted d-block">Montant Demandé</small>
+                <h5 class="fw-bold mb-0 text-primary">{{ number_format($analysis['loan']['montant_demande'] ?? 0, 2) }}
+                    {{ $analysis['loan']['currency'] ?? '' }}
+                </h5>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Durée</small>
+                <h5 class="fw-bold mb-0">{{ $analysis['loan']['duree_mois'] ?? 0 }} mois</h5>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Business</small>
+                <h5 class="fw-bold mb-0 text-truncate">{{ $analysis['loan']['business']['type_activite'] ?? 'N/A' }}
+                </h5>
+            </div>
+            <div class="col-md-3">
+                <small class="text-muted d-block">Statut Actuel</small>
+                <span class="badge bg-label-secondary">{{ ucfirst($analysis['loan']['statut'] ?? 'N/A') }}</span>
+            </div>
+        </div>
+
         @if($aiAnalysis)
             <div class="alert alert-secondary border-primary mb-4">
                 <h6 class="text-primary"><i class="bx bxs-magic-wand me-1"></i> Résumé Analyse IA</h6>
@@ -53,9 +76,9 @@
                     <button class="btn btn-outline-secondary" type="button"
                         wire:click="simulateEMI({{ $annual_rate ?? 10 }})">Calculer</button>
                 </div>
-                @if(isset($analysis['emi']))
+                @if(isset($analysis['emi']) && is_numeric($analysis['emi']))
                     <div class="alert alert-warning">
-                        Mensualité Estimée : <strong>{{ number_format($analysis['emi'], 2) }}</strong>
+                        Mensualité Estimée : <strong>{{ number_format((float) $analysis['emi'], 2) }}</strong>
                     </div>
                 @endif
             </div>
@@ -104,12 +127,14 @@
             <h6>Ratios Financiers</h6>
             <ul class="list-group">
                 @foreach($analysis['ratios'] ?? [] as $key => $value)
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        {{ ucwords(str_replace('_', ' ', $key)) }}
-                        <span class="badge bg-{{ $this->badgeColor($key, $value) }} rounded-pill">
-                            {{ number_format($value, 2) }}
-                        </span>
-                    </li>
+                    @if(!in_array($key, ['id', 'loan_application_id', 'created_at', 'updated_at', 'date_calcul']) && is_numeric($value))
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            {{ ucwords(str_replace('_', ' ', $key)) }}
+                            <span class="badge bg-{{ $this->badgeColor($key, $value) }} rounded-pill">
+                                {{ number_format((float) $value, 2) }}
+                            </span>
+                        </li>
+                    @endif
                 @endforeach
             </ul>
         </div>

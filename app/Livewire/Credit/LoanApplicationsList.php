@@ -8,7 +8,7 @@ use Livewire\WithPagination;
 
 class LoanApplicationsList extends Component
 {
-  use WithPagination;
+    use WithPagination;
 
 
     protected $paginationTheme = 'bootstrap';
@@ -28,7 +28,11 @@ class LoanApplicationsList extends Component
         $query = LoanApplication::query();
         if ($this->search) {
             $query->whereHas('user', function ($q) {
-                $q->where('first_name', 'like', "%{$this->search}%")->orWhere('last_name', 'like', "%{$this->search}%"); });
+                $q->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('postnom', 'like', "%{$this->search}%")
+                    ->orWhere('prenom', 'like', "%{$this->search}%")
+                    ->orWhere('code', 'like', "%{$this->search}%");
+            });
         }
         if ($this->statusFilter)
             $query->where('statut', $this->statusFilter);
