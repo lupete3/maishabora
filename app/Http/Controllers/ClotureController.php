@@ -60,6 +60,12 @@ class ClotureController extends Controller
         $cloture->pure_withdrawals_usd = $cloture->withdrawals->where('currency', 'USD')->sum('amount');
         $cloture->pure_withdrawals_cdf = $cloture->withdrawals->where('currency', 'CDF')->sum('amount');
 
+        // Sub-totals for Transfer table
+        $cloture->other_inflows_usd = $cloture->other_flows->where('currency', 'USD')->whereIn('type', $otherInflowTypes)->sum('amount');
+        $cloture->other_inflows_cdf = $cloture->other_flows->where('currency', 'CDF')->whereIn('type', $otherInflowTypes)->sum('amount');
+        $cloture->other_outflows_usd = $cloture->other_flows->where('currency', 'USD')->whereIn('type', $otherOutflowTypes)->sum('amount');
+        $cloture->other_outflows_cdf = $cloture->other_flows->where('currency', 'CDF')->whereIn('type', $otherOutflowTypes)->sum('amount');
+
         // Totals for accounting proof (Consolidated)
         $cloture->total_inflows_usd = $dailyTransactions->where('currency', 'USD')->whereIn('type', $allInflowTypes)->sum('amount');
         $cloture->total_inflows_cdf = $dailyTransactions->where('currency', 'CDF')->whereIn('type', $allInflowTypes)->sum('amount');

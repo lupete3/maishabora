@@ -368,6 +368,28 @@
                 </tr>
             @endforelse
         </tbody>
+        <tfoot>
+            @if($cloture->other_inflows_usd > 0 || $cloture->other_outflows_usd > 0)
+                <tr>
+                    <th colspan="4" class="text-end">TOTAL ENTRÉES TRANSFERTS USD</th>
+                    <th class="text-end">{{ number_format($cloture->other_inflows_usd, 2) }} USD</th>
+                </tr>
+                <tr>
+                    <th colspan="4" class="text-end">TOTAL SORTIES TRANSFERTS USD</th>
+                    <th class="text-end">{{ number_format($cloture->other_outflows_usd, 2) }} USD</th>
+                </tr>
+            @endif
+            @if($cloture->other_inflows_cdf > 0 || $cloture->other_outflows_cdf > 0)
+                <tr>
+                    <th colspan="4" class="text-end">TOTAL ENTRÉES TRANSFERTS CDF</th>
+                    <th class="text-end">{{ number_format($cloture->other_inflows_cdf, 2) }} CDF</th>
+                </tr>
+                <tr>
+                    <th colspan="4" class="text-end">TOTAL SORTIES TRANSFERTS CDF</th>
+                    <th class="text-end">{{ number_format($cloture->other_outflows_cdf, 2) }} CDF</th>
+                </tr>
+            @endif
+        </tfoot>
     </table>
 
     <div class="section-title">PREUVE COMPTABLE (Récapitulatif Global)</div>
