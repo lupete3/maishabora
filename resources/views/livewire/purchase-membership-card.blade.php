@@ -212,6 +212,15 @@
                                                     Désactiver
                                                 </button>
                                             @endif
+
+                                            {{-- Bouton Supprimer --}}
+                                            @if ($card->contributions->where('is_paid', true)->count() == 0)
+                                                <button class="btn btn-dark btn-sm" wire:click="deleteCard({{ $card->id }})"
+                                                    wire:confirm="Êtes-vous sûr de vouloir supprimer ce carnet ? Les montants seront soustraits des comptes agent et profit."
+                                                    title="Supprimer définitivement ce carnet">
+                                                    Supprimer
+                                                </button>
+                                            @endif
                                         </td>
                                     @endcan
                                 </tr>
