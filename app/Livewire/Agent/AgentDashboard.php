@@ -4,6 +4,7 @@ namespace App\Livewire\Agent;
 
 use App\Exports\AgentTransactionsExport;
 use Livewire\Component;
+use App\Models\AgentAccount;
 use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -38,6 +39,18 @@ class AgentDashboard extends Component
     public $newBalance;
     public $modificationReason;
     public $openModifyBalance = false;
+
+    // Propriétés pour la suppression de transaction
+    public $transactionToDeleteId;
+    public $openDeleteTransaction = false;
+    public $deleteReason;
+
+    // Propriétés pour la modification de transaction
+    public $editingTransactionId;
+    public $editAmount;
+    public $editDescription;
+    public $editBalanceAfter;
+    public $openEditTransaction = false;
 
 
     public function mount()
@@ -258,5 +271,129 @@ class AgentDashboard extends Component
     public function closeModifyBalanceModal()
     {
         $this->openModifyBalance = false;
+    }
+
+    public function confirmDeleteTransaction($transactionId)
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+        $this->transactionToDeleteId = $transactionId;
+        $this->deleteReason = '';
+        $this->openDeleteTransaction = true;
+    }
+
+    public function deleteTransaction()
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'deleteReason' => 'required|string|min:5',
+        ]);
+
+        $transaction = Transaction::findOrFail($this->transactionToDeleteId);
+        $agentAccount = AgentAccount::where('id', $transaction->agent_account_id)->first();
+
+        if (!$agentAccount) {
+            $this->dispatch('notyf', type: 'error', message: 'Cette transaction n\'appartient pas à un compte agent.');
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            $type = $transaction->type;
+            $amount = $transaction->amount;
+            $currency = $transaction->currency;
+
+            // 3. LOG AND DELETE
+            \App\Helpers\UserLogHelper::log_user_activity(
+                "Suppression_transaction",
+                "Suppression de la transaction #{$transaction->id} ({$type}) de l'agent {$agentAccount->user->name}. Montant: {$amount} {$currency}. Raison: {$this->deleteReason}"
+            );
+
+            $transaction->delete();
+
+            DB::commit();
+            $this->openDeleteTransaction = false;
+            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée et soldes ajustés !');
+
+            // Refresh transactions
+            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            report($th);
+            $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la suppression : ' . $th->getMessage());
+        }
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->openDeleteTransaction = false;
+    }
+
+    public function confirmEditTransaction($transactionId)
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+        $transaction = Transaction::findOrFail($transactionId);
+
+        $this->editingTransactionId = $transactionId;
+        $this->editAmount = $transaction->amount;
+        $this->editDescription = $transaction->description;
+        $this->editBalanceAfter = $transaction->balance_after;
+        $this->openEditTransaction = true;
+    }
+
+    public function updateTransaction()
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'editAmount' => 'required|numeric|min:0.01',
+            'editDescription' => 'required|string|min:5',
+            'editBalanceAfter' => 'required|numeric',
+        ]);
+
+        $transaction = Transaction::findOrFail($this->editingTransactionId);
+        $agentAccount = AgentAccount::find($transaction->agent_account_id);
+
+        if (!$agentAccount) {
+            $this->dispatch('notyf', type: 'error', message: 'Cette transaction n\'appartient pas à un compte agent.');
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+            $oldAmount = (float) $transaction->amount;
+            $newAmount = (float) $this->editAmount;
+            $diff = $newAmount - $oldAmount;
+
+            // Update transaction
+            $transaction->update([
+                'amount' => $newAmount,
+                'description' => $this->editDescription,
+                'balance_after' => $this->editBalanceAfter
+            ]);
+
+            \App\Helpers\UserLogHelper::log_user_activity(
+                "Modification_transaction_agent",
+                "Modification de la transaction #{$transaction->id} ({$transaction->type}). Ancien montant: {$oldAmount}, Nouveau: {$newAmount}, Nouveau Solde Après: {$this->editBalanceAfter}. Raison: {$this->editDescription}"
+            );
+
+            DB::commit();
+            $this->openEditTransaction = false;
+            $this->dispatch('notyf', type: 'success', message: 'Transaction mise à jour et solde ajusté !');
+
+            // Refresh transactions
+            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            report($th);
+            $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la modification : ' . $th->getMessage());
+        }
+    }
+
+    public function closeEditModal()
+    {
+        $this->openEditTransaction = false;
     }
 }
