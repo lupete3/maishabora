@@ -291,12 +291,12 @@
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="3" class="text-end">TOTAL DÉPÔTS USD</th>
-                <th class="text-end">{{ number_format($cloture->total_deposits_usd, 2) }} USD</th>
+                <th colspan="3" class="text-end">TOTAL DÉPÔTS (Opérations) USD</th>
+                <th class="text-end">{{ number_format($cloture->pure_deposits_usd, 2) }} USD</th>
             </tr>
             <tr>
-                <th colspan="3" class="text-end">TOTAL DÉPÔTS CDF</th>
-                <th class="text-end">{{ number_format($cloture->total_deposits_cdf, 2) }} CDF</th>
+                <th colspan="3" class="text-end">TOTAL DÉPÔTS (Opérations) CDF</th>
+                <th class="text-end">{{ number_format($cloture->pure_deposits_cdf, 2) }} CDF</th>
             </tr>
         </tfoot>
     </table>
@@ -327,17 +327,50 @@
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="3" class="text-end">TOTAL RETRAITS USD</th>
-                <th class="text-end">{{ number_format($cloture->total_withdrawals_usd, 2) }} USD</th>
+                <th colspan="3" class="text-end">TOTAL RETRAITS (Opérations) USD</th>
+                <th class="text-end">{{ number_format($cloture->pure_withdrawals_usd, 2) }} USD</th>
             </tr>
             <tr>
-                <th colspan="3" class="text-end">TOTAL RETRAITS CDF</th>
-                <th class="text-end">{{ number_format($cloture->total_withdrawals_cdf, 2) }} CDF</th>
+                <th colspan="3" class="text-end">TOTAL RETRAITS (Opérations) CDF</th>
+                <th class="text-end">{{ number_format($cloture->pure_withdrawals_cdf, 2) }} CDF</th>
             </tr>
         </tfoot>
     </table>
 
-    <div class="section-title">PREUVE COMPTABLE</div>
+    <div class="section-title">TABLEAU DES TRANSFERTS ET AUTRES FLUX</div>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>N° Transaction</th>
+                <th>Date & Heure</th>
+                <th>Type / Libellé</th>
+                <th>Sens</th>
+                <th>Montant</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse ($cloture->other_flows as $flow)
+                @php
+                    $isInflow = in_array($flow->type, ['virement_caisse_entrant', 'frais_credit_pour_retrait']);
+                @endphp
+                <tr>
+                    <td>{{ $flow->id }}</td>
+                    <td>{{ $flow->created_at->format('d/m/Y H:i') }}</td>
+                    <td>{{ ucfirst(str_replace('_', ' ', $flow->type)) }} - {{ $flow->description ?? '' }}</td>
+                    <td style="color: {{ $isInflow ? 'green' : 'red' }};">
+                        {{ $isInflow ? 'ENTRÉE (+)' : 'SORTIE (-)' }}
+                    </td>
+                    <td class="text-end">{{ number_format($flow->amount, 2) }} {{ $flow->currency }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="5" class="text-center">Aucun transfert ou flux divers enregistré</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+
+    <div class="section-title">PREUVE COMPTABLE (Récapitulatif Global)</div>
     <table class="table">
         <thead>
             <tr>
@@ -353,14 +386,14 @@
                 <td class="text-end">{{ number_format($cloture->previous_logical_cdf, 2) }}</td>
             </tr>
             <tr>
-                <td>Total Dépôts du Jour (+)</td>
-                <td class="text-end">{{ number_format($cloture->total_deposits_usd, 2) }}</td>
-                <td class="text-end">{{ number_format($cloture->total_deposits_cdf, 2) }}</td>
+                <td>Total Entrées (Dépôts + Transferts In) (+)</td>
+                <td class="text-end">{{ number_format($cloture->total_inflows_usd, 2) }}</td>
+                <td class="text-end">{{ number_format($cloture->total_inflows_cdf, 2) }}</td>
             </tr>
             <tr>
-                <td>Total Retraits du Jour (-)</td>
-                <td class="text-end">{{ number_format($cloture->total_withdrawals_usd, 2) }}</td>
-                <td class="text-end">{{ number_format($cloture->total_withdrawals_cdf, 2) }}</td>
+                <td>Total Sorties (Retraits + Transferts Out) (-)</td>
+                <td class="text-end">{{ number_format($cloture->total_outflows_usd, 2) }}</td>
+                <td class="text-end">{{ number_format($cloture->total_outflows_cdf, 2) }}</td>
             </tr>
             <tr style="background-color: #f8f9fa; font-weight: bold;">
                 <td>SOLDE EN CAISSE ACTUALISÉ</td>

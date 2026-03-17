@@ -24,16 +24,26 @@ class ClotureController extends Controller
     {
         $cloture = Cloture::with(['user', 'billetages', 'validatedBy'])->findOrFail($id);
 
-        // Fetch daily transactions for deposits and withdrawals
-        $cloture->deposits = Transaction::where('user_id', $cloture->user_id)
+        // Define categories
+        $depositTypes = ['mise_quotidienne', 'dépôt', 'vente_carte_adhesion', 'remboursement_credit', 'frais_inscription'];
+        $withdrawalTypes = ['retrait_carte_adhesion', 'retrait'];
+        $otherInflowTypes = ['virement_caisse_entrant', 'frais_credit_pour_retrait', 'transfert_entrant', 'conversion_devise_credit'];
+        $otherOutflowTypes = ['virement_caisse_sortant', 'décaissement', 'annulation_vente_carte_adhesion', 'paiement_salaire', 'transfert_sortant', 'conversion_devise_debit'];
+
+        $allInflowTypes = array_merge($depositTypes, $otherInflowTypes);
+        $allOutflowTypes = array_merge($withdrawalTypes, $otherOutflowTypes);
+
+        // Fetch daily transactions
+        $dailyTransactions = Transaction::where('user_id', $cloture->user_id)
             ->whereDate('created_at', $cloture->closing_date)
-            ->whereIn('type', ['mise_quotidienne', 'dépôt', 'vente_carte_adhesion'])
             ->get();
 
-        $cloture->withdrawals = Transaction::where('user_id', $cloture->user_id)
-            ->whereDate('created_at', $cloture->closing_date)
-            ->whereIn('type', ['retrait_carte_adhesion', 'retrait', 'décaissement'])
-            ->get();
+        // 1. Core operations (Deposits & Withdrawals)
+        $cloture->deposits = $dailyTransactions->whereIn('type', $depositTypes);
+        $cloture->withdrawals = $dailyTransactions->whereIn('type', $withdrawalTypes);
+
+        // 2. Transfers and other flows
+        $cloture->other_flows = $dailyTransactions->whereIn('type', array_merge($otherInflowTypes, $otherOutflowTypes));
 
         // Fetch previous closure for the same agent
         $previousCloture = Cloture::where('user_id', $cloture->user_id)
@@ -44,11 +54,17 @@ class ClotureController extends Controller
         $cloture->previous_logical_usd = $previousCloture ? $previousCloture->logical_usd : 0;
         $cloture->previous_logical_cdf = $previousCloture ? $previousCloture->logical_cdf : 0;
 
-        // Totals for accounting proof
-        $cloture->total_deposits_usd = $cloture->deposits->where('currency', 'USD')->sum('amount');
-        $cloture->total_deposits_cdf = $cloture->deposits->where('currency', 'CDF')->sum('amount');
-        $cloture->total_withdrawals_usd = $cloture->withdrawals->where('currency', 'USD')->sum('amount');
-        $cloture->total_withdrawals_cdf = $cloture->withdrawals->where('currency', 'CDF')->sum('amount');
+        // Totals for specific tables
+        $cloture->pure_deposits_usd = $cloture->deposits->where('currency', 'USD')->sum('amount');
+        $cloture->pure_deposits_cdf = $cloture->deposits->where('currency', 'CDF')->sum('amount');
+        $cloture->pure_withdrawals_usd = $cloture->withdrawals->where('currency', 'USD')->sum('amount');
+        $cloture->pure_withdrawals_cdf = $cloture->withdrawals->where('currency', 'CDF')->sum('amount');
+
+        // Totals for accounting proof (Consolidated)
+        $cloture->total_inflows_usd = $dailyTransactions->where('currency', 'USD')->whereIn('type', $allInflowTypes)->sum('amount');
+        $cloture->total_inflows_cdf = $dailyTransactions->where('currency', 'CDF')->whereIn('type', $allInflowTypes)->sum('amount');
+        $cloture->total_outflows_usd = $dailyTransactions->where('currency', 'USD')->whereIn('type', $allOutflowTypes)->sum('amount');
+        $cloture->total_outflows_cdf = $dailyTransactions->where('currency', 'CDF')->whereIn('type', $allOutflowTypes)->sum('amount');
 
         $pdf = Pdf::loadView('receipts.cloture', compact('cloture'));
         return $pdf->download('Fiche-Cloture-' . $cloture->id . '.pdf');
