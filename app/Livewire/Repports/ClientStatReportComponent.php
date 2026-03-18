@@ -122,12 +122,17 @@ class ClientStatReportComponent extends Component
         $totalFemale = $filtered->where('sexe', 'Féminin')->count();
         $newClients = $filtered->where('created_at', '>=', now()->subDays(30))->count();
 
+        $percentMale = $total > 0 ? round(($totalMale / $total) * 100, 1) : 0;
+        $percentFemale = $total > 0 ? round(($totalFemale / $total) * 100, 1) : 0;
+
         return view('livewire.repports.client-stat-report-component', [
             'clients' => $clients,
             'total' => $total,
             'totalMale' => $totalMale,
             'totalFemale' => $totalFemale,
             'newClients' => $newClients,
+            'percentMale' => $percentMale,
+            'percentFemale' => $percentFemale,
         ]);
     }
 

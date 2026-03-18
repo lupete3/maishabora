@@ -1,26 +1,40 @@
 <div>
     <h4 class="card-title">Soldes des Membres</h4>
     <div class="row mb-4">
-        @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-            <div class="{{ $currencyFilter === 'all' ? 'col-md-6' : 'col-md-12' }}">
-                <div class="card text-center bg-light shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Total USD {{ $accountType !== 'all' ? '('.($accountType === 'current' ? 'Courant' : 'Épargne').')' : '' }}</h5>
-                        <h3 class="text-success">{{ number_format($globalUsd, 2) }} $</h3>
-                    </div>
+        <!-- Comptes Courants -->
+        <div class="col-md-3 mb-3">
+            <div class="card text-center bg-light shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-1">Total Courant USD</h6>
+                    <h4 class="text-success mb-0">{{ number_format($globalCurrentUsd, 2) }} $</h4>
                 </div>
             </div>
-        @endif
-        @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-            <div class="{{ $currencyFilter === 'all' ? 'col-md-6' : 'col-md-12' }}">
-                <div class="card text-center bg-light shadow-sm">
-                    <div class="card-body">
-                        <h5 class="card-title">Total CDF {{ $accountType !== 'all' ? '('.($accountType === 'current' ? 'Courant' : 'Épargne').')' : '' }}</h5>
-                        <h3 class="text-primary">{{ number_format($globalCdf, 2) }} CDF</h3>
-                    </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center bg-light shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-1">Total Courant CDF</h6>
+                    <h4 class="text-primary mb-0">{{ number_format($globalCurrentCdf, 2) }} <small>FC</small></h4>
                 </div>
             </div>
-        @endif
+        </div>
+        <!-- Comptes Épargnes -->
+        <div class="col-md-3 mb-3">
+            <div class="card text-center bg-light shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-1">Total Épargne USD</h6>
+                    <h4 class="text-success mb-0">{{ number_format($globalSavingsUsd, 2) }} $</h4>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-3">
+            <div class="card text-center bg-light shadow-sm h-100">
+                <div class="card-body">
+                    <h6 class="card-title text-muted mb-1">Total Épargne CDF</h6>
+                    <h4 class="text-primary mb-0">{{ number_format($globalSavingsCdf, 2) }} <small>FC</small></h4>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="card">
@@ -32,11 +46,11 @@
                         placeholder="Nom, code, prénom...">
                 </div>
                 <div class="col-md-2">
-                    <label class="form-label small fw-bold">Type Compte</label>
+                    <label class="form-label small fw-bold">Type Compte (Vue)</label>
                     <select wire:model.live="accountType" class="form-control">
                         <option value="all">Tous</option>
-                        <option value="current">Courant</option>
-                        <option value="savings">Épargne</option>
+                        <option value="current">Courant Uniquement</option>
+                        <option value="savings">Épargne Uniquement</option>
                     </select>
                 </div>
                 <div class="col-md-2">
@@ -62,53 +76,68 @@
                 </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Solde Min</label>
-                    <input type="number" wire:model.live.debounce.500ms="minBalance" class="form-control" placeholder="0.00">
+                    <input type="number" wire:model.live.debounce.500ms="minBalance" class="form-control"
+                        placeholder="0.00">
                 </div>
                 <div class="col-md-1 d-flex align-items-end">
                     <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
-                        target="_blank" class="btn btn-danger w-100">
-                        <i class="bi bi-file-earmark-pdf"></i> PDF
+                        target="_blank" class="btn btn-danger w-100 p-2">
+                        <i class="bx bx-download"></i> PDF
                     </a>
                 </div>
             </div>
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-bordered">
-                    <thead>
+                <table class="table table-bordered table-sm">
+                    <thead class="table-light">
                         <tr>
-                        <th>Code</th>
-                        <th>Membre</th>
-                        @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                            <th>Solde USD</th>
-                        @endif
-                        @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                            <th>Solde CDF</th>
-                        @endif
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach ($balances as $balance)
-                        <tr>
-                            <td>{{ $balance['member']->code }}</td>
-                            <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
-                            </td>
+                            <th rowspan="2" class="align-middle">Code</th>
+                            <th rowspan="2" class="align-middle">Membre</th>
                             @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                                <td>{{ number_format($balance['usd_balance'], 2) }}</td>
+                                <th colspan="2" class="text-center">Solde USD</th>
                             @endif
                             @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                                <td>{{ number_format($balance['cdf_balance'], 2) }}</td>
+                                <th colspan="2" class="text-center">Solde CDF</th>
                             @endif
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                        <tr>
+                            @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
+                                <th class="text-center small">Courant</th>
+                                <th class="text-center small">Épargne</th>
+                            @endif
+                            @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
+                                <th class="text-center small">Courant</th>
+                                <th class="text-center small">Épargne</th>
+                            @endif
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($balances as $balance)
+                            <tr>
+                                <td><small class="fw-bold">{{ $balance['member']->code }}</small></td>
+                                <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
+                                </td>
 
-            <div class="mt-3">
-                {{ $members->links() }}
+                                @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
+                                    <td class="text-end">{{ number_format($balance['current_usd'], 2) }}</td>
+                                    <td class="text-end">{{ number_format($balance['savings_usd'], 2) }}</td>
+                                @endif
+
+                                @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
+                                    <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
+                                    <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
+                                @endif
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
+                <div class="mt-3">
+                    {{ $members->links() }}
+                </div>
+
             </div>
-
         </div>
-    </div>
 
-</div>
+    </div>

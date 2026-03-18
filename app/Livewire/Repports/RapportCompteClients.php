@@ -60,42 +60,41 @@ class RapportCompteClients extends Component
 
         $members = $query->paginate($this->perPage);
 
-        // Soldes par membre (applique le filtre devise + tri solde)
+        // Soldes par membre
         $balances = $members->getCollection()->map(function ($member) {
-            $usd = 0;
-            $cdf = 0;
+            $current_usd = 0;
+            $current_cdf = 0;
+            $savings_usd = 0;
+            $savings_cdf = 0;
 
             foreach ($member->accounts as $account) {
-                if ($this->accountType !== 'all' && $account->type !== $this->accountType) {
-                    continue;
-                }
-
-                if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter) {
-                    continue;
-                }
-
-                if ($account->currency === 'USD') {
-                    $usd += $account->balance;
-                } elseif ($account->currency === 'CDF') {
-                    $cdf += $account->balance;
+                if ($account->type === 'current') {
+                    if ($account->currency === 'USD')
+                        $current_usd += $account->balance;
+                    if ($account->currency === 'CDF')
+                        $current_cdf += $account->balance;
+                } elseif ($account->type === 'savings') {
+                    if ($account->currency === 'USD')
+                        $savings_usd += $account->balance;
+                    if ($account->currency === 'CDF')
+                        $savings_cdf += $account->balance;
                 }
             }
 
             return [
                 'member' => $member,
-                'usd_balance' => $usd,
-                'cdf_balance' => $cdf,
+                'current_usd' => $current_usd,
+                'current_cdf' => $current_cdf,
+                'savings_usd' => $savings_usd,
+                'savings_cdf' => $savings_cdf,
             ];
         });
 
-        // Repaginate manually if balance filtering is applied on the page
-        // Note: For large datasets, filtering by balance should ideally be done in SQL, 
-        // but since balances are in a related table, we have a challenge without complex joins/subqueries.
-        // For now, we filter in memory for the *paginated* results.
-
-        // Totaux globaux basés sur les mêmes filtres
-        $globalUsd = 0;
-        $globalCdf = 0;
+        // Totaux globaux
+        $globalCurrentUsd = 0;
+        $globalCurrentCdf = 0;
+        $globalSavingsUsd = 0;
+        $globalSavingsCdf = 0;
 
         $totalQuery = User::where('role', 'membre')
             ->whereHas('accounts', function ($q) {
@@ -110,20 +109,24 @@ class RapportCompteClients extends Component
                 }
             });
 
-        $totalQuery->with('accounts')->chunk(200, function ($chunk) use (&$globalUsd, &$globalCdf) {
+        $totalQuery->with('accounts')->chunk(200, function ($chunk) use (&$globalCurrentUsd, &$globalCurrentCdf, &$globalSavingsUsd, &$globalSavingsCdf) {
             foreach ($chunk as $member) {
                 foreach ($member->accounts as $account) {
-                    if ($this->accountType !== 'all' && $account->type !== $this->accountType) {
+                    if ($this->accountType !== 'all' && $account->type !== $this->accountType)
                         continue;
-                    }
-                    if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter) {
+                    if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter)
                         continue;
-                    }
 
-                    if ($account->currency === 'USD') {
-                        $globalUsd += $account->balance;
-                    } elseif ($account->currency === 'CDF') {
-                        $globalCdf += $account->balance;
+                    if ($account->type === 'current') {
+                        if ($account->currency === 'USD')
+                            $globalCurrentUsd += $account->balance;
+                        elseif ($account->currency === 'CDF')
+                            $globalCurrentCdf += $account->balance;
+                    } elseif ($account->type === 'savings') {
+                        if ($account->currency === 'USD')
+                            $globalSavingsUsd += $account->balance;
+                        elseif ($account->currency === 'CDF')
+                            $globalSavingsCdf += $account->balance;
                     }
                 }
             }
@@ -132,8 +135,10 @@ class RapportCompteClients extends Component
         return view('livewire.repports.rapport-compte-clients', [
             'balances' => $balances,
             'members' => $members,
-            'globalUsd' => $globalUsd,
-            'globalCdf' => $globalCdf,
+            'globalCurrentUsd' => $globalCurrentUsd,
+            'globalCurrentCdf' => $globalCurrentCdf,
+            'globalSavingsUsd' => $globalSavingsUsd,
+            'globalSavingsCdf' => $globalSavingsCdf,
         ]);
     }
 
