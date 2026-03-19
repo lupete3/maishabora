@@ -4,8 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
@@ -13,7 +12,6 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             // Identité officielle
-            $table->enum('sexe', ['Masculin', 'Féminin'])->nullable()->after('prenom');
             $table->string('type_piece')->nullable()->after('profession');
             $table->string('numero_piece')->nullable()->after('type_piece');
             $table->date('date_expiration_piece')->nullable()->after('numero_piece');
@@ -66,16 +64,30 @@ return new class extends Migration
     {
         Schema::table('users', function (Blueprint $table) {
             $table->dropColumn([
-                'type_piece', 'numero_piece', 'date_expiration_piece',
-                'etat_civil', 'nombre_dependants',
+                'type_piece',
+                'numero_piece',
+                'date_expiration_piece',
+                'etat_civil',
+                'nombre_dependants',
                 'lieu_naissance',
-                'revenu_mensuel', 'source_revenu', 'nom_employeur',
-                'nom_conjoint', 'telephone_conjoint',
-                'nom_reference', 'telephone_reference', 'lien_reference',
-                'province', 'ville', 'commune', 'quartier',
-                'photo_profil', 'scan_piece',
-                'date_adhesion', 'sexe',
-                'nationalite', 'niveau_etude', 'remarque'
+                'revenu_mensuel',
+                'source_revenu',
+                'nom_employeur',
+                'nom_conjoint',
+                'telephone_conjoint',
+                'nom_reference',
+                'telephone_reference',
+                'lien_reference',
+                'province',
+                'ville',
+                'commune',
+                'quartier',
+                'photo_profil',
+                'scan_piece',
+                'date_adhesion',
+                'nationalite',
+                'niveau_etude',
+                'remarque'
             ]);
         });
     }

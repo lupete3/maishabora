@@ -7,6 +7,7 @@ use App\Models\Credit;
 use App\Models\Repayment;
 use App\Models\MainCashRegister;
 use App\Models\User;
+use App\Services\CreditStatsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\WithPagination;
@@ -62,79 +63,34 @@ class GlobalCreditDashboard extends Component
         }
     }
 
-    public function render()
+    public function render(CreditStatsService $statsService)
     {
-        // Calcul des statistiques réactives
+        // Calcul des statistiques via le service
+        $stats = $statsService->getGlobalStats([
+            'search' => $this->search,
+            'dateStart' => $this->dateStart,
+            'dateEnd' => $this->dateEnd,
+            'currency' => $this->currency,
+        ]);
+
         foreach (['USD', 'CDF'] as $curr) {
-            $baseQuery = Credit::where('currency', $curr);
-            $this->applyFilters($baseQuery);
-
-            $this->totalCreditsCount[$curr] = $baseQuery->count();
-            $this->totalCreditsValue[$curr] = $baseQuery->sum('amount');
-
-            $inProgressQuery = Credit::where('currency', $curr)->where('is_paid', false);
-            $this->applyFilters($inProgressQuery);
-            $this->creditsInProgressCount[$curr] = $inProgressQuery->count();
-            $this->creditsInProgressValue[$curr] = $inProgressQuery->sum('amount');
-
-            $overdueCreditIds = Repayment::where('due_date', '<', now())
-                ->where('is_paid', false)
-                ->whereHas('credit', function ($q) use ($curr) {
-                    $q->where('currency', $curr);
-                    $this->applyFilters($q);
-                })
-                ->distinct()
-                ->pluck('credit_id');
-
-            $this->overdueCreditsCount[$curr] = $overdueCreditIds->count();
-            $this->overdueCreditsValue[$curr] = Credit::whereIn('id', $overdueCreditIds)->sum('amount');
-
-            $penaltyQuery = Repayment::whereHas('credit', function ($q) use ($curr) {
-                $q->where('currency', $curr);
-                $this->applyFilters($q);
-            })->where('penalty', '>', 0);
-
-            $this->totalPenalties[$curr] = $penaltyQuery->sum('penalty');
-
-            // Nouveaux calculs
-            $repaymentBaseQuery = Repayment::whereHas('credit', function ($q) use ($curr) {
-                $q->where('currency', $curr);
-                $this->applyFilters($q);
-            });
-
-            $this->totalToRepayValue[$curr] = (clone $repaymentBaseQuery)->sum('expected_amount');
-            $this->totalRepaidValue[$curr] = (clone $repaymentBaseQuery)->sum('paid_amount');
-            $this->remainingBalanceValue[$curr] = $this->totalToRepayValue[$curr] - $this->totalRepaidValue[$curr];
-
-            // Taux de recouvrement
-            $this->recoveryRate[$curr] = $this->totalToRepayValue[$curr] > 0
-                ? ($this->totalRepaidValue[$curr] / $this->totalToRepayValue[$curr]) * 100
-                : 0;
-
-            // Taux de dossiers en retard (par rapport aux dossiers en cours)
-            $this->overdueRate[$curr] = $this->creditsInProgressCount[$curr] > 0
-                ? ($this->overdueCreditsCount[$curr] / $this->creditsInProgressCount[$curr]) * 100
-                : 0;
-
-            // Taux de dossiers en cours (par rapport au total historique)
-            $this->inProgressRate[$curr] = $this->totalCreditsCount[$curr] > 0
-                ? ($this->creditsInProgressCount[$curr] / $this->totalCreditsCount[$curr]) * 100
-                : 0;
-
-            // Poids des pénalités (par rapport au montant déjà remboursé)
-            $this->penaltyWeight[$curr] = $this->totalRepaidValue[$curr] > 0
-                ? ($this->totalPenalties[$curr] / $this->totalRepaidValue[$curr]) * 100
-                : 0;
-
-            // Ratio de dette restante (par rapport au total attendu)
-            $this->debtRatio[$curr] = $this->totalToRepayValue[$curr] > 0
-                ? ($this->remainingBalanceValue[$curr] / $this->totalToRepayValue[$curr]) * 100
-                : 0;
-
-            // Marge d'intérêt (Intérêts attendus / Principal prêté)
-            $this->interestMargin[$curr] = $this->totalCreditsValue[$curr] > 0
-                ? (($this->totalToRepayValue[$curr] - $this->totalCreditsValue[$curr]) / $this->totalCreditsValue[$curr]) * 100
-                : 0;
+            $s = $stats[$curr];
+            $this->totalCreditsCount[$curr] = $s['totalCreditsCount'];
+            $this->totalCreditsValue[$curr] = $s['totalCreditsValue'];
+            $this->creditsInProgressCount[$curr] = $s['creditsInProgressCount'];
+            $this->creditsInProgressValue[$curr] = $s['creditsInProgressValue'];
+            $this->overdueCreditsCount[$curr] = $s['overdueCreditsCount'];
+            $this->overdueCreditsValue[$curr] = $s['overdueCreditsValue'];
+            $this->totalPenalties[$curr] = $s['totalPenalties'];
+            $this->totalToRepayValue[$curr] = $s['totalToRepayValue'];
+            $this->totalRepaidValue[$curr] = $s['totalRepaidValue'];
+            $this->remainingBalanceValue[$curr] = $s['remainingBalanceValue'];
+            $this->recoveryRate[$curr] = $s['recoveryRate'];
+            $this->overdueRate[$curr] = $s['overdueRate'];
+            $this->inProgressRate[$curr] = $s['inProgressRate'];
+            $this->penaltyWeight[$curr] = $s['penaltyWeight'];
+            $this->debtRatio[$curr] = $s['debtRatio'];
+            $this->interestMargin[$curr] = $s['interestMargin'];
         }
 
         $this->totalCredits = array_sum($this->totalCreditsCount);

@@ -51,14 +51,33 @@ class AIReportService
         return $this->callAI($prompt, "Tu es un CFO de microfinance expert en stratégie.");
     }
 
-    public function summarizeCreditPerformance($credits, $delays)
+    public function summarizeCreditPerformance($stats)
     {
-        $prompt = "Analyse la performance du portefeuille crédit :\n" .
-            "- Crédits en cours : " . $credits->count() . " dossiers pour un total de " . $this->sumByCurrency($credits, 'amount') . "\n" .
-            "- Retards détectés : " . $delays->count() . " remboursements en retard pour un montant total de " . $this->sumByCurrency($delays, 'total_due') . "\n\n" .
-            "Évalue le risque du portefeuille (PAR) séparément pour USD et CDF. Propose des mesures de recouvrement.";
+        $prompt = "En tant qu'expert en microfinance et analyste de risque de crédit, fais une analyse approfondie de la situation réelle du portefeuille de crédit basée sur ces indicateurs de performance :\n\n";
 
-        return $this->callAI($prompt, "Tu es un gestionnaire de recouvrement et analyste de risque de crédit.");
+        foreach (['USD', 'CDF'] as $curr) {
+            $s = $stats[$curr];
+            $prompt .= "### Portefeuille $curr\n";
+            $prompt .= "- Nombre de crédits (Total historique) : {$s['totalCreditsCount']} pour " . number_format($s['totalCreditsValue'], 2) . " $curr\n";
+            $prompt .= "- Dossiers en cours : {$s['creditsInProgressCount']} pour " . number_format($s['creditsInProgressValue'], 2) . " $curr\n";
+            $prompt .= "- Dossiers en retard (PAR) : {$s['overdueCreditsCount']} pour " . number_format($s['overdueCreditsValue'], 2) . " $curr\n";
+            $prompt .= "- Montant total attendu (Capital + Intérêts) : " . number_format($s['totalToRepayValue'], 2) . " $curr\n";
+            $prompt .= "- Montant déjà recouvré : " . number_format($s['totalRepaidValue'], 2) . " $curr\n";
+            $prompt .= "- Reste à recouvrer : " . number_format($s['remainingBalanceValue'], 2) . " $curr\n";
+            $prompt .= "- Taux de recouvrement : " . number_format($s['recoveryRate'], 2) . "%\n";
+            $prompt .= "- Taux de dossiers en retard : " . number_format($s['overdueRate'], 2) . "%\n";
+            $prompt .= "- Ratio de dette sur le portefeuille : " . number_format($s['debtRatio'], 2) . "%\n";
+            $prompt .= "- Marge d'intérêt brute projetée : " . number_format($s['interestMargin'], 2) . "%\n";
+            $prompt .= "- Pénalités générées : " . number_format($s['totalPenalties'], 2) . " $curr (Poids sur le recouvrement : " . number_format($s['penaltyWeight'], 2) . "%)\n\n";
+        }
+
+        $prompt .= "Analyse :\n";
+        $prompt .= "1. Diagnostique la santé financière globale de l'institution sur la base de ces chiffres.\n";
+        $prompt .= "2. Identifie les forces et les faiblesses par devise.\n";
+        $prompt .= "3. Propose une stratégie de recouvrement ciblée et des conseils pour optimiser la marge d'intérêt et réduire le PAR.\n";
+        $prompt .= "Rédige en français, avec un ton professionnel, précis et orienté résultats.";
+
+        return $this->callAI($prompt, "Tu es un CFO et Directeur des Risques en microfinance.");
     }
 
     public function summarizeClientInsights($newClients, $accounts)

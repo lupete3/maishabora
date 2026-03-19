@@ -6,6 +6,7 @@ use Livewire\Component;
 use App\Models\Credit;
 use App\Models\Repayment;
 use App\Services\AIReportService;
+use App\Services\CreditStatsService;
 use Carbon\Carbon;
 
 class AiCreditReport extends Component
@@ -22,17 +23,13 @@ class AiCreditReport extends Component
     {
         $this->loading = true;
         $ai = new AIReportService();
+        $statsService = new CreditStatsService();
 
-        // 1. Fetch active credits (not yet paid)
-        $credits = Credit::where('is_paid', false)->get();
+        // 1. Fetch detailed stats
+        $stats = $statsService->getGlobalStats();
 
-        // 2. Fetch delayed repayments
-        $delays = Repayment::where('is_paid', false)
-            ->where('due_date', '<', Carbon::now())
-            ->get();
-
-        // 3. Generate AI summary
-        $this->summaryCreditPerformance = $ai->summarizeCreditPerformance($credits, $delays);
+        // 2. Generate AI summary
+        $this->summaryCreditPerformance = $ai->summarizeCreditPerformance($stats);
 
         $this->loading = false;
     }
