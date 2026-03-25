@@ -299,23 +299,17 @@ class AgentDashboard extends Component
 
         DB::beginTransaction();
         try {
-            $type = $transaction->type;
-            $amount = $transaction->amount;
-            $currency = $transaction->currency;
-
-            // 3. LOG AND DELETE
             \App\Helpers\UserLogHelper::log_user_activity(
                 "Suppression_transaction",
-                "Suppression de la transaction #{$transaction->id} ({$type}) de l'agent {$agentAccount->user->name}. Montant: {$amount} {$currency}. Raison: {$this->deleteReason}"
+                "Suppression de la transaction #{$transaction->id} ({$transaction->type}) de l'agent {$agentAccount->user->name}. Montant: {$transaction->amount} {$transaction->currency}. Raison: {$this->deleteReason}"
             );
 
             $transaction->delete();
 
             DB::commit();
             $this->openDeleteTransaction = false;
-            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée et soldes ajustés !');
+            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée avec succès !');
 
-            // Refresh transactions
             $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
 
         } catch (Throwable $th) {
