@@ -36,7 +36,7 @@ class MemberDetails extends Component
     public $a_retenir = 0;
     public $operation_type;
     public $type;
-    public $cardDetail = [];
+    public $cardDetail;
     public $openConfirmDepositNormal = false;
     public $openConfirmRetraitNormal = false;
 
@@ -829,10 +829,17 @@ class MemberDetails extends Component
     /**
      * Crée une transaction
      */
-    private function createTransaction($accountId, $userId, $type, $currency, $amount, $balanceAfter, $description)
+    private function createTransaction($accountId, $userId, $type, $currency, $amount, $balanceAfter, $description, $agentAccountId = null)
     {
+        // Si agentAccountId est null, on tente de le trouver via userId
+        if (!$agentAccountId) {
+            $agentAcc = AgentAccount::where('user_id', $userId)->where('currency', $currency)->first();
+            $agentAccountId = $agentAcc ? $agentAcc->id : null;
+        }
+
         return Transaction::create([
             'account_id' => $accountId,
+            'agent_account_id' => $agentAccountId,
             'user_id' => $userId,
             'type' => $type,
             'currency' => $currency,
@@ -1028,27 +1035,64 @@ class MemberDetails extends Component
             'editDescription' => 'required|string|min:5',
         ]);
 
+        DB::beginTransaction();
         try {
             $transaction = Transaction::findOrFail($this->editingTransactionId);
-            $oldAmount = $transaction->amount;
-            $oldDescription = $transaction->description;
+            $oldAmount = (float) $transaction->amount;
+            $newAmount = (float) $this->editAmount;
+            $diff = $newAmount - $oldAmount;
 
-            $transaction->amount = $this->editAmount;
+            // Ajustement des soldes si différence
+            if ($diff != 0) {
+                // 1. Solde Membre (lié à account_id)
+                if ($transaction->account_id) {
+                    $memberAccount = Account::find($transaction->account_id);
+                    if ($memberAccount) {
+                        if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'octroi_de_credit'])) {
+                            $memberAccount->balance += $diff;
+                        } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'remboursement_de_credit'])) {
+                            $memberAccount->balance -= $diff;
+                        }
+                        $memberAccount->save();
+                    }
+                }
+
+                // 2. Solde Agent (lié à agent_account_id ou via user_id qui a fait l'opération)
+                $agentAccount = AgentAccount::find($transaction->agent_account_id);
+                if (!$agentAccount && $transaction->user_id) {
+                    $agentAccount = AgentAccount::where('user_id', $transaction->user_id)
+                        ->where('currency', $transaction->currency)
+                        ->first();
+                }
+
+                if ($agentAccount) {
+                    if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'rectification_solde_agent', 'commission_credit', 'frais_mutuelle', 'frais_credit_pour_retrait', 'encaissement_agent'])) {
+                        $agentAccount->balance += $diff;
+                    } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'octroi_de_credit', 'virement_caisse'])) {
+                        $agentAccount->balance -= $diff;
+                    }
+                    $agentAccount->save();
+                }
+            }
+
+            $transaction->amount = $newAmount;
             $transaction->balance_after = $this->editBalanceAfter;
             $transaction->description = $this->editDescription;
             $transaction->save();
 
             UserLogHelper::log_user_activity(
                 action: 'modifier_transaction',
-                description: "Modification de la transaction #{$transaction->id}. Montant: {$oldAmount} -> {$this->editAmount}, description: '{$oldDescription}' -> '{$this->editDescription}'",
+                description: "Modification de la transaction #{$transaction->id}. Montant diff: {$diff}. Soldes ajustés. Raison: {$this->editDescription}",
             );
 
+            DB::commit();
             $this->openEditTransaction = false;
-            notyf()->success('Transaction mise à jour avec succès !');
+            notyf()->success('Transaction et soldes mis à jour !');
             $this->dispatch('$refresh');
         } catch (\Throwable $th) {
+            DB::rollBack();
             report($th);
-            notyf()->error('Erreur lors de la modification de la transaction.');
+            notyf()->error('Erreur lors de la modification : ' . $th->getMessage());
         }
     }
 
@@ -1063,23 +1107,57 @@ class MemberDetails extends Component
     {
         Gate::authorize('modifier-transaction-compte', User::class);
 
+        DB::beginTransaction();
         try {
             $transaction = Transaction::findOrFail($this->editingTransactionId);
+            
+            // 1. Inversion Solde Membre
+            if ($transaction->account_id) {
+                $memberAccount = Account::find($transaction->account_id);
+                if ($memberAccount) {
+                    if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'octroi_de_credit'])) {
+                        $memberAccount->balance -= $transaction->amount;
+                    } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'remboursement_de_credit'])) {
+                        $memberAccount->balance += $transaction->amount;
+                    }
+                    $memberAccount->save();
+                }
+            }
+
+            // 2. Inversion Solde Agent
+            $agentAccount = AgentAccount::find($transaction->agent_account_id);
+            if (!$agentAccount && $transaction->user_id) {
+                $agentAccount = AgentAccount::where('user_id', $transaction->user_id)
+                    ->where('currency', $transaction->currency)
+                    ->first();
+            }
+
+            if ($agentAccount) {
+                if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'rectification_solde_agent', 'commission_credit', 'frais_mutuelle', 'frais_credit_pour_retrait', 'encaissement_agent'])) {
+                    $agentAccount->balance -= $transaction->amount;
+                } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'octroi_de_credit', 'virement_caisse'])) {
+                    $agentAccount->balance += $transaction->amount;
+                }
+                $agentAccount->save();
+            }
+
             $details = "ID: #{$transaction->id}, Type: {$transaction->type}, Montant: {$transaction->amount} {$transaction->currency}";
 
             $transaction->delete();
 
             UserLogHelper::log_user_activity(
                 action: 'supprimer_transaction',
-                description: "Suppression de la transaction: {$details}",
+                description: "Suppression de la transaction: {$details}. Soldes reversés.",
             );
 
+            DB::commit();
             $this->openConfirmDeleteTransaction = false;
-            notyf()->success('Transaction supprimée avec succès !');
+            notyf()->success('Transaction supprimée et soldes ajustés !');
             $this->dispatch('$refresh');
         } catch (\Throwable $th) {
+            DB::rollBack();
             report($th);
-            notyf()->error('Erreur lors de la suppression de la transaction.');
+            notyf()->error('Erreur lors de la suppression : ' . $th->getMessage());
         }
     }
 
