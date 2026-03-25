@@ -97,7 +97,8 @@ class PermissionSeeder extends Seeder
             "decaissement",
             "ajouter-type-decaissement",
             "approuver-decaissement",
-            "rejeter-decaissement"
+            "rejeter-decaissement",
+            "autoriser-tout-retirer"
 
 
         ];

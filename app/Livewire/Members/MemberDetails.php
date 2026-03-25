@@ -438,10 +438,12 @@ class MemberDetails extends Component
             $totalAmount = $this->amount + $this->a_retenir;
             $minBalance = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
 
-            if (($account->balance - $totalAmount) < $minBalance) {
-                DB::rollBack();
-                notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
-                return;
+            if (!$account->can_withdraw_all) {
+                if (($account->balance - $totalAmount) < $minBalance) {
+                    DB::rollBack();
+                    notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
+                    return;
+                }
             }
 
             if ($account->balance < $totalAmount) {
@@ -577,10 +579,12 @@ class MemberDetails extends Component
 
             if ($accountType === 'current') {
                 $minBalance = ($card->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
-                if (($account->balance - $total) < $minBalance) {
-                    DB::rollBack();
-                    notyf()->error("Opération impossible. Le retrait de ce carnet laisserait un solde inférieur au minimum de {$minBalance} {$card->currency} sur le compte courant.");
-                    return;
+                if (!$account->can_withdraw_all) {
+                    if (($account->balance - $total) < $minBalance) {
+                        DB::rollBack();
+                        notyf()->error("Opération impossible. Le retrait de ce carnet laisserait un solde inférieur au minimum de {$minBalance} {$card->currency} sur le compte courant.");
+                        return;
+                    }
                 }
             }
 
@@ -930,6 +934,19 @@ class MemberDetails extends Component
         $member = User::findOrFail($memberId);
         $member->visible_account = !$member->visible_account;
         $member->save();
+        $this->dispatch('$refresh');
+    }
+
+    public function toggleWithdrawAll($accountId)
+    {
+        Gate::authorize('autoriser-tout-retirer', User::class);
+
+        $account = Account::findOrFail($accountId);
+        $account->can_withdraw_all = !$account->can_withdraw_all;
+        $account->save();
+
+        $status = $account->can_withdraw_all ? 'activée' : 'désactivée';
+        notyf()->success("Autorisation de tout retirer {$status}.");
         $this->dispatch('$refresh');
     }
 

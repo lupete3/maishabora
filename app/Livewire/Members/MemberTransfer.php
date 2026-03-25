@@ -93,10 +93,12 @@ class MemberTransfer extends Component
         $senderAccount = Account::find($this->selectedAccountId);
         $minBalance = ($senderAccount->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
 
-        if (($senderAccount->balance - $this->amount) < $minBalance) {
-            notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$senderAccount->currency}.");
-            $this->addError('amount', "Minimum {$minBalance} {$senderAccount->currency} requis.");
-            return;
+        if (!$senderAccount->can_withdraw_all) {
+            if (($senderAccount->balance - $this->amount) < $minBalance) {
+                notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$senderAccount->currency}.");
+                $this->addError('amount', "Minimum {$minBalance} {$senderAccount->currency} requis.");
+                return;
+            }
         }
         $this->step = 2;
     }
@@ -140,9 +142,11 @@ class MemberTransfer extends Component
         }
 
         $minBalance = ($senderAccount->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
-        if (($senderAccount->balance - $this->amount) < $minBalance) {
-            notyf()->error("Opération impossible. Le solde restant doit être d'au moins {$minBalance} {$senderAccount->currency}.");
-            return;
+        if (!$senderAccount->can_withdraw_all) {
+            if (($senderAccount->balance - $this->amount) < $minBalance) {
+                notyf()->error("Opération impossible. Le solde restant doit être d'au moins {$minBalance} {$senderAccount->currency}.");
+                return;
+            }
         }
 
         DB::beginTransaction();
