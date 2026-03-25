@@ -291,55 +291,18 @@ class AgentDashboard extends Component
 
         $transaction = Transaction::findOrFail($this->transactionToDeleteId);
         
-        // Identifier le compte agent affecté
-        $agentAccount = AgentAccount::where('id', $transaction->agent_account_id)->first();
-        
-        // Fallback: si agent_account_id est null, on cherche par user_id et currency
-        if (!$agentAccount) {
-            $agentAccount = AgentAccount::where('user_id', $transaction->user_id)
-                ->where('currency', $transaction->currency)
-                ->first();
-        }
-
         DB::beginTransaction();
         try {
-            // 1. REVERSEMENT DU SOLDE AGENT
-            if ($agentAccount) {
-                // Si c'est un dépôt ou une mise, on retire du solde
-                if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'rectification_solde_agent', 'commission_credit', 'frais_mutuelle', 'frais_credit_pour_retrait', 'encaissement_agent'])) {
-                    $agentAccount->balance -= $transaction->amount;
-                } 
-                // Si c'est un retrait, on rajoute au solde
-                elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'octroi_de_credit', 'virement_caisse'])) {
-                    $agentAccount->balance += $transaction->amount;
-                }
-                
-                $agentAccount->save();
-            }
-
-            // 2. REVERSEMENT DU SOLDE MEMBRE (Si lié à un compte membre)
-            if ($transaction->account_id) {
-                $memberAccount = \App\Models\Account::find($transaction->account_id);
-                if ($memberAccount) {
-                    if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'octroi_de_credit'])) {
-                        $memberAccount->balance -= $transaction->amount;
-                    } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'remboursement_de_credit'])) {
-                        $memberAccount->balance += $transaction->amount;
-                    }
-                    $memberAccount->save();
-                }
-            }
-
             \App\Helpers\UserLogHelper::log_user_activity(
                 "Suppression_transaction",
-                "Suppression de la transaction #{$transaction->id} ({$transaction->type}). Montant: {$transaction->amount} {$transaction->currency}. Solde agent et membre ajustés. Raison: {$this->deleteReason}"
+                "Suppression simple de la transaction #{$transaction->id} ({$transaction->type}). Montant: {$transaction->amount} {$transaction->currency}. Raison: {$this->deleteReason}"
             );
 
             $transaction->delete();
 
             DB::commit();
             $this->openDeleteTransaction = false;
-            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée et soldes ajustés avec succès !');
+            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée avec succès (sans rectification du solde) !');
 
             $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
 
@@ -379,47 +342,12 @@ class AgentDashboard extends Component
 
         $transaction = Transaction::findOrFail($this->editingTransactionId);
         
-        // Identifier le compte agent affecté
-        $agentAccount = AgentAccount::where('id', $transaction->agent_account_id)->first();
-        if (!$agentAccount) {
-            $agentAccount = AgentAccount::where('user_id', $transaction->user_id)
-                ->where('currency', $transaction->currency)
-                ->first();
-        }
-
         DB::beginTransaction();
         try {
             $oldAmount = (float) $transaction->amount;
             $newAmount = (float) $this->editAmount;
-            $diff = $newAmount - $oldAmount;
 
-            // 1. AJUSTEMENT DU SOLDE AGENT
-            if ($agentAccount && $diff != 0) {
-                // Si c'est un dépôt ou assimilé, l'augmentation du montant augmente le solde agent
-                if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'rectification_solde_agent', 'commission_credit', 'frais_mutuelle', 'frais_credit_pour_retrait', 'encaissement_agent'])) {
-                    $agentAccount->balance += $diff;
-                } 
-                // Si c'est un retrait ou assimilé, l'augmentation du montant diminue le solde agent
-                elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'octroi_de_credit', 'virement_caisse'])) {
-                    $agentAccount->balance -= $diff;
-                }
-                $agentAccount->save();
-            }
-
-            // 2. AJUSTEMENT DU SOLDE MEMBRE
-            if ($transaction->account_id && $diff != 0) {
-                $memberAccount = \App\Models\Account::find($transaction->account_id);
-                if ($memberAccount) {
-                    if (in_array($transaction->type, ['dépôt', 'mise_quotidienne', 'octroi_de_credit'])) {
-                        $memberAccount->balance += $diff;
-                    } elseif (in_array($transaction->type, ['retrait', 'retrait_carte_adhesion', 'remboursement_de_credit'])) {
-                        $memberAccount->balance -= $diff;
-                    }
-                    $memberAccount->save();
-                }
-            }
-
-            // Update transaction
+            // Update transaction (just the record)
             $transaction->update([
                 'amount' => $newAmount,
                 'description' => $this->editDescription,
@@ -428,12 +356,12 @@ class AgentDashboard extends Component
 
             \App\Helpers\UserLogHelper::log_user_activity(
                 "Modification_transaction_agent",
-                "Modification de la transaction #{$transaction->id} ({$transaction->type}). Différence: {$diff}. Soldes agent et membre mis à jour. Raison: {$this->editDescription}"
+                "Modification de la transaction #{$transaction->id} ({$transaction->type}). Montant: {$oldAmount} -> {$newAmount}. Raison: {$this->editDescription}"
             );
 
             DB::commit();
             $this->openEditTransaction = false;
-            $this->dispatch('notyf', type: 'success', message: 'Transaction et soldes mis à jour avec succès !');
+            $this->dispatch('notyf', type: 'success', message: 'Transaction mise à jour avec succès (sans rectification du solde) !');
 
             // Refresh transactions
             $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
