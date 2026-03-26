@@ -55,8 +55,13 @@ class CheckOverdueRepayments extends Command
             //$interestAfter = $interestPart+$penaltyAmount;
 
 
-            //Vérifier si le membre a assez de fonds (en respectant le solde minimum)
+            //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
             $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+            
+            // Si le compte est autorisé à tout retirer, le solde minimum est de 0
+            if ($account->can_withdraw_all) {
+                $minBalance = 0;
+            }
 
             if (($account->balance - $expectedAmount) >= $minBalance) {
                 //Débiter le compte du membre
