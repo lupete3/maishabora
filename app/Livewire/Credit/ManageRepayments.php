@@ -138,8 +138,12 @@ class ManageRepayments extends Component
                     $amountToPay = round($capitalRestant, 3);
                 }
 
-                // Vérification du solde minimum
+                // Vérification du solde minimum (sauf si autorisé à tout retirer)
                 $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+                if ($account->can_withdraw_all) {
+                    $minBalance = 0;
+                }
+
                 if ((floatval($account->balance) - $amountToPay) < $minBalance) {
                     notyf()->error("Solde insuffisant. Le solde minimum obligatoire est de {$minBalance} {$credit->currency}.");
                     return;
