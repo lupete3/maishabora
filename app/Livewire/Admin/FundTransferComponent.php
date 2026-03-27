@@ -44,9 +44,15 @@ class FundTransferComponent extends Component
         $query = trim($this->searchagent);
         if ($query !== '') {
             $this->results = User::query()
+                ->where(function ($q) {
+                    if ($this->transfer_type === 'agent') {
+                        $q->where('role', '!=', 'membre')->orWhereNull('role');
+                    } else {
+                        $q->where('role', 'membre');
+                    }
+                })
                 ->where(function ($q) use ($query) {
-                    $q->where('role', 'membre')
-                        ->where('code', 'like', "%{$query}%")
+                    $q->where('code', 'like', "%{$query}%")
                         ->orWhere('name', 'like', "%{$query}%")
                         ->orWhere('postnom', 'like', "%{$query}%")
                         ->orWhere('prenom', 'like', "%{$query}%")
@@ -88,6 +94,18 @@ class FundTransferComponent extends Component
 
         try {
             DB::transaction(function () {
+                $recipient = User::findOrFail($this->recipient_id);
+                
+                if ($this->transfer_type === 'agent' && $recipient->role === 'membre') {
+                    notyf()->error('Le destinataire doit être un agent, pas un membre.');
+                    return;
+                }
+                
+                if ($this->transfer_type === 'member' && $recipient->role !== 'membre') {
+                    notyf()->error('Le destinataire doit avoir le rôle membre.');
+                    return;
+                }
+
                 $mainCash = MainCashRegister::where('currency', $this->currency)->firstOrFail();
 
                 if ($mainCash->balance < $this->amount) {
@@ -274,6 +292,16 @@ class FundTransferComponent extends Component
 
         if (!$user) {
             notyf()->error('Bénéficiaire introuvable');
+            return;
+        }
+
+        if ($this->transfer_type === 'agent' && $user->role === 'membre') {
+            notyf()->error('Le destinataire doit être un agent, pas un membre.');
+            return;
+        }
+        
+        if ($this->transfer_type === 'member' && $user->role !== 'membre') {
+            notyf()->error('Le destinataire doit avoir le rôle membre.');
             return;
         }
 
