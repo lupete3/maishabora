@@ -200,7 +200,12 @@
     <div class="col-12 col-xl-9">
         <div class="card shadow-sm border-0 rounded-4 h-100">
             <div class="card-header bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 rounded-top-4">
-                <h5 class="mb-0 fw-bold"><i class="bx bx-bar-chart-alt-2 me-2"></i>Tableau des Ratios de Gestion d'une IMF</h5>
+                <div class="d-flex align-items-center">
+                    <h5 class="mb-0 fw-bold"><i class="bx bx-bar-chart-alt-2 me-2"></i>Tableau des Ratios de Gestion d'une IMF</h5>
+                    <button type="button" class="btn btn-sm btn-light text-primary ms-3 fw-bold" data-bs-toggle="modal" data-bs-target="#ratioExplanationModal">
+                        <i class="bx bx-help-circle me-1"></i> Comprendre les ratios
+                    </button>
+                </div>
                 <div class="d-flex flex-wrap gap-2">
                     <select wire:model.live="currency" class="form-select form-select-sm border-0 shadow-sm" style="width: auto; min-width: 100px;">
                         @foreach($currencies as $curr)
@@ -317,6 +322,102 @@
                 <h6 class="fw-bold mb-3 text-white"><i class="bx bxs-bulb me-2 text-warning"></i>À Savoir</h6>
                 <p class="small mb-2" style="opacity: 0.85;">Ces indicateurs sont basés sur les standards internationaux des Institutions de Microfinance (CGAP/MIX).</p>
                 <p class="small mb-0" style="opacity: 0.85;">Le diagnostic global fournit une image instantanée basée sur des états financiers arrêtés à la date sélectionnée. Les données non saisies en comptabilité ne sont pas prises en compte.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal d'explication des ratios -->
+    <div class="modal fade" id="ratioExplanationModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-scrollable modal-lg" role="document">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header bg-light border-bottom">
+                    <h5 class="modal-title fw-bold text-primary" id="modalScrollableTitle">
+                        <i class="bx bx-book-reader me-2"></i> Guide d'interprétation des Ratios
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="alert alert-primary d-flex align-items-center mb-4 rounded-3" role="alert">
+                        <i class="bx bx-info-circle fs-4 me-3"></i>
+                        <div>
+                            Ce guide explique la signification des 17 indicateurs présentés dans le tableau, répartis en 5 grandes catégories, essentiels pour évaluer la santé de l'institution.
+                        </div>
+                    </div>
+
+                    <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2 mb-3">1. Structure Financière et Solvabilité</h6>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3">
+                            <strong class="text-dark">Ratio de solvabilité :</strong> Mesure la part des actifs de l'IMF qui est réellement financée par ses propres moyens (capital, réserves, bénéfices). L'idéal est d'être à plus de 10% pour survivre en cas de crise majeure.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Couverture des immobilisations :</strong> Vérifie si les fonds propres sont trop peu ou trop investis dans le "béton" (bâtiments, véhicules). Ne doit pas dépasser 50%.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Taux d’immobilisation :</strong> Quel pourcentage de la richesse totale est bloqué dans des actifs non productifs (≤ 10%). Plus c'est bas, plus il y a d'argent pour le crédit.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Couverture des emplois MLT :</strong> Les crédits longs ne doivent pas être financés par l'épargne exigible à court terme. Les ressources stables doivent couvrir au moins 100% des crédits à long terme.
+                        </li>
+                    </ul>
+
+                    <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2 mb-3">2. Liquidité</h6>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3">
+                            <strong class="text-dark">Ratio de liquidité :</strong> Si les épargnants viennent retirer leur argent à vue, l'IMF a-t-elle le cash nécessaire ? Au moins 20% des dépôts court terme doivent être en actifs liquides.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Taux d’encaisse oisive :</strong> Trop d'argent qui dort dans les coffres sans être prêté (plus de 20%) est mauvais pour la rentabilité, car cet argent ne produit pas d'intérêts.
+                        </li>
+                    </ul>
+
+                    <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2 mb-3">3. Qualité du Portefeuille de Crédit</h6>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3">
+                            <strong class="text-dark">Taux d’encours de crédit :</strong> Quelle part de toute la richesse est réellement dehors chez les clients ? Devrait être d'au moins 70%.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Portefeuille à risque (PAR30) :</strong> L'indicateur vital ! Total restant à payer de tous les crédits en retard de plus de 30 jours, divisé par le total des crédits. Un seuil >5% met l'IMF en danger.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Taux de remboursement :</strong> Le pourcentage des échéances exigibles qui ont été réellement payées à temps (idéal ≥ 95%).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Taux de provisionnement :</strong> Pour chaque crédit en retard, quelle part a été couverte par une provision pour perte ? (Doit être >100%).
+                        </li>
+                    </ul>
+
+                    <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2 mb-3">4. Rentabilité et Pérennité</h6>
+                    <ul class="list-unstyled mb-4">
+                        <li class="mb-3">
+                            <strong class="text-dark">Autosuffisance opérationnelle :</strong> Les intérêts perçus suffisent-ils à payer toutes les charges (salaires, loyers, frais) ? En dessous de 100%, l'IMF fonctionne à perte (Idéal ≥ 120%).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Rendement du portefeuille :</strong> Combien d'intérêts rapportent 100 unités prêtées ? (≥ 15%).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Rentabilité des actifs (ROA) :</strong> Quel bénéfice est généré par rapport à la taille totale de l'institution (≥ 3%).
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Rentabilité des fonds propres (ROE) :</strong> Le retour sur l'investissement initial des actionnaires/membres (≥ 15%).
+                        </li>
+                    </ul>
+
+                    <h6 class="text-primary fw-bold text-uppercase border-bottom pb-2 mb-3">5. Productivité et Efficacité</h6>
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-3">
+                            <strong class="text-dark">Productivité agents crédit :</strong> Un bon gestionnaire de crédit gère idéalement entre 200 et 300 emprunteurs productifs.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Coût opérationnel :</strong> Le coût de gestion pour 100 $ d'encours de crédit. Ne devrait pas excéder 15% à 20%.
+                        </li>
+                        <li class="mb-3">
+                            <strong class="text-dark">Coût par emprunteur :</strong> Coût moyen administratif mensuel/annuel pour encadrer un seul client. Plus c'est bas, plus l'IMF est efficace.
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer bg-light border-top p-3 justify-content-center">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Fermer ce guide</button>
+                </div>
             </div>
         </div>
     </div>
