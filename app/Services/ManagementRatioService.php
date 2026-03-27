@@ -239,7 +239,7 @@ class ManagementRatioService
      */
     private function getProductivityStats()
     {
-        $agentCount = User::whereIn('role', ['recouvreur', 'agent', 'caissier'])->count();
+        $agentCount = User::whereIn('role', ['admin', 'recouvreur', 'comptable', 'receotionniste', 'caissier'])->count();
         // Emprunteurs actifs (les membres ayant un crédit non solder)
         $borrowerCount = User::whereHas('credits', function($q) {
             $q->where('is_paid', false);
