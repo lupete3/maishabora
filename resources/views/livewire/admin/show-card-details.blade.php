@@ -51,7 +51,7 @@
                                 </thead>
                                 <tbody>
                                     @foreach ($cardDetail->contributions->sortByDesc('updated_at') as $contribution)
-                                        <tr>
+                                        <tr wire:key="contrib-{{ $contribution->id }}">
                                             <td class="align-middle">
                                                 {{ \Carbon\Carbon::parse($contribution->contribution_date)->format('d/m/Y') }}
                                             </td>
