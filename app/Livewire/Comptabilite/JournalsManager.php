@@ -11,6 +11,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
+use App\Exports\JournalExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class JournalsManager extends Component
 {
@@ -21,6 +23,9 @@ class JournalsManager extends Component
     public $date_operation, $libelle, $reference, $devise = 'USD', $type_journal_id;
 
     // 🔹 Filtres
+    public $filterType = 'month';
+    public $startDate;
+    public $endDate;
     public $filter_journal_type = null; // filtre auxiliaire
     public $filter_account = null;      // filtre grand livre
     public $filter_currency = null;     // devise
@@ -34,19 +39,20 @@ class JournalsManager extends Component
         $this->date_operation = now()->format('Y-m-d');
     }
 
-    public function updatingSearch()
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
     {
         $this->resetPage();
     }
-    public function updatingFilterJournalType()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterAccount()
-    {
-        $this->resetPage();
-    }
-    public function updatingFilterCurrency()
+
+    public function updatedEndDate()
     {
         $this->resetPage();
     }
@@ -61,6 +67,19 @@ class JournalsManager extends Component
             ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
             ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
             ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
             ->orderBy('date_operation', 'desc');
 
 
@@ -133,6 +152,10 @@ class JournalsManager extends Component
 
     public function export()
     {
+        // 🔹 Optimisation pour les gros rapports
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
         $query = Journal::with(['account', 'journalType', 'user'])
             ->when($this->search, fn($q) => $q->where(function ($s) {
                 $s->where('libelle', 'like', "%{$this->search}%")
@@ -141,37 +164,83 @@ class JournalsManager extends Component
             ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
             ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
             ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
             ->orderBy('date_operation', 'desc');
 
         $journals = $query->get();
 
         // ✅ Totaux par devise (débit/credit/net)
         $totalByCurrency = $journals->groupBy('devise')->map(function ($rows) {
-            $debit  = $rows->sum(fn($j) => (float) $j->montant_debit);
+            $debit = $rows->sum(fn($j) => (float) $j->montant_debit);
             $credit = $rows->sum(fn($j) => (float) $j->montant_credit);
             return [
-                'debit'  => $debit,
+                'debit' => $debit,
                 'credit' => $credit,
-                'net'    => $debit - $credit,
+                'net' => $debit - $credit,
             ];
         });
 
         $user = Auth::user();
 
         $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.journals-report', [
-            'journals'         => $journals,
-            'user'             => $user,
-            'totalByCurrency'  => $totalByCurrency,
+            'journals' => $journals,
+            'user' => $user,
+            'totalByCurrency' => $totalByCurrency,
             'transactionCount' => $journals->count(),
-            'filter'           => $this->filter_journal_type ? "Journal"
+            'filter' => $this->filter_journal_type ? "Journal"
                 : ($this->filter_account ? "Grand Livre"
                     : ($this->filter_currency ? "Devise" : "Tous")),
-            'filter_currency'  => $this->filter_currency,
+            'filter_currency' => $this->filter_currency,
         ])->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
-            fn() => print($pdf->output()),
+            fn() => print ($pdf->output()),
             'rapport-journaux-' . now()->format('Ymd-His') . '.pdf'
+        );
+    }
+
+    public function exportExcel()
+    {
+        $query = Journal::with(['account', 'journalType', 'user'])
+            ->when($this->search, fn($q) => $q->where(function ($s) {
+                $s->where('libelle', 'like', "%{$this->search}%")
+                    ->orWhere('reference', 'like', "%{$this->search}%");
+            }))
+            ->when($this->filter_journal_type, fn($q) => $q->where('type_journal_id', $this->filter_journal_type))
+            ->when($this->filter_account, fn($q) => $q->where('compte_id', $this->filter_account))
+            ->when($this->filter_currency, fn($q) => $q->where('devise', $this->filter_currency))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('date_operation', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('date_operation', [now()->startOfWeek()->format('Y-m-d'), now()->endOfWeek()->format('Y-m-d')]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('date_operation', now()->month)
+                    ->whereYear('date_operation', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('date_operation', [$this->startDate, $this->endDate]);
+            })
+            ->orderBy('date_operation', 'desc');
+
+        $journals = $query->get();
+
+        return Excel::download(
+            new JournalExport($journals),
+            'rapport-journaux-' . now()->format('Ymd-His') . '.xlsx'
         );
     }
 }

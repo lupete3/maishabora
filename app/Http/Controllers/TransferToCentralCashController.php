@@ -20,7 +20,8 @@ class TransferToCentralCashController extends Controller
 
         $data = compact('transfer', 'agent');
 
-        $pdf = Pdf::loadView('receipts.transfer-receipt', $data);
+        $pdf = Pdf::loadView('receipts.transfer-receipt', $data)
+            ->setPaper([0, 0, 164.41, 600], 'portrait');
 
         return $pdf->stream("virement_{$id}.pdf");
     }

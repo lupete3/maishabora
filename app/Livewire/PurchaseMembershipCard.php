@@ -27,6 +27,9 @@ class PurchaseMembershipCard extends Component
     public $price = 1000;
     public $subscription_amount = 0;
     public $code;
+    public $filterType = '30days';
+    public $startDate;
+    public $endDate;
 
     public $members = [];
     public $results = [];
@@ -91,7 +94,6 @@ class PurchaseMembershipCard extends Component
             $this->results = [];
         }
     }
-
     public function selectResult(int $id)
     {
         $user = User::find($id);
@@ -103,7 +105,6 @@ class PurchaseMembershipCard extends Component
             $this->dispatch('userSelected', $user->id);
         }
     }
-
     public $card_type = 'epargne'; // 'epargne' or 'simple'
 
     public function updatedCardType($value)
@@ -168,7 +169,7 @@ class PurchaseMembershipCard extends Component
             // On suppose ici que le système gère le multi-devise ou convertit.
             // Le code original force 'CDF'.
 
-            $transactionCurrency = $this->currency; // Utiliser la devise de la carte
+            $transactionCurrency = $this->card_type == 'epargne' ? 'CDF' : 'USD'; // Utiliser la devise de la carte
 
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
@@ -195,7 +196,7 @@ class PurchaseMembershipCard extends Component
                 'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $agentAccount->balance,
-                'description' => "Vente de carte ({$this->card_type}) à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
+                'description' => "Vente de carte ({$this->card_type}) #{$this->code} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
             // Enregistrement de la transaction profit
@@ -207,21 +208,13 @@ class PurchaseMembershipCard extends Component
                 'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $membershipCardAccount->balance,
-                'description' => "Vente de carte ({$this->card_type}) à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
+                'description' => "Vente de carte ({$this->card_type}) #{$this->code} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
             UserLogHelper::log_user_activity(
                 action: 'achat_carte_adhesion',
                 description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->currency}"
             );
-
-            // ÉCRITURE COMPTABLE AUTOMATIQUE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordMembershipPurchase($card, (float) $this->price, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable achat carte: " . $e->getMessage());
-            }
 
             DB::commit();
 
@@ -255,9 +248,27 @@ class PurchaseMembershipCard extends Component
         $this->submit();
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
-        $cards = MembershipCard::with('member')
+        $cards = MembershipCard::with(['member', 'agent'])
             ->when($this->searchCard, function ($query) {
                 // Découpe la recherche en plusieurs termes (séparés par espace)
                 $terms = explode(' ', $this->searchCard);
@@ -278,6 +289,22 @@ class PurchaseMembershipCard extends Component
                         });
                     }
                 });
+            })
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === '30days', function ($q) {
+                $q->where('created_at', '>=', now()->subDays(30));
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
             });
 
         return view('livewire.purchase-membership-card', [
@@ -396,4 +423,91 @@ class PurchaseMembershipCard extends Component
         }
     }
 
+    public function deleteCard($cardId)
+    {
+        Gate::authorize('supprimer-carnet', User::class);
+
+        $card = MembershipCard::with(['contributions', 'member'])->find($cardId);
+
+        if (!$card) {
+            notyf()->error("Carte non trouvée.");
+            return;
+        }
+
+        // Vérifier si des contributions ont été payées
+        if ($card->contributions()->where('is_paid', true)->exists()) {
+            notyf()->error("Impossible de supprimer un carnet dont les contributions ont déjà commencé.");
+            return;
+        }
+
+        try {
+            DB::beginTransaction();
+
+            $transactionCurrency = $card->card_type == 'epargne' ? 'CDF' : 'USD';
+            $price = $card->price;
+
+            // Rechercher les transactions originales de vente liées à cette carte
+            // On cherche par le type, la devise, le montant et le code de la carte dans la description
+            $originalTransactions = Transaction::where('type', 'vente_carte_adhesion')
+                ->where('currency', $transactionCurrency)
+                ->where('amount', $price)
+                ->where('description', 'like', "%#{$card->code}%")
+                ->get();
+
+            if ($originalTransactions->isEmpty()) {
+                // Fallback: Recherche par nom du membre si le code n'est pas dans la description (pour les anciens carnets)
+                $originalTransactions = Transaction::where('type', 'vente_carte_adhesion')
+                    ->where('currency', $transactionCurrency)
+                    ->where('amount', $price)
+                    ->where('description', 'like', "%{$card->member->name}%")
+                    ->whereBetween('created_at', [
+                        $card->created_at->subMinutes(5),
+                        $card->created_at->addMinutes(5)
+                    ])
+                    ->get();
+            }
+
+            if ($originalTransactions->isEmpty()) {
+                throw new \Exception("Transactions de vente originales non trouvées. Impossible de déterminer les comptes à débiter.");
+            }
+
+            foreach ($originalTransactions as $origTrans) {
+                $account = AgentAccount::find($origTrans->agent_account_id);
+                if ($account) {
+                    $account->balance -= $price;
+                    $account->save();
+
+                    // Créer la transaction d'annulation
+                    Transaction::create([
+                        'account_id' => null,
+                        'agent_account_id' => $account->id,
+                        'user_id' => $account->user_id, // L'agent propriétaire du compte
+                        'type' => 'annulation_vente_carte_adhesion',
+                        'currency' => $transactionCurrency,
+                        'amount' => -$price,
+                        'balance_after' => $account->balance,
+                        'description' => "Annulation vente de carte ({$card->card_type}) #{$card->code} - Membre: {$card->member->name}",
+                    ]);
+                }
+            }
+
+            // Supprimer les contributions et la carte
+            $card->contributions()->delete();
+            $card->delete();
+
+            UserLogHelper::log_user_activity(
+                action: 'suppression_carte_adhesion',
+                description: "Suppression de la carte #{$cardId} ({$card->code}) et annulation des transactions financières."
+            );
+
+            DB::commit();
+
+            $this->dispatch('$refresh');
+            $this->resetPage();
+            notyf()->success("Carnet supprimé avec succès et montants débités des comptes correspondants.");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            notyf()->error("Erreur lors de la suppression : " . $e->getMessage());
+        }
+    }
 }

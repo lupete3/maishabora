@@ -41,6 +41,15 @@
             </li>
         @endcan
 
+        @can('afficher-caisse-agent')
+            <li class="menu-item @if (request()->routeIs('ecarts.caisse')) active @endif">
+                <a href="{{ route('ecarts.caisse') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-error-circle"></i>
+                    <div data-i18n="Analytics">Écarts de Caisse</div>
+                </a>
+            </li>
+        @endcan
+
         @can('effectuer-virement')
             <li class="menu-item @if (request()->routeIs('transfert.ajouter')) active @endif">
                 <a href="{{ route('transfert.ajouter') }}" class="menu-link">
@@ -97,13 +106,7 @@
                     <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
                         <a href="{{ route('credit.applications.list') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-list-ul"></i>
-                            <div data-i18n="Analytics">Demandes / Analyse</div>
-                        </a>
-                    </li>
-                    <li class="menu-item @if (request()->routeIs('credit.applications.create')) active @endif">
-                        <a href="{{ route('credit.applications.create') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-file-plus"></i>
-                            <div data-i18n="Analytics">Nouvelle Demande</div>
+                            <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
                         </a>
                     </li>
 
@@ -223,7 +226,7 @@
 
                     <li class="menu-item @if (request()->routeIs('comptabilite.bilan')) active @endif">
                         <a href="{{ route('comptabilite.bilan') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-balance-scale"></i>
+                            <i class="menu-icon tf-icons bx bx-spreadsheet"></i>
                             <div data-i18n="Analytics">Bilan</div>
                         </a>
                     </li>
@@ -242,6 +245,18 @@
                             <div data-i18n="Analytics">Résultat Général</div>
                         </a>
                     </li>
+                    <li class="menu-item @if (request()->routeIs('comptabilite.ratios')) active @endif">
+                        <a href="{{ route('comptabilite.ratios') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                            <div data-i18n="Analytics">Ratios de Gestion</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('reports.agent-performance')) active @endif">
+                        <a href="{{ route('reports.agent-performance') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-check"></i>
+                            <div data-i18n="Analytics">Performance Agents</div>
+                        </a>
+                    </li>
                 </ul>
             </li>
         @endcan
@@ -256,7 +271,8 @@
                     'report.credit.followup',
                     'report.repayments',
                     'rapports.depot_retrait',
-                    'member.accounts'
+                    'member.accounts',
+                    'members.carnet-overview'
                 )
             ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
@@ -282,6 +298,14 @@
                         <a href="{{ route('rapports.carnets') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-book-content"></i> <!-- Livre/carnet -->
                             <div data-i18n="Analytics">Rapports Carnets</div>
+                        </a>
+                    </li>
+
+                    <!-- Overview des carnets -->
+                    <li class="menu-item @if (request()->routeIs('members.carnet-overview')) active @endif">
+                        <a href="{{ route('members.carnet-overview') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-show-alt"></i>
+                            <div data-i18n="Analytics">Carnets Douteux</div>
                         </a>
                     </li>
 
@@ -350,16 +374,43 @@
         @endcan
 
         @can('afficher-logs', App\Models\User::class)
-            <li class="menu-item @if (request()->routeIs('ai.reports')) active @endif">
-                <a href="{{ route('ai.reports') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
-                    <div data-i18n="Analytics">Rapports AI</div>
+            <li class="menu-item @if (request()->is('ai/reports/*')) active open @endif" wire:ignore.self>
+                <a class="menu-link menu-toggle">
+                    <i class="menu-icon tf-icons bx bxs-magic-wand"></i>
+                    <div data-i18n="Misc">Hub d'Analyse IA</div>
                 </a>
+                <ul class="menu-sub">
+                    <li class="menu-item @if (request()->routeIs('ai.reports')) active @endif">
+                        <a href="{{ route('ai.reports') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-sun"></i>
+                            <div data-i18n="Analytics">Résumé Quotidien</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.credit')) active @endif">
+                        <a href="{{ route('ai.reports.credit') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-credit-card"></i>
+                            <div data-i18n="Analytics">Santé des Crédits</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.clients')) active @endif">
+                        <a href="{{ route('ai.reports.clients') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-user-voice"></i>
+                            <div data-i18n="Analytics">Fidélité Clients</div>
+                        </a>
+                    </li>
+                    <li class="menu-item @if (request()->routeIs('ai.reports.sales')) active @endif">
+                        <a href="{{ route('ai.reports.sales') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-trending-up"></i>
+                            <div data-i18n="Analytics">Ventes & Adhésions</div>
+                        </a>
+                    </li>
+                </ul>
             </li>
+
             <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
                 <a href="{{ route('rapports.logs') }}" class="menu-link">
-                    <i class="menu-icon tf-icons bx bx-calculator"></i> <!-- Icône de calculateur -->
-                    <div data-i18n="Analytics">Logs</div>
+                    <i class="menu-icon tf-icons bx bx-history"></i> <!-- Icône de calculateur -->
+                    <div data-i18n="Analytics">Logs du système</div>
                 </a>
             </li>
         @endcan

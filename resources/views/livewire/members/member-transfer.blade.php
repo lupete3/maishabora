@@ -17,9 +17,12 @@
             <div class="mb-3">
                 <label for="receiverCode" class="form-label">Code du bénéficiaire</label>
                 <input type="text" class="form-control @error('receiverCode') is-invalid @enderror" id="receiverCode"
-                    wire:model.live.debounce.500ms="receiverCode" placeholder="Ex: 0321">
+                    wire:model.live.debounce.750ms="receiverCode" placeholder="Ex: 0321">
+                <div wire:loading wire:target="receiverCode" class="form-text text-primary">
+                    <span class="spinner-border spinner-border-sm me-1" role="status"></span> Recherche du bénéficiaire...
+                </div>
                 @if($receiverName)
-                    <div class="form-text text-success">
+                    <div wire:loading.remove wire:target="receiverCode" class="form-text text-success">
                         <i class="fas fa-check-circle"></i> Bénéficiaire : <strong>{{ $receiverName }}</strong>
                     </div>
                 @endif
@@ -40,8 +43,9 @@
                 @error('description') <div class="invalid-feedback">{{ $message }}</div> @enderror
             </div>
 
-            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled"> <span wire:loading wire:target="nextStep" class="spinner-border spinner-border-sm me-2"
-                            role="status"></span> Suivant</button>
+            <button type="submit" class="btn btn-primary" wire:loading.attr="disabled"> <span wire:loading
+                    wire:target="nextStep" class="spinner-border spinner-border-sm me-2" role="status"></span>
+                Suivant</button>
         </form>
     @elseif ($step === 2)
         <div class="text-center">
@@ -64,10 +68,18 @@
                 </li>
             </ul>
 
+            <div class="mb-4 mx-auto" style="max-width: 400px;">
+                <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
+                <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
+                    id="password" wire:model="password" placeholder="••••••••">
+                @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+            </div>
+
             <div class="d-flex justify-content-center gap-2">
                 <button type="button" class="btn btn-secondary" wire:click="previousStep">Retour</button>
-                <button type="button" class="btn btn-success" wire:click="executeTransfer" wire:loading.attr="disabled"> <span wire:loading wire:target="executeTransfer" class="spinner-border spinner-border-sm me-2"
-                            role="status"></span> Confirmer le virement</button>
+                <button type="button" class="btn btn-success" wire:click="executeTransfer" wire:loading.attr="disabled">
+                    <span wire:loading wire:target="executeTransfer" class="spinner-border spinner-border-sm me-2"
+                        role="status"></span> Confirmer le virement</button>
             </div>
         </div>
     @endif

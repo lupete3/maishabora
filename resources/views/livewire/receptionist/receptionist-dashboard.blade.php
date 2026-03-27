@@ -33,7 +33,7 @@
         </div>
 
         <div class="col-md-3 col-sm-6 mb-4">
-                <div class="card card-border-shadow border-start-danger">
+            <div class="card card-border-shadow border-start-danger">
                 <div class="card-body d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-1">Totals Clients Bloqués</h6>
@@ -46,8 +46,4 @@
             </div>
         </div>
     </div>
-    <div class="mb-4 mt-2" wire:ignore>
-        <livewire:credit.credit-overview wire:key="credit-overview" />
-    </div>
-
 </div>

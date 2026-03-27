@@ -4,19 +4,24 @@ namespace App\Livewire\Agent;
 
 use App\Exports\AgentTransactionsExport;
 use Livewire\Component;
+use App\Models\AgentAccount;
 use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Maatwebsite\Excel\Facades\Excel;
+use Throwable;
 
 class AgentDashboard extends Component
 {
     public $today;
     public $user_id;
     public $isShowTransaction = false;
-    public $transactions = [];
+    /** @var \Illuminate\Support\Collection|array */
+    public $transactions;
     public $transactionCount;
     public $totalByCurrency;
     public $selectedAgent;
@@ -35,10 +40,22 @@ class AgentDashboard extends Component
     public $modificationReason;
     public $openModifyBalance = false;
 
+    // Propriétés pour la suppression de transaction
+    public $transactionToDeleteId;
+    public $openDeleteTransaction = false;
+    public $deleteReason;
+
+    // Propriétés pour la modification de transaction
+    public $editingTransactionId;
+    public $editAmount;
+    public $editDescription;
+    public $editBalanceAfter;
+    public $openEditTransaction = false;
+
 
     public function mount()
     {
-        $user = Auth::user();
+        // Initialization if needed
     }
 
     public function applyCustomFilter()
@@ -70,8 +87,8 @@ class AgentDashboard extends Component
                 return $query->whereDate('created_at', $now);
 
             case 'week':
-                $start = $now->startOfWeek();
-                $end = $now->endOfWeek();
+                $start = $now->copy()->startOfWeek();
+                $end = $now->copy()->endOfWeek();
                 $this->periodLabel = "Semaine";
                 return $query->whereBetween('created_at', [$start, $end]);
 
@@ -197,7 +214,7 @@ class AgentDashboard extends Component
 
     public function confirmUpdateBalance($accountId)
     {
-        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+        Gate::authorize('modifier-solde-compte', User::class);
         $account = \App\Models\AgentAccount::findOrFail($accountId);
         $this->editingAccountId = $accountId;
         $this->newBalance = $account->balance;
@@ -207,14 +224,14 @@ class AgentDashboard extends Component
 
     public function updateBalance()
     {
-        \Illuminate\Support\Facades\Gate::authorize('modifier-solde-compte', User::class);
+        Gate::authorize('modifier-solde-compte', User::class);
 
         $this->validate([
             'newBalance' => 'required|numeric|min:0',
             'modificationReason' => 'required|string|min:5',
         ]);
 
-        \Illuminate\Support\Facades\DB::beginTransaction();
+        DB::beginTransaction();
         try {
             $account = \App\Models\AgentAccount::findOrFail($this->editingAccountId);
             $oldBalance = $account->balance;
@@ -236,7 +253,7 @@ class AgentDashboard extends Component
                 "Modification manuelle du solde agent {$account->currency} de {$account->user->name}. Ancien: {$oldBalance}, Nouveau: {$this->newBalance}. Raison: {$this->modificationReason}"
             );
 
-            \Illuminate\Support\Facades\DB::commit();
+            DB::commit();
             $this->openModifyBalance = false;
             $this->dispatch('notyf', type: 'success', message: 'Solde agent mis à jour avec succès !');
 
@@ -244,8 +261,8 @@ class AgentDashboard extends Component
             if ($this->isShowTransaction && $this->user_id == $account->user_id) {
                 $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
             }
-        } catch (\Throwable $th) {
-            \Illuminate\Support\Facades\DB::rollBack();
+        } catch (Throwable $th) {
+            DB::rollBack();
             report($th);
             $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la mise à jour du solde.');
         }
@@ -254,5 +271,110 @@ class AgentDashboard extends Component
     public function closeModifyBalanceModal()
     {
         $this->openModifyBalance = false;
+    }
+
+    public function confirmDeleteTransaction($transactionId)
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+        $this->transactionToDeleteId = $transactionId;
+        $this->deleteReason = '';
+        $this->openDeleteTransaction = true;
+    }
+
+    public function deleteTransaction()
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'deleteReason' => 'required|string|min:5',
+        ]);
+
+        $transaction = Transaction::findOrFail($this->transactionToDeleteId);
+        
+        DB::beginTransaction();
+        try {
+            \App\Helpers\UserLogHelper::log_user_activity(
+                "Suppression_transaction",
+                "Suppression simple de la transaction #{$transaction->id} ({$transaction->type}). Montant: {$transaction->amount} {$transaction->currency}. Raison: {$this->deleteReason}"
+            );
+
+            $transaction->delete();
+
+            DB::commit();
+            $this->openDeleteTransaction = false;
+            $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée avec succès (sans rectification du solde) !');
+
+            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            report($th);
+            $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la suppression : ' . $th->getMessage());
+        }
+    }
+
+    public function closeDeleteModal()
+    {
+        $this->openDeleteTransaction = false;
+    }
+
+    public function confirmEditTransaction($transactionId)
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+        $transaction = Transaction::findOrFail($transactionId);
+
+        $this->editingTransactionId = $transactionId;
+        $this->editAmount = $transaction->amount;
+        $this->editDescription = $transaction->description;
+        $this->editBalanceAfter = $transaction->balance_after;
+        $this->openEditTransaction = true;
+    }
+
+    public function updateTransaction()
+    {
+        Gate::authorize('modifier-solde-compte', User::class);
+
+        $this->validate([
+            'editAmount' => 'required|numeric|min:0.01',
+            'editDescription' => 'required|string|min:5',
+            'editBalanceAfter' => 'required|numeric',
+        ]);
+
+        $transaction = Transaction::findOrFail($this->editingTransactionId);
+        
+        DB::beginTransaction();
+        try {
+            $oldAmount = (float) $transaction->amount;
+            $newAmount = (float) $this->editAmount;
+
+            // Update transaction (just the record)
+            $transaction->update([
+                'amount' => $newAmount,
+                'description' => $this->editDescription,
+                'balance_after' => $this->editBalanceAfter
+            ]);
+
+            \App\Helpers\UserLogHelper::log_user_activity(
+                "Modification_transaction_agent",
+                "Modification de la transaction #{$transaction->id} ({$transaction->type}). Montant: {$oldAmount} -> {$newAmount}. Raison: {$this->editDescription}"
+            );
+
+            DB::commit();
+            $this->openEditTransaction = false;
+            $this->dispatch('notyf', type: 'success', message: 'Transaction mise à jour avec succès (sans rectification du solde) !');
+
+            // Refresh transactions
+            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+
+        } catch (Throwable $th) {
+            DB::rollBack();
+            report($th);
+            $this->dispatch('notyf', type: 'error', message: 'Erreur lors de la modification : ' . $th->getMessage());
+        }
+    }
+
+    public function closeEditModal()
+    {
+        $this->openEditTransaction = false;
     }
 }

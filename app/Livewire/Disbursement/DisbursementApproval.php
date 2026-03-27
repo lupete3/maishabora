@@ -127,12 +127,12 @@ class DisbursementApproval extends Component
             );
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordDisbursementRequest($request);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordDisbursementRequest($request);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement: " . $e->getMessage());
+            // }
 
             DB::commit();
 

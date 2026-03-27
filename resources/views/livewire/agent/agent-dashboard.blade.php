@@ -148,7 +148,21 @@
                                                                 </div>
                                                             </div>
 
-                                                            <div class="add-btn">
+                                                            <div class="add-btn d-flex align-items-center gap-2">
+                                                                @can('modifier-solde-compte')
+                                                                    <button type="button"
+                                                                        wire:click="confirmEditTransaction({{ $t->id }})"
+                                                                        class="btn btn-sm btn-icon btn-outline-primary"
+                                                                        title="Modifier la transaction">
+                                                                        <i class="bx bx-edit"></i>
+                                                                    </button>
+                                                                    <button type="button"
+                                                                        wire:click="confirmDeleteTransaction({{ $t->id }})"
+                                                                        class="btn btn-sm btn-icon btn-outline-danger"
+                                                                        title="Supprimer la transaction">
+                                                                        <i class="bx bx-trash"></i>
+                                                                    </button>
+                                                                @endcan
                                                                 <span class="badge bg-secondary">
                                                                     {{ \Carbon\Carbon::parse($t->created_at)->format('d-m-Y') }}
                                                                     <br><br>

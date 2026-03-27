@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Credit;
 use App\Models\Provision;
 use App\Models\ProvisionSetting;
+use App\Models\Repayment;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -95,33 +96,56 @@ class ProvisionCalculator
     }
 
     /**
-     * Classifier un crédit selon jours de retard
+     * Classifier une échéance individuelle selon jours de retard
+     */
+    public function classifyRepayment(Repayment $repayment): string
+    {
+        if ($repayment->is_paid) {
+            return 'saine';
+        }
+
+        $today = Carbon::now()->startOfDay();
+        $dueDate = Carbon::parse($repayment->due_date)->startOfDay();
+
+        if ($dueDate->lt($today) || $dueDate->equalTo($today)) {
+            $daysOverdue = abs((int) $today->diffInDays($dueDate));
+
+            if ($daysOverdue >= 1 && $daysOverdue <= 30) {
+                return '1-30';
+            } elseif ($daysOverdue > 30 && $daysOverdue <= 60) {
+                return '31-60';
+            } elseif ($daysOverdue > 60 && $daysOverdue <= 90) {
+                return '61-90';
+            } elseif ($daysOverdue > 90) {
+                return '>90';
+            }
+        }
+
+        return 'saine';
+    }
+
+    /**
+     * Classifier un crédit selon l'échéance la plus en retard
      */
     public function classifyCredit(Credit $credit): string
     {
-        if (!$credit->due_date) {
+        $unpaidRepayments = $credit->repayments->where('is_paid', false);
+
+        if ($unpaidRepayments->isEmpty()) {
             return 'saine';
         }
 
-        $dueDate = Carbon::parse($credit->due_date);
-        $today = Carbon::now();
+        $worstClass = 'saine';
+        $classPriority = ['saine' => 0, '1-30' => 1, '31-60' => 2, '61-90' => 3, '>90' => 4];
 
-        // Si pas encore échu
-        if ($today->lte($dueDate)) {
-            return 'saine';
+        foreach ($unpaidRepayments as $repayment) {
+            $class = $this->classifyRepayment($repayment);
+            if ($classPriority[$class] > $classPriority[$worstClass]) {
+                $worstClass = $class;
+            }
         }
 
-        $daysOverdue = $today->diffInDays($dueDate);
-
-        if ($daysOverdue >= 1 && $daysOverdue <= 30) {
-            return '1-30';
-        } elseif ($daysOverdue >= 31 && $daysOverdue <= 60) {
-            return '31-60';
-        } elseif ($daysOverdue >= 61 && $daysOverdue <= 90) {
-            return '61-90';
-        } else {
-            return '>90';
-        }
+        return $worstClass;
     }
 
     /**
@@ -134,20 +158,38 @@ class ProvisionCalculator
     }
 
     /**
-     * Calculer capital restant dû
+     * Calculer capital restant dû (Capital seul, excluant intérêts et pénalités)
+     * Aligné sur le "fond déboursé" pour limiter le risque réel
+     */
+    /**
+     * Calculer capital restant dû (Principal uniquement)
+     * Basé sur le nombre d'échéances payées pour ignorer les intérêts/pénalités dans le risque.
      */
     private function getOutstandingAmount(Credit $credit): float
     {
-        $totalPaid = $credit->repayments()->sum('paid_amount');
-        return max(0, $credit->amount - $totalPaid);
+        $totalInstallments = max(1, (int) $credit->installments);
+        $principalPerInstallment = (float) $credit->amount / $totalInstallments;
+
+        // On compte les échéances marquées comme payées
+        $paidCount = $credit->repayments->where('is_paid', true)->count();
+
+        $outstanding = (float) $credit->amount - ($paidCount * $principalPerInstallment);
+
+        return max(0, $outstanding);
     }
 
     /**
      * Calculer les indicateurs PAR (Portfolio At Risk)
      */
-    public function calculatePARIndicators(): array
+    public function calculatePARIndicators(string $currency = 'all'): array
     {
-        $credits = Credit::where('is_paid', false)->get();
+        $query = Credit::where('is_paid', false);
+
+        if ($currency !== 'all') {
+            $query->where('currency', $currency);
+        }
+
+        $credits = $query->get();
 
         $totalOutstanding = 0;
         $par30 = 0;
@@ -155,19 +197,24 @@ class ProvisionCalculator
         $par90 = 0;
 
         foreach ($credits as $credit) {
-            $outstanding = $this->getOutstandingAmount($credit);
-            $totalOutstanding += $outstanding;
+            $totalInstallments = max(1, (int) $credit->installments);
+            $principalPerInstallment = (float) $credit->amount / $totalInstallments;
 
-            $classification = $this->classifyCredit($credit);
+            $unpaidRepayments = $credit->repayments->where('is_paid', false);
 
-            if (in_array($classification, ['1-30', '31-60', '61-90', '>90'])) {
-                $par30 += $outstanding;
-            }
-            if (in_array($classification, ['31-60', '61-90', '>90'])) {
-                $par60 += $outstanding;
-            }
-            if (in_array($classification, ['61-90', '>90'])) {
-                $par90 += $outstanding;
+            foreach ($unpaidRepayments as $repayment) {
+                $totalOutstanding += $principalPerInstallment;
+                $classification = $this->classifyRepayment($repayment);
+
+                if (in_array($classification, ['1-30', '31-60', '61-90', '>90'])) {
+                    $par30 += $principalPerInstallment;
+                }
+                if (in_array($classification, ['31-60', '61-90', '>90'])) {
+                    $par60 += $principalPerInstallment;
+                }
+                if (in_array($classification, ['61-90', '>90'])) {
+                    $par90 += $principalPerInstallment;
+                }
             }
         }
 
@@ -185,9 +232,15 @@ class ProvisionCalculator
     /**
      * Obtenir statistiques par classification
      */
-    public function getStatsByClassification(): Collection
+    public function getStatsByClassification(string $currency = 'all'): Collection
     {
-        $credits = Credit::where('is_paid', false)->get();
+        $query = Credit::where('is_paid', false)->with('repayments');
+
+        if ($currency !== 'all') {
+            $query->where('currency', $currency);
+        }
+
+        $credits = $query->get();
 
         $stats = [
             'saine' => ['count' => 0, 'outstanding' => 0, 'provision' => 0],
@@ -198,16 +251,69 @@ class ProvisionCalculator
         ];
 
         foreach ($credits as $credit) {
-            $classification = $this->classifyCredit($credit);
-            $outstanding = $this->getOutstandingAmount($credit);
-            $rate = $this->getProvisionRate($classification);
-            $provision = ($outstanding * $rate) / 100;
+            $totalInstallments = max(1, (int) $credit->installments);
+            $principalPerInstallment = (float) $credit->amount / $totalInstallments;
 
-            $stats[$classification]['count']++;
-            $stats[$classification]['outstanding'] += $outstanding;
-            $stats[$classification]['provision'] += $provision;
+            $unpaidRepayments = $credit->repayments->where('is_paid', false);
+
+            foreach ($unpaidRepayments as $repayment) {
+                $classification = $this->classifyRepayment($repayment);
+                $rate = $this->getProvisionRate($classification);
+
+                $stats[$classification]['count']++; // On compte ici le nombre d'échéances concernées ou on peut garder le count par crédit si besoin
+                $stats[$classification]['outstanding'] += $principalPerInstallment;
+                $stats[$classification]['provision'] += ($principalPerInstallment * $rate) / 100;
+            }
         }
 
         return collect($stats);
+    }
+
+    /**
+     * Obtenir la liste des crédits pour une classification spécifique
+     */
+    public function getCreditsByClassification(string $classification, string $currency = 'all'): Collection
+    {
+        $query = Credit::where('is_paid', false)->with(['user', 'repayments']);
+
+        if ($currency !== 'all') {
+            $query->where('currency', $currency);
+        }
+
+        $credits = $query->get();
+        $results = collect();
+
+        foreach ($credits as $credit) {
+            $totalInstallments = max(1, (int) $credit->installments);
+            $principalPerInstallment = (float) $credit->amount / $totalInstallments;
+
+            $matchingRepayments = $credit->repayments->where('is_paid', false)->filter(function ($r) use ($classification) {
+                return $this->classifyRepayment($r) === $classification;
+            });
+
+            if ($matchingRepayments->isNotEmpty()) {
+                // On calcule le cumul du principal pour cette catégorie
+                $matchingCount = $matchingRepayments->count();
+                $matchingPrincipal = $matchingCount * $principalPerInstallment;
+                $rate = $this->getProvisionRate($classification);
+
+                // On clone le crédit pour y attacher les infos spécifiques à cette classification
+                $row = clone $credit;
+                $row->outstanding_amount = $matchingPrincipal;
+                $row->provision_rate = $rate;
+                $row->provision_amount = ($matchingPrincipal * $rate) / 100;
+
+                // Retard exact pour l'échéance la plus vieille de ce groupe
+                $today = Carbon::now()->startOfDay();
+                $oldestOfGroup = $matchingRepayments->sortBy(fn($r) => Carbon::parse($r->due_date)->timestamp)->first();
+                $dueDate = Carbon::parse($oldestOfGroup->due_date)->startOfDay();
+
+                $row->days_overdue = $dueDate->lt($today) ? abs((int) $today->diffInDays($dueDate)) : 0;
+
+                $results->push($row);
+            }
+        }
+
+        return $results;
     }
 }

@@ -115,23 +115,30 @@
             <div class="table-responsive">
                 <table class="table table-bordered table-striped">
                     <thead>
-                        <tr>
-                            <th>Nom du membre</th>
-                            <th>Montant/Jour</th>
-                            <th>Jours payés</th>
-                            <th>Taux de remplissage</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse($carnets as $carnet)
-                            @php
-                                $pourcentage = round(($carnet->contributed_days_count / 31) * 100, 1);
-                            @endphp
                             <tr>
-                                <td>{{ $carnet->member->name.' '.$carnet->member->postnom.' '.$carnet->member->prenom ?? 'N/A' }}</td>
-                                <td>{{ number_format($carnet->subscription_amount, 2) }} {{$carnet->currency }}</td>
-                                <td>{{ $carnet->contributed_days_count }}</td>
-                                <td>
+                                <td>Nom du membre</td>
+                                <td>Montant/Jour</td>
+                                <td>Jours payés</td>
+                                <td>Total déposé</td>
+                                <td>Total restant</td>
+                                <td>Taux de remplissage</td>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($carnets as $carnet)
+                                @php
+                                    $pourcentage = round(($carnet->contributed_days_count / 31) * 100, 1);
+                                    $totalDepose = $carnet->contributed_days_count * $carnet->subscription_amount;
+                                    $totalRestant = (31 - $carnet->contributed_days_count) * $carnet->subscription_amount;
+                                @endphp
+                                <tr>
+                                    <td>{{ $carnet->member->name . ' ' . $carnet->member->postnom . ' ' . $carnet->member->prenom ?? 'N/A' }}
+                                    </td>
+                                    <td>{{ number_format($carnet->subscription_amount, 2) }} {{ $carnet->currency }}</td>
+                                    <td>{{ $carnet->contributed_days_count }}</td>
+                                    <td class="fw-bold text-success">{{ number_format($totalDepose, 2) }} {{ $carnet->currency }}</td>
+                                    <td class="fw-bold text-danger">{{ number_format($totalRestant, 2) }} {{ $carnet->currency }}</td>
+                                    <td>
                                     {{ $pourcentage }}%
                                     <div class="progress bg-label-success" style="height: 6px;">
                                         <div class="progress-bar bg-success" role="progressbar"

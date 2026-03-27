@@ -104,8 +104,11 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if ($rep['days_late'])
-                                                    <span class="text-danger">{{ number_format($rep['days_late'], 0) }}
+                                                @php
+                                                    $daysLate = \Carbon\Carbon::parse($rep['due_date'])->diffInDays($rep['paid_date']);
+                                                @endphp
+                                                @if ($daysLate > 0)
+                                                    <span class="text-danger">{{ number_format($daysLate, 0) }}
                                                         jours</span>
                                                 @else
                                                     0

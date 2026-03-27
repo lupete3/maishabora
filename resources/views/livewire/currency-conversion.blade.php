@@ -105,12 +105,27 @@
     </div>
 
     <div class="card mt-4">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
             <h5 class="mb-0">Historique des conversions</h5>
-            <button wire:click="exportConversionsPdf" wire:loading.attr="disabled" class="btn btn-primary mb-2">
-                <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                📄 Exporter PDF
-            </button>
+            
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <div class="d-flex align-items-center gap-1">
+                    <input type="date" wire:model.live="startDate" class="form-control form-control-sm" style="width: 150px;">
+                    <span class="text-muted">au</span>
+                    <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="width: 150px;">
+                </div>
+
+                <div class="btn-group">
+                    <button wire:click="exportConversionsPdf" wire:loading.attr="disabled" class="btn btn-outline-danger btn-sm">
+                        <span wire:loading wire:target="exportConversionsPdf" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i class="bx bxs-file-pdf me-1"></i> PDF
+                    </button>
+                    <button wire:click="exportConversionsExcel" wire:loading.attr="disabled" class="btn btn-outline-success btn-sm">
+                        <span wire:loading wire:target="exportConversionsExcel" class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i class="bx bxs-file-export me-1"></i> Excel
+                    </button>
+                </div>
+            </div>
         </div>
 
         <div class="table-responsive text-nowrap">

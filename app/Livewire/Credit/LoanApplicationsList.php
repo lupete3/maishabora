@@ -8,7 +8,7 @@ use Livewire\WithPagination;
 
 class LoanApplicationsList extends Component
 {
-  use WithPagination;
+    use WithPagination;
 
 
     protected $paginationTheme = 'bootstrap';
@@ -23,17 +23,40 @@ class LoanApplicationsList extends Component
         $this->resetPage();
     }
 
+    public function delete($id)
+    {
+        $loan = LoanApplication::find($id);
+        if ($loan) {
+            $loan->delete();
+            session()->flash('message', 'Demande de crédit supprimée avec succès.');
+        }
+    }
+
     public function render()
     {
         $query = LoanApplication::query();
         if ($this->search) {
             $query->whereHas('user', function ($q) {
-                $q->where('first_name', 'like', "%{$this->search}%")->orWhere('last_name', 'like', "%{$this->search}%"); });
+                $q->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('postnom', 'like', "%{$this->search}%")
+                    ->orWhere('prenom', 'like', "%{$this->search}%")
+                    ->orWhere('code', 'like', "%{$this->search}%");
+            });
         }
         if ($this->statusFilter)
             $query->where('statut', $this->statusFilter);
 
+        $stats = [
+            'total' => LoanApplication::count(),
+            'pending' => LoanApplication::where('statut', 'en_analyse')->count(),
+            'total_usd' => LoanApplication::where('currency', 'USD')->sum('montant_demande'),
+            'total_cdf' => LoanApplication::where('currency', 'CDF')->sum('montant_demande'),
+        ];
+
         $loans = $query->orderBy('id', 'desc')->paginate(10);
-        return view('livewire.credit.loan-applications-list', compact('loans'));
+        return view('livewire.credit.loan-applications-list', [
+            'loans' => $loans,
+            'stats' => $stats
+        ]);
     }
 }

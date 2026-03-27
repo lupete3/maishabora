@@ -97,14 +97,32 @@
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">
         <div class="card">
-            <div class="card-header bg-light d-flex justify-content-between">
-                <div>
-                    <h5>Historique des Cartes d'Adhésion</h4>
-                </div>
-                <!-- Barre de recherche -->
-                <div>
-                    <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control"
-                        placeholder="Rechercher une carte...">
+            <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0">Historique des Cartes d'Adhésion</h5>
+
+                <div class="d-flex align-items-center gap-2">
+                    <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                        <option value="30days">30 derniers jours</option>
+                        <option value="day">Aujourd'hui</option>
+                        <option value="week">Cette semaine</option>
+                        <option value="month">Ce mois</option>
+                        <option value="range">Intervalle personnalisé</option>
+                    </select>
+
+                    @if ($filterType === 'range')
+                        <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                            style="width: auto;">
+                        <span class="small">au</span>
+                        <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                            style="width: auto;">
+                    @endif
+
+                    <!-- Barre de recherche -->
+                    <div class="input-group input-group-sm" style="width: 200px;">
+                        <span class="input-group-text"><i class="bx bx-search"></i></span>
+                        <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control"
+                            placeholder="Rechercher...">
+                    </div>
                 </div>
             </div>
 
@@ -147,7 +165,8 @@
                                             <span class="badge bg-primary">Epargne</span>
                                         @endif
                                     </td>
-                                    <td>{{ number_format($card->price, 2) }} {{ $card->currency }}</td>
+                                    @php $curency_update = $card->card_type == 'epargne' ? 'CDF' : 'USD'; @endphp
+                                    <td>{{ number_format($card->price, 2) }} {{ $curency_update }}</td>
                                     <td>
                                         @if($card->card_type == 'epargne')
                                             {{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}
@@ -194,12 +213,21 @@
                                                     Désactiver
                                                 </button>
                                             @endif
+
+                                            {{-- Bouton Supprimer --}}
+                                            @if ($card->contributions->where('is_paid', true)->count() == 0)
+                                                <button class="btn btn-dark btn-sm" wire:click="deleteCard({{ $card->id }})"
+                                                    wire:confirm="Êtes-vous sûr de vouloir supprimer ce carnet ? Les montants seront soustraits des comptes agent et profit."
+                                                    title="Supprimer définitivement ce carnet">
+                                                    Supprimer
+                                                </button>
+                                            @endif
                                         </td>
                                     @endcan
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">Aucune carte trouvée.</td>
+                                    <td colspan="11" class="text-center">Aucune carte trouvée.</td>
                                 </tr>
                             @endforelse
                         </tbody>

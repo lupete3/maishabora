@@ -36,7 +36,7 @@ class MemberDetails extends Component
     public $a_retenir = 0;
     public $operation_type;
     public $type;
-    public $cardDetail = [];
+    public $cardDetail;
     public $openConfirmDepositNormal = false;
     public $openConfirmRetraitNormal = false;
 
@@ -69,6 +69,9 @@ class MemberDetails extends Component
     const RETAINED_ACCOUNT_USER_ID = 195;
 
     const CARD_MIGRATION_DATE = '2026-01-08';
+
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 5000;
 
     public function mount($id)
     {
@@ -210,6 +213,12 @@ class MemberDetails extends Component
             'currency' => 'required|in:USD,CDF',
         ]);
 
+        $minDeposit = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+        if ($this->amount < $minDeposit) {
+            notyf()->error("Opération impossible. Le montant minimum pour un dépôt est de {$minDeposit} {$this->currency}.");
+            return;
+        }
+
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
@@ -251,12 +260,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordDeposit($account, (float) $this->amount, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable dépôt membre: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordDeposit($account, (float) $this->amount, $this->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable dépôt membre: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', 'Dépôt effectué avec succès !');
 
@@ -391,12 +400,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - COTISATION QUOTIDIENNE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordDailyContribution($card, (float) $totalPaid, $card->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable contribution quotidienne: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordDailyContribution($card, (float) $totalPaid, $card->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable contribution quotidienne: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', "Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
 
@@ -427,6 +436,15 @@ class MemberDetails extends Component
             $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
             $totalAmount = $this->amount + $this->a_retenir;
+            $minBalance = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+
+            if (!$account->can_withdraw_all) {
+                if (($account->balance - $totalAmount) < $minBalance) {
+                    DB::rollBack();
+                    notyf()->error("Opération impossible. Le solde minimum obligatoire est de {$minBalance} {$this->currency}.");
+                    return;
+                }
+            }
 
             if ($account->balance < $totalAmount) {
                 DB::rollBack();
@@ -503,12 +521,12 @@ class MemberDetails extends Component
             DB::commit();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - RETRAIT
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordWithdrawal($account, (float) $this->amount, $this->currency);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable retrait membre: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordWithdrawal($account, (float) $this->amount, $this->currency);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable retrait membre: " . $e->getMessage());
+            // }
 
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
 
@@ -559,6 +577,17 @@ class MemberDetails extends Component
 
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
 
+            if ($accountType === 'current') {
+                $minBalance = ($card->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+                if (!$account->can_withdraw_all) {
+                    if (($account->balance - $total) < $minBalance) {
+                        DB::rollBack();
+                        notyf()->error("Opération impossible. Le retrait de ce carnet laisserait un solde inférieur au minimum de {$minBalance} {$card->currency} sur le compte courant.");
+                        return;
+                    }
+                }
+            }
+
             if ($account->balance < $total) {
                 DB::rollBack();
                 notyf()->error('Le solde du compte est insuffisant.');
@@ -608,15 +637,17 @@ class MemberDetails extends Component
                 $this->getCardWithdrawalDescription($card, false)
             );
 
-            $this->createTransaction(
-                null,
-                self::RETAINED_ACCOUNT_USER_ID,
-                'depot',
-                $card->currency,
-                $toRetain,
-                $retainedAccount->balance,
-                $this->getCardRetainedDescription($card)
-            );
+            if ($toRetain > 0) {
+                $this->createTransaction(
+                    null,
+                    self::RETAINED_ACCOUNT_USER_ID,
+                    'depot',
+                    $card->currency,
+                    $toRetain,
+                    $retainedAccount->balance,
+                    $this->getCardRetainedDescription($card)
+                );
+            }
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
@@ -798,10 +829,17 @@ class MemberDetails extends Component
     /**
      * Crée une transaction
      */
-    private function createTransaction($accountId, $userId, $type, $currency, $amount, $balanceAfter, $description)
+    private function createTransaction($accountId, $userId, $type, $currency, $amount, $balanceAfter, $description, $agentAccountId = null)
     {
+        // Si agentAccountId est null, on tente de le trouver via userId
+        if (!$agentAccountId) {
+            $agentAcc = AgentAccount::where('user_id', $userId)->where('currency', $currency)->first();
+            $agentAccountId = $agentAcc ? $agentAcc->id : null;
+        }
+
         return Transaction::create([
             'account_id' => $accountId,
+            'agent_account_id' => $agentAccountId,
             'user_id' => $userId,
             'type' => $type,
             'currency' => $currency,
@@ -906,6 +944,19 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
     }
 
+    public function toggleWithdrawAll($accountId)
+    {
+        Gate::authorize('autoriser-tout-retirer', User::class);
+
+        $account = Account::findOrFail($accountId);
+        $account->can_withdraw_all = !$account->can_withdraw_all;
+        $account->save();
+
+        $status = $account->can_withdraw_all ? 'activée' : 'désactivée';
+        notyf()->success("Autorisation de tout retirer {$status}.");
+        $this->dispatch('$refresh');
+    }
+
     // --- GESTION DIRECTE DES SOLDES ---
 
     public function confirmUpdateBalance($accountId)
@@ -987,7 +1038,6 @@ class MemberDetails extends Component
         try {
             $transaction = Transaction::findOrFail($this->editingTransactionId);
             $oldAmount = $transaction->amount;
-            $oldDescription = $transaction->description;
 
             $transaction->amount = $this->editAmount;
             $transaction->balance_after = $this->editBalanceAfter;
@@ -996,7 +1046,7 @@ class MemberDetails extends Component
 
             UserLogHelper::log_user_activity(
                 action: 'modifier_transaction',
-                description: "Modification de la transaction #{$transaction->id}. Montant: {$oldAmount} -> {$this->editAmount}, description: '{$oldDescription}' -> '{$this->editDescription}'",
+                description: "Modification simple de la transaction #{$transaction->id}. Montant: {$oldAmount} -> {$this->editAmount}. Raison: {$this->editDescription}",
             );
 
             $this->openEditTransaction = false;
@@ -1027,7 +1077,7 @@ class MemberDetails extends Component
 
             UserLogHelper::log_user_activity(
                 action: 'supprimer_transaction',
-                description: "Suppression de la transaction: {$details}",
+                description: "Suppression simple de la transaction: {$details}",
             );
 
             $this->openConfirmDeleteTransaction = false;

@@ -72,6 +72,7 @@
         .logo {
             width: 80px;
         }
+
         .balances {
             width: 49%;
             display: inline-block;
@@ -132,24 +133,44 @@
         </tbody>
     </table>
 
-    <div class="balances">
-        <h3 style="margin-top: 30px;">Récapitulatif des totaux par devise</h3>
-        <table class="table" border="1" cellspacing="0" cellpadding="4">
-            <thead>
-                <tr>
-                    <th>Devise</th>
-                    <th>Total</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($totalByCurrency as $currency => $total)
-                    <tr>
-                        <td>{{ $currency }}</td>
-                        <td>{{ number_format($total, 2) }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+    @php
+        $groupedTotals = $transactions->groupBy('currency')->map(function ($currencyGroup) {
+            return $currencyGroup->groupBy('type')->map(function ($typeGroup) {
+                return $typeGroup->sum('amount');
+            });
+        });
+    @endphp
+
+    <div class="totals-container">
+        @foreach($groupedTotals as $currency => $types)
+            <div class="balances">
+                <h3 style="margin-top: 30px;">Recap : {{ $currency }}</h3>
+                <table class="table" border="1" cellspacing="0" cellpadding="4">
+                    <thead>
+                        <tr>
+                            <th>Type de Transaction</th>
+                            <th class="text-end">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @php $currencyTotal = 0; @endphp
+                        @foreach($types as $type => $amount)
+                            <tr>
+                                <td>{{ ucfirst(str_replace('_', ' ', $type)) }}</td>
+                                <td class="text-end">{{ number_format($amount, 2) }}</td>
+                            </tr>
+                            @php $currencyTotal += $amount; @endphp
+                        @endforeach
+                    </tbody>
+                    <tfoot>
+                        <tr style="font-weight: bold; background-color: #eee;">
+                            <td>TOTAL NET ({{ $currency }})</td>
+                            <td class="text-end">{{ number_format($currencyTotal, 2) }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        @endforeach
     </div>
     <div class="balances">
         <h3 style="margin-top: 30px;">Solde disponible en caisse</h3>

@@ -18,7 +18,7 @@ class CreditOverview extends Component
             ->where('due_date', '<', now())
             ->where('is_paid', false)
             ->latest()
-            ->paginate(5);
+            ->paginate(5, pageName: 'pageOverdue');
     }
 
     //Paiements à venir
@@ -28,7 +28,7 @@ class CreditOverview extends Component
             ->whereBetween('due_date', [now(), now()->addDays(7)])
             ->where('is_paid', false)
             ->orderBy('due_date', 'asc')
-            ->paginate(5);
+            ->paginate(5, pageName: 'pageUpcoming');
     }
 
     // NOUVEAU: Calcule le total dû en retard par devise

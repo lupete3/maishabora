@@ -83,30 +83,37 @@
 
     <table class="table" width="100%" border="1" cellspacing="0" cellpadding="5">
         <thead>
-            <tr>
-                <th>#</th>
-                <th>Code</th>
-                <th>Nom complet</th>
-                <th>Téléphone</th>
-                <th>Devise</th>
-                <th>Date Création</th>
-                <th>Jours de mise</th>
-                <th>Taux de remplissage</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach ($carnets as $index => $carnet)
                 <tr>
-                    <td>{{ $index + 1 }}</td>
-                    <td>{{ $carnet->member->code ?? '' }}</td>
-                    <td>{{ $carnet->member->name ?? '' }} {{ $carnet->member->postnom ?? '' }} {{ $carnet->member->prenom ?? '' }}</td>
-                    <td>{{ $carnet->member->telephone ?? '' }}</td>
-                    <td>{{ strtoupper($carnet->currency) }}</td>
-                    <td>{{ \Carbon\Carbon::parse($carnet->created_at)->format('d/m/Y') }}</td>
-                    <td>{{ $carnet->contributed_days_count }}</td>
-                    <td>{{ round(($carnet->contributed_days_count / 31) * 100) }} %</td>
+                    <th>#</th>
+                    <th>Code</th>
+                    <th>Nom complet</th>
+                    <th>Téléphone</th>
+                    <th>Devise</th>
+                    <th>Jours</th>
+                    <th>Déposé</th>
+                    <th>Restant</th>
+                    <th>Taux</th>
                 </tr>
-            @endforeach
+            </thead>
+            <tbody>
+                @foreach ($carnets as $index => $carnet)
+                    @php
+                        $totalDepose = $carnet->contributed_days_count * $carnet->subscription_amount;
+                        $totalRestant = (31 - $carnet->contributed_days_count) * $carnet->subscription_amount;
+                    @endphp
+                    <tr>
+                        <td>{{ $index + 1 }}</td>
+                        <td>{{ $carnet->member->code ?? '' }}</td>
+                        <td>{{ $carnet->member->name ?? '' }} {{ $carnet->member->postnom ?? '' }}
+                            {{ $carnet->member->prenom ?? '' }}</td>
+                        <td>{{ $carnet->member->telephone ?? '' }}</td>
+                        <td>{{ strtoupper($carnet->currency) }}</td>
+                        <td>{{ $carnet->contributed_days_count }}</td>
+                        <td align="right">{{ number_format($totalDepose, 2) }}</td>
+                        <td align="right">{{ number_format($totalRestant, 2) }}</td>
+                        <td>{{ round(($carnet->contributed_days_count / 31) * 100) }} %</td>
+                    </tr>
+                @endforeach
         </tbody>
     </table>
 

@@ -10,6 +10,11 @@ class ProvisionDashboard extends Component
     public $parIndicators = [];
     public $statsByClassification = [];
     public $totalProvisions = 0;
+    public $currency = 'all'; // Filtre de devise : 'all', 'USD', 'CDF'
+
+    // Modal state
+    public $selectedClassification = null;
+    public $selectedCredits = [];
 
     public function mount()
     {
@@ -22,14 +27,22 @@ class ProvisionDashboard extends Component
     }
 
     /**
+     * Mise à jour du filtre de devise
+     */
+    public function updatedCurrency()
+    {
+        $this->refreshData();
+    }
+
+    /**
      * Rafraîchir les données
      */
     public function refreshData()
     {
         $calculator = app(ProvisionCalculator::class);
 
-        $this->parIndicators = $calculator->calculatePARIndicators();
-        $this->statsByClassification = $calculator->getStatsByClassification();
+        $this->parIndicators = $calculator->calculatePARIndicators($this->currency);
+        $this->statsByClassification = $calculator->getStatsByClassification($this->currency);
         $this->totalProvisions = $this->statsByClassification->sum('provision');
     }
 
@@ -55,5 +68,26 @@ class ProvisionDashboard extends Component
 
         notyf()->success("Écritures comptables générées pour {$provisions->count()} provisions");
         $this->refreshData();
+    }
+
+    /**
+     * Afficher les crédits d'une classification
+     */
+    public function showCredits($classification)
+    {
+        $this->selectedClassification = $classification;
+        $calculator = app(ProvisionCalculator::class);
+        $this->selectedCredits = $calculator->getCreditsByClassification($classification, $this->currency);
+
+        $this->dispatch('show-provision-modal');
+    }
+
+    /**
+     * Fermer la modal
+     */
+    public function closeModal()
+    {
+        $this->selectedClassification = null;
+        $this->selectedCredits = [];
     }
 }

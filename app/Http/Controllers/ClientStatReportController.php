@@ -58,40 +58,46 @@ class ClientStatReportController extends Controller
 
         $allMembers = $query->get();
 
-        $balances = $allMembers->map(function ($member) use ($accountType, $currencyFilter) {
-            $usd = 0;
-            $cdf = 0;
+        $balances = $allMembers->map(function ($member) {
+            $current_usd = 0;
+            $current_cdf = 0;
+            $savings_usd = 0;
+            $savings_cdf = 0;
 
             foreach ($member->accounts as $account) {
-                if ($accountType !== 'all' && $account->type !== $accountType) {
-                    continue;
-                }
-
-                if ($currencyFilter !== 'all' && $account->currency !== $currencyFilter) {
-                    continue;
-                }
-
-                if ($account->currency === 'USD') {
-                    $usd += $account->balance;
-                } elseif ($account->currency === 'CDF') {
-                    $cdf += $account->balance;
+                if ($account->type === 'current') {
+                    if ($account->currency === 'USD')
+                        $current_usd += $account->balance;
+                    if ($account->currency === 'CDF')
+                        $current_cdf += $account->balance;
+                } elseif ($account->type === 'savings') {
+                    if ($account->currency === 'USD')
+                        $savings_usd += $account->balance;
+                    if ($account->currency === 'CDF')
+                        $savings_cdf += $account->balance;
                 }
             }
 
             return [
                 'member' => $member,
-                'usd_balance' => $usd,
-                'cdf_balance' => $cdf,
+                'current_usd' => $current_usd,
+                'current_cdf' => $current_cdf,
+                'savings_usd' => $savings_usd,
+                'savings_cdf' => $savings_cdf,
             ];
         });
 
-        $globalUsd = $balances->sum('usd_balance');
-        $globalCdf = $balances->sum('cdf_balance');
+        $globalCurrentUsd = $balances->sum('current_usd');
+        $globalCurrentCdf = $balances->sum('current_cdf');
+        $globalSavingsUsd = $balances->sum('savings_usd');
+        $globalSavingsCdf = $balances->sum('savings_cdf');
 
         $pdf = Pdf::loadView('pdf.rapport-comptes-membres', [
             'balances' => $balances,
-            'globalUsd' => $globalUsd,
-            'globalCdf' => $globalCdf,
+            'globalCurrentUsd' => $globalCurrentUsd,
+            'globalCurrentCdf' => $globalCurrentCdf,
+            'globalSavingsUsd' => $globalSavingsUsd,
+            'globalSavingsCdf' => $globalSavingsCdf,
             'accountType' => $accountType,
             'currencyFilter' => $currencyFilter,
             'minBalance' => $minBalance,

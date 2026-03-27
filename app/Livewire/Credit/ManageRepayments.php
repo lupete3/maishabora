@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\DB;
 
 class ManageRepayments extends Component
 {
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 5000;
+
     public $member_id;
     public $credit_id;
     public $selectedCredit = null;
@@ -135,9 +138,14 @@ class ManageRepayments extends Component
                     $amountToPay = round($capitalRestant, 3);
                 }
 
-                // Vérification du solde
-                if (floatval($account->balance) < $amountToPay) {
-                    notyf()->error(__('Solde insuffisant pour effectuer ce remboursement.'));
+                // Vérification du solde minimum (sauf si autorisé à tout retirer)
+                $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+                if ($account->can_withdraw_all) {
+                    $minBalance = 0;
+                }
+
+                if ((floatval($account->balance) - $amountToPay) < $minBalance) {
+                    notyf()->error("Solde insuffisant. Le solde minimum obligatoire est de {$minBalance} {$credit->currency}.");
                     return;
                 }
 
@@ -149,6 +157,7 @@ class ManageRepayments extends Component
                 $repayment->paid_date = now()->format('Y-m-d');
                 $repayment->paid_amount = $amountToPay;
                 $repayment->total_due = $amountToPay;
+                $repayment->penalty = $this->penality;
                 $repayment->is_paid = true;
                 $repayment->save();
 
@@ -233,38 +242,38 @@ class ManageRepayments extends Component
                 $this->openModalConfirm = false;
 
                 // ÉCRITURES COMPTABLES AUTOMATIQUES
-                try {
-                    $accountingService = app(\App\Services\AccountingService::class);
+                // try {
+                //     $accountingService = app(\App\Services\AccountingService::class);
 
-                    // Calcul des parts (si paiement avec intérêts)
-                    $montantInteret = 0;
-                    $montantPenalite = 0;
-                    $montantCapital = $amountToPay;
+                //     // Calcul des parts (si paiement avec intérêts)
+                //     $montantInteret = 0;
+                //     $montantPenalite = 0;
+                //     $montantCapital = $amountToPay;
 
-                    if ($withInterest) {
-                        $montantInteret = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
-                        $montantPenalite = floatval($repayment->penalty);
-                        $montantCapital = $amountToPay - $montantInteret - $montantPenalite;
-                    }
+                //     if ($withInterest) {
+                //         $montantInteret = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
+                //         $montantPenalite = floatval($repayment->penalty);
+                //         $montantCapital = $amountToPay - $montantInteret - $montantPenalite;
+                //     }
 
-                    // 1. Enregistrer le remboursement du capital
-                    if ($montantCapital > 0) {
-                        $accountingService->recordRepayment($repayment, $montantCapital);
-                    }
+                //     // 1. Enregistrer le remboursement du capital
+                //     if ($montantCapital > 0) {
+                //         $accountingService->recordRepayment($repayment, $montantCapital);
+                //     }
 
-                    // 2. Enregistrer les intérêts
-                    if ($montantInteret > 0) {
-                        $accountingService->recordInterest($credit, $montantInteret, $credit->currency);
-                    }
+                //     // 2. Enregistrer les intérêts
+                //     if ($montantInteret > 0) {
+                //         $accountingService->recordInterest($credit, $montantInteret, $credit->currency);
+                //     }
 
-                    // 3. Enregistrer les pénalités
-                    if ($montantPenalite > 0) {
-                        $accountingService->recordLatePenalty($credit, $montantPenalite, $credit->currency);
-                    }
+                //     // 3. Enregistrer les pénalités
+                //     if ($montantPenalite > 0) {
+                //         $accountingService->recordLatePenalty($credit, $montantPenalite, $credit->currency);
+                //     }
 
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement crédit: " . $e->getMessage());
-                }
+                // } catch (\Exception $e) {
+                //     \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement crédit: " . $e->getMessage());
+                // }
 
                 notyf()->success(__('Échéance remboursée avec succès !'));
             });

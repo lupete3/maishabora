@@ -146,7 +146,19 @@
                                         $color = $curr === 'USD' ? 'green' : 'blue';
                                     @endphp
                                     <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
-                                        <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                            @can('autoriser-tout-retirer')
+                                                @if($acc)
+                                                    <div class="form-check form-switch ms-2 mb-0" title="Autoriser à tout retirer">
+                                                        <input class="form-check-input" type="checkbox" role="switch" 
+                                                            wire:click="toggleWithdrawAll({{ $acc->id }})"
+                                                            {{ $acc->can_withdraw_all ? 'checked' : '' }}
+                                                            style="cursor: pointer; width: 2.2em; height: 1.1em;">
+                                                    </div>
+                                                @endif
+                                            @endcan
+                                        </div>
                                         <span class="font-semibold flex items-center gap-2">
                                             @if ($member->visible_account)
                                                 {{ number_format($balance, 2, '.', ' ') }}
@@ -197,9 +209,9 @@
                             <!-- Migration Tool (Admin Only) -->
                             @can('migrer-comptes')
                                 <div class="mt-2 text-right">
-                                    <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
+                                    <!-- <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
                                         ⚠️ Vérifier/Migrer Comptes
-                                    </button>
+                                    </button> -->
                                 </div>
                             @endcan
                         </div>

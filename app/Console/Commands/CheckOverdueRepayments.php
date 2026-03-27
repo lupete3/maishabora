@@ -19,6 +19,9 @@ class CheckOverdueRepayments extends Command
     protected $signature = 'check:overdue-repayments';
     protected $description = 'Vérifie les échéances en retard et applique les remboursements ou pénalités';
 
+    const MIN_BALANCE_USD = 5;
+    const MIN_BALANCE_CDF = 5000;
+
     public function handle()
     {
         $today = Carbon::today();
@@ -52,10 +55,17 @@ class CheckOverdueRepayments extends Command
             //$interestAfter = $interestPart+$penaltyAmount;
 
 
-            //Vérifier si le membre a assez de fonds
-            if ($account->balance >= $expectedAmount) {
+            //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
+            $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
+            
+            // Si le compte est autorisé à tout retirer, le solde minimum est de 0
+            if ($account->can_withdraw_all) {
+                $minBalance = 0;
+            }
+
+            if (($account->balance - $totalDue) >= $minBalance) {
                 //Débiter le compte du membre
-                $account->balance -= $expectedAmount;
+                $account->balance -= $totalDue;
                 $account->save();
 
                 //Crediter la caisse centrale
@@ -77,28 +87,28 @@ class CheckOverdueRepayments extends Command
                 $agentAccount->save();
 
                 // ÉCRITURES COMPTABLES AUTOMATIQUES
-                try {
-                    $accountingService = app(\App\Services\AccountingService::class);
+                // try {
+                //     $accountingService = app(\App\Services\AccountingService::class);
 
-                    // 1. Constater la sortie du compte membre (Retrait épargne -> Caisse pivot)
-                    $accountingService->recordWithdrawal($account, (float) $expectedAmount, $credit->currency);
+                //     // 1. Constater la sortie du compte membre (Retrait épargne -> Caisse pivot)
+                //     $accountingService->recordWithdrawal($account, (float) $expectedAmount, $credit->currency);
 
-                    // 2. Ventiler le remboursement (Caisse pivot -> Crédit / Intérêts)
-                    // Hypothèse: expectedAmount contient Capital + Intérêts
-                    // Le script calcule $interestPart séparément, on l'utilise pour déduire le capital
-                    $capitalAmount = max(0, $expectedAmount - $interestPart);
+                //     // 2. Ventiler le remboursement (Caisse pivot -> Crédit / Intérêts)
+                //     // Hypothèse: expectedAmount contient Capital + Intérêts
+                //     // Le script calcule $interestPart séparément, on l'utilise pour déduire le capital
+                //     $capitalAmount = max(0, $expectedAmount - $interestPart);
 
-                    if ($capitalAmount > 0) {
-                        $accountingService->recordRepayment($repayment, (float) $capitalAmount);
-                    }
+                //     if ($capitalAmount > 0) {
+                //         $accountingService->recordRepayment($repayment, (float) $capitalAmount);
+                //     }
 
-                    if ($interestPart > 0) {
-                        $accountingService->recordInterest($credit, (float) $interestPart, $credit->currency);
-                    }
+                //     if ($interestPart > 0) {
+                //         $accountingService->recordInterest($credit, (float) $interestPart, $credit->currency);
+                //     }
 
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement auto échéance #{$repayment->id}: " . $e->getMessage());
-                }
+                // } catch (\Exception $e) {
+                //     \Illuminate\Support\Facades\Log::error("Erreur comptable remboursement auto échéance #{$repayment->id}: " . $e->getMessage());
+                // }
 
                 //Enregistrer la transaction
                 Transaction::create([

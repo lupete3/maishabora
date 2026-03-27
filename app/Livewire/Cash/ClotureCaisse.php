@@ -6,6 +6,7 @@ use App\Helpers\UserLogHelper;
 use App\Models\Cloture;
 use App\Models\Transaction;
 use App\Models\Billetage;
+use App\Models\EcartCaisse;
 use App\Models\UserLog;
 use App\Models\AgentAccount;
 use Livewire\Component;
@@ -138,6 +139,31 @@ class ClotureCaisse extends Component
                     'total' => $denomination * $qty,
                 ]);
             }
+        }
+
+        // Création automatique des écarts de caisse
+        if ($this->gap_usd != 0) {
+            EcartCaisse::create([
+                'cloture_id' => $cloture->id,
+                'user_id' => $userId,
+                'type' => $this->gap_usd > 0 ? 'surplus' : 'deficit',
+                'currency' => 'USD',
+                'amount' => abs($this->gap_usd),
+                'description' => $this->note,
+                'status' => 'ouvert',
+            ]);
+        }
+
+        if ($this->gap_cdf != 0) {
+            EcartCaisse::create([
+                'cloture_id' => $cloture->id,
+                'user_id' => $userId,
+                'type' => $this->gap_cdf > 0 ? 'surplus' : 'deficit',
+                'currency' => 'CDF',
+                'amount' => abs($this->gap_cdf),
+                'description' => $this->note,
+                'status' => 'ouvert',
+            ]);
         }
 
         UserLogHelper::log_user_activity(

@@ -16,6 +16,11 @@ class ManageCashRegister extends Component
 {
     use WithPagination;
 
+    public $monthlyStats = [
+        'USD' => ['in' => 0, 'out' => 0, 'net' => 0],
+        'CDF' => ['in' => 0, 'out' => 0, 'net' => 0],
+    ];
+
     public $currency = 'USD';
     public $type;
     public $amount = 0;
@@ -24,8 +29,10 @@ class ManageCashRegister extends Component
 
     public $search = '';
     public $perPage = 10;
+    public $startDate;
+    public $endDate;
 
-    protected $updatesQueryString = ['search', 'perPage'];
+    protected $updatesQueryString = ['search', 'perPage', 'startDate', 'endDate'];
 
     protected $paginationTheme = 'bootstrap';
 
@@ -34,11 +41,15 @@ class ManageCashRegister extends Component
         'type' => 'required|in:in,out',
         'amount' => 'required|numeric|min:0',
         'description' => 'nullable|string|max:255',
+        'startDate' => 'nullable|date',
+        'endDate' => 'nullable|date',
     ];
 
     public function mount()
     {
         Gate::authorize('afficher-caisse-centrale', User::class);
+        $this->startDate = now()->startOfMonth()->format('Y-m-d');
+        $this->endDate = now()->format('Y-m-d');
     }
 
     public function updatedCurrency()
@@ -91,7 +102,7 @@ class ManageCashRegister extends Component
         );
 
         // Notifier les utilisateurs concernés
-        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();        
+        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
         $typeOperation = $this->type === 'in' ? 'Entrée de fonds' : 'Sortie de fonds';
         $message = "Une opération de {$typeOperation} d'un montant de " . number_format($this->amount, 2) . " {$this->currency} a été effectuée par " . Auth::user()->name . ".";
 
@@ -111,6 +122,16 @@ class ManageCashRegister extends Component
     }
 
     public function updatingSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingEndDate()
     {
         $this->resetPage();
     }
@@ -146,6 +167,12 @@ class ManageCashRegister extends Component
                 ->orWhere('type', 'like', '%virement_caisse_sortant%')
                 ->orWhere('type', 'like', '%paie_sortant%');
         })
+            ->when($this->startDate, function ($query) {
+                $query->whereDate('created_at', '>=', $this->startDate);
+            })
+            ->when($this->endDate, function ($query) {
+                $query->whereDate('created_at', '<=', $this->endDate);
+            })
             ->where(function ($query) {
                 $query->where('description', 'like', '%' . $this->search . '%')
                     ->orWhere('currency', 'like', '%' . $this->search . '%')
@@ -154,6 +181,43 @@ class ManageCashRegister extends Component
             ->latest()
             ->paginate($this->perPage);
 
+        // --- CALCUL DES STATS MENSUELLES ---
+        $this->calculateMonthlyStats();
+
         return view('livewire.admin.manage-cash-register', compact('registers', 'transactions'));
+    }
+
+    /**
+     * Calcule les statistiques mensuelles pour les KPIs et les graphiques
+     */
+    private function calculateMonthlyStats()
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        // Stats pour le mois en cours
+        foreach (['USD', 'CDF'] as $curr) {
+            $in = Transaction::where('currency', $curr)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%fonds%')
+                        ->orWhere('type', 'like', '%virement vers caisse centrale%');
+                })->sum('amount');
+
+            $out = Transaction::where('currency', $curr)
+                ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
+                ->where(function ($q) {
+                    $q->where('type', 'like', '%sortie%')
+                        ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                        ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                        ->orWhere('type', 'like', '%paie_sortant%');
+                })->sum('amount');
+
+            $this->monthlyStats[$curr] = [
+                'in' => $in,
+                'out' => $out,
+                'net' => $in - $out
+            ];
+        }
     }
 }

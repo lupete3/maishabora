@@ -11,6 +11,8 @@ class LoanAnalysisViewer extends Component
     public $loan_application_id;
     public $analysis = [];
     public $annual_rate;
+    public $aiAnalysis;
+    public $isAnalyzing = false;
 
     protected $listeners = ['refreshAnalysis' => 'loadAnalysis'];
 
@@ -22,11 +24,13 @@ class LoanAnalysisViewer extends Component
 
     public function loadAnalysis()
     {
-        $loan = LoanApplication::with(['cashflow', 'balance', 'ratios', 'securities', 'decision'])->find($this->loan_application_id);
-        if (!$loan) return;
+        $loan = LoanApplication::with(['user', 'business', 'cashflow', 'balance', 'ratios', 'securities', 'decision'])->find($this->loan_application_id);
+        if (!$loan)
+            return;
 
         $service = new LoanAnalysisService($loan);
         $this->analysis = $service->fullAnalysis();
+        $this->analysis['loan'] = $loan->toArray();
 
         if ($this->annual_rate) {
             $this->analysis['emi'] = $service->simulateEmi($this->annual_rate);
@@ -35,7 +39,12 @@ class LoanAnalysisViewer extends Component
 
     public function simulateEMI($rate)
     {
-        $this->annual_rate = floatval($rate);
+        if (is_numeric($rate) && (float) $rate > 0) {
+            $this->annual_rate = (float) $rate;
+        } else {
+            $this->annual_rate = null;
+            unset($this->analysis['emi']);
+        }
         $this->loadAnalysis();
     }
 
@@ -56,7 +65,20 @@ class LoanAnalysisViewer extends Component
         }
     }
 
-    
+
+
+    public function analyzeWithAI()
+    {
+        $this->isAnalyzing = true;
+
+        $loan = LoanApplication::find($this->loan_application_id);
+        if ($loan) {
+            $service = new \App\Services\AICreditAnalysisService();
+            $this->aiAnalysis = $service->analyze($loan);
+        }
+
+        $this->isAnalyzing = false;
+    }
 
     public function render()
     {

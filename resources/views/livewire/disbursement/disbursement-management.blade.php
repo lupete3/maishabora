@@ -1,6 +1,69 @@
 <div class="mt-4">
     @include('livewire.disbursement.add-disbursement-modal')
-    @include('livewire.disbursement.add-disbursement-type-modal')
+    @include('livewire.disbursement.manage-disbursement-types-modal')
+    @include('livewire.disbursement.edit-disbursement-modal')
+
+    @can('ajouter-type-decaissement')
+        <!-- KPI Section: Breakdown by Type -->
+        <div class="row g-3 mb-4">
+            <!-- USD Breakdown -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-primary">Répartition des Dépenses (USD)</h6>
+                    </div>
+                    <div class="card-body">
+                        @forelse($breakdownUSD as $item)
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-sm fw-medium text-heading">{{ $item['name'] }}</span>
+                                    <span
+                                        class="text-sm fw-bold text-primary">{{ number_format($item['percentage'], 1) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-primary" role="progressbar"
+                                        style="width: {{ $item['percentage'] }}%" aria-valuenow="{{ $item['percentage'] }}"
+                                        aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ number_format($item['total'], 2) }} USD</small>
+                            </div>
+                        @empty
+                            <div class="text-center py-4 text-muted">Aucune donnée USD approuvée.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+
+            <!-- CDF Breakdown -->
+            <div class="col-md-6">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-header bg-white py-3">
+                        <h6 class="mb-0 fw-bold text-info">Répartition des Dépenses (CDF)</h6>
+                    </div>
+                    <div class="card-body">
+                        @forelse($breakdownCDF as $item)
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <span class="text-sm fw-medium text-heading">{{ $item['name'] }}</span>
+                                    <span class="text-sm fw-bold text-info">{{ number_format($item['percentage'], 1) }}%</span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div class="progress-bar bg-info" role="progressbar"
+                                        style="width: {{ $item['percentage'] }}%" aria-valuenow="{{ $item['percentage'] }}"
+                                        aria-valuemin="0" aria-valuemax="100">
+                                    </div>
+                                </div>
+                                <small class="text-muted">{{ number_format($item['total'], 2) }} CDF</small>
+                            </div>
+                        @empty
+                            <div class="text-center py-4 text-muted">Aucune donnée CDF approuvée.</div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endcan
 
     <div class="card mb-4 border-0 shadow-sm">
         <div class="card-header bg-white py-3 border-bottom">
@@ -12,9 +75,9 @@
                 </div>
                 <div class="col-md-4 d-flex justify-content-end gap-2">
                     @can('ajouter-type-decaissement')
-                        <button wire:click="openTypeModal"
-                            class="btn btn-outline-primary d-flex align-items-center shadow-sm">
-                            <i class="bx bx-list-plus me-1"></i> Type
+                        <button class="btn btn-outline-primary d-flex align-items-center shadow-sm" data-bs-toggle="modal"
+                            data-bs-target="#modalManageDisbursementTypes">
+                            <i class="bx bx-list-ul me-1"></i> Gérer les Types
                         </button>
                     @endcan
                     <button wire:click="openModal" class="btn btn-primary d-flex align-items-center shadow-sm">
@@ -30,6 +93,24 @@
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input wire:model.live.debounce.300ms="search" type="text" class="form-control"
                             placeholder="Rechercher par description...">
+                    </div>
+                </div>
+                <div class="col-md-8 mt-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                            <option value="day">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="range">Intervalle personnalisé</option>
+                        </select>
+
+                        @if ($filterType === 'range')
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span>au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        @endif
                     </div>
                 </div>
             </div>
@@ -73,7 +154,7 @@
                                 @can('ajouter-type-decaissement')
                                     <td class="text-sm">
                                         <i class="bx bx-user-circle me-1"></i>
-                                        {{ $request->user?->name .' '.$request->user?->postnom }}
+                                        {{ $request->user?->name . ' ' . $request->user?->postnom }}
                                     </td>
                                 @endcan
                                 <td>
@@ -87,7 +168,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                     @elseif($request->status === 'rejected')
@@ -96,7 +177,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name .' '.$request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                         @if($request->rejection_reason)
@@ -109,6 +190,15 @@
                                 </td>
                                 <td>
                                     <div class="d-flex gap-1 justify-content-end">
+                                        @can('ajouter-type-decaissement')
+                                            @if($request->status === 'pending')
+                                                <button wire:click="editRequest({{ $request->id }})"
+                                                    class="btn btn-xs btn-outline-primary" title="Modifier">
+                                                    <i class="bx bx-edit"></i>
+                                                </button>
+                                            @endif
+                                        @endcan
+
                                         @if($request->status === 'approved' && $request->transaction_id)
                                             <button wire:click="printReceipt({{ $request->transaction_id }}, 'pos')"
                                                 class="btn btn-xs btn-outline-dark" title="Reçu POS">
@@ -119,7 +209,9 @@
                                                 <i class="bx bxs-file-pdf"></i> A4
                                             </button>
                                         @else
-                                            <span class="text-muted small">-</span>
+                                            @if($request->status !== 'pending' || !auth()->user()->can('ajouter-type-decaissement'))
+                                                <span class="text-muted small">-</span>
+                                            @endif
                                         @endif
                                     </div>
                                 </td>

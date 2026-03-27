@@ -633,6 +633,9 @@ class RegisterMember extends Component
                         });
                     }
                 });
+            } else {
+                // Par défaut : membres enregistrés les 30 derniers jours
+                $query->where('created_at', '>=', now()->subDays(30));
             }
 
             $members = $query->paginate($this->perPage);

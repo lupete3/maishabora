@@ -105,53 +105,57 @@
                 ({{ $accountType === 'current' ? 'COMPTE COURANT' : 'COMPTE ÉPARGNE' }})
             @endif
         </h3>
-    @if(isset($alphabetRange) && $alphabetRange !== 'all')
-        <p class="text-center" style="margin: 0;">Tranche : {{ $alphabetRange }}</p>
-    @endif
-    @if(isset($minBalance) && $minBalance > 0)
-        <p class="text-center" style="margin: 0;">Solde Minimum : {{ number_format($minBalance, 2) }}</p>
-    @endif
+        @if(isset($alphabetRange) && $alphabetRange !== 'all')
+            <p class="text-center" style="margin: 0;">Tranche : {{ $alphabetRange }}</p>
+        @endif
+        @if(isset($minBalance) && $minBalance > 0)
+            <p class="text-center" style="margin: 0;">Solde Minimum : {{ number_format($minBalance, 2) }}</p>
+        @endif
     </div>
 
-    @php
-        $typeLabel = '';
-        if (isset($accountType) && $accountType !== 'all') {
-            $typeLabel = '(' . ($accountType === 'current' ? 'Courant' : 'Épargne') . ')';
-        }
-    @endphp
-
-    @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-        <h3>Total USD {{ $typeLabel }} : {{ number_format($globalUsd, 2) }} $</h3>
-    @endif
-    @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-        <h3>Total CDF {{ $typeLabel }} : {{ number_format($globalCdf, 2) }} CDF</h3>
-    @endif
-    <h3>Total Membres listés : {{ $balances->count() }}</h3>
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+        <tr>
+            <td style="width: 50%; vertical-align: top;">
+                <h4 style="margin-bottom: 5px; border-bottom: 1px solid #ccc;">Comptes Courants</h4>
+                <p style="margin: 2px 0;">Total USD : <strong>{{ number_format($globalCurrentUsd, 2) }} $</strong></p>
+                <p style="margin: 2px 0;">Total CDF : <strong>{{ number_format($globalCurrentCdf, 2) }} FC</strong></p>
+            </td>
+            <td style="width: 50%; vertical-align: top;">
+                <h4 style="margin-bottom: 5px; border-bottom: 1px solid #ccc;">Comptes Épargnes</h4>
+                <p style="margin: 2px 0;">Total USD : <strong>{{ number_format($globalSavingsUsd, 2) }} $</strong></p>
+                <p style="margin: 2px 0;">Total CDF : <strong>{{ number_format($globalSavingsCdf, 2) }} FC</strong></p>
+            </td>
+        </tr>
+    </table>
+    <h4 style="margin: 0 0 10px 0;">Total Membres listés : {{ $balances->count() }}</h4>
 
     <table class="table" border="1" cellspacing="0" cellpadding="0">
         <thead>
             <tr>
-                <th>Code</th>
-                <th>Membre</th>
-                @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                    <th>Solde USD</th>
-                @endif
-                @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                    <th>Solde CDF</th>
-                @endif
+                <th rowspan="2" style="width: 10%;">Code</th>
+                <th rowspan="2" style="width: 30%;">Membre</th>
+                <th colspan="2" style="width: 30%;">Solde USD</th>
+                <th colspan="2" style="width: 30%;">Solde CDF</th>
+            </tr>
+            <tr>
+                <th style="font-size: 7px;">Courant</th>
+                <th style="font-size: 7px;">Épargne</th>
+                <th style="font-size: 7px;">Courant</th>
+                <th style="font-size: 7px;">Épargne</th>
             </tr>
         </thead>
         <tbody>
             @foreach ($balances as $balance)
                 <tr>
-                    <td>{{ $balance['member']->code }}</td>
-                    <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}</td>
-                    @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                        <td>{{ number_format($balance['usd_balance'], 2) }}</td>
-                    @endif
-                    @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                        <td>{{ number_format($balance['cdf_balance'], 2) }}</td>
-                    @endif
+                    <td class="text-center">{{ $balance['member']->code }}</td>
+                    <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
+                    </td>
+
+                    <td class="text-end">{{ number_format($balance['current_usd'], 2) }}</td>
+                    <td class="text-end">{{ number_format($balance['savings_usd'], 2) }}</td>
+
+                    <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
+                    <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
                 </tr>
             @endforeach
         </tbody>

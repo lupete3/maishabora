@@ -14,18 +14,46 @@ class ManageCashRegisterController extends Controller
         return view("admin.manage-cash-register");
     }
 
-    public function generate()
+    public function generate(Request $request)
     {
-        // Récupérer toutes les transactions liées à la caisse centrale
-        $transactions = Transaction::where(function ($query) {
-                $query->where('type', 'like', '%fonds%')
-                    ->orWhere('type', 'like', '%sortie%')
-                    ->orWhere('type', 'like', '%virement vers caisse centrale%')
-                    ->orWhere('type', 'like', '%octroi_de_credit_client%')
-                    ->orWhere('type', 'like', '%virement_caisse_sortant%');
+        $startDate = $request->input('startDate');
+        $endDate = $request->input('endDate');
+        $search = $request->input('search');
+        $format = $request->input('format', 'pdf');
+
+        // Récupérer toutes les transactions liées à la caisse centrale avec filtres
+        $query = Transaction::where(function ($query) {
+            $query->where('type', 'like', '%fonds%')
+                ->orWhere('type', 'like', '%sortie%')
+                ->orWhere('type', 'like', '%virement vers caisse centrale%')
+                ->orWhere('type', 'like', '%octroi_de_credit_client%')
+                ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
+                ->orWhere('type', 'like', '%virement_caisse_sortant%')
+                ->orWhere('type', 'like', '%paie_sortant%');
+        })
+            ->when($startDate, function ($query) use ($startDate) {
+                $query->whereDate('created_at', '>=', $startDate);
             })
-            ->latest()
-            ->get();
+            ->when($endDate, function ($query) use ($endDate) {
+                $query->whereDate('created_at', '<=', $endDate);
+            })
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('description', 'like', '%' . $search . '%')
+                        ->orWhere('currency', 'like', '%' . $search . '%')
+                        ->orWhere('type', 'like', '%' . $search . '%');
+                });
+            })
+            ->latest();
+
+        if ($format === 'excel') {
+            return \Maatwebsite\Excel\Facades\Excel::download(
+                new \App\Exports\CentralCashExport($query),
+                "rapport_caisse_centrale_" . now()->format("Ymd_His") . ".xlsx"
+            );
+        }
+
+        $transactions = $query->get();
 
         // Récupérer les soldes actuels
         $balances = MainCashRegister::all()->pluck('balance', 'currency')->toArray();
@@ -42,7 +70,7 @@ class ManageCashRegisterController extends Controller
                 ->sum('amount');
 
             $totaux['sorties'][$currency] = $transactions->where('currency', $currency)
-                ->filter(fn($t) => str_contains($t->type, 'sortie') || str_contains($t->type, 'octroi_de_credit_client'))
+                ->filter(fn($t) => str_contains($t->type, 'sortie') || str_contains($t->type, 'octroi_de_credit_client') || str_contains($t->type, 'paie_sortant'))
                 ->sum('amount');
         }
 

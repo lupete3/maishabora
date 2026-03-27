@@ -27,8 +27,11 @@ class GrantCredit extends Component
     public $installments = 3;
     public $start_date;
     public $frequency = 'monthly'; // 'daily', 'monthly', 'weekly'
-    public $repayment_type = 'constant'; // 'constant', 'degressif'
+    public $repayment_type = 'degressif'; // 'constant', 'degressif'
     public $creditFrisFix = 3; // frais fixe de dossier
+    public $mutuelle_rate = 1.0; // frais mutuelle par défaut (1%)
+
+    const MUTUELLE_ACCOUNT_USER_ID = 4; // Compte mutuelle (ID à ajuster selon le besoin)
 
     public $description = '';
 
@@ -58,6 +61,7 @@ class GrantCredit extends Component
         'frequency' => 'required|in:daily,monthly,weekly',
         'repayment_type' => 'required|in:constant,degressif',
         'creditFrisFix' => 'required|numeric|min:0.0|max:100',
+        'mutuelle_rate' => 'required|numeric|min:0.0|max:100',
         'disbursing_agent_id' => 'required|exists:users,id',
     ];
 
@@ -199,18 +203,26 @@ class GrantCredit extends Component
                 ->where('currency', $this->currency)
                 ->where('type', 'current')
                 ->lockForUpdate()
-                ->firstOrFail();
+                ->first();
+
+            if (!$account) {
+                DB::rollBack();
+                notyf()->error("Le membre ne possède pas de compte courant en {$this->currency}. Veuillez d'abord lui créer ce compte.");
+                return;
+            }
 
             $mainCash = MainCashRegister::where('currency', $this->currency)
                 ->lockForUpdate()
                 ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);
 
             $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
+            $mutuelleAmount = round($this->amount * ($this->mutuelle_rate / 100), 2);
+            $totalFees = $creditFrisFix + $mutuelleAmount;
 
             // Validation des soldes
-            if ($account->balance < $creditFrisFix) {
+            if ($account->balance < $totalFees) {
                 DB::rollBack();
-                notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier'));
+                notyf()->error(__('Solde insuffisant dans le compte client pour payer les frais du dossier et la mutuelle'));
                 return;
             }
 
@@ -220,8 +232,8 @@ class GrantCredit extends Component
                 return;
             }
 
-            // Déduction des frais de commission du client
-            $account->balance -= $creditFrisFix;
+            // Déduction des frais (commission et mutuelle) du client
+            $account->balance -= $totalFees;
             $account->save();
 
             // Enregistrement de la transaction pour les frais de dossier
@@ -231,8 +243,19 @@ class GrantCredit extends Component
                 'type' => 'commission_credit',
                 'currency' => $this->currency,
                 'amount' => $creditFrisFix,
-                'balance_after' => $account->balance,
+                'balance_after' => $account->balance + $mutuelleAmount,
                 'description' => "Frais de commission du dossier du credit. Montant: {$creditFrisFix} {$this->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
+            // Enregistrement de la transaction pour les frais de mutuelle
+            Transaction::create([
+                'account_id' => $account->id,
+                'user_id' => $member->id,
+                'type' => 'frais_mutuelle',
+                'currency' => $this->currency,
+                'amount' => $mutuelleAmount,
+                'balance_after' => $account->balance,
+                'description' => "Frais de mutuelle (1% par defaut). Montant: {$mutuelleAmount} {$this->currency} pour le credit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Transfert du montant du crédit de la caisse centrale au compte du client
@@ -253,6 +276,7 @@ class GrantCredit extends Component
                 'due_date' => Carbon::parse($this->start_date),
                 'credit_type' => $this->repayment_type,
                 'frais_credit' => $this->creditFrisFix,
+                'mutuelle' => $mutuelleAmount,
                 'repayment_type' => $this->frequency,
                 'is_paid' => false,
                 'agent_id' => $this->agent_id,
@@ -266,7 +290,7 @@ class GrantCredit extends Component
                 'amount' => $this->amount,
                 'balance_after' => $account->balance,
                 'account_id' => $account->id,
-                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             Transaction::create([
@@ -276,7 +300,7 @@ class GrantCredit extends Component
                 'currency' => $credit->currency,
                 'amount' => $this->amount,
                 'balance_after' => $mainCash->balance,
-                'description' => $this->description ?: "Crédit octroyé à {$member->name} {$member->postnom}",
+                'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Envoyer les frais de commission du crédit au compte 94
@@ -286,6 +310,14 @@ class GrantCredit extends Component
             );
             $commissionCreditAccount->balance += $creditFrisFix;
             $commissionCreditAccount->save();
+
+            // Envoyer les frais de mutuelle au compte MUTUELLE_ACCOUNT_USER_ID
+            $mutuelleAccount = AgentAccount::firstOrCreate(
+                ['user_id' => self::MUTUELLE_ACCOUNT_USER_ID, 'currency' => $credit->currency],
+                ['balance' => 0]
+            );
+            $mutuelleAccount->balance += $mutuelleAmount;
+            $mutuelleAccount->save();
 
             // Envoyer le montant du crédit au compte du caissier sélectionné pour attente du retrait
             $cassisierAccount = AgentAccount::firstOrCreate(
@@ -311,6 +343,18 @@ class GrantCredit extends Component
                 'amount' => $creditFrisFix,
                 'balance_after' => $commissionCreditAccount->balance,
                 'description' => "Frais de commission du dossier du credit #{$credit->id} - Montant: {$creditFrisFix} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
+            ]);
+
+            // Enregistrement de la transaction pour commission mutuelle
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $mutuelleAccount->id,
+                'user_id' => self::MUTUELLE_ACCOUNT_USER_ID,
+                'type' => 'commission_mutuelle',
+                'currency' => $credit->currency,
+                'amount' => $mutuelleAmount,
+                'balance_after' => $mutuelleAccount->balance,
+                'description' => "Frais de mutuelle du dossier du credit #{$credit->id} - Montant: {$mutuelleAmount} {$credit->currency} octroyé à {$member->name} {$member->postnom}",
             ]);
 
             // Enregistrement de la transaction pour commission crédit au caissier
@@ -446,12 +490,12 @@ class GrantCredit extends Component
             $credit->save();
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - DÉCAISSEMENT CRÉDIT
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                $accountingService->recordCreditDisbursement($credit);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement crédit: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     $accountingService->recordCreditDisbursement($credit);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable décaissement crédit: " . $e->getMessage());
+            // }
 
             DB::commit();
 
@@ -462,7 +506,6 @@ class GrantCredit extends Component
         } catch (\Throwable $th) {
             DB::rollBack();
             report($th);
-            dd($th);
             notyf()->error(__('Une erreur est survenue lors de l’octroi du crédit.'));
         }
     }
@@ -473,6 +516,7 @@ class GrantCredit extends Component
 
         // Calcul du montant des frais et total à rembourser (pour affichage)
         $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
+        $mutuelleAmount = round($this->amount * ($this->mutuelle_rate / 100), 2);
         $interestAmount = round(($this->amount * $this->interest_rate / 100), 2);
         $totalToRepay = $this->amount + $interestAmount;
 
@@ -483,13 +527,14 @@ class GrantCredit extends Component
             'montant' => "{$this->amount} {$this->currency}",
             'taux' => "{$this->interest_rate} %",
             'frais' => "{$creditFrisFix} {$this->currency}",
+            'mutuelle' => "{$mutuelleAmount} {$this->currency}",
             'total' => "{$totalToRepay} {$this->currency}",
             'debut' => $this->start_date,
             'echeances' => "{$this->installments} × {$this->frequency}",
             'type' => ucfirst($this->repayment_type),
             'agent' => User::find($this->agent_id) ? User::find($this->agent_id)->name . ' ' . User::find($this->agent_id)->postnom : 'Inconnu',
             'disbursing_agent' => User::find($this->disbursing_agent_id) ? User::find($this->disbursing_agent_id)->name . ' ' . User::find($this->disbursing_agent_id)->postnom : 'Inconnu',
-            'description' => $this->description ?: '—',
+            'description' => (isset($this->description) && strlen($this->description) > 10) ? $this->description : "Crédit octroyé à {$member->name} {$member->postnom}",
         ];
 
         // Ouvre le modal

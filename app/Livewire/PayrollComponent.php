@@ -31,10 +31,21 @@ class PayrollComponent extends Component
     public $searchAgent = '';
     public $perPage = 10;
     public $perPageSalary = 3;
-
+    public $filterType = 'month';
+    public $startDate;
+    public $endDate;
     public $members = [];
     public $results = [];
     public $resultsAgent = [];
+
+    // Properties for confirmation modal
+    public $showingConfirmationModal = false;
+    public $selectedUserName = '';
+    public $selectedSalaryAmount = 0;
+
+    const CHARGE_ACCOUNT_USER_ID = 452;
+    const CAISSIER_ACCOUNT_USER_ID = 2;
+    const RETAINED_ACCOUNT_USER_ID = 328;
 
     protected $paginationTheme = 'bootstrap';
 
@@ -58,7 +69,6 @@ class PayrollComponent extends Component
             $this->results = [];
         }
     }
-
     public function updatedSearchagent()
     {
         $query = trim($this->searchAgent);
@@ -80,7 +90,6 @@ class PayrollComponent extends Component
             $this->resultsAgent = [];
         }
     }
-
     public function selectResult(int $id)
     {
         $user = User::find($id);
@@ -92,7 +101,6 @@ class PayrollComponent extends Component
             $this->dispatch('userSelected', $user->id);
         }
     }
-
     public function selectResultAgent(int $id)
     {
         $user = User::find($id);
@@ -132,6 +140,32 @@ class PayrollComponent extends Component
         notyf()->success('Salaire attribué à l’agent.');
         $this->reset(['user_id', 'salary_amount', 'currency', 'search', 'results']);
     }
+    public function confirmPayment($userId)
+    {
+        Gate::authorize('ajouter-paye', User::class);
+
+        $this->user_id = $userId;
+        $user = User::find($userId);
+        if (!$user) {
+            notyf()->error('Agent non trouvé.');
+            return;
+        }
+
+        $salary = Salary::where('user_id', $userId)->where('currency', $this->currency)->first();
+        if (!$salary) {
+            notyf()->error('Salaire non configuré pour cet agent dans cette devise.');
+            return;
+        }
+
+        $this->selectedUserName = "{$user->name} {$user->postnom}";
+        $this->selectedSalaryAmount = $salary->amount;
+        $this->showingConfirmationModal = true;
+    }
+
+    public function closeConfirmationModal()
+    {
+        $this->showingConfirmationModal = false;
+    }
 
     public function paySalary($userId)
     {
@@ -139,6 +173,7 @@ class PayrollComponent extends Component
 
         try {
             $this->processSalaryPayment($userId);
+            $this->closeConfirmationModal();
         } catch (\Exception $e) {
             notyf()->error('Erreur lors du paiement du salaire');
         }
@@ -155,10 +190,9 @@ class PayrollComponent extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
-            notyf()->error('Erreur lors du paiement du salaire');
+            //notyf()->error('Erreur lors du paiement du salaire');
         }
     }
-
     protected function handleSalaryPaymentTransaction($userId)
     {
         DB::transaction(function () use ($userId) {
@@ -192,13 +226,19 @@ class PayrollComponent extends Component
 
             // Crédit compte agent
             $accountRetenuSalaire = Account::firstOrCreate(
-                ['user_id' => 328, 'currency' => $this->currency, 'type' => 'current'],
+                ['user_id' => self::RETAINED_ACCOUNT_USER_ID, 'currency' => $this->currency, 'type' => 'current'],
                 ['balance' => 0]
             );
 
             // Envoyer le montant du crédit au compte 2 du caissier pour attente du retrait
             $cassisierAccount = AgentAccount::firstOrCreate(
-                ['user_id' => 2, 'currency' => $this->currency],
+                ['user_id' => self::CAISSIER_ACCOUNT_USER_ID, 'currency' => $this->currency],
+                ['balance' => 0]
+            );
+
+            // Création du compte de charge salaire
+            $chargeSalaire = AgentAccount::firstOrCreate(
+                ['user_id' => self::CHARGE_ACCOUNT_USER_ID, 'currency' => $this->currency],
                 ['balance' => 0]
             );
 
@@ -207,7 +247,9 @@ class PayrollComponent extends Component
             $account->increment('balance', $amount);
             $accountRetenuSalaire->increment('balance', $retenuSalaire);
             $cassisierAccount->increment('balance', $amount);
+            $chargeSalaire->increment('balance', $amount);
 
+            // Création de la transaction de paiement agent
             Transaction::create([
                 'user_id' => $userId,
                 'account_id' => $account->id,
@@ -218,6 +260,7 @@ class PayrollComponent extends Component
                 'description' => 'Salaire reçu',
             ]);
 
+            // Création de la transaction de retenue sur salaire
             Transaction::create([
                 'user_id' => $userId,
                 'account_id' => $accountRetenuSalaire->id,
@@ -242,13 +285,37 @@ class PayrollComponent extends Component
             Transaction::create([
                 'account_id' => null,
                 'agent_account_id' => $cassisierAccount->id,
-                'user_id' => 2,
+                'user_id' => self::CAISSIER_ACCOUNT_USER_ID,
                 'type' => 'salaire_pour_retrait',
                 'currency' => $this->currency,
                 'amount' => $amount,
                 'balance_after' => $cassisierAccount->balance,
                 'description' => "Frais à retirer du salaire #{$payroll->id} de l'agent {$salary->user->name} {$salary->user->postnom}",
             ]);
+
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $chargeSalaire->id,
+                'user_id' => self::CHARGE_ACCOUNT_USER_ID,
+                'type' => 'charge_salaire',
+                'currency' => $this->currency,
+                'amount' => $amount,
+                'balance_after' => $chargeSalaire->balance,
+                'description' => "Charge salaire #{$payroll->id} de l'agent {$salary->user->name} {$salary->user->postnom}",
+            ]);
+
+            // Notifier les utilisateurs concernés
+            $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+            $notificationMessage = "Un paiement de salaire de " . number_format($amount, 2) . " {$this->currency} a été effectué pour agent {$salary->user->name} {$salary->user->postnom} ({$salary->user->code}) par " . Auth::user()->name . "." . Auth::user()->postnom . ".";
+
+            foreach ($usersToNotify as $notifyUser) {
+                Notification::create([
+                    'user_id' => $notifyUser->id,
+                    'title' => 'Paiement de salaire',
+                    'message' => $notificationMessage,
+                    'read' => false,
+                ]);
+            }
 
             UserLogHelper::log_user_activity(
                 action: 'paiement_salaire',
@@ -265,13 +332,13 @@ class PayrollComponent extends Component
             notyf()->success('Salaire payé avec succès.');
 
             // ÉCRITURE COMPTABLE AUTOMATIQUE - PAIE
-            try {
-                $accountingService = app(\App\Services\AccountingService::class);
-                // On passe le montant net effectivement payé ($amount) car recordSalaryPayment a été modifiée pour l'accepter
-                $accountingService->recordSalaryPayment($payroll, (float) $amount);
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error("Erreur comptable paiement salaire: " . $e->getMessage());
-            }
+            // try {
+            //     $accountingService = app(\App\Services\AccountingService::class);
+            //     // On passe le montant net effectivement payé ($amount) car recordSalaryPayment a été modifiée pour l'accepter
+            //     $accountingService->recordSalaryPayment($payroll, (float) $amount);
+            // } catch (\Exception $e) {
+            //     \Illuminate\Support\Facades\Log::error("Erreur comptable paiement salaire: " . $e->getMessage());
+            // }
         });
     }
 
@@ -306,6 +373,24 @@ class PayrollComponent extends Component
         notyf()->success('Salaire supprimé avec succès.');
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $users = User::where('role', 'membre')->get();
@@ -313,6 +398,19 @@ class PayrollComponent extends Component
 
         $payrolls = Payroll::with('user')
             ->when($this->search, fn($q) => $q->whereHas('user', fn($uq) => $uq->where('name', 'like', "%$this->search%")))
+            ->when($this->filterType === 'day', function ($q) {
+                $q->whereDate('created_at', now()->today());
+            })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+            })
             ->orderByDesc('created_at')
             ->paginate($this->perPage);
 

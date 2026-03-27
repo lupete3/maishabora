@@ -24,45 +24,7 @@ class CreditFollowUpReport extends Component
 
     public function render()
     {
-        $query = Credit::with(['user'])->select('credits.*');
-
-        // 🔍 Filtres
-        if ($this->searchMember) {
-            $query->whereHas('user', function ($q) {
-                $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%")
-                  ->orWhere('code', 'like', "%{$this->searchMember}%")
-                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
-                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
-            });
-        }
-        if ($this->searchAgent) {
-            $query->whereHas('agent', function ($q) {
-                $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%")
-                  ->orWhere('code', 'like', "%{$this->searchMember}%")
-                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
-                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
-            });
-        }
-
-        if ($this->currency) {
-            $query->where('currency', $this->currency);
-        }
-
-        if ($this->status === 'paid') {
-            $query->where('is_paid', true);
-        } elseif ($this->status === 'unpaid') {
-            $query->where('is_paid', false);
-        }
-
-        if ($this->startDate && $this->endDate) {
-            $query->whereBetween('start_date', [$this->startDate, $this->endDate]);
-        } elseif ($this->startDate) {
-            $query->whereDate('start_date', '>=', $this->startDate);
-        } elseif ($this->endDate) {
-            $query->whereDate('start_date', '<=', $this->endDate);
-        }
+        $query = $this->baseFilteredQuery()->with(['user']);
 
         $credits = $query->latest()->paginate($this->perPage);
         $totals = $this->getTotals();
@@ -104,20 +66,20 @@ class CreditFollowUpReport extends Component
         if ($this->searchMember) {
             $query->whereHas('user', function ($q) {
                 $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%")
-                  ->orWhere('code', 'like', "%{$this->searchMember}%")
-                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
-                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
+                    ->orWhere('id', 'like', "%{$this->searchMember}%")
+                    ->orWhere('code', 'like', "%{$this->searchMember}%")
+                    ->orWhere('postnom', 'like', "%{$this->searchMember}%")
+                    ->orWhere('prenom', 'like', "%{$this->searchMember}%");
             });
         }
 
         if ($this->searchAgent) {
             $query->whereHas('agent', function ($q) {
-                $q->where('name', 'like', "%{$this->searchMember}%")
-                  ->orWhere('id', 'like', "%{$this->searchMember}%")
-                  ->orWhere('code', 'like', "%{$this->searchMember}%")
-                  ->orWhere('postnom', 'like', "%{$this->searchMember}%")
-                  ->orWhere('prenom', 'like', "%{$this->searchMember}%");
+                $q->where('name', 'like', "%{$this->searchAgent}%")
+                    ->orWhere('id', 'like', "%{$this->searchAgent}%")
+                    ->orWhere('code', 'like', "%{$this->searchAgent}%")
+                    ->orWhere('postnom', 'like', "%{$this->searchAgent}%")
+                    ->orWhere('prenom', 'like', "%{$this->searchAgent}%");
             });
         }
 
@@ -131,12 +93,14 @@ class CreditFollowUpReport extends Component
             $query->where('is_paid', false);
         }
 
+        // 📅 Filtre de date : Crédits ACTIFS durant la période
         if ($this->startDate && $this->endDate) {
-            $query->whereBetween('start_date', [$this->startDate, $this->endDate]);
+            $query->where('start_date', '<=', $this->endDate)
+                ->where('due_date', '>=', $this->startDate);
         } elseif ($this->startDate) {
-            $query->whereDate('start_date', '>=', $this->startDate);
+            $query->where('due_date', '>=', $this->startDate);
         } elseif ($this->endDate) {
-            $query->whereDate('start_date', '<=', $this->endDate);
+            $query->where('start_date', '<=', $this->endDate);
         }
 
         return $query;
@@ -144,34 +108,83 @@ class CreditFollowUpReport extends Component
 
     private function calculateTotals($credits)
     {
-        $creditIds = $credits->pluck('id')->toArray();
-
         $totalByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalPaidByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalUnpaidByCurrency = ['USD' => 0, 'CDF' => 0];
         $penaltyByCurrency = ['USD' => 0, 'CDF' => 0];
         $interestByCurrency = ['USD' => 0, 'CDF' => 0];
+        $recoveryRateByCurrency = ['USD' => 0, 'CDF' => 0];
+        $interestMarginByCurrency = ['USD' => 0, 'CDF' => 0];
+        $debtRatioByCurrency = ['USD' => 0, 'CDF' => 0];
+
+        if ($credits->isEmpty()) {
+            return compact(
+                'totalByCurrency',
+                'totalPaidByCurrency',
+                'totalUnpaidByCurrency',
+                'penaltyByCurrency',
+                'interestByCurrency',
+                'recoveryRateByCurrency',
+                'interestMarginByCurrency',
+                'debtRatioByCurrency'
+            );
+        }
+
+        $creditIds = $credits->pluck('id')->toArray();
 
         foreach ($credits as $credit) {
             $curr = $credit->currency;
+            if (!isset($totalByCurrency[$curr])) {
+                $totalByCurrency[$curr] = 0;
+                $totalPaidByCurrency[$curr] = 0;
+                $totalUnpaidByCurrency[$curr] = 0;
+                $penaltyByCurrency[$curr] = 0;
+                $interestByCurrency[$curr] = 0;
+            }
+
             $totalByCurrency[$curr] += $credit->amount;
 
-            $paid = $credit->repayments->where('is_paid', true)->sum('paid_amount');
-            $remaining = max(0, $credit->amount - $paid);
+            $paid = $credit->repayments->sum('paid_amount');
+            $expected = $credit->repayments->sum('expected_amount');
+
             $totalPaidByCurrency[$curr] += $paid;
+
+            // Le "Reste à Payer" ici est basé sur le total attendu (Principal + Intérêt)
+            $remaining = max(0, $expected - $paid);
             $totalUnpaidByCurrency[$curr] += $remaining;
 
             $penaltyByCurrency[$curr] += $credit->repayments->sum('penalty');
         }
 
         // 💰 Calcul des intérêts totaux (selon crédits filtrés)
-        foreach (['USD', 'CDF'] as $curr) {
-            $interestByCurrency[$curr] = DB::table('repayments')
+        $interests = DB::table('repayments')
+            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
+            ->whereIn('credits.id', $creditIds)
+            ->where('repayments.is_paid', true)
+            ->select('credits.currency', DB::raw('SUM(GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)) as total_interest'))
+            ->groupBy('credits.currency')
+            ->get();
+
+        foreach ($interests as $interest) {
+            $interestByCurrency[$interest->currency] = $interest->total_interest;
+        }
+
+        // 📊 Calcul des ratios finaux
+        foreach ($totalByCurrency as $curr => $principal) {
+            $totalExpected = DB::table('repayments')
                 ->join('credits', 'repayments.credit_id', '=', 'credits.id')
                 ->whereIn('credits.id', $creditIds)
                 ->where('credits.currency', $curr)
-                ->where('repayments.is_paid', true)
-                ->sum(DB::raw('GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)'));
+                ->sum('expected_amount');
+
+            if ($totalExpected > 0) {
+                $recoveryRateByCurrency[$curr] = ($totalPaidByCurrency[$curr] / $totalExpected) * 100;
+                $debtRatioByCurrency[$curr] = ($totalUnpaidByCurrency[$curr] / $totalExpected) * 100;
+            }
+
+            if ($principal > 0) {
+                $interestMarginByCurrency[$curr] = ($interestByCurrency[$curr] / $principal) * 100;
+            }
         }
 
         return [
@@ -180,6 +193,9 @@ class CreditFollowUpReport extends Component
             'totalUnpaidByCurrency' => $totalUnpaidByCurrency,
             'penaltyByCurrency' => $penaltyByCurrency,
             'interestByCurrency' => $interestByCurrency,
+            'recoveryRateByCurrency' => $recoveryRateByCurrency,
+            'interestMarginByCurrency' => $interestMarginByCurrency,
+            'debtRatioByCurrency' => $debtRatioByCurrency,
         ];
     }
 }

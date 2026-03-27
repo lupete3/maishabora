@@ -3,14 +3,53 @@
     <p>Complétez le formulaire ci-dessous pour transférer de l'argent vers la caisse centrale.</p>
 
     <div class="row">
-        <div class="col-md-6">
-            <div class="card mt-2">
-                <div class="card-header bg-primary text-white">Formulaire de virement</div>
+        <div class="col-md-5">
+            <div class="card mt-2 shadow-sm border-0">
+                <div class="card-header bg-secondary text-white fw-bold">
+                    <i class="bx bx-wallet me-2"></i>Vos soldes actuels
+                </div>
+                <div class="card-body">
+                    <p class="small text-muted mb-2">Cliquez sur un solde pour préparer le virement</p>
+                    <table class="table table-hover border">
+                        <thead>
+                            <tr class="table-light">
+                                <th>Devise</th>
+                                <th class="text-end">Solde</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse($agentAccounts as $acc)
+                                <tr wire:click="setFillAmount('{{ $acc->currency }}', {{ $acc->balance }})"
+                                    style="cursor: pointer" class="hover-shadow"
+                                    title="Cliquez pour transférer tout le solde">
+                                    <td class="fw-bold text-primary">{{ $acc->currency }}</td>
+                                    <td class="text-end">
+                                        <span class="fw-bold">{{ number_format($acc->balance, 2) }}</span>
+                                        <small class="text-muted d-block" style="font-size: 0.7rem;">Cliquez pour
+                                            remplir</small>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">Aucun compte disponible</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-7">
+            <div class="card mt-2 shadow-sm border-0">
+                <div class="card-header bg-primary text-white fw-bold">
+                    <i class="bx bx-transfer me-2"></i>Formulaire de virement
+                </div>
                 <div class="card-body">
                     <form wire:submit.prevent="submit">
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label>Devise</label>
+                                <label class="form-label fw-bold">Devise</label>
                                 <select wire:model.live="currency" class="form-select">
                                     <option value="">Choisir une devise</option>
                                     @foreach($currencies as $curr)
@@ -21,15 +60,16 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label>Montant</label>
-                                <input type="number" step="0.01" wire:model.live.debounce.500ms="amount" class="form-control" placeholder="Ex: 100.00" />
+                                <label class="form-label fw-bold">Montant à transférer</label>
+                                <input type="number" step="0.01" wire:model.live.debounce.500ms="amount"
+                                    class="form-control" placeholder="0.00" />
                                 @error('amount') <span class="text-danger small">{{ $message }}</span> @enderror
                             </div>
 
                             <div class="col-md-12">
-                                <button type="submit" class="btn btn-success float-end" wire:loading.attr="disabled">
+                                <button type="submit" class="btn btn-primary w-100" wire:loading.attr="disabled">
                                     <span wire:loading class="spinner-border spinner-border-sm me-2"></span>
-                                    Prévisualiser le virement
+                                    <i class="bx bx-check-circle me-1"></i>Prévisualiser le virement
                                 </button>
                             </div>
                         </div>
@@ -37,31 +77,80 @@
                 </div>
             </div>
         </div>
+    </div>
 
-        <div class="col-md-6">
-            <div class="card mt-2">
-                <div class="card-header bg-secondary text-white">Vos soldes actuels</div>
+    <!-- Historique des transferts -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center fw-bold">
+                    <span><i class="bx bx-history me-2"></i>Historique de vos virements récents</span>
+
+                    <div class="d-flex align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                            <option value="day">Aujourd'hui</option>
+                            <option value="week">Cette semaine</option>
+                            <option value="month">Ce mois</option>
+                            <option value="range">Intervalle personnalisé</option>
+                        </select>
+
+                        @if ($filterType === 'range')
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                            <span class="text-white small">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
+                                style="width: auto;">
+                        @endif
+                    </div>
+                </div>
                 <div class="card-body">
-                    <table class="table table-bordered mt-4">
-                        <thead>
-                            <tr>
-                                <th>Devise</th>
-                                <th>Solde</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($agentAccounts as $acc)
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
                                 <tr>
-                                    <td>{{ $acc->currency }}</td>
-                                    <td>{{ number_format($acc->balance, 2) }}</td>
+                                    <th>Date</th>
+                                    <th>Référence</th>
+                                    @if($isAdminOrFinance)
+                                        <th>Agent</th>
+                                    @endif
+                                    <th>Devise</th>
+                                    <th class="text-end">Montant</th>
+                                    <th class="text-center">Action</th>
                                 </tr>
-                            @empty
-                                <tr>
-                                    <td colspan="2" class="text-center text-muted">Aucun compte disponible</td>
-                                </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                @forelse($transfers as $trans)
+                                    <tr>
+                                        <td>{{ $trans->created_at->format('d/m/Y H:i') }}</td>
+                                        <td><span class="badge bg-label-secondary">#REF{{ $trans->id }}</span></td>
+                                        @if($isAdminOrFinance)
+                                            <td>
+                                                <small
+                                                    class="fw-bold">{{ $trans->fromAgentAccount->user->name ?? 'N/A' }} 
+                                                {{ $trans->fromAgentAccount->user->postnom ?? 'N/A' }} </small>
+                                            </td>
+                                        @endif
+                                        <td class="fw-bold">{{ $trans->currency }}</td>
+                                        <td class="text-end fw-bold">{{ number_format($trans->amount, 2) }}</td>
+                                        <td class="text-center">
+                                            <a href="{{ route('transfer.receipt.generate', ['id' => $trans->id]) }}"
+                                                target="_blank" class="btn btn-sm btn-outline-danger">
+                                                <i class="bx bxs-file-pdf me-1"></i>Reçu
+                                            </a>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted py-4">Aucun virement enregistré
+                                            récemment</td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        {{ $transfers->links() }}
+                    </div>
                 </div>
             </div>
         </div>
@@ -82,7 +171,8 @@
                             <table class="table table-sm mb-0">
                                 <tr>
                                     <th>Agent</th>
-                                    <td>{{ Auth::user()->name.' '.Auth::user()->postnom.' '.Auth::user()->prenom }}</td>
+                                    <td>{{ Auth::user()->name . ' ' . Auth::user()->postnom . ' ' . Auth::user()->prenom }}
+                                    </td>
                                 </tr>
                                 <tr>
                                     <th>Devise</th>

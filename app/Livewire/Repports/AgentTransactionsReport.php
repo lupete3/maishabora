@@ -30,7 +30,7 @@ class AgentTransactionsReport extends Component
 
     public function getTransactionsProperty()
     {
-        $query = Transaction::query();
+        $query = Transaction::query()->with('user');
 
         if ($this->agentId) {
             $query->where('user_id', $this->agentId);
@@ -40,11 +40,7 @@ class AgentTransactionsReport extends Component
             $query->where('currency', $this->currency);
         }
 
-        if ($this->period === 'interval' && $this->dateStart && $this->dateEnd) {
-            $query->whereBetween('created_at', [$this->dateStart, $this->dateEnd]);
-        } else {
-            $query = $this->applyPeriodFilter($query);
-        }
+        $query = $this->applyPeriodFilter($query);
 
         return $query->latest()->paginate(20);
     }
@@ -53,33 +49,19 @@ class AgentTransactionsReport extends Component
     {
         $now = now();
         return match ($this->period) {
-            'day' => $query->whereDate('created_at', $now->toDateString()),
-            'week' => $query->whereBetween('created_at', [$now->startOfWeek(), $now->endOfWeek()]),
+            'day' => $query->whereDate('created_at', $now),
+            'week' => $query->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]),
             'month' => $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year),
             'year' => $query->whereYear('created_at', $now->year),
+            'interval' => ($this->dateStart && $this->dateEnd)
+            ? $query->whereBetween('created_at', [Carbon::parse($this->dateStart)->startOfDay(), Carbon::parse($this->dateEnd)->endOfDay()])
+            : $query,
             default => $query,
         };
     }
 
     public function getTotalsProperty()
     {
-        $baseQuery = $this->transactions;
-
-        // Total global
-        $total = $baseQuery->sum('amount');
-
-        return [
-            'total' => $total,
-        ];
-    }
-
-
-    public function exportPdf()
-    {
-        // Récupérer l’agent sélectionné
-        $agent = User::find($this->agentId);
-
-        // Appliquer les filtres comme dans la méthode render()
         $query = Transaction::query();
 
         if ($this->agentId) {
@@ -90,49 +72,44 @@ class AgentTransactionsReport extends Component
             $query->where('currency', $this->currency);
         }
 
-        // Appliquer la période
-        $startDate = null;
-        $endDate = null;
+        $query = $this->applyPeriodFilter($query);
 
-        if ($this->period === 'day') {
-            $query->whereDate('created_at', Carbon::today());
-        } elseif ($this->period === 'week') {
-            $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);
-        } elseif ($this->period === 'month') {
-            $query->whereMonth('created_at', Carbon::now()->month)
-                ->whereYear('created_at', Carbon::now()->year);
-        } elseif ($this->period === 'year') {
-            $query->whereYear('created_at', Carbon::now()->year);
-        } elseif ($this->period === 'custom' && $this->start_date && $this->end_date) {
-            $startDate = Carbon::parse($this->start_date)->startOfDay();
-            $endDate = Carbon::parse($this->end_date)->endOfDay();
-            $query->whereBetween('created_at', [$startDate, $endDate]);
+        return $query->selectRaw('currency, sum(amount) as total')
+            ->groupBy('currency')
+            ->pluck('total', 'currency');
+    }
+
+
+    public function exportPdf()
+    {
+        $agent = $this->agentId ? User::find($this->agentId) : null;
+
+        $query = Transaction::query()->with('user');
+        if ($this->agentId) {
+            $query->where('user_id', $this->agentId);
         }
+        if ($this->currency) {
+            $query->where('currency', $this->currency);
+        }
+        $query = $this->applyPeriodFilter($query);
 
-        $transactions = $query->orderBy('created_at', 'desc')->get();
+        $transactions = $query->latest()->get();
+        $totalByCurrency = $this->totals;
 
-        // Calcul des totaux
-        $totalDeposits = $transactions->where('type', 'deposit')->sum('amount');
-        $totalWithdrawals = $transactions->where('type', 'withdrawal')->sum('amount');
-        $totalTransactions = $transactions->sum('amount');
-
-        // Générer le PDF
         $pdf = Pdf::loadView('pdf.agent-report', [
             'agent' => $agent,
             'transactions' => $transactions,
             'currency' => $this->currency,
             'period' => $this->period,
-            'startDate' => $startDate,
-            'endDate' => $endDate,
-            'totalDeposits' => $totalDeposits,
-            'totalWithdrawals' => $totalWithdrawals,
-            'totalTransactions' => $totalTransactions,
+            'dateStart' => $this->dateStart,
+            'dateEnd' => $this->dateEnd,
+            'totalByCurrency' => $totalByCurrency,
+            'isCentralized' => true
         ])->setPaper('A4', 'portrait');
 
-        // Télécharger
         return response()->streamDownload(function () use ($pdf) {
             echo $pdf->stream();
-        }, 'rapport_transactions_agent.pdf');
+        }, 'rapport_general_transactions_agents.pdf');
     }
 
     public function render()

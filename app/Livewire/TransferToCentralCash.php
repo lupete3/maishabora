@@ -12,12 +12,18 @@ use App\Models\Transfert;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Livewire\WithPagination;
 
 class TransferToCentralCash extends Component
 {
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
     public $currency = '';
     public $amount = '';
     public $currencies = ['USD', 'CDF'];
+    public $filterType = 'month'; // 'day', 'week', 'month', 'range'
+    public $startDate;
+    public $endDate;
 
     // ✅ Nouveau : contrôle d’affichage du modal
     public $showConfirmation = false;
@@ -43,6 +49,30 @@ class TransferToCentralCash extends Component
     public function updated($property)
     {
         $this->validateOnly($property);
+
+        // Auto-remplissage du montant lors du choix de la devise
+        if ($property === 'currency' && $this->currency) {
+            $this->fillAmountFromBalance();
+        }
+    }
+
+    public function setFillAmount($curr, $bal)
+    {
+        $this->currency = $curr;
+        $this->amount = $bal;
+    }
+
+    private function fillAmountFromBalance()
+    {
+        $agentAccount = AgentAccount::where('user_id', Auth::id())
+            ->where('currency', $this->currency)
+            ->first();
+
+        if ($agentAccount) {
+            $this->amount = $agentAccount->balance;
+        } else {
+            $this->amount = '';
+        }
     }
 
     public function submit()
@@ -104,7 +134,7 @@ class TransferToCentralCash extends Component
         ]);
 
         // Notifier les utilisateurs concernés
-        $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+        $usersToNotify = User::whereIn('role', ['admin', 'caissier', 'SUPER IT', 'comptable'])->get();
         $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers la caisse centrale par " . Auth::user()->name . " " . Auth::user()->postnom . ". #REF{$transfer->id}";
 
         foreach ($usersToNotify as $notifyUser) {
@@ -158,9 +188,56 @@ class TransferToCentralCash extends Component
         $this->redirect(route('transfer.receipt.generate', ['id' => $transfer->id]), navigate: false);
     }
 
+    public function updatedFilterType()
+    {
+        $this->resetPage();
+        if ($this->filterType !== 'range') {
+            $this->reset(['startDate', 'endDate']);
+        }
+    }
+
+    public function updatedStartDate()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedEndDate()
+    {
+        $this->resetPage();
+    }
+
     public function render()
     {
         $agentAccounts = AgentAccount::where('user_id', Auth::id())->get();
-        return view('livewire.transfer-to-central-cash', compact('agentAccounts'));
+
+        $user = Auth::user();
+        $isAdminOrFinance = in_array($user->role, ['admin', 'comptable', 'caissier', 'SUPER IT']);
+
+        // Historique des transferts
+        $query = Transfert::with(['fromAgentAccount.user', 'toMainCashRegister']);
+
+        if (!$isAdminOrFinance) {
+            $query->whereHas('fromAgentAccount', function ($q) {
+                $q->where('user_id', Auth::id());
+            });
+        }
+
+        $transfers = $query->when($this->filterType === 'day', function ($q) {
+            $q->whereDate('created_at', now()->today());
+        })
+            ->when($this->filterType === 'week', function ($q) {
+                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+            })
+            ->when($this->filterType === 'month', function ($q) {
+                $q->whereMonth('created_at', now()->month)
+                    ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
+                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
+            })
+            ->latest()
+            ->paginate(10);
+
+        return view('livewire.transfer-to-central-cash', compact('agentAccounts', 'transfers', 'isAdminOrFinance'));
     }
 }

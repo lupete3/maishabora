@@ -2,35 +2,76 @@
     <h4>Rapport Statistique des Membres</h4>
 
     <div class="row g-3 mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card border-primary h-100">
+        <!-- Total Membres -->
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h6>Total Membres</h6>
-                    <p class="mb-0">{{ $total }}</p>
+                    <div class="d-flex align-items-center mb-2 pb-1">
+                        <div class="avatar me-2">
+                            <span class="avatar-initial rounded bg-label-primary"><i class="bx bx-user"></i></span>
+                        </div>
+                        <h6 class="ms-1 mb-0">Total Membres</h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <h3 class="mb-0 me-2">{{ number_format($total) }}</h3>
+                        <small class="text-muted">Inscrits</small>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-success h-100">
+        <!-- Hommes -->
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h6>Hommes</h6>
-                    <p class="mb-0">{{ $totalMale }}</p>
+                    <div class="d-flex align-items-center mb-2 pb-1">
+                        <div class="avatar me-2">
+                            <span class="avatar-initial rounded bg-label-success"><i class="bx bx-male-sign"></i></span>
+                        </div>
+                        <h6 class="ms-1 mb-0">Hommes</h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <h3 class="mb-0 me-2">{{ number_format($totalMale) }}</h3>
+                        <small class="text-success fw-semibold">
+                            <i class='bx bx-chevron-right'></i> {{ $percentMale }}%
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-warning h-100">
+        <!-- Femmes -->
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h6>Femmes</h6>
-                    <p class="mb-0">{{ $totalFemale }}</p>
+                    <div class="d-flex align-items-center mb-2 pb-1">
+                        <div class="avatar me-2">
+                            <span class="avatar-initial rounded bg-label-warning"><i
+                                    class="bx bx-female-sign"></i></span>
+                        </div>
+                        <h6 class="ms-1 mb-0">Femmes</h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <h3 class="mb-0 me-2">{{ number_format($totalFemale) }}</h3>
+                        <small class="text-warning fw-semibold">
+                            <i class='bx bx-chevron-right'></i> {{ $percentFemale }}%
+                        </small>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card border-info h-100">
+        <!-- Nouveaux -->
+        <div class="col-md-3">
+            <div class="card shadow-sm h-100">
                 <div class="card-body">
-                    <h6>Nouveaux (30j)</h6>
-                    <p class="mb-0">{{ $newClients }}</p>
+                    <div class="d-flex align-items-center mb-2 pb-1">
+                        <div class="avatar me-2">
+                            <span class="avatar-initial rounded bg-label-info"><i class="bx bx-user-plus"></i></span>
+                        </div>
+                        <h6 class="ms-1 mb-0">Nouveaux (30j)</h6>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <h3 class="mb-0 me-2">{{ number_format($newClients) }}</h3>
+                        <small class="text-info">Recrues</small>
+                    </div>
                 </div>
             </div>
         </div>
