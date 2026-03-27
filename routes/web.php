@@ -170,7 +170,9 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
     Route::get('/provisions', [ComptabiliteController::class, 'provisions'])->name('comptabilite.provisions');
     Route::get('/export/provisions', [App\Http\Controllers\ProvisionReportController::class, 'export'])->name('provisions.export.pdf');
     Route::get('/resultats', [ComptabiliteController::class, 'resultats'])->name('comptabilite.resultats');
-    Route::get('/ratios-gestion', \App\Livewire\Reports\ManagementRatios::class)->name('comptabilite.ratios');
+    Route::get('/ratios-gestion', function () {
+        return view('reports.management-ratios');
+    })->name('comptabilite.ratios');
 });
 
 Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
