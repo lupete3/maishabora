@@ -151,6 +151,35 @@ class TransferToCentralCash extends Component
             description: "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}"
         );
 
+        // ÉCRITURE COMPTABLE AUTOMATIQUE
+        try {
+            $accountingService = app(\App\Services\AccountingService::class);
+            // Transfert de Caisse Agent (Source) vers Caisse Centrale (Destination)
+            // 'agent' signifie que la caisse nommée est une caisse agent. 'centrale' est la destination par défaut si non spécifié, ou explicite.
+            // recordTransfer($fromCaisse, $toCaisse, $amount, $currency)
+            // fromCaisse: 'agent' (User ID implicite car connecté ou passé?)
+            // getCaisseAccount utilise le type. recordTransfer utilise $fromCaisse pour déterminer le compte.
+            // La méthode recordTransfer de AccountingService attend des identifiants de caisse ("monikers" ou "types").
+            // Regardons recordTransfer: $this->getCaisseAccount($currency, $toCaisse) ...
+            // getCaisseAccount($currency, $type = 'centrale').
+            // Donc si on passe 'centrale', ça va chercher le compte central.
+            // Si on passe 'agent', ça va chercher le compte agent.
+            // Mais pour lier au BON agent, getCaisseAccount ne prend pas d'ID user. Elle retourne le compte général "Caisse Agent".
+            // Il faudrait que recordTransfer ou getCaisseAccount sache QUEL agent.
+            // Actuellement getCaisseAccount retourne '5731' (Caisse auxiliaire) globalement.
+            // Cela suffit pour le "Journal de Caisse" général, mais pas pour le suivi par agent en compta pure (auxiliaire).
+            // Mais pour l'instant, on suit la logique existante.
+
+            $accountingService->recordTransfer(
+                fromCaisse: 'agent',
+                toCaisse: 'centrale',
+                amount: (float) $this->amount,
+                currency: $this->currency
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error("Erreur comptable transfert caisse: " . $e->getMessage());
+        }
+
         notyf()->success('Virement effectué avec succès !');
 
         // ✅ Ferme le modal et réinitialise

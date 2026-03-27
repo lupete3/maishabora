@@ -245,6 +245,15 @@
                             <div data-i18n="Analytics">Résultat Général</div>
                         </a>
                     </li>
+<<<<<<< HEAD
+=======
+                    <li class="menu-item @if (request()->routeIs('comptabilite.ratios')) active @endif">
+                        <a href="{{ route('comptabilite.ratios') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-bar-chart-alt-2"></i>
+                            <div data-i18n="Analytics">Ratios de Gestion</div>
+                        </a>
+                    </li>
+>>>>>>> indicateurs
                     <li class="menu-item @if (request()->routeIs('reports.agent-performance')) active @endif">
                         <a href="{{ route('reports.agent-performance') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-user-check"></i>

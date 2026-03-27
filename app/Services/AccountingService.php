@@ -296,6 +296,50 @@ class AccountingService
         );
     }
 
+    /**
+     * Enregistrer un écart de caisse (Surplus ou Déficit)
+     */
+    public function recordCashGap(float $gapAmount, string $currency, int $userId): void
+    {
+        // Si écart = 0, rien à faire
+        if ($gapAmount == 0) {
+            return;
+        }
+
+        $date = now()->format('Y-m-d');
+        $caisseAccount = $this->getCaisseAccount($currency, 'agent'); // Caisse de l'agent connecté
+
+        if ($gapAmount > 0) {
+            // Surplus (Positif) : On encaisse le surplus
+            // Caisse (Débit) / Produits divers - Surplus (Crédit)
+            $this->createBalancedEntry(
+                date: $date,
+                libelle: "Régularisation surplus caisse - Agent #{$userId}",
+                reference: "GAP-POS-{$userId}-" . now()->timestamp,
+                devise: $currency,
+                debitAccount: $caisseAccount,
+                creditAccount: $this->getAccount('758'), // Produits divers de gestion courante
+                amount: abs($gapAmount),
+                journalType: 'Journal des opérations diverses'
+            );
+        } else {
+            // Déficit (Négatif) : On constate la perte ou la charge
+            // Charges diverses - Malis (Débit) / Caisse (Crédit)
+            // Note: On pourrait aussi utiliser une créance sur l'agent (compte 4) si l'agent doit rembourser.
+            // Ici, on suppose une imputation en charge par défaut pour l'instant.
+            $this->createBalancedEntry(
+                date: $date,
+                libelle: "Régularisation déficit caisse - Agent #{$userId}",
+                reference: "GAP-NEG-{$userId}-" . now()->timestamp,
+                devise: $currency,
+                debitAccount: $this->getAccount('658'), // Charges diverses de gestion courante
+                creditAccount: $caisseAccount,
+                amount: abs($gapAmount),
+                journalType: 'Journal des opérations diverses'
+            );
+        }
+    }
+
     // ==================== MÉTHODES PRIVÉES HELPERS ====================
 
     /**
