@@ -173,8 +173,8 @@
     @endphp
 
     <!-- Health Summary Card -->
-    <div class="col-12 mb-2">
-        <div class="card shadow-sm border-0 rounded-4">
+    <div class="col-12 mb-2 mt-4">
+        <div class="card shadow-sm border-0 rounded-4 mt-4">
             <div class="card-body p-4 d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div class="d-flex align-items-center gap-3">
                     <div class="avatar avatar-md">
@@ -199,15 +199,15 @@
     <!-- Main Table Card -->
     <div class="col-12 col-xl-9">
         <div class="card shadow-sm border-0 rounded-4 h-100">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center rounded-top-4">
+            <div class="card-header bg-primary text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 rounded-top-4">
                 <h5 class="mb-0 fw-bold"><i class="bx bx-bar-chart-alt-2 me-2"></i>Tableau des Ratios de Gestion d'une IMF</h5>
-                <div class="d-flex gap-2">
-                    <select wire:model.live="currency" class="form-select form-select-sm border-0 shadow-sm" style="width: 100px;">
+                <div class="d-flex flex-wrap gap-2">
+                    <select wire:model.live="currency" class="form-select form-select-sm border-0 shadow-sm" style="width: auto; min-width: 100px;">
                         @foreach($currencies as $curr)
                             <option value="{{ $curr }}">{{ $curr }}</option>
                         @endforeach
                     </select>
-                    <input type="date" wire:model.live="dateReference" class="form-control form-control-sm border-0 shadow-sm" style="width: 150px;">
+                    <input type="date" wire:model.live="dateReference" class="form-control form-control-sm border-0 shadow-sm" style="width: auto; min-width: 150px;">
                 </div>
             </div>
             <div class="card-body p-0">
