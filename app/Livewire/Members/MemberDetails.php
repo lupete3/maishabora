@@ -213,12 +213,6 @@ class MemberDetails extends Component
             'currency' => 'required|in:USD,CDF',
         ]);
 
-        $minDeposit = ($this->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
-        if ($this->amount < $minDeposit) {
-            notyf()->error("Opération impossible. Le montant minimum pour un dépôt est de {$minDeposit} {$this->currency}.");
-            return;
-        }
-
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
