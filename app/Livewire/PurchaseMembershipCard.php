@@ -27,7 +27,7 @@ class PurchaseMembershipCard extends Component
     public $price = 1000;
     public $subscription_amount = 0;
     public $code;
-    public $filterType = 'month';
+    public $filterType = '30days';
     public $startDate;
     public $endDate;
 
@@ -299,6 +299,9 @@ class PurchaseMembershipCard extends Component
             ->when($this->filterType === 'month', function ($q) {
                 $q->whereMonth('created_at', now()->month)
                     ->whereYear('created_at', now()->year);
+            })
+            ->when($this->filterType === '30days', function ($q) {
+                $q->where('created_at', '>=', now()->subDays(30));
             })
             ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
                 $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);

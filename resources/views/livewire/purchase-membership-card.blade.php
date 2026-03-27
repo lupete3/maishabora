@@ -102,6 +102,7 @@
 
                 <div class="d-flex align-items-center gap-2">
                     <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                        <option value="30days">30 derniers jours</option>
                         <option value="day">Aujourd'hui</option>
                         <option value="week">Cette semaine</option>
                         <option value="month">Ce mois</option>
