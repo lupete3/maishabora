@@ -63,9 +63,9 @@ class CheckOverdueRepayments extends Command
                 $minBalance = 0;
             }
 
-            if (($account->balance - $expectedAmount) >= $minBalance) {
+            if (($account->balance - $totalDue) >= $minBalance) {
                 //Débiter le compte du membre
-                $account->balance -= $expectedAmount;
+                $account->balance -= $totalDue;
                 $account->save();
 
                 //Crediter la caisse centrale
