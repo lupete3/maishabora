@@ -84,16 +84,33 @@
                             <thead>
                                 <tr>
                                     <th>Date d'échéance</th>
+                                    <th>Principal</th>
+                                    <th>Intérêt</th>
                                     <th>Montant dû</th>
                                     <th>Pénalité</th>
                                     <th>Total</th>
                                     <th>Status</th>
+                                    <th></th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($selectedCredit->repayments as $r)
+                                @php
+                                    $remainingCapital = floatval($selectedCredit->amount);
+                                @endphp
+                                @forelse($selectedCredit->repayments->sortBy('due_date') as $r)
+                                    @php
+                                        if ($selectedCredit->credit_type === 'degressif') {
+                                            $interest = round($remainingCapital * (floatval($selectedCredit->interest_rate) / 100), 2);
+                                        } else {
+                                            $interest = round(floatval($selectedCredit->amount) * (floatval($selectedCredit->interest_rate) / 100), 2);
+                                        }
+                                        $capital = round(floatval($r->expected_amount) - $interest, 2);
+                                        $remainingCapital = round($remainingCapital - $capital, 2);
+                                    @endphp
                                     <tr>
                                         <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                        <td>{{ number_format($capital, 2) }}</td>
+                                        <td>{{ number_format($interest, 2) }}</td>
                                         <td>{{ number_format($r->expected_amount, 2) }}</td>
                                         <td>{{ number_format($r->penalty, 2) }}</td>
                                         <td>{{ number_format($r->total_due, 2) }}</td>
@@ -118,7 +135,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">Aucune échéance trouvée.</td>
+                                        <td colspan="8" class="text-center">Aucune échéance trouvée.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
