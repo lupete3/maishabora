@@ -63,7 +63,6 @@ class DepositForMember extends Component
         // Enregistrer la transaction pour le compte du membre
         Transaction::create([
             'account_id' => $account->id,
-            'agent_account_id' => $agentAccount->id,
             'user_id' => Auth::id(),
             'type' => 'dépôt',
             'currency' => $this->currency,

@@ -154,7 +154,7 @@
                                 @can('ajouter-type-decaissement')
                                     <td class="text-sm">
                                         <i class="bx bx-user-circle me-1"></i>
-                                        {{ $request->user?->name . ' ' . $request->user?->postnom }}
+                                        {{ $request->user?->name . ' ' . $request->user?->postnom . ' ' . $request->user?->prenom }}
                                     </td>
                                 @endcan
                                 <td>
@@ -168,7 +168,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom. ' ' . $request->approvedBy?->prenom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                     @elseif($request->status === 'rejected')
@@ -177,7 +177,7 @@
                                         </span>
                                         <br>
                                         <small class="text-muted">
-                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom }}
+                                            Par {{ $request->approvedBy?->name . ' ' . $request->approvedBy?->postnom . ' ' . $request->approvedBy?->prenom }}
                                             <br>{{ $request->approved_at?->format('d/m/Y H:i') }}
                                         </small>
                                         @if($request->rejection_reason)

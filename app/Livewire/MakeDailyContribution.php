@@ -92,10 +92,9 @@ class MakeDailyContribution extends Component
         $account->balance += $this->amount;
         $account->save();
 
-        // Enregistrer la transaction pour le membre
+        // Enregistrer la transaction
         Transaction::create([
             'account_id' => $account->id,
-            'agent_account_id' => $agentAccount->id, // Lien vers le compte de l'agent
             'user_id' => $card->member_id,
             'type' => 'mise_quotidienne',
             'currency' => $card->currency,

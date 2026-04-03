@@ -72,7 +72,7 @@
     </div>
     <div class="row">
         <span>Agent:</span>
-        <span>{{ $transaction->user->name }}</span>
+        <span>{{ $transaction->user->name . ' ' . $transaction->user->postnom }}</span>
     </div>
 
     <div class="divider"></div>

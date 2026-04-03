@@ -109,7 +109,7 @@
                 <td style="width:50%; text-align:center">
                     <strong>L'Agent (Caissier)</strong>
                     <br><br><br>
-                    {{ $transaction->user->name }}
+                    {{ $transaction->user->name . ' ' . $transaction->user?->prostnom . ' ' . $transaction->user?->prenom }}
                 </td>
                 <td style="width:50%; text-align:center">
                     <strong>Pour Approbation</strong>
