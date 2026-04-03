@@ -201,6 +201,12 @@
                 </div>
 
                 <div class="modal-body">
+                    @if ($hasActiveCredit)
+                        <div class="alert alert-danger mb-3">
+                            <i class="bx bx-error-circle me-1"></i>
+                            <strong>Attention !</strong> Ce membre a déjà un crédit en cours qui n'est pas encore totalement remboursé.
+                        </div>
+                    @endif
                     <p class="fw-bold text-center mb-3">Merci de vérifier les détails ci-dessous avant de confirmer :
                     </p>
                     <table class="table table-bordered">

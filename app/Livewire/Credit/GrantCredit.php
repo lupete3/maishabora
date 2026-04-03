@@ -49,6 +49,7 @@ class GrantCredit extends Component
 
     public $showConfirmModal = false;
     public $creditSummary = [];
+    public $hasActiveCredit = false;
 
 
     protected $rules = [
@@ -513,6 +514,10 @@ class GrantCredit extends Component
     public function confirmGrant()
     {
         $this->validate();
+
+        $this->hasActiveCredit = Credit::where('user_id', $this->member_id)
+            ->where('is_paid', false)
+            ->exists();
 
         // Calcul du montant des frais et total à rembourser (pour affichage)
         $creditFrisFix = round($this->amount * ($this->creditFrisFix / 100), 2);
