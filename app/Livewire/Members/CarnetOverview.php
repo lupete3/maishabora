@@ -44,61 +44,9 @@ class CarnetOverview extends Component
 
     public function render()
     {
-        // On récupère tous les carnets actifs avec leurs membres, comptes et contributions payées
-        $query = MembershipCard::with([
-            'member.accounts',
-            'contributions' => function ($q) {
-                $q->where('is_paid', true);
-            }
-        ])
-            ->where('is_active', true);
+        $anomalies = MembershipCard::getAnomalies($this->search);
 
-        if ($this->search) {
-            $query->where(function ($q) {
-                $q->where('code', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('member', function ($sub) {
-                        $sub->where('name', 'like', '%' . $this->search . '%')
-                            ->orWhere('postnom', 'like', '%' . $this->search . '%')
-                            ->orWhere('prenom', 'like', '%' . $this->search . '%')
-                            ->orWhere('code', 'like', '%' . $this->search . '%');
-                    });
-            });
-        }
-
-        // Pour la pagination, on doit d'abord filtrer les anomalies. 
-        // Si la base de données est très grande, cette approche (get() puis filter()) peut être lente.
-        // Mais pour une vue "Overview" d'anomalies, c'est souvent acceptable.
-
-        $allActive = $query->get();
-
-        $anomalies = $allActive->filter(function ($card) {
-            $totalSaved = $card->contributions->sum('amount');
-
-            // On soutire la première mise (qui est pour la maison)
-            $firstContribution = $card->contributions->sortBy('created_at')->first();
-            if ($firstContribution) {
-                $totalSaved -= $firstContribution->amount;
-            }
-
-            // On cherche le compte correspondant (priorité epargne/savings car c'est lié aux carnets)
-            $account = $card->member->accounts
-                ->where('currency', $card->currency)
-                ->where('type', 'savings')
-                ->first();
-
-            // Si pas de compte épargne, on regarde le courant
-            if (!$account) {
-                $account = $card->member->accounts
-                    ->where('currency', $card->currency)
-                    ->where('type', 'current')
-                    ->first();
-            }
-
-            $balance = $account ? $account->balance : 0;
-
-            // L'anomalie : montant déposé > solde disponible
-            return $totalSaved > $balance;
-        });
+        // ---------- Statistiques globales ----------
 
         // ---------- Statistiques globales ----------
         $totalCount = $anomalies->count();

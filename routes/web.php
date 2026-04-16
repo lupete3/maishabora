@@ -182,6 +182,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|a
     Route::get('/membres/overview-carnets', function () {
         return view('members.carnet-overview');
     })->name('members.carnet-overview');
+    Route::get('/membres/overview-carnets/export-pdf', [ClientStatReportController::class, 'carnetOverviewPdf'])->name('members.overview-carnets.pdf');
     Route::get('/rapport-transactions', [AgentTransactionsReportController::class, 'rapportTransactions'])->name('rapports.transactions');
     Route::get('/rapport-depot-retrait', [AgentTransactionsReportController::class, 'rapportDepotRetrait'])->name('rapports.depot_retrait');
 });

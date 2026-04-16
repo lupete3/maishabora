@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\User;
+use App\Models\MembershipCard;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClientStatReportController extends Controller
@@ -105,5 +106,48 @@ class ClientStatReportController extends Controller
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream('rapport_comptes_membres.pdf');
+    }
+
+    public function carnetOverviewPdf(Request $request)
+    {
+        $search = $request->query('search', null);
+        $anomalies = MembershipCard::getAnomalies($search);
+
+        // Calcul des totaux identiques à la vue Livewire
+        $totalSavedUSD = $anomalies->where('currency', 'USD')->sum(function ($c) {
+            $total = $c->contributions->sum('amount');
+            $first = $c->contributions->sortBy('created_at')->first();
+            return $first ? $total - $first->amount : $total;
+        });
+        $totalSavedCDF = $anomalies->where('currency', 'CDF')->sum(function ($c) {
+            $total = $c->contributions->sum('amount');
+            $first = $c->contributions->sortBy('created_at')->first();
+            return $first ? $total - $first->amount : $total;
+        });
+
+        $totalBalanceUSD = $anomalies->where('currency', 'USD')->sum(function ($c) {
+            $acc = $c->member->accounts->where('currency', 'USD')->where('type', 'savings')->first()
+                ?? $c->member->accounts->where('currency', 'USD')->where('type', 'current')->first();
+            return $acc ? $acc->balance : 0;
+        });
+        $totalBalanceCDF = $anomalies->where('currency', 'CDF')->sum(function ($c) {
+            $acc = $c->member->accounts->where('currency', 'CDF')->where('type', 'savings')->first()
+                ?? $c->member->accounts->where('currency', 'CDF')->where('type', 'current')->first();
+            return $acc ? $acc->balance : 0;
+        });
+
+        $pdf = Pdf::loadView('pdf.carnet-overview', [
+            'anomalies' => $anomalies,
+            'search' => $search,
+            'totalCount' => $anomalies->count(),
+            'totalSavedUSD' => $totalSavedUSD,
+            'totalSavedCDF' => $totalSavedCDF,
+            'totalBalanceUSD' => $totalBalanceUSD,
+            'totalBalanceCDF' => $totalBalanceCDF,
+            'ecartUSD' => $totalSavedUSD - $totalBalanceUSD,
+            'ecartCDF' => $totalSavedCDF - $totalBalanceCDF,
+        ])->setPaper('a4', 'portrait');
+
+        return $pdf->stream('rapport_anomalies_carnets.pdf');
     }
 }

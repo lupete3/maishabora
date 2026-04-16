@@ -4,6 +4,10 @@
         <div class="d-flex">
             <input wire:model.live.debounce.300ms="search" type="text" class="form-control me-2"
                 placeholder="Nom, Postnom ou Code membre..." style="width: 300px;">
+            <a href="{{ route('members.overview-carnets.pdf', ['search' => $search]) }}" target="_blank"
+                class="btn btn-outline-danger">
+                <i class="bx bxs-file-pdf me-1"></i> PDF
+            </a>
         </div>
     </div>
 
