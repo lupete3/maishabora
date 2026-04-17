@@ -165,7 +165,8 @@ class ManageCashRegister extends Component
                 ->orWhere('type', 'like', '%frais_retrait_carte_adhesion%')
                 ->orWhere('type', 'like', '%octroi_de_credit_client%')
                 ->orWhere('type', 'like', '%virement_caisse_sortant%')
-                ->orWhere('type', 'like', '%paie_sortant%');
+                ->orWhere('type', 'like', '%paie_sortant%')
+                ->orWhere('type', 'like', '%annulation_paie_salaire%');
         })
             ->when($this->startDate, function ($query) {
                 $query->whereDate('created_at', '>=', $this->startDate);

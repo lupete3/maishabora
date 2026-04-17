@@ -98,7 +98,8 @@ class PermissionSeeder extends Seeder
             "ajouter-type-decaissement",
             "approuver-decaissement",
             "rejeter-decaissement",
-            "autoriser-tout-retirer"
+            "autoriser-tout-retirer",
+            "annuler-paye"
 
 
         ];

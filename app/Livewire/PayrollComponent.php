@@ -42,6 +42,8 @@ class PayrollComponent extends Component
     public $showingConfirmationModal = false;
     public $selectedUserName = '';
     public $selectedSalaryAmount = 0;
+    public $showingCancellationModal = false;
+    public $selectedPayrollId;
 
     const CHARGE_ACCOUNT_USER_ID = 452;
     const CAISSIER_ACCOUNT_USER_ID = 2;
@@ -165,6 +167,14 @@ class PayrollComponent extends Component
     public function closeConfirmationModal()
     {
         $this->showingConfirmationModal = false;
+        $this->showingCancellationModal = false;
+    }
+
+    public function confirmCancellation($payrollId)
+    {
+        Gate::authorize('annuler-paye', User::class);
+        $this->selectedPayrollId = $payrollId;
+        $this->showingCancellationModal = true;
     }
 
     public function paySalary($userId)
@@ -330,16 +340,115 @@ class PayrollComponent extends Component
             ]);
 
             notyf()->success('Salaire payé avec succès.');
-
-            // ÉCRITURE COMPTABLE AUTOMATIQUE - PAIE
-            // try {
-            //     $accountingService = app(\App\Services\AccountingService::class);
-            //     // On passe le montant net effectivement payé ($amount) car recordSalaryPayment a été modifiée pour l'accepter
-            //     $accountingService->recordSalaryPayment($payroll, (float) $amount);
-            // } catch (\Exception $e) {
-            //     \Illuminate\Support\Facades\Log::error("Erreur comptable paiement salaire: " . $e->getMessage());
-            // }
         });
+    }
+
+    public function cancelPayment()
+    {
+        Gate::authorize('annuler-paye', User::class);
+
+        try {
+            DB::beginTransaction();
+
+            $payroll = Payroll::findOrFail($this->selectedPayrollId);
+            if ($payroll->status === 'cancelled') {
+                notyf()->error('Ce paiement est déjà annulé.');
+                return;
+            }
+
+            $userId = $payroll->user_id;
+            $currency = $payroll->currency;
+            $totalAmount = $payroll->amount;
+            $retenuAmount = round($totalAmount * (10 / 100), 2);
+            $netAmount = $totalAmount - $retenuAmount;
+
+            // 1. Inversion Caisse Centrale
+            $mainCash = MainCashRegister::where('currency', $currency)->firstOrFail();
+            $mainCash->increment('balance', $totalAmount);
+
+            Transaction::create([
+                'user_id' => Auth::id(),
+                'type' => 'annulation_paie_salaire',
+                'currency' => $currency,
+                'amount' => $totalAmount,
+                'balance_after' => $mainCash->balance,
+                'description' => "Annulation paiement salaire #{$payroll->id} de l'agent ID:$userId",
+            ]);
+
+            // 2. Inversion Compte Agent
+            $account = Account::where('user_id', $userId)->where('currency', $currency)->where('type', 'current')->first();
+            if ($account) {
+                $account->decrement('balance', $netAmount);
+                Transaction::create([
+                    'user_id' => $userId,
+                    'account_id' => $account->id,
+                    'type' => 'annulation_paie',
+                    'currency' => $currency,
+                    'amount' => $netAmount,
+                    'balance_after' => $account->balance,
+                    'description' => "Inversion salaire reçu (Annulation #{$payroll->id})",
+                ]);
+            }
+
+            // 3. Inversion Compte Retenue
+            $retainedAccount = Account::where('user_id', self::RETAINED_ACCOUNT_USER_ID)->where('currency', $currency)->where('type', 'current')->first();
+            if ($retainedAccount) {
+                $retainedAccount->decrement('balance', $retenuAmount);
+                Transaction::create([
+                    'user_id' => $userId,
+                    'account_id' => $retainedAccount->id,
+                    'type' => 'annulation_paie',
+                    'currency' => $currency,
+                    'amount' => $retenuAmount,
+                    'balance_after' => $retainedAccount->balance,
+                    'description' => "Inversion retenue sur salaire (Annulation #{$payroll->id})",
+                ]);
+            }
+
+            // 4. Inversion Compte Caissier et Charge
+            $caissierAccount = AgentAccount::where('user_id', self::CAISSIER_ACCOUNT_USER_ID)->where('currency', $currency)->first();
+            if ($caissierAccount) {
+                $caissierAccount->decrement('balance', $netAmount);
+                Transaction::create([
+                    'agent_account_id' => null,
+                    'user_id' => self::CAISSIER_ACCOUNT_USER_ID,
+                    'type' => 'annulation_paie',
+                    'currency' => $currency,
+                    'amount' => $netAmount,
+                    'balance_after' => $caissierAccount->balance,
+                    'description' => "Inversion provision retrait salaire (Annulation #{$payroll->id})",
+                ]);
+            }
+
+            $chargeAccount = AgentAccount::where('user_id', self::CHARGE_ACCOUNT_USER_ID)->where('currency', $currency)->first();
+            if ($chargeAccount) {
+                $chargeAccount->decrement('balance', $netAmount);
+                Transaction::create([
+                    'agent_account_id' => null,
+                    'user_id' => self::CHARGE_ACCOUNT_USER_ID,
+                    'type' => 'annulation_paie',
+                    'currency' => $currency,
+                    'amount' => $netAmount,
+                    'balance_after' => $chargeAccount->balance,
+                    'description' => "Inversion charge salaire (Annulation #{$payroll->id})",
+                ]);
+            }
+
+            // 5. Mise à jour du statut
+            $payroll->update(['status' => 'cancelled']);
+
+            UserLogHelper::log_user_activity(
+                action: 'annulation_paiement_salaire',
+                description: "Annulation du paiement de salaire #{$payroll->id} de {$totalAmount} {$currency} pour l'agent ID:$userId"
+            );
+
+            DB::commit();
+            $this->closeConfirmationModal();
+            notyf()->success('Paiement annulé avec succès.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            notyf()->error("Erreur lors de l'annulation: " . $e->getMessage());
+        }
     }
 
     public function exportPayslip($payrollId)

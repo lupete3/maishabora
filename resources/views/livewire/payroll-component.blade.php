@@ -354,14 +354,28 @@
                                 <td>{{ $payroll->currency }}</td>
                                 <td>{{ number_format($payroll->amount, 2) }}</td>
                                 <td>
-                                    <span class="badge bg-label-success">{{ ucfirst($payroll->status) }}</span>
+                                    @if($payroll->status === 'paid')
+                                        <span class="badge bg-label-success">Payé</span>
+                                    @elseif($payroll->status === 'cancelled')
+                                        <span class="badge bg-label-danger">Annulé</span>
+                                    @else
+                                        <span class="badge bg-label-secondary">{{ ucfirst($payroll->status) }}</span>
+                                    @endif
                                 </td>
                                 <td>
-                                    <button class="btn btn-sm btn-outline-dark"
+                                    <button class="btn btn-sm btn-outline-dark me-1"
                                         wire:click="exportPayslip({{ $payroll->id }})" wire:loading.attr="disabled">
                                         <span wire:loading class="spinner-border spinner-border-sm me-2"></span>
                                         📄 Bulletin
                                     </button>
+                                    @if($payroll->status === 'paid')
+                                        @can('annuler-paye', App\Models\User::class)
+                                            <button class="btn btn-sm btn-outline-danger"
+                                                wire:click="confirmCancellation({{ $payroll->id }})" wire:loading.attr="disabled">
+                                                <i class="bx bx-x-circle me-1"></i> Annuler
+                                            </button>
+                                        @endcan
+                                    @endif
                                 </td>
                             </tr>
                         @empty
@@ -398,4 +412,46 @@
             </div>
         </div>
     </div>
+
+    {{-- MODAL DE CONFIRMATION D'ANNULATION --}}
+    @if($showingCancellationModal)
+        <div class="modal fade show" tabindex="-1" style="display: block; background: rgba(0,0,0,0.5);" aria-modal="true" role="dialog">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title text-white"><i class="bx bx-error me-2"></i>Annulation de Paiement</h5>
+                        <button type="button" class="btn-close btn-close-white" wire:click="closeConfirmationModal"></button>
+                    </div>
+                    <div class="modal-body text-center p-4">
+                        <div class="mb-3">
+                            <i class="bx bx-trash text-danger" style="font-size: 5rem;"></i>
+                        </div>
+                        <h4>Voulez-vous vraiment annuler ce paiement ?</h4>
+                        <p class="text-muted">
+                            Cette action est irréversible et inversera tous les mouvements financiers associés (Caisse centrale, compte agent, etc.).
+                        </p>
+                        @php
+                            $p = App\Models\Payroll::find($selectedPayrollId);
+                        @endphp
+                        @if($p)
+                            <div class="alert alert-light border border-danger text-start">
+                                <ul class="list-unstyled mb-0">
+                                    <li><strong>Agent :</strong> {{ $p->user->name }} {{ $p->user->postnom }}</li>
+                                    <li><strong>Montant :</strong> {{ number_format($p->amount, 2) }} {{ $p->currency }}</li>
+                                    <li><strong>Période :</strong> {{ $p->period }}</li>
+                                </ul>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-label-secondary" wire:click="closeConfirmationModal">Non, Garder</button>
+                        <button type="button" class="btn btn-danger" wire:click="cancelPayment">
+                            <span wire:loading wire:target="cancelPayment" class="spinner-border spinner-border-sm me-1"></span>
+                            Oui, Annuler le Paiement
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
