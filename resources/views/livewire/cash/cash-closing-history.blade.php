@@ -1,14 +1,14 @@
 <div class="card mt-4">
-    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-3">
         <h5 class="card-title mb-0">Historique des Clôtures de Caisse</h5>
-        <div class="d-flex align-items-center gap-2">
-            <div class="d-flex align-items-center gap-1">
+        <div class="d-flex flex-column flex-sm-row align-items-stretch align-items-sm-center gap-2 w-100 w-md-auto">
+            <div class="d-flex align-items-center gap-1 w-100 w-sm-auto">
                 <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
-                    style="width: 140px;">
+                    style="min-width: 120px;">
                 <span class="text-muted small">au</span>
-                <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="width: 140px;">
+                <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="min-width: 120px;">
             </div>
-            <button wire:click="exportPdf" class="btn btn-primary btn-sm">
+            <button wire:click="exportPdf" class="btn btn-primary btn-sm w-100 w-sm-auto">
                 <span wire:loading wire:target="exportPdf" class="spinner-border spinner-border-sm me-2"
                     role="status"></span>
                 <i class="bx bxs-file-pdf"></i> Exporter PDF

@@ -100,25 +100,25 @@
             <div class="card-header bg-light d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h5 class="mb-0">Historique des Cartes d'Adhésion</h5>
 
-                <div class="d-flex align-items-center gap-2">
-                    <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                <div class="d-flex flex-column flex-md-row align-items-stretch align-items-md-center gap-2 w-100 w-lg-auto">
+                    <select wire:model.live="filterType" class="form-select form-select-sm w-100 w-md-auto">
                         <option value="30days">30 derniers jours</option>
                         <option value="day">Aujourd'hui</option>
                         <option value="week">Cette semaine</option>
                         <option value="month">Ce mois</option>
                         <option value="range">Intervalle personnalisé</option>
                     </select>
-
+            
                     @if ($filterType === 'range')
-                        <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
-                            style="width: auto;">
-                        <span class="small">au</span>
-                        <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
-                            style="width: auto;">
+                        <div class="d-flex align-items-center gap-1 w-100 w-md-auto">
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm w-100">
+                            <span class="small">au</span>
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm w-100">
+                        </div>
                     @endif
-
+            
                     <!-- Barre de recherche -->
-                    <div class="input-group input-group-sm" style="width: 200px;">
+                    <div class="input-group input-group-sm w-100 w-md-auto" style="min-width: 200px;">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
                         <input type="text" wire:model.live.debounce.300ms="searchCard" class="form-control"
                             placeholder="Rechercher...">
