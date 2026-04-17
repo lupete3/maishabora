@@ -106,9 +106,15 @@ class JournalsManager extends Component
     /** Vérifier équilibre */
     public function getIsBalancedProperty()
     {
-        $debit = collect($this->lines)->where('type_operation', 'debit')->sum('montant');
-        $credit = collect($this->lines)->where('type_operation', 'credit')->sum('montant');
-        return $debit == $credit && $debit > 0;
+        $debit = collect($this->lines)
+            ->where('type_operation', 'debit')
+            ->sum(fn($l) => floatval($l['montant']));
+            
+        $credit = collect($this->lines)
+            ->where('type_operation', 'credit')
+            ->sum(fn($l) => floatval($l['montant']));
+            
+        return round($debit, 2) == round($credit, 2) && $debit > 0;
     }
 
     /** Validation finale */
@@ -126,8 +132,8 @@ class JournalsManager extends Component
                 'libelle' => $this->libelle,
                 'reference' => $this->reference,
                 'devise' => $this->devise,
-                'montant_debit' => $line['type_operation'] === 'debit' ? $line['montant'] : 0,
-                'montant_credit' => $line['type_operation'] === 'credit' ? $line['montant'] : 0,
+                'montant_debit' => $line['type_operation'] === 'debit' ? floatval($line['montant']) : 0,
+                'montant_credit' => $line['type_operation'] === 'credit' ? floatval($line['montant']) : 0,
                 'type_operation' => $line['type_operation'],
                 'compte_id' => $line['compte_id'],
                 'type_journal_id' => $this->type_journal_id,

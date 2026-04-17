@@ -17,12 +17,15 @@ class MonthlyContributionReport extends Mailable implements ShouldQueue
     public $member;
     public $contributions;
     public $totalDeposited;
+    public $monthName;
 
     public function __construct(User $member, Collection $contributions)
     {
         $this->member = $member;
         $this->contributions = $contributions;
-        $this->totalDeposited = $contributions->sum('montant');
+        // Le champ est 'amount' dans DailyContribution (au lieu de 'montant' dans l'ancien modèle)
+        $this->totalDeposited = $contributions->sum('amount');
+        $this->monthName = now()->translatedFormat('F Y');
     }
 
     public function build()
@@ -31,16 +34,13 @@ class MonthlyContributionReport extends Mailable implements ShouldQueue
             'member' => $this->member,
             'contributions' => $this->contributions,
             'totalDeposited' => $this->totalDeposited,
-            'month' => now()->format('F Y'),
+            'month' => $this->monthName,
         ]);
 
-        return $this->subject("Rapport mensuel - Contributions - " . now()->format('F Y'))
+        return $this->subject("Rapport mensuel des contributions - " . $this->monthName)
             ->view('emails.monthly-report')
             ->attachData($pdf->output(), "rapport-mensuel-" . now()->format('Y-m-d') . ".pdf", [
                 'mime' => 'application/pdf',
             ]);
-
-            return $this->subject("Test mail simple")
-    ->view('emails.monthly-report');
     }
 }

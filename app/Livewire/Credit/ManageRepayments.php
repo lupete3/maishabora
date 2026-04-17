@@ -155,9 +155,9 @@ class ManageRepayments extends Component
 
                 // Mettre à jour le remboursement
                 $repayment->paid_date = now()->format('Y-m-d');
-                $repayment->paid_amount = $amountToPay;
-                $repayment->total_due = $amountToPay;
-                $repayment->penalty = $this->penality;
+                $repayment->paid_amount = floatval($amountToPay);
+                $repayment->total_due = floatval($amountToPay);
+                $repayment->penalty = floatval($this->penality);
                 $repayment->is_paid = true;
                 $repayment->save();
 
