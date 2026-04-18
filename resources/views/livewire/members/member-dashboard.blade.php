@@ -158,7 +158,7 @@
                             </button>
                         @else
                             <button class="btn btn-sm btn-outline-primary py-1" data-bs-toggle="modal" data-bs-target="#revealModal">
-                                <i class="fas fa-lock me-1"></i> Révéler les soldes
+                                <i class="fas fa-lock me-1"></i> Afficher les soldes
                             </button>
                         @endif
                     </div>
