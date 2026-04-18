@@ -38,6 +38,10 @@ class PayrollComponent extends Component
     public $results = [];
     public $resultsAgent = [];
 
+    public $caisseSearch = '';
+    public $resultsCaisse = [];
+    public $caisse_id;
+
     // Properties for confirmation modal
     public $showingConfirmationModal = false;
     public $selectedUserName = '';
@@ -115,6 +119,36 @@ class PayrollComponent extends Component
         }
     }
 
+    public function updatedCaisseSearch()
+    {
+        $query = trim($this->caisseSearch);
+        if ($query !== '') {
+            $this->resultsCaisse = User::role(['Caissier', 'Receptionniste'])
+                ->where(function ($q) use ($query) {
+                    $q->where('code', 'like', "%{$query}%")
+                        ->orWhere('name', 'like', "%{$query}%")
+                        ->orWhere('postnom', 'like', "%{$query}%")
+                        ->orWhere('prenom', 'like', "%{$query}%")
+                        ->orWhere('telephone', 'like', "%{$query}%");
+                })
+                ->limit(10)
+                ->get(['id', 'code', 'name', 'postnom', 'prenom'])
+                ->toArray();
+        } else {
+            $this->resultsCaisse = [];
+        }
+    }
+
+    public function selectResultCaisse(int $id)
+    {
+        $user = User::find($id);
+        if ($user) {
+            $this->caisseSearch = "{$user->name} {$user->postnom}";
+            $this->resultsCaisse = [];
+            $this->caisse_id = $user->id;
+        }
+    }
+
     public function setSalary()
     {
         Gate::authorize('ajouter-salaire', User::class);
@@ -156,6 +190,11 @@ class PayrollComponent extends Component
         $salary = Salary::where('user_id', $userId)->where('currency', $this->currency)->first();
         if (!$salary) {
             notyf()->error('Salaire non configuré pour cet agent dans cette devise.');
+            return;
+        }
+
+        if (!$this->caisse_id) {
+            notyf()->error('Veuillez sélectionner une caisse (caissier) pour le retrait.');
             return;
         }
 
@@ -240,9 +279,9 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
-            // Envoyer le montant du crédit au compte 2 du caissier pour attente du retrait
+            // Envoyer le montant du crédit au compte du caissier choisi pour attente du retrait
             $cassisierAccount = AgentAccount::firstOrCreate(
-                ['user_id' => self::CAISSIER_ACCOUNT_USER_ID, 'currency' => $this->currency],
+                ['user_id' => $this->caisse_id, 'currency' => $this->currency],
                 ['balance' => 0]
             );
 
@@ -285,6 +324,7 @@ class PayrollComponent extends Component
             $payroll = Payroll::create([
                 'user_id' => $userId,
                 'salary_id' => $salary->id,
+                'agent_id' => $this->caisse_id,
                 'currency' => $this->currency,
                 'amount' => $salary->amount,
                 'period' => $this->period ?? now()->format('Y-m'),
@@ -295,7 +335,7 @@ class PayrollComponent extends Component
             Transaction::create([
                 'account_id' => null,
                 'agent_account_id' => $cassisierAccount->id,
-                'user_id' => self::CAISSIER_ACCOUNT_USER_ID,
+                'user_id' => $this->caisse_id,
                 'type' => 'salaire_pour_retrait',
                 'currency' => $this->currency,
                 'amount' => $amount,
@@ -339,6 +379,7 @@ class PayrollComponent extends Component
                 'read' => false,
             ]);
 
+            $this->reset(['user_id', 'caisse_id', 'caisseSearch', 'searchAgent']);
             notyf()->success('Salaire payé avec succès.');
         });
     }
@@ -406,12 +447,13 @@ class PayrollComponent extends Component
             }
 
             // 4. Inversion Compte Caissier et Charge
-            $caissierAccount = AgentAccount::where('user_id', self::CAISSIER_ACCOUNT_USER_ID)->where('currency', $currency)->first();
+            $caisseId = $payroll->agent_id ?? self::CAISSIER_ACCOUNT_USER_ID;
+            $caissierAccount = AgentAccount::where('user_id', $caisseId)->where('currency', $currency)->first();
             if ($caissierAccount) {
                 $caissierAccount->decrement('balance', $netAmount);
                 Transaction::create([
                     'agent_account_id' => null,
-                    'user_id' => self::CAISSIER_ACCOUNT_USER_ID,
+                    'user_id' => $caisseId,
                     'type' => 'annulation_paie',
                     'currency' => $currency,
                     'amount' => $netAmount,

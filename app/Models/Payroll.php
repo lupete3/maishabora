@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Payroll extends Model
 {
-    protected $fillable = ['user_id', 'salary_id', 'currency', 'amount', 'period', 'status'];
+    protected $fillable = ['user_id', 'salary_id', 'agent_id', 'currency', 'amount', 'period', 'status'];
 
     public function user()
     {
@@ -16,5 +16,10 @@ class Payroll extends Model
     public function salary()
     {
         return $this->belongsTo(Salary::class);
+    }
+
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'agent_id');
     }
 }

@@ -180,9 +180,9 @@
 
             <div class="card-body row g-3">
                 {{-- Agent --}}
-                <div class="col-md-4">
+                <div class="col-md-3">
                     <div class="position-relative">
-                        <label class="form-label fw-bold">Agent</label>
+                        <label class="form-label fw-bold">Agent (Bénéficiaire)</label>
                         <div class="table-search-input">
                             <div class="input-group input-group-merge">
                                 <span class="input-group-text" id="basic-addon-search31"><i
@@ -194,9 +194,9 @@
                         </div>
 
                         @if (!empty($resultsAgent))
-                            <ul class="list-group w-100" style="z-index: 1000;">
+                            <ul class="list-group list-group-flush position-absolute w-100 shadow-sm rounded-bottom" style="z-index: 1050;">
                                 @foreach ($resultsAgent as $user)
-                                    <li class="list-group-item list-group-item-action"
+                                    <li class="list-group-item list-group-item-action cursor-pointer"
                                         wire:click="selectResultAgent({{ $user['id'] }})">
                                         {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
                                     </li>
@@ -204,14 +204,39 @@
                             </ul>
                         @endif
                         @error('user_id')
-                            <span class="text-danger">{{ $message }}</span>
+                            <span class="text-danger small">{{ $message }}</span>
                         @enderror
 
                     </div>
                 </div>
 
+                {{-- Caisse / Caissier --}}
+                <div class="col-md-3">
+                    <div class="position-relative">
+                        <label class="form-label fw-bold">Caisse / Caissier (Retrait)</label>
+                        <div class="table-search-input">
+                            <div class="input-group input-group-merge">
+                                <span class="input-group-text"><i class="icon-base bx bx-search"></i></span>
+                                <input type="search" wire:model.live.debounce.300ms="caisseSearch" class="form-control"
+                                    placeholder="Rechercher Caissier.....">
+                            </div>
+                        </div>
+
+                        @if (!empty($resultsCaisse))
+                            <ul class="list-group list-group-flush position-absolute w-100 shadow-sm rounded-bottom" style="z-index: 1050;">
+                                @foreach ($resultsCaisse as $caisse)
+                                    <li class="list-group-item list-group-item-action cursor-pointer"
+                                        wire:click="selectResultCaisse({{ $caisse['id'] }})">
+                                        {{ "{$caisse['code']} {$caisse['name']} {$caisse['postnom']}" }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+                    </div>
+                </div>
+
                 {{-- Devise --}}
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label class="form-label fw-bold">Devise</label>
                     <select class="form-select" wire:model="currency">
                         <option value="CDF">CDF</option>
@@ -220,7 +245,7 @@
                 </div>
 
                 {{-- Période --}}
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label fw-bold">Période</label>
                     <input type="month" class="form-control" wire:model="period">
                 </div>
@@ -228,7 +253,7 @@
                 {{-- Bouton --}}
                 <div class="col-md-3 d-flex align-items-end">
                     <button class="btn btn-primary w-100" wire:click="confirmPayment({{ $user_id ?? 'null' }})"
-                        wire:loading.attr="disabled" @if(!$user_id) disabled @endif>
+                        wire:loading.attr="disabled" @if(!$user_id || !$caisse_id) disabled @endif>
                         <span wire:loading wire:target="confirmPayment"
                             class="spinner-border spinner-border-sm me-2"></span>
                         Payer Salaire
@@ -258,6 +283,10 @@
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                         <span>Agent :</span>
                                         <span class="fw-bold">{{ $selectedUserName }}</span>
+                                    </li>
+                                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                        <span>Caisse de retrait :</span>
+                                        <span class="fw-bold text-info">{{ $caisseSearch }}</span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
                                         <span>Période :</span>
@@ -337,6 +366,7 @@
                             <th>Date</th>
                             <th>Matricule</th>
                             <th>Agent</th>
+                            <th>Caisse</th>
                             <th>Période</th>
                             <th>Devise</th>
                             <th>Montant</th>
@@ -350,6 +380,15 @@
                                 <td>{{ $payroll->created_at->format('d/m/Y H:i') }}</td>
                                 <td>{{ $payroll->user->code }}</td>
                                 <td>{{ $payroll->user->name . ' ' . $payroll->user->postnom }}</td>
+                                <td>
+                                    @if($payroll->agent)
+                                        <span class="badge bg-label-info">
+                                            <i class="bx bx-user-circle me-1"></i>{{ $payroll->agent->name }} {{ $payroll->agent->postnom }}
+                                        </span>
+                                    @else
+                                        <span class="text-muted">—</span>
+                                    @endif
+                                </td>
                                 <td>{{ $payroll->period }}</td>
                                 <td>{{ $payroll->currency }}</td>
                                 <td>{{ number_format($payroll->amount, 2) }}</td>
@@ -380,7 +419,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="text-center">
+                                <td colspan="9" class="text-center">
                                     <div class="alert alert-warning mb-0">Aucun salaire payé trouvé.</div>
                                 </td>
                             </tr>
