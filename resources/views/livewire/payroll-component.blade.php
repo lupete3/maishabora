@@ -194,9 +194,9 @@
                         </div>
 
                         @if (!empty($resultsAgent))
-                            <ul class="list-group list-group-flush position-absolute w-100 shadow-sm rounded-bottom" style="z-index: 1050;">
+                            <ul class="list-group w-100" style="z-index: 1000;">
                                 @foreach ($resultsAgent as $user)
-                                    <li class="list-group-item list-group-item-action cursor-pointer"
+                                    <li class="list-group-item list-group-item-action"
                                         wire:click="selectResultAgent({{ $user['id'] }})">
                                         {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
                                     </li>
@@ -223,9 +223,9 @@
                         </div>
 
                         @if (!empty($resultsCaisse))
-                            <ul class="list-group list-group-flush position-absolute w-100 shadow-sm rounded-bottom" style="z-index: 1050;">
+                            <ul class="list-group w-100" style="z-index: 1000;">
                                 @foreach ($resultsCaisse as $caisse)
-                                    <li class="list-group-item list-group-item-action cursor-pointer"
+                                    <li class="list-group-item list-group-item-action"
                                         wire:click="selectResultCaisse({{ $caisse['id'] }})">
                                         {{ "{$caisse['code']} {$caisse['name']} {$caisse['postnom']}" }}
                                     </li>
