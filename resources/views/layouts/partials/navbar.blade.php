@@ -24,7 +24,7 @@
                         @if (Auth::user()->photo_profil)
                             <img src="{{ asset('storage/' . Auth::user()->photo_profil) }}" alt="Photo de profil" class="w-px-40 h-auto rounded-circle">
                         @else
-                            <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="w-px-40 h-auto rounded-circle">
+                            <span class="avatar-initial rounded-circle bg-label-primary px-2">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(Auth::user()->postnom ?? '', 0, 1)) }}</span>
                         @endif
                     </div>
                 </a>
@@ -37,7 +37,7 @@
                                         @if (Auth::user()->photo_profil)
                                             <img src="{{ asset('storage/' . Auth::user()->photo_profil) }}" alt="Photo de profil" class="w-px-40 h-auto rounded-circle">
                                         @else
-                                            <img src="{{ asset('user.png') }}" alt="Photo par défaut" class="w-px-40 h-auto rounded-circle">
+                                            <span class="avatar-initial rounded-circle bg-label-primary">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(Auth::user()->postnom ?? '', 0, 1)) }}</span>
                                         @endif
 
                                     </div>
