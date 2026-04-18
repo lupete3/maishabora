@@ -19,37 +19,121 @@
 
             <!-- Sidebar: Profile & Contact -->
             <div class="col-lg-4">
-                <div class="card shadow-sm border-0 sticky-top" style="top: 2rem; z-index: 1;">
-                    <div class="card-body text-center pt-5 pb-4">
-                        <div class="mb-3">
-                            <div class="avatar avatar-xl rounded-circle bg-label-primary fs-2 mx-auto d-flex align-items-center justify-content-center shadow-sm"
-                                style="width: 80px; height: 80px;">
+                <style>
+                    .profile-card {
+                        border-radius: 20px;
+                        overflow: hidden;
+                        border: none;
+                        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+                    }
+                    .profile-cover {
+                        height: 120px;
+                        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                        position: relative;
+                    }
+                    .profile-cover::after {
+                        content: '';
+                        position: absolute;
+                        bottom: 0; left: 0; right: 0;
+                        height: 40px;
+                        background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
+                    }
+                    .profile-avatar-wrapper {
+                        margin-top: -60px;
+                        position: relative;
+                        z-index: 2;
+                        text-align: center;
+                    }
+                    .profile-avatar {
+                        width: 100px;
+                        height: 100px;
+                        border-radius: 50%;
+                        border: 4px solid #fff;
+                        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                        color: #fff;
+                        font-size: 2.5rem;
+                        font-weight: bold;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+                    }
+                    .contact-item {
+                        padding: 12px 16px;
+                        border-radius: 12px;
+                        transition: all 0.2s ease;
+                        background: rgba(241, 245, 249, 0.5);
+                        margin-bottom: 12px;
+                        border: 1px solid transparent;
+                    }
+                    .contact-item:hover {
+                        background: #fff;
+                        border-color: rgba(59, 130, 246, 0.2);
+                        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+                        transform: translateY(-2px);
+                    }
+                    .contact-icon-wrapper {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 10px;
+                        background: rgba(59, 130, 246, 0.1);
+                        color: #2563eb;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.1rem;
+                        transition: all 0.2s;
+                    }
+                    .contact-item:hover .contact-icon-wrapper {
+                        background: #2563eb;
+                        color: #fff;
+                    }
+                </style>
+                <div class="card profile-card sticky-top" style="top: 2rem; z-index: 1;">
+                    <div class="profile-cover"></div>
+                    <div class="card-body text-center pt-0 pb-4 px-4">
+                        <div class="profile-avatar-wrapper mb-3">
+                            <div class="profile-avatar">
                                 {{ strtoupper(substr($member->name, 0, 1)) }}{{ strtoupper(substr($member->postnom, 0, 1)) }}
                             </div>
                         </div>
-                        <h5 class="fw-bold mb-1">{{ $member->name }} {{ $member->postnom }}</h5>
-                        <span class="badge bg-label-secondary mb-4">CODE: {{ $member->code }}</span>
+                        <h4 class="fw-bold mb-1 text-dark">{{ $member->name }} {{ $member->postnom }}</h4>
+                        <div class="mb-4">
+                            <span class="badge bg-label-primary px-3 py-2 rounded-pill" style="letter-spacing: 1px;">
+                                <i class="bx bx-id-card me-1"></i> {{ $member->code }}
+                            </span>
+                        </div>
 
-                        <div class="text-start border-top pt-4">
-                            <div class="d-flex align-items-start mb-3">
-                                <i class="fas fa-map-marker-alt text-primary mt-1 me-3"></i>
+                        <div class="text-start mt-4">
+                            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Coordonnées</h6>
+                            
+                            <div class="contact-item d-flex align-items-center">
+                                <div class="contact-icon-wrapper me-3">
+                                    <i class="bx bx-map"></i>
+                                </div>
                                 <div>
-                                    <small class="text-muted d-block">Adresse</small>
-                                    <span class="fw-medium">{{ $member->adresse_physique }}</span>
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Adresse</small>
+                                    <span class="fw-semibold text-dark">{{ $member->adresse_physique }}</span>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-start mb-3">
-                                <i class="fas fa-phone text-primary mt-1 me-3"></i>
+                            
+                            <div class="contact-item d-flex align-items-center">
+                                <div class="contact-icon-wrapper me-3">
+                                    <i class="bx bx-phone"></i>
+                                </div>
                                 <div>
-                                    <small class="text-muted d-block">Téléphone</small>
-                                    <span class="fw-medium">{{ $member->telephone }}</span>
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Téléphone</small>
+                                    <span class="fw-semibold text-dark">{{ $member->telephone }}</span>
                                 </div>
                             </div>
-                            <div class="d-flex align-items-start">
-                                <i class="fas fa-envelope text-primary mt-1 me-3"></i>
-                                <div>
-                                    <small class="text-muted d-block">Email</small>
-                                    <span class="fw-medium">{{ $member->email ?? 'Non renseigné' }}</span>
+                            
+                            <div class="contact-item d-flex align-items-center mb-0">
+                                <div class="contact-icon-wrapper me-3">
+                                    <i class="bx bx-envelope"></i>
+                                </div>
+                                <div class="text-truncate">
+                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Email</small>
+                                    <span class="fw-semibold text-dark text-truncate">{{ $member->email ?? 'Non renseigné' }}</span>
                                 </div>
                             </div>
                         </div>
