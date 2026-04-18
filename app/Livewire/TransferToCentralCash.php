@@ -111,81 +111,127 @@ class TransferToCentralCash extends Component
             ['balance' => 0]
         );
 
-        // ✅ Mise à jour des soldes
-        $agentAccount->decrement('balance', $this->amount);
-        $mainCash->increment('balance', $this->amount);
-
-        // ✅ Enregistrement du transfert
+        // ✅ Enregistrement du transfert (en attente)
         $transfer = Transfert::create([
             'from_agent_account_id' => $agentAccount->id,
             'to_main_cash_register_id' => $mainCash->id,
             'currency' => $this->currency,
             'amount' => $this->amount,
+            'status' => 'pending',
         ]);
 
-        Transaction::create([
-            'agent_account_id' => $agentAccount->id,
-            'user_id' => Auth::id(),
-            'type' => 'virement vers caisse centrale',
-            'currency' => $this->currency,
-            'amount' => $this->amount,
-            'balance_after' => $agentAccount->balance,
-            'description' => "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}",
-        ]);
-
-        // Notifier les utilisateurs concernés
+        // Notifier les utilisateurs concernés (Admin/Comptable pour validation)
         $usersToNotify = User::whereIn('role', ['admin', 'caissier', 'SUPER IT', 'comptable'])->get();
-        $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers la caisse centrale par " . Auth::user()->name . " " . Auth::user()->postnom . ". #REF{$transfer->id}";
+        $notificationMessage = "Une nouvelle demande de virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectuée vers la caisse centrale par " . Auth::user()->name . " " . Auth::user()->postnom . ". Référence : #REF{$transfer->id}. Veuillez la valider.";
 
         foreach ($usersToNotify as $notifyUser) {
             Notification::create([
                 'user_id' => $notifyUser->id,
-                'title' => 'Virement effectué',
+                'title' => 'Nouveau virement en attente',
                 'message' => $notificationMessage,
                 'read' => false,
             ]);
         }
 
         UserLogHelper::log_user_activity(
-            action: 'virement_caisse_centrale',
-            description: "Virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}"
+            action: 'virement_caisse_centrale_demande',
+            description: "Demande de virement de {$this->amount} {$this->currency} du compte de " . Auth::user()->name . " vers la caisse centrale. #REF{$transfer->id}"
         );
 
-        // ÉCRITURE COMPTABLE AUTOMATIQUE
-        try {
-            $accountingService = app(\App\Services\AccountingService::class);
-            // Transfert de Caisse Agent (Source) vers Caisse Centrale (Destination)
-            // 'agent' signifie que la caisse nommée est une caisse agent. 'centrale' est la destination par défaut si non spécifié, ou explicite.
-            // recordTransfer($fromCaisse, $toCaisse, $amount, $currency)
-            // fromCaisse: 'agent' (User ID implicite car connecté ou passé?)
-            // getCaisseAccount utilise le type. recordTransfer utilise $fromCaisse pour déterminer le compte.
-            // La méthode recordTransfer de AccountingService attend des identifiants de caisse ("monikers" ou "types").
-            // Regardons recordTransfer: $this->getCaisseAccount($currency, $toCaisse) ...
-            // getCaisseAccount($currency, $type = 'centrale').
-            // Donc si on passe 'centrale', ça va chercher le compte central.
-            // Si on passe 'agent', ça va chercher le compte agent.
-            // Mais pour lier au BON agent, getCaisseAccount ne prend pas d'ID user. Elle retourne le compte général "Caisse Agent".
-            // Il faudrait que recordTransfer ou getCaisseAccount sache QUEL agent.
-            // Actuellement getCaisseAccount retourne '5731' (Caisse auxiliaire) globalement.
-            // Cela suffit pour le "Journal de Caisse" général, mais pas pour le suivi par agent en compta pure (auxiliaire).
-            // Mais pour l'instant, on suit la logique existante.
-
-            $accountingService->recordTransfer(
-                fromCaisse: 'agent',
-                toCaisse: 'centrale',
-                amount: (float) $this->amount,
-                currency: $this->currency
-            );
-        } catch (\Exception $e) {
-            \Illuminate\Support\Facades\Log::error("Erreur comptable transfert caisse: " . $e->getMessage());
-        }
-
-        notyf()->success('Virement effectué avec succès !');
+        notyf()->success('Demande de virement envoyée avec succès ! En attente de validation.');
 
         // ✅ Ferme le modal et réinitialise
         $this->reset(['amount', 'currency', 'showConfirmation']);
 
-        $this->redirect(route('transfer.receipt.generate', ['id' => $transfer->id]), navigate: false);
+        $this->redirect(route('transfer.to.central'), navigate: false);
+    }
+
+    public function validateTransfer($id)
+    {
+        Gate::authorize('valider-transfert-caisse', User::class);
+
+        $transfer = Transfert::findOrFail($id);
+
+        if ($transfer->status !== 'pending') {
+            notyf()->error('Ce virement ne peut plus être validé.');
+            return;
+        }
+
+        $agentAccount = AgentAccount::findOrFail($transfer->from_agent_account_id);
+        $mainCash = MainCashRegister::findOrFail($transfer->to_main_cash_register_id);
+
+        if ($agentAccount->balance < $transfer->amount) {
+            notyf()->error("Solde insuffisant dans la caisse de l'agent.");
+            return;
+        }
+
+        // Action dans une transaction DB
+        \Illuminate\Support\Facades\DB::transaction(function () use ($transfer, $agentAccount, $mainCash) {
+            // Mise à jour des soldes
+            $agentAccount->decrement('balance', $transfer->amount);
+            $mainCash->increment('balance', $transfer->amount);
+
+            // Mise à jour du virement
+            $transfer->update([
+                'status' => 'validated',
+                'processed_by_id' => Auth::id()
+            ]);
+
+            // Création de la transaction
+            Transaction::create([
+                'agent_account_id' => $agentAccount->id,
+                'user_id' => $agentAccount->user_id,
+                'type' => 'virement vers caisse centrale',
+                'currency' => $transfer->currency,
+                'amount' => $transfer->amount,
+                'balance_after' => $agentAccount->balance,
+                'description' => "Virement de {$transfer->amount} {$transfer->currency} du compte de " . $agentAccount->user->name . " vers la caisse centrale. #REF{$transfer->id}",
+            ]);
+
+            // ÉCRITURE COMPTABLE AUTOMATIQUE
+            try {
+                $accountingService = app(\App\Services\AccountingService::class);
+                $accountingService->recordTransfer(
+                    fromCaisse: 'agent',
+                    toCaisse: 'centrale',
+                    amount: (float) $transfer->amount,
+                    currency: $transfer->currency
+                );
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Erreur comptable transfert caisse: " . $e->getMessage());
+            }
+
+            UserLogHelper::log_user_activity(
+                action: 'virement_caisse_centrale_valide',
+                description: "Virement #REF{$transfer->id} validé par " . Auth::user()->name
+            );
+        });
+
+        notyf()->success('Virement validé avec succès !');
+    }
+
+    public function cancelTransfer($id)
+    {
+        Gate::authorize('annuler-transfert-caisse', User::class);
+
+        $transfer = Transfert::findOrFail($id);
+
+        if ($transfer->status !== 'pending') {
+            notyf()->error('Ce virement ne peut plus être annulé.');
+            return;
+        }
+
+        $transfer->update([
+            'status' => 'cancelled',
+            'processed_by_id' => Auth::id()
+        ]);
+
+        UserLogHelper::log_user_activity(
+            action: 'virement_caisse_centrale_annule',
+            description: "Virement #REF{$transfer->id} annulé par " . Auth::user()->name
+        );
+
+        notyf()->success('Virement annulé.');
     }
 
     public function updatedFilterType()

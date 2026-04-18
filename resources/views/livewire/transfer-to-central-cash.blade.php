@@ -52,18 +52,22 @@
                                 <label class="form-label fw-bold">Devise</label>
                                 <select wire:model.live="currency" class="form-select">
                                     <option value="">Choisir une devise</option>
-                                    @foreach($currencies as $curr)
+                                    @foreach ($currencies as $curr)
                                         <option value="{{ $curr }}">{{ $curr }}</option>
                                     @endforeach
                                 </select>
-                                @error('currency') <span class="text-danger small">{{ $message }}</span> @enderror
+                                @error('currency')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Montant à transférer</label>
                                 <input type="number" step="0.01" wire:model.live.debounce.500ms="amount"
                                     class="form-control" placeholder="0.00" />
-                                @error('amount') <span class="text-danger small">{{ $message }}</span> @enderror
+                                @error('amount')
+                                    <span class="text-danger small">{{ $message }}</span>
+                                @enderror
                             </div>
 
                             <div class="col-md-12">
@@ -110,11 +114,12 @@
                                 <tr>
                                     <th>Date</th>
                                     <th>Référence</th>
-                                    @if($isAdminOrFinance)
+                                    @if ($isAdminOrFinance)
                                         <th>Agent</th>
                                     @endif
                                     <th>Devise</th>
                                     <th class="text-end">Montant</th>
+                                    <th class="text-center">Statut</th>
                                     <th class="text-center">Action</th>
                                 </tr>
                             </thead>
@@ -123,25 +128,67 @@
                                     <tr>
                                         <td>{{ $trans->created_at->format('d/m/Y H:i') }}</td>
                                         <td><span class="badge bg-label-secondary">#REF{{ $trans->id }}</span></td>
-                                        @if($isAdminOrFinance)
+                                        @if ($isAdminOrFinance)
                                             <td>
                                                 <small
-                                                    class="fw-bold">{{ $trans->fromAgentAccount->user->name ?? 'N/A' }} 
-                                                {{ $trans->fromAgentAccount->user->postnom ?? 'N/A' }} </small>
+                                                    class="fw-bold">{{ $trans->fromAgentAccount->user->name ?? 'N/A' }}
+                                                    {{ $trans->fromAgentAccount->user->postnom ?? 'N/A' }} </small>
                                             </td>
                                         @endif
                                         <td class="fw-bold">{{ $trans->currency }}</td>
                                         <td class="text-end fw-bold">{{ number_format($trans->amount, 2) }}</td>
                                         <td class="text-center">
-                                            <a href="{{ route('transfer.receipt.generate', ['id' => $trans->id]) }}"
-                                                target="_blank" class="btn btn-sm btn-outline-danger">
-                                                <i class="bx bxs-file-pdf me-1"></i>Reçu
-                                            </a>
+                                            @if ($trans->status === 'pending')
+                                                <span class="badge bg-label-warning">En attente</span>
+                                            @elseif($trans->status === 'validated')
+                                                <span class="badge bg-label-success">Validé</span>
+                                                <small class="d-block text-muted" style="font-size: 0.65rem;">
+                                                    Par: {{ $trans->processedBy->name ?? 'Admin' }}
+                                                </small>
+                                            @elseif($trans->status === 'cancelled')
+                                                <span class="badge bg-label-danger">Annulé</span>
+                                                <small class="d-block text-muted" style="font-size: 0.65rem;">
+                                                    Par: {{ $trans->processedBy->name ?? 'Admin' }}
+                                                    {{ $trans->processedBy->postnom ?? 'N/A' }}
+                                                </small>
+                                            @endif
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="d-flex justify-content-center gap-1">
+                                                @if ($trans->status === 'validated')
+                                                    <a href="{{ route('transfer.receipt.generate', ['id' => $trans->id]) }}"
+                                                        target="_blank" class="btn btn-sm btn-icon btn-outline-danger"
+                                                        title="Reçu PDF">
+                                                        <i class="bx bxs-file-pdf"></i>
+                                                    </a>
+                                                @endif
+
+                                                @if ($trans->status === 'pending')
+                                                    @can('valider-transfert-caisse')
+                                                        <button wire:click="validateTransfer({{ $trans->id }})"
+                                                            wire:confirm="Voulez-vous vraiment valider ce virement ?"
+                                                            class="btn btn-sm btn-icon btn-outline-success"
+                                                            title="Valider">
+                                                            <i class="bx bx-check"></i>
+                                                        </button>
+                                                    @endcan
+
+                                                    @can('annuler-transfert-caisse')
+                                                        <button wire:click="cancelTransfer({{ $trans->id }})"
+                                                            wire:confirm="Voulez-vous vraiment annuler ce virement ?"
+                                                            class="btn btn-sm btn-icon btn-outline-warning"
+                                                            title="Annuler">
+                                                            <i class="bx bx-x"></i>
+                                                        </button>
+                                                    @endcan
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted py-4">Aucun virement enregistré
+                                        <td colspan="7" class="text-center text-muted py-4">Aucun virement
+                                            enregistré
                                             récemment</td>
                                     </tr>
                                 @endforelse
@@ -157,14 +204,15 @@
     </div>
 
     <!-- ✅ Modal pure Livewire -->
-    @if($showConfirmation)
+    @if ($showConfirmation)
         <div class="modal-backdrop fade show"></div>
         <div class="modal d-block" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content rounded-3 shadow-lg border-0">
                     <div class="modal-header bg-warning text-dark">
                         <h5 class="modal-title">Prévisualisation du virement</h5>
-                        <button type="button" class="btn-close" wire:click="$set('showConfirmation', false)"></button>
+                        <button type="button" class="btn-close"
+                            wire:click="$set('showConfirmation', false)"></button>
                     </div>
                     <div class="modal-body">
                         <div class="p-3 bg-light rounded">
@@ -193,7 +241,8 @@
                         </p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn btn-secondary" wire:click="$set('showConfirmation', false)">Annuler</button>
+                        <button class="btn btn-secondary"
+                            wire:click="$set('showConfirmation', false)">Annuler</button>
                         <button wire:click="confirmSubmit" class="btn btn-success">
                             <span wire:loading.class="spinner-border spinner-border-sm me-2"></span>
                             Confirmer le virement

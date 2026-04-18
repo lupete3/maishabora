@@ -45,6 +45,8 @@ class PermissionSeeder extends Seeder
 
             "afficher-transfert-caisse",
             "ajouter-transfert-caisse",
+            "valider-transfert-caisse",
+            "annuler-transfert-caisse",
             "modifier-transfert-caisse",
             "supprimer-transfert-caisse",
 
@@ -105,7 +107,7 @@ class PermissionSeeder extends Seeder
         ];
 
         foreach ($permissions as $key => $permission) {
-            Permission::create(['name' => $permission]);
+            Permission::firstOrCreate(['name' => $permission]);
         }
     }
 }
