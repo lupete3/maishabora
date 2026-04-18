@@ -21,7 +21,7 @@
             <li class="nav-item navbar-dropdown dropdown-user dropdown">
                 <a class="nav-link dropdown-toggle hide-arrow" href="javascript:void(0);" data-bs-toggle="dropdown">
                     <div class="avatar avatar-online">
-                        @if (Auth::user()->photo_profil)
+                        @if (Auth::user()->photo_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->photo_profil))
                             <img src="{{ asset('storage/' . Auth::user()->photo_profil) }}" alt="Photo de profil" class="w-px-40 h-auto rounded-circle">
                         @else
                             <span class="avatar-initial rounded-circle bg-label-primary px-2">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(Auth::user()->postnom ?? '', 0, 1)) }}</span>
@@ -34,7 +34,7 @@
                             <div class="d-flex">
                                 <div class="flex-shrink-0 me-3">
                                     <div class="avatar avatar-online">
-                                        @if (Auth::user()->photo_profil)
+                                        @if (Auth::user()->photo_profil && \Illuminate\Support\Facades\Storage::disk('public')->exists(Auth::user()->photo_profil))
                                             <img src="{{ asset('storage/' . Auth::user()->photo_profil) }}" alt="Photo de profil" class="w-px-40 h-auto rounded-circle">
                                         @else
                                             <span class="avatar-initial rounded-circle bg-label-primary">{{ strtoupper(substr(Auth::user()->name, 0, 1)) }}{{ strtoupper(substr(Auth::user()->postnom ?? '', 0, 1)) }}</span>
