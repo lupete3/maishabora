@@ -372,43 +372,39 @@
     });
 </script>
 
-
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const chartData = window.monthlyPieChart;
+    document.addEventListener("DOMContentLoaded", function () {
+        const chartData = window.monthlyPieChart;
 
-    var options = {
-        series: chartData.data,
-        labels: chartData.labels,
-        chart: {
-            type: 'pie',
-            height: 600
-        },
-        responsive: [{
-            breakpoint: 480,
-            options: {
-                chart: {
-                    width: 300
-                },
-                legend: {
-                    position: 'bottom'
+        var options = {
+            series: chartData.data,
+            labels: chartData.labels,
+            chart: {
+                type: 'pie',
+                height: 600
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    chart: {
+                        width: 300
+                    },
+                    legend: {
+                        position: 'bottom'
+                    }
                 }
+            }],
+            legend: {
+                position: 'right',
+                offsetY: 0,
+                height: 230,
             }
-        }],
-        legend: {
-            position: 'right',
-            offsetY: 0,
-            height: 230,
-        }
-    };
+        };
 
-    const chart = new ApexCharts(document.querySelector("#orderStatisticsChartNew"), options);
-    chart.render();
-});
+        const chart = new ApexCharts(document.querySelector("#orderStatisticsChartNew"), options);
+        chart.render();
+    });
 </script>
-
-
-
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {

@@ -121,7 +121,7 @@
 
                         /* Compte Courant – navy/indigo Visa Infinite */
                         .card-courant {
-                            background: linear-gradient(135deg, #0a0f2c 0%, #1a237e 45%, #283593 75%, #1565c0 100%);
+                            background: linear-gradient(135deg, #53450aff 0%, #94740dff 45%, #b18a0cff 75%, #d7bd15ff 100%);
                         }
                         .card-courant::before {
                             content: '';
@@ -278,7 +278,7 @@
                                 <div class="card-chip mb-3"></div>
 
                                 <div class="mb-3" style="font-size:.72rem;opacity:.6;letter-spacing:2px;">
-                                    {{ implode('  ', str_split(str_pad(preg_replace('/\D/', '', $member->code) . '9', 16, '0', STR_PAD_LEFT), 4)) }}
+                                    {{ implode('  ', str_split(str_pad(preg_replace('/\D/', '', $member->code), 16, '0', STR_PAD_LEFT), 4)) }}
                                 </div>
 
                                 @foreach(['USD', 'CDF'] as $curr)
@@ -308,8 +308,6 @@
                         </div>
                     </div>
                 </div>
-
-
 
                 <!-- Section: Statistiques Carnets -->
                 <div class="mb-4" wire:ignore>
@@ -394,7 +392,6 @@
                     </div>
                 </div>
                 @endif
-
 
                 <!-- Section: Historique Transactions -->
                 <div class="card border-0 shadow-sm">
