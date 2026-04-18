@@ -24,11 +24,10 @@
                         border-radius: 20px;
                         overflow: hidden;
                         border: none;
-                        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+                        box-shadow: 0 10px 40px rgba(3, 74, 14, 0.08);
                     }
                     .profile-cover {
-                        height: 120px;
-                        background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+                        height: 80px;
                         position: relative;
                     }
                     .profile-cover::after {
@@ -36,7 +35,7 @@
                         position: absolute;
                         bottom: 0; left: 0; right: 0;
                         height: 40px;
-                        background: linear-gradient(to top, rgba(255,255,255,1), rgba(255,255,255,0));
+                        background: linear-gradient(to top, rgba(255,255,255,1), rgba(50, 34, 1, 0));
                     }
                     .profile-avatar-wrapper {
                         margin-top: -60px;
@@ -49,14 +48,14 @@
                         height: 100px;
                         border-radius: 50%;
                         border: 4px solid #fff;
-                        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+                        background: linear-gradient(135deg, #d7a611ff 0%, #e6c02cff 100%);
                         color: #fff;
                         font-size: 2.5rem;
                         font-weight: bold;
                         display: inline-flex;
                         align-items: center;
                         justify-content: center;
-                        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+                        box-shadow: 0 8px 20px rgba(235, 186, 37, 0.3);
                     }
                     .contact-item {
                         padding: 12px 16px;
@@ -77,7 +76,7 @@
                         height: 40px;
                         border-radius: 10px;
                         background: rgba(59, 130, 246, 0.1);
-                        color: #2563eb;
+                        color: #cca406ff;
                         display: flex;
                         align-items: center;
                         justify-content: center;
@@ -85,7 +84,7 @@
                         transition: all 0.2s;
                     }
                     .contact-item:hover .contact-icon-wrapper {
-                        background: #2563eb;
+                        background: #cca406ff;
                         color: #fff;
                     }
                 </style>
@@ -157,37 +156,12 @@
                             <button class="btn btn-sm btn-outline-secondary py-1" wire:click="hideBalances">
                                 <i class="fas fa-eye-slash me-1"></i> Masquer
                             </button>
+                        @else
+                            <button class="btn btn-sm btn-outline-primary py-1" data-bs-toggle="modal" data-bs-target="#revealModal">
+                                <i class="fas fa-lock me-1"></i> Révéler les soldes
+                            </button>
                         @endif
                     </div>
-
-                    @if(!$showBalances)
-                        <div class="card shadow-sm border-0 mb-4 bg-label-secondary">
-                            <div class="card-body py-4">
-                                <div class="row align-items-center">
-                                    <div class="col-md-7 mb-3 mb-md-0">
-                                        <h6 class="fw-bold mb-1">Soldes masqués pour votre sécurité</h6>
-                                        <p class="text-muted small mb-0">Entrez votre mot de passe pour afficher vos soldes
-                                            disponibles.</p>
-                                    </div>
-                                    <div class="col-md-5">
-                                        <form wire:submit.prevent="revealBalances" class="d-flex gap-2">
-                                            <input type="password" wire:model="balancePassword"
-                                                class="form-control form-control-sm @error('balancePassword') is-invalid @enderror"
-                                                placeholder="Mot de passe">
-                                            <button type="submit" class="btn btn-primary btn-sm px-3"
-                                                wire:loading.attr="disabled">
-                                                <span wire:loading wire:target="revealBalances"
-                                                    class="spinner-border spinner-border-sm me-1"></span>
-                                                Révéler
-                                            </button>
-                                        </form>
-                                        @error('balancePassword') <div class="text-danger x-small mt-1">{{ $message }}</div>
-                                        @enderror
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    @endif
 
                     {{-- ── STYLES CARTES ── --}}
                     <style>
@@ -577,6 +551,52 @@
                 </div>
             </div>
         </div>
+
+        <!-- Reveal Balance Modal -->
+        <div class="modal fade" id="revealModal" tabindex="-1" aria-hidden="true" wire:ignore.self>
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 shadow-lg">
+                    <div class="modal-body p-4 text-center">
+                        <div class="mb-3 d-flex justify-content-center">
+                            <div class="avatar avatar-md border rounded-circle bg-label-primary d-flex align-items-center justify-content-center mx-auto shadow-sm" style="width: 60px; height: 60px;">
+                                <i class="bx bx-lock-alt fs-2"></i>
+                            </div>
+                        </div>
+                        <h5 class="fw-bold mb-2">Sécurité</h5>
+                        <p class="text-muted small mb-4">Veuillez renseigner votre mot de passe pour afficher les soldes de vos comptes.</p>
+                        
+                        <form wire:submit.prevent="revealBalances">
+                            <input type="password" wire:model="balancePassword" class="form-control text-center mb-2 @error('balancePassword') is-invalid @enderror" placeholder="••••••••" required>
+                            @error('balancePassword') 
+                                <span class="text-danger small d-block mb-2">{{ $message }}</span> 
+                            @enderror
+                            
+                            <div class="d-flex gap-2 justify-content-center mt-4">
+                                <button type="button" class="btn btn-label-secondary w-50" data-bs-dismiss="modal">Annuler</button>
+                                <button type="submit" class="btn btn-primary w-50" wire:loading.attr="disabled">
+                                    <span wire:loading wire:target="revealBalances" class="spinner-border spinner-border-sm me-1"></span>
+                                    Valider
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tooling script to close modal upon success -->
+        <div x-data="{}" x-init="
+            $watch('$wire.showBalances', val => {
+                if(val) {
+                    let el = document.getElementById('revealModal');
+                    if(el) {
+                        let m = bootstrap.Modal.getInstance(el);
+                        if(m) m.hide();
+                    }
+                }
+            })
+        "></div>
+
 
     @endcan
 
