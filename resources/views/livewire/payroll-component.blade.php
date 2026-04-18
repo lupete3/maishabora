@@ -250,8 +250,19 @@
                     <input type="month" class="form-control" wire:model="period">
                 </div>
 
+                {{-- Retenu Salaire % --}}
+                <div class="col-md-2">
+                    <label class="form-label fw-bold">Retenu Salaire (%)</label>
+                    <div class="input-group">
+                        <input type="number" step="0.1" min="0" max="100"
+                            class="form-control" wire:model.live="retenuRate"
+                            placeholder="10">
+                        <span class="input-group-text">%</span>
+                    </div>
+                </div>
+
                 {{-- Bouton --}}
-                <div class="col-md-3 d-flex align-items-end">
+                <div class="col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" wire:click="confirmPayment({{ $user_id ?? 'null' }})"
                         wire:loading.attr="disabled" @if(!$user_id || !$caisse_id) disabled @endif>
                         <span wire:loading wire:target="confirmPayment"
@@ -297,12 +308,12 @@
                                         <span class="text-primary fw-bold">{{ number_format($selectedSalaryAmount, 2) }}
                                             {{ $currency }}</span>
                                     </li>
-                                    @php             
-                                        $retenuSalaire = round($selectedSalaryAmount * (10 / 100), 2);
+                                    @php
+                                        $retenuSalaire = round($selectedSalaryAmount * ($retenuRate / 100), 2);
                                     @endphp
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                        <span>Retenu Salaire :</span>
-                                        <span class="text-info fw-bold">{{ number_format($retenuSalaire, 2) }}
+                                        <span>Retenu Salaire ({{ $retenuRate }}%) :</span>
+                                        <span class="text-warning fw-bold">{{ number_format($retenuSalaire, 2) }}
                                             {{ $currency }}</span>
                                     </li>
                                     <li class="list-group-item d-flex justify-content-between align-items-center px-0">

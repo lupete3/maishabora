@@ -41,6 +41,7 @@ class PayrollComponent extends Component
     public $caisseSearch = '';
     public $resultsCaisse = [];
     public $caisse_id;
+    public $retenuRate = 10;
 
     // Properties for confirmation modal
     public $showingConfirmationModal = false;
@@ -239,7 +240,7 @@ class PayrollComponent extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
-            //notyf()->error('Erreur lors du paiement du salaire');
+            notyf()->error('Erreur lors du paiement du salaire');
         }
     }
     protected function handleSalaryPaymentTransaction($userId)
@@ -248,7 +249,7 @@ class PayrollComponent extends Component
             $salary = Salary::where('user_id', $userId)->where('currency', $this->currency)->firstOrFail();
             $mainCash = MainCashRegister::where('currency', $this->currency)->firstOrFail();
 
-            $retenuSalaire = round($salary->amount * (10 / 100), 2);
+            $retenuSalaire = round($salary->amount * ($this->retenuRate / 100), 2);
 
             if ($mainCash->balance < $salary->amount) {
                 notyf()->error('Solde insuffisant dans la caisse centrale.');
@@ -322,13 +323,14 @@ class PayrollComponent extends Component
 
             // Enregistrer dans l’historique payroll
             $payroll = Payroll::create([
-                'user_id' => $userId,
-                'salary_id' => $salary->id,
-                'agent_id' => $this->caisse_id,
-                'currency' => $this->currency,
-                'amount' => $salary->amount,
-                'period' => $this->period ?? now()->format('Y-m'),
-                'status' => 'paid',
+                'user_id'     => $userId,
+                'salary_id'   => $salary->id,
+                'agent_id'    => $this->caisse_id,
+                'retenu_rate' => $this->retenuRate,
+                'currency'    => $this->currency,
+                'amount'      => $salary->amount,
+                'period'      => $this->period ?? now()->format('Y-m'),
+                'status'      => 'paid',
             ]);
 
             // Enregistrement de la transaction pour paiment salaire au caissier
@@ -380,6 +382,7 @@ class PayrollComponent extends Component
             ]);
 
             $this->reset(['user_id', 'caisse_id', 'caisseSearch', 'searchAgent']);
+            $this->retenuRate = 10;
             notyf()->success('Salaire payé avec succès.');
         });
     }
@@ -400,7 +403,8 @@ class PayrollComponent extends Component
             $userId = $payroll->user_id;
             $currency = $payroll->currency;
             $totalAmount = $payroll->amount;
-            $retenuAmount = round($totalAmount * (10 / 100), 2);
+            $storedRate = $payroll->retenu_rate ?? 10;
+            $retenuAmount = round($totalAmount * ($storedRate / 100), 2);
             $netAmount = $totalAmount - $retenuAmount;
 
             // 1. Inversion Caisse Centrale
