@@ -317,6 +317,7 @@
                     <livewire:membership-card-stats wire:key="membership-stats" />
                 </div>
 
+                @if ($credits->where('is_paid', false)->isNotEmpty())
                 <div class="row g-4 mb-4">
                     <!-- Section: Crédits Actifs -->
                     <div class="col-md-6">
@@ -392,6 +393,7 @@
                         </div>
                     </div>
                 </div>
+                @endif
 
 
                 <!-- Section: Historique Transactions -->
