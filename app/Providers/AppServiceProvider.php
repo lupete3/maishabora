@@ -29,6 +29,8 @@ class AppServiceProvider extends ServiceProvider
 
         Blaze::optimize()->in(resource_path('views/components'));
 
-        \Illuminate\Support\Facades\View::share('company', \App\Models\CompanyInformation::getActive());
+        if (\Illuminate\Support\Facades\Schema::hasTable('company_informations')) {
+            \Illuminate\Support\Facades\View::share('company', \App\Models\CompanyInformation::getActive());
+        }
     }
 }
