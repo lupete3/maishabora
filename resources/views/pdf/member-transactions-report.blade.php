@@ -80,13 +80,11 @@
 
 <body>
 
-    <div class="header">
-        <h2>RAPPORT DES TRANSACTIONS</h2>
-        <p><strong>{{ config('app.name') }}</strong></p>
-        <p><strong>Membre :</strong> {{ $member->name . ' ' . $member->postnom . ' ' . $member->prenom ?? '' }} (ID:
-            {{ $member->code }})</p>
-        <p><strong>Date d'impression :</strong> {{ now()->format('d/m/Y H:i') }}</p>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'RAPPORT DES TRANSACTIONS'])
+    <p style="text-align: center; margin-top: -10px;">
+        <strong>Membre :</strong> {{ $member->name . ' ' . $member->postnom . ' ' . $member->prenom ?? '' }} (ID:
+        {{ $member->code }})
+    </p>
 
     @if ($member->visible_account)
         <div class="balances">
@@ -182,7 +180,7 @@
     </div>
 
     <div class="footer">
-        Généré par {{ auth()->user()->name }} - {{ config('app.name') }}
+        Généré par {{ auth()->user()->name }} - {{ $company->name ?? config('app.name') }}
     </div>
 
 </body>

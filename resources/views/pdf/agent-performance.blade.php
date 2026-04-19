@@ -83,38 +83,7 @@
 </head>
 
 <body>
-    <div class="header">
-        <table style="width:100%;">
-            <tr>
-                <td style="width: 15%;">
-                    @if(file_exists(public_path('logo.jpg')))
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
-                            class="logo" style="width: 80px;">
-                    @elseif(file_exists(public_path('assets/img/logo.jpg')))
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('assets/img/logo.jpg'))) }}"
-                            class="logo" style="width: 80px;">
-                    @endif
-                </td>
-                <td style="width: 60%; text-align:center;">
-                    <h2 style="margin: 0; font-size: 16px;">{{ strtoupper(config('app.name')) }}</h2>
-                    <p style="margin: 0; font-size: 10px;">Adresse :
-                        {{ env('APP_ADRESS', 'Avenue Industrielle, Bukavu') }}
-                    </p>
-                    <p style="margin: 0; font-size: 10px;">Tel : {{ env('APP_PHONE', '+243 ...') }} – Email : {{
-                        env('APP_EMAIL', 'info@maishabora.com') }}</p>
-                </td>
-                <td style="width: 25%; text-align:right; font-size: 9px;">
-                    <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
-                    <strong>Heure :</strong> {{ now()->format('H:i') }}<br>
-                    <strong>Généré par :</strong> {{ auth()->user()->name }}
-                </td>
-            </tr>
-        </table>
-        <hr style="margin: 10px 0; border-bottom: 2px solid #ed8d0f;">
-        <h3 class="text-center" style="text-decoration: underline; margin-bottom: 5px; text-transform: uppercase;">
-            Rapport de Performance des Agents
-        </h3>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'Rapport de Performance des Agents'])
 
     <div class="filters-info"
         style="font-size: 8pt; background: #f8f9fa; padding: 5px; border: 1px solid #ddd; margin-bottom: 10px;">
@@ -198,7 +167,7 @@
     </table>
 
     <div class="footer">
-        {{ config('app.name') }} - Système de Gestion Intégré - Page 1
+        {{ $company->name ?? config('app.name') }} - Système de Gestion Intégré - Page 1
     </div>
 </body>
 

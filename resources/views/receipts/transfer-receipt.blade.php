@@ -76,11 +76,21 @@
 <body>
     <div class="container">
         <!-- En-tête -->
-        <div class="center bold">{{ config('app.name') }}</div>
+        @php
+            $logoPath = public_path('assets/img/logo.jpg');
+            $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+        @endphp
+        @if($logoData)
+            <div class="center">
+                <img src="data:image/png;base64,{{ $logoData }}" width="50px" alt="logo" class="img-center"
+                    style="margin-bottom: 5px;">
+            </div>
+        @endif
+        <div class="center bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
         <div class="center" style="font-size: 10px;">
-            N° ID : {{ env('APP_RCCM', '000-000-000') }}<br>
-            Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}<br>
-            Tél : {{ env('APP_PHONE', '+243 000 000 000') }}
+            N° ID : {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
+            Adresse : {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}<br>
+            Tél : {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}
         </div>
 
         <div class="line"></div>
@@ -128,7 +138,6 @@
 
         <!-- Pied de page -->
         <div class="footer">
-            Ce reçu fait foi de l’opération de virement effectuée.
 
             <table class="row-table" style="margin-top: 15px;">
                 <tr>

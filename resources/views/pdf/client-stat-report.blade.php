@@ -66,38 +66,15 @@
 </head>
 <body>
 
-        <div class="header" style="padding-bottom: 5px;">
-            <table style="width:100%;">
-                <tr>
-                    <td style="width: 15%;">
-                        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" class="logo" alt="Logo">
-                    </td>
-                    <td style="width: 60%; text-align:center;">
-                        <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
-                        <p style="margin: 0;">Adresse : {{ env('APP_ADRESS') }}</p>
-                        <p style="margin: 0;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
-                    </td>
-                    <td style="width: 25%; text-align:right; font-size: 9px;">
-                        <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
-                        <strong>Heure :</strong> {{ now()->format('H:i') }}<br>
-                        <strong>Agent :</strong><br>
-                        {{ Auth::user()->name }} {{ Auth::user()->postnom }}
-                    </td>
-                </tr>
-            </table>
-            <hr style="margin: 10px 0; border-bottom: 2px solid #ed8d0f;">
-            <h3 class="text-center" style="text-decoration: underline; margin-bottom: 2px;">{{ $titre }}</h3>
+    @include('partials.pdf-header', ['reportTitle' => $titre])
 
-        <table class="table" width="100%" style="margin-bottom: 5px;">
-            <tr>
-                <td><strong>Total clients :</strong> {{ $total }}</td>
-                <td><strong>Hommes :</strong> {{ $totalMale }}</td>
-                <td><strong>Femmes :</strong> {{ $totalFemale }}</td>
-            </tr>
-        </table>
-
-            
-        </div>
+    <table class="table" width="100%" style="margin-bottom: 5px;">
+        <tr>
+            <td><strong>Total clients :</strong> {{ $total }}</td>
+            <td><strong>Hommes :</strong> {{ $totalMale }}</td>
+            <td><strong>Femmes :</strong> {{ $totalFemale }}</td>
+        </tr>
+    </table>
 
         <table class="table" width="100%" border="1" cellspacing="0" cellpadding="5">
             <thead>
@@ -124,7 +101,7 @@
 
 
         <div class="footer">
-            Fiche générée le {{ now()->format('d/m/Y H:i') }} - {{ config('app.name') }}
+            Fiche générée le {{ now()->format('d/m/Y H:i') }} - {{ $company->name ?? config('app.name') }}
         </div>
 
 </body>

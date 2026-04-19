@@ -60,19 +60,22 @@
 
 <body>
 
-  <!-- Logo -->
-  {{-- <div class="center">
-    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" width="100px"
-      alt="" />
-  </div>}}
-  {{-- <img src="{{ asset('assets/img/logo.jpg') }}" width="100px" alt="" class="img-center" srcset=""> --}}
-
-
-  <!-- En-tête -->
-  <div class="center bold" style="font-size: 50px;">{{ config('app.name') }}</div>
-  <div class="center">N° ID : {{ env('APP_RCCM', '000-000-000') }}</div>
-  <div class="center">Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}</div>
-  <div class="center">Tél : {{ env('APP_PHONE', '+243 000 000 000') }}</div>
+  <!-- Logo & En-tête -->
+  @php
+      $logoPath = public_path('assets/img/logo.jpg');
+      $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+  @endphp
+  @if($logoData)
+      <div class="center">
+          <img src="data:image/png;base64,{{ $logoData }}" width="80px" alt="logo" />
+      </div>
+  @endif
+  <div class="center bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
+  <div class="center" style="font-size: 25px;">
+    N° ID : {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
+    Adresse : {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}<br>
+    Tél : {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}
+  </div>
   <div class="line"></div>
 
   <!-- Titre -->

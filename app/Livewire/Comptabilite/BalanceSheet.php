@@ -191,7 +191,7 @@ class BalanceSheet extends Component
             'dateReference' => $this->date_reference,
             'user' => Auth::user(),
             'generatedAt' => now()->format('d/m/Y H:i'),
-        ])->setPaper('a4', 'portrait');
+        ])->setPaper('a4', 'landscape');
 
         return response()->streamDownload(
             fn() => print ($pdf->output()),

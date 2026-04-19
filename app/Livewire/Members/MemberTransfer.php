@@ -163,7 +163,7 @@ class MemberTransfer extends Component
                 'currency' => $senderAccount->currency,
                 'amount' => $this->amount,
                 'balance_after' => $senderAccount->balance,
-                'description' => 'Virement vers ' . $receiver->name . ' (' . $this->description . ')',
+                'description' => 'Virement vers ' . $receiver->code . ' ' . $receiver->name . ' ' . $receiver->postnom . ' ' . $receiver->prenom . ' (' . $this->description . ')',
             ]);
 
             // Credit Receiver
@@ -177,7 +177,7 @@ class MemberTransfer extends Component
                 'currency' => $receiverAccount->currency,
                 'amount' => $this->amount,
                 'balance_after' => $receiverAccount->balance,
-                'description' => 'Virement reçu de ' . $this->sender->name . ' (' . $this->description . ')',
+                'description' => 'Virement reçu de ' . $this->sender->code . ' ' . $this->sender->name . ' ' . $this->sender->postnom . ' ' . $this->sender->prenom . ' (' . $this->description . ')',
             ]);
 
             // Notification

@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
         // Exécution des seeders dans l'ordre logique
         $this->call([
             MainCashRegisterSeeder::class,
+            CompanyInformationSeeder::class,
             UserSeeder::class,
             AccountSeeder::class,
             AgentAccountSeeder::class,

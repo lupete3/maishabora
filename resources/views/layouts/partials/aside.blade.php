@@ -4,7 +4,7 @@
             <span class="app-brand-logo demo ">
                 <img src="{{ asset('assets/img/logo.jpg') }}" width="50px" alt="" class="mr-2">
             </span>
-            {{ config('app.name', 'Maisha Bora') }}
+            {{ $company?->name ?? config('app.name', 'Maisha Bora') }}
         </a>
 
         <a class="layout-menu-toggle menu-link text-large ms-auto d-block d-xl-none">
@@ -370,6 +370,15 @@
                         </li>
                     @endcan
                 </ul>
+            </li>
+        @endcan
+
+        @can('afficher-informations-entreprise')
+            <li class="menu-item" wire:ignore.self>
+                <a href="{{ route('company.information') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-building"></i>
+                    <div data-i18n="Analytics">Info Entreprise</div>
+                </a>
             </li>
         @endcan
 

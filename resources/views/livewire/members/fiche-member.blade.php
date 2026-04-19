@@ -127,7 +127,7 @@
                 @else
                 <img src="{{ asset('assets/img/logo.jpg') }}" alt="Logo" width="100" style="margin-bottom:-40px">
                 @endif
-                <h2>FICHE CLIENT - {{ env('APP_NAME') }}</h2>
+                <h2>FICHE CLIENT - {{ $company?->name ?? config('app.name') }}</h2>
                 <small class="text-muted">Date : {{ now()->format('d/m/Y') }}</small>
             </div>
 
@@ -298,8 +298,8 @@
             </table>
 
             <div class="section-title">EN CAS DE DECES : HERITIER (E)</div>
-            <p>Advenant mon décès, "'ordonne "Asociation MAISHA BORA à réduire de mon compte ses droits vis-à-vis
-                de ma personne en crédit et autres frais de service. L'Association MAISHA BORA a d'office droit
+            <p>Advenant mon décès, j'ordonne à l'Association {{ $company?->name ?? config('app.name') }} de réduire de mon compte ses droits vis-à-vis
+                de ma personne en crédit et autres frais de service. L'Association {{ $company?->name ?? config('app.name') }} a d'office droit
                 de donner le solde de mes comptes au profit de : </p>
             <p> Mr, Mme ..................................................................................................................................................
                 que je désigne sans aucune contrainte ni influence mon héritier (e). </p>

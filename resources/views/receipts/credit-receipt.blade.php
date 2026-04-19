@@ -23,11 +23,19 @@
     </style>
 </head>
 <body>
-    <img src="{{ asset('assets/img/logo.jpg') }}" width="80px" alt="logo" class="img-center">
-    <div class="center bold">{{ config('app.name') }}</div>
-    <div class="center">N° ID : {{ env('APP_RCCM', '000-000-000') }}</div>
-    <div class="center">Adresse : {{ env('APP_ADRESS', 'Adresse non définie') }}</div>
-    <div class="center">Tél : {{ env('APP_PHONE', '+243 000 000 000') }}</div>
+    @php
+        $logoPath = public_path('assets/img/logo.jpg');
+        $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+    @endphp
+    @if($logoData)
+        <img src="data:image/png;base64,{{ $logoData }}" width="80px" alt="logo" class="img-center">
+    @endif
+    <div class="center bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
+    <div class="center" style="font-size: 10px;">
+        N° ID : {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
+        Adresse : {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}<br>
+        Tél : {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}
+    </div>
     <div class="line"></div>
 
     <div class="center bold">REÇU D'OCTROI DE CRÉDIT</div>

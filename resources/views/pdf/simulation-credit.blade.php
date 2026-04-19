@@ -39,7 +39,7 @@
 
 <body>
 
-    <h2 style="text-align: center;">PLAN DE REMBOURSEMENT DE CRÉDIT <br> MAISHA BORA </h2>
+    @include('partials.pdf-header', ['reportTitle' => 'PLAN DE REMBOURSEMENT DE CRÉDIT'])
     <p>
         <strong>Code Membre :</strong> {{ $user->code ?? '3420250000000000' }}<br>
         <strong>Nom Complet :</strong> {{ $user->name ?? 'MATATA' }} {{ $user->postnom ?? 'KODI' }}

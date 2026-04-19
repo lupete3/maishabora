@@ -60,9 +60,20 @@
 
     <!-- En-tête -->
     <div class="header">
-        <h2>{{ config('app.name') }}</h2>
-        <p><strong>Reçu de Virement</strong></p>
-        <p>Date : {{ now()->format('d/m/Y H:i') }}</p>
+        @php
+            $logoPath = public_path('assets/img/logo.jpg');
+            $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+        @endphp
+        @if($logoData)
+            <img src="data:image/png;base64,{{ $logoData }}" style="width: 50px; margin-bottom: 5px;">
+        @endif
+        <div class="bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
+        <div style="font-size: 10px;">
+            {{ $company?->address ?? env('APP_ADRESS') }}<br>
+            Tél : {{ $company?->phone ?? env('APP_PHONE') }}
+        </div>
+        <p class="bold" style="margin-top: 5px;">Reçu de Virement</p>
+        <p style="font-size: 10px;">Date : {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 
     <hr class="line">

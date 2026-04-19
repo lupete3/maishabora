@@ -3,7 +3,7 @@
         <tr>
             <td style="width: 15%;">
                 @php
-                    $logoPath = public_path('logo.jpg');
+                    $logoPath = public_path('assets/img/logo.jpg');
                     $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
                 @endphp
                 @if($logoData)
@@ -11,10 +11,12 @@
                 @endif
             </td>
             <td style="width: 60%; text-align:center;">
-                <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
-                <p style="margin: 0;">Adresse : {{ env('APP_ADRESS') }}</p>
-                <p style="margin: 0;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
-                @if(env('APP_RCCM'))
+                <h2 style="margin: 0; font-size: 14px;">{{ strtoupper($company->name ?? config('app.name')) }}</h2>
+                <p style="margin: 0;">Adresse : {{ $company->address ?? env('APP_ADRESS') }}</p>
+                <p style="margin: 0;">Tel : {{ $company->phone ?? env('APP_PHONE') }} – Email : {{ $company->email ?? env('APP_EMAIL') }}</p>
+                @if($company && $company->rccm)
+                    <p style="margin: 0;">RCCM : {{ $company->rccm }}</p>
+                @elseif(env('APP_RCCM'))
                     <p style="margin: 0;">RCCM : {{ env('APP_RCCM') }}</p>
                 @endif
             </td>

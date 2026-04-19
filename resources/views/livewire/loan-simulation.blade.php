@@ -69,7 +69,7 @@
             <div class="flex justify-between items-center mt-4">
                 <div>
                     <h2 class="text-xl font-bold text-center">PLAN DE REMBOURSEMENT DE CRÉDIT</h2>
-                    <p><strong>MAISHA BORA</strong></p>
+                    <p><strong>{{ $company?->name ?? config('app.name') }}</strong></p>
                 </div>
                 <div class="flex justify-between items-center mt-4">
                     <div class="space-x-2">

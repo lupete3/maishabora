@@ -105,10 +105,7 @@
 
 <body>
     {{-- En-tête --}}
-    <div class="header">
-        <h2>MAÏSHA BORA - Institution de Microfinance</h2>
-        <h3>COMPTE DE RÉSULTAT</h3>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'COMPTE DE RÉSULTAT'])
 
     {{-- Informations --}}
     <div class="info">
@@ -215,7 +212,7 @@
 
     {{-- Pied de page --}}
     <div class="footer">
-        <p>Document généré automatiquement par le système MAÏSHA BORA le {{ $generatedAt }}</p>
+        <p>Document généré automatiquement par le système {{ $company->name ?? config('app.name') }} le {{ $generatedAt }}</p>
         <p>Compte de Résultat - Période du {{ \Carbon\Carbon::parse($dateDebut)->format('d/m/Y') }} au
             {{ \Carbon\Carbon::parse($dateFin)->format('d/m/Y') }}</p>
     </div>

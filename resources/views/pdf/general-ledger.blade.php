@@ -94,10 +94,7 @@
 
 <body>
     {{-- En-tête --}}
-    <div class="header">
-        <h2>MAÏSHA BORA - Institution de Microfinance</h2>
-        <h3>GRAND LIVRE</h3>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'GRAND LIVRE'])
 
     {{-- Informations compte --}}
     <div class="info">
@@ -202,7 +199,7 @@
 
     {{-- Pied de page --}}
     <div class="footer">
-        <p>Document généré automatiquement par le système MAÏSHA BORA le {{ $generatedAt }}</p>
+        <p>Document généré automatiquement par le système {{ $company->name ?? config('app.name') }} le {{ $generatedAt }}</p>
         <p>Grand Livre - Compte {{ $compte->code }} - {{ $compte->intitule }}</p>
     </div>
 </body>

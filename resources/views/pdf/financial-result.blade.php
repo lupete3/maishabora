@@ -54,23 +54,6 @@
     font-size: 9px;
     }
 
-    /* Specific Layout for Resultat */
-    .row:after {
-    content: "";
-    display: table;
-    clear: both;
-    }
-
-    .column {
-    float: left;
-    width: 48%; /* Réduit pour laisser une marge */
-    margin-right: 1%;
-    }
-
-    .column:last-child {
-    margin-right: 0;
-    margin-left: 1%;
-    }
 
     .title-charge {
     color: #dc3545;
@@ -108,29 +91,7 @@
 <body>
 
     <div class="header">
-        <table style="width:100%;">
-            <tr>
-                <td style="width: 15%; border: none;">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
-                        class="logo" alt="Logo">
-                </td>
-                <td style="width: 60%; text-align:center; border: none;">
-                    <h2 style="margin: 0; font-size: 16px;">{{ strtoupper(config('app.name')) }}</h2>
-                    <p style="margin: 0;">Adresse : {{ env('APP_ADRESS') }}</p>
-                    <p style="margin: 0;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
-                </td>
-                <td style="width: 25%; text-align:right; font-size: 9px; border: none; vertical-align: top;">
-                    <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
-                    <strong>Heure :</strong> {{ now()->format('H:i') }}<br>
-                    <strong>Agent :</strong><br>
-                    {{ Auth::user()->name }} {{ Auth::user()->postnom }}
-                </td>
-            </tr>
-        </table>
-        <hr style="margin: 10px 0; border-bottom: 2px solid #ed8d0f;">
-        <h3 class="text-center" style="text-decoration: underline; margin-bottom: 5px; text-transform: uppercase;">
-            COMPTE DE RÉSULTAT ({{ $currency }})
-        </h3>
+    @include('partials.pdf-header', ['reportTitle' => 'COMPTE DE RÉSULTAT (' . $currency . ')'])
         @if(isset($date_debut) && isset($date_fin) && $period_type !== 'tout')
             <p class="text-center" style="margin: 0; font-size: 11px;">
                 Période : du {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }}
@@ -139,73 +100,74 @@
         @endif
     </div>
 
-    <div class="row">
-        <!-- CHARGES -->
-        <div class="column">
-            <h3 class="title-charge">Charges (Dépenses)</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th width="20%">Code</th>
-                        <th width="50%">Intitulé</th>
-                        <th width="30%" class="text-end">Solde</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($data['Charge'] as $charge)
+    <table style="width: 100%; border: none; border-collapse: collapse;">
+        <tr>
+            <td style="width: 49%; vertical-align: top; padding-right: 1%;">
+                <!-- CHARGES -->
+                <h3 class="title-charge">Charges (Dépenses)</h3>
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td>{{ $charge['code'] }}</td>
-                            <td>{{ $charge['intitule'] }}</td>
-                            <td class="text-end">{{ number_format($charge['solde'], 2, ',', ' ') }}</td>
+                            <th width="20%">Code</th>
+                            <th width="50%">Intitulé</th>
+                            <th width="30%" class="text-end">Solde</th>
                         </tr>
-                    @empty
+                    </thead>
+                    <tbody>
+                        @forelse($data['Charge'] as $charge)
+                            <tr>
+                                <td>{{ $charge['code'] }}</td>
+                                <td>{{ $charge['intitule'] }}</td>
+                                <td class="text-end">{{ number_format($charge['solde'], 2, ',', ' ') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center">Aucune charge</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #eee; font-weight: bold;">
+                            <td colspan="2">TOTAL CHARGES</td>
+                            <td class="text-end">{{ number_format($totals['Charge'], 2, ',', ' ') }}</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </td>
+            <td style="width: 49%; vertical-align: top; padding-left: 1%;">
+                <!-- PRODUITS -->
+                <h3 class="title-produit">Produits (Recettes)</h3>
+                <table class="table">
+                    <thead>
                         <tr>
-                            <td colspan="3" class="text-center">Aucune charge</td>
+                            <th width="20%">Code</th>
+                            <th width="50%">Intitulé</th>
+                            <th width="30%" class="text-end">Solde</th>
                         </tr>
-                    @endforelse
-                </tbody>
-                <tfoot>
-                    <tr style="background-color: #eee; font-weight: bold;">
-                        <td colspan="2">TOTAL CHARGES</td>
-                        <td class="text-end">{{ number_format($totals['Charge'], 2, ',', ' ') }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-
-        <!-- PRODUITS -->
-        <div class="column">
-            <h3 class="title-produit">Produits (Recettes)</h3>
-            <table class="table">
-                <thead>
-                    <tr>
-                        <th width="20%">Code</th>
-                        <th width="50%">Intitulé</th>
-                        <th width="30%" class="text-end">Solde</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($data['Produit'] as $product)
-                        <tr>
-                            <td>{{ $product['code'] }}</td>
-                            <td>{{ $product['intitule'] }}</td>
-                            <td class="text-end">{{ number_format($product['solde'], 2, ',', ' ') }}</td>
+                    </thead>
+                    <tbody>
+                        @forelse($data['Produit'] as $product)
+                            <tr>
+                                <td>{{ $product['code'] }}</td>
+                                <td>{{ $product['intitule'] }}</td>
+                                <td class="text-end">{{ number_format($product['solde'], 2, ',', ' ') }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="3" class="text-center">Aucun produit</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot>
+                        <tr style="background-color: #eee; font-weight: bold;">
+                            <td colspan="2">TOTAL PRODUITS</td>
+                            <td class="text-end">{{ number_format($totals['Produit'], 2, ',', ' ') }}</td>
                         </tr>
-                    @empty
-                        <tr>
-                            <td colspan="3" class="text-center">Aucun produit</td>
-                        </tr>
-                    @endforelse
-                </tbody>
-                <tfoot>
-                    <tr style="background-color: #eee; font-weight: bold;">
-                        <td colspan="2">TOTAL PRODUITS</td>
-                        <td class="text-end">{{ number_format($totals['Produit'], 2, ',', ' ') }}</td>
-                    </tr>
-                </tfoot>
-            </table>
-        </div>
-    </div>
+                    </tfoot>
+                </table>
+            </td>
+        </tr>
+    </table>
 
     <div class="result-box">
         <strong>RÉSULTAT NET : {{ number_format($resultat, 2, ',', ' ') }} {{ $currency }}</strong>
@@ -215,7 +177,7 @@
     </div>
 
     <div class="footer">
-        Document généré le {{ now()->format('d/m/Y à H:i') }} - {{ config('app.name') }}
+        Document généré le {{ now()->format('d/m/Y à H:i') }} - {{ $company->name ?? config('app.name') }}
     </div>
 
 </body>

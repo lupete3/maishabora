@@ -49,6 +49,11 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-role|afficher-ut
     Route::get('/roles', [UserController::class, 'roles'])->name('role.management');
 });
 
+Route::middleware(['auth', 'auth.session', 'permission:afficher-informations-entreprise'])->group(function () {
+    Route::get('/entreprise', [\App\Http\Controllers\Admin\CompanyInformationController::class, 'index'])->name('company.information');
+    Route::post('/entreprise/update', [\App\Http\Controllers\Admin\CompanyInformationController::class, 'update'])->name('company.information.update');
+});
+
 Route::middleware(['auth', 'auth.session', 'permission:afficher-caisse-centrale'])->group(function () {
     Route::get('/caisse-centrale', [ManageCashRegisterController::class, 'index'])->name('cash.register');
     Route::get('/caisse-centrale/export-transactions', [ManageCashRegisterController::class, 'generate'])

@@ -40,29 +40,7 @@
     </style>
 </head>
 <body>
-    <div class="header" style="padding-bottom: 5px;">
-        <table style="width:100%;">
-            <tr>
-                <td style="width: 10%;">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}" class="logo" alt="Logo">
-                </td>
-                <td style="width: 60%; text-align:center;">
-                    <h4 style="margin: 0; font-size: 10px;">{{ strtoupper(config('app.name')) }}</h4>
-                    <p style="margin: 0; font-size: 9px;">Adresse : {{ env('APP_ADRESS') }}</p>
-                    <p style="margin: 0; font-size: 9px;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
-                </td>
-                <td style="width: 30%; text-align:right; font-size: 9px;">
-                    <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
-                    <strong>Agent :</strong><br>
-                    {{ $payroll->user->name }} {{ $payroll->user->postnom }}
-                </td>
-            </tr>
-        </table>
-        <hr style="margin: 5px 0; border-bottom: 2px solid #ed8d0f;">
-        <h3 class="text-center" style="text-decoration: underline; margin-bottom: 2px;">
-            BULLETIN DE PAIE - PÉRIODE : {{ strtoupper($payroll->period) }}
-        </h3>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'BULLETIN DE PAIE - PÉRIODE : ' . strtoupper($payroll->period)])
 
     <div style="margin-top: 5px; margin-bottom: 10px;">
         <table class="sub-table">
@@ -170,9 +148,9 @@
     </table>
 
 
-    {{-- <div class="footer">
-        Bulletin généré le {{ now()->format('d/m/Y H:i') }} - {{ config('app.name') }}
-    </div> --}}
+    <div class="footer">
+        Bulletin généré le {{ now()->format('d/m/Y H:i') }} - {{ $company->name ?? config('app.name') }}
+    </div>
 </body>
 </html>
 

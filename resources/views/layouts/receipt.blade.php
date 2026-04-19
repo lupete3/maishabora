@@ -49,9 +49,16 @@
 
 <body>
     <div class="header">
-        <div class="bold">{{ strtoupper(config('app.name')) }}</div>
-        <div>{{ env('APP_ADRESS') }}</div>
-        <div>Tel: {{ env('APP_PHONE') }}</div>
+        @php
+            $logoPath = public_path('assets/img/logo.jpg');
+            $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
+        @endphp
+        @if($logoData)
+            <img src="data:image/png;base64,{{ $logoData }}" style="width: 60px; margin-bottom: 5px;" alt="Logo">
+        @endif
+        <div class="bold">{{ strtoupper($company->name ?? config('app.name')) }}</div>
+        <div>{{ $company->address ?? env('APP_ADRESS') }}</div>
+        <div>Tel: {{ $company->phone ?? env('APP_PHONE') }}</div>
     </div>
 
     <div class="divider"></div>

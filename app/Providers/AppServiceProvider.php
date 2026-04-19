@@ -28,5 +28,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(User::class, UserPolicy::class);
 
         Blaze::optimize()->in(resource_path('views/components'));
+
+        \Illuminate\Support\Facades\View::share('company', \App\Models\CompanyInformation::getActive());
     }
 }

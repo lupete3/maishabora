@@ -57,11 +57,7 @@
 </head>
 <body>
 
-<div class="header">
-    <h1>RAPPORT MENSUEL DES CONTRIBUTIONS</h1>
-    <p><strong>{{ config('app.name') }}</strong></p>
-    <p>Période : {{ $month }}</p>
-</div>
+    @include('partials.pdf-header', ['reportTitle' => 'RAPPORT MENSUEL DES CONTRIBUTIONS'])
 
 <div class="info-section">
     <p><strong>Membre :</strong> {{ $member->name }} {{ $member->postnom }} {{ $member->prenom }}</p>
@@ -98,7 +94,7 @@
 
 <div class="footer">
     Ce document est un récapitulatif automatique de vos versements pour le mois de {{ $month }}.<br>
-    Merci pour votre contribution au développement de notre ASBL.
+    Merci pour votre contribution au développement de {{ $company->name ?? config('app.name') }}.
 </div>
 
 </body>

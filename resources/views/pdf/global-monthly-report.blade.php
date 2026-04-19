@@ -73,10 +73,7 @@
 </head>
 <body>
 
-<div class="header">
-    <h2>Rapport Mensuel Global</h2>
-    <p>Période : {{ now()->format('F Y') }}</p>
-</div>
+    @include('partials.pdf-header', ['reportTitle' => 'RAPPORT MENSUEL GLOBAL', 'date' => now()->format('d/m/Y'), 'heure' => now()->format('H:i')])
 
 <h4>Statistiques Générales</h4>
 <table>
@@ -113,7 +110,7 @@
 </table>
 
 <div class="footer">
-    Document généré automatiquement par le système.
+    Document généré automatiquement par le système {{ $company->name ?? config('app.name') }}.
 </div>
 
 </body>

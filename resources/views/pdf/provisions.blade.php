@@ -127,31 +127,7 @@
 </head>
 
 <body>
-    <div class="header">
-        <table style="width:100%;">
-            <tr>
-                <td style="width: 15%; border: none;">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
-                        style="width: 80px;" alt="Logo">
-                </td>
-                <td style="width: 60%; text-align:center; border: none;">
-                    <h2 style="margin: 0; font-size: 14px;">{{ strtoupper(config('app.name')) }}</h2>
-                    <p style="margin: 0;">Adresse : {{ env('APP_ADRESS') }}</p>
-                    <p style="margin: 0;">Tel : {{ env('APP_PHONE') }} – Email : {{ env('APP_EMAIL') }}</p>
-                </td>
-                <td style="width: 25%; text-align:right; font-size: 9px; border: none;">
-                    <strong>Date :</strong> {{ now()->format('d/m/Y') }}<br>
-                    <strong>Heure :</strong> {{ now()->format('H:i') }}<br>
-                    <strong>Agent :</strong><br>
-                    {{ Auth::user()->name ?? 'N/A' }} {{ Auth::user()->postnom ?? '' }} {{ Auth::user()->prenom ?? '' }}
-                </td>
-            </tr>
-        </table>
-        <hr style="margin: 10px 0; border: none; border-bottom: 2px solid #ed8d0f;">
-        <h3 style="text-align: center; text-decoration: underline; margin-bottom: 2px;">
-            RAPPORT PORTREFEUILLE À RISQUE & PROVISIONS ({{ $currency == 'all' ? 'Toutes Devises' : $currency }})
-        </h3>
-    </div>
+    @include('partials.pdf-header', ['reportTitle' => 'RAPPORT PORTREFEUILLE À RISQUE & PROVISIONS (' . ($currency == 'all' ? 'Toutes Devises' : $currency) . ')'])
 
     <table class="summary-box">
         <tr>
@@ -250,7 +226,7 @@
     @endforeach
 
     <div class="footer">
-        Maisha Bora - Système de Gestion Comptable - Généré le {{ date('d/m/Y H:i') }}
+        {{ $company->name ?? config('app.name') }} - Système de Gestion Comptable - Généré le {{ date('d/m/Y H:i') }}
     </div>
 </body>
 

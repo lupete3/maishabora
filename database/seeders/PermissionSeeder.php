@@ -101,7 +101,10 @@ class PermissionSeeder extends Seeder
             "approuver-decaissement",
             "rejeter-decaissement",
             "autoriser-tout-retirer",
-            "annuler-paye"
+            "annuler-paye",
+
+            "afficher-informations-entreprise",
+            "modifier-informations-entreprise"
 
 
         ];
@@ -109,5 +112,15 @@ class PermissionSeeder extends Seeder
         foreach ($permissions as $key => $permission) {
             Permission::firstOrCreate(['name' => $permission]);
         }
+
+        // Création des rôles et assignation des permissions
+        $adminRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'admin']);
+        $adminRole->givePermissionTo(Permission::all());
+
+        $secretariatRole = \Spatie\Permission\Models\Role::firstOrCreate(['name' => 'Secrétariat']);
+        $secretariatRole->givePermissionTo([
+            'afficher-informations-entreprise',
+            'modifier-informations-entreprise'
+        ]);
     }
 }

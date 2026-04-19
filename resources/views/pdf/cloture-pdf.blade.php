@@ -57,51 +57,52 @@
             </tbody>
         </table>
 
-        <div style="width: 100%; display: inline-block;">
-            <div style="width: 49%; display: inline-block; vertical-align: top;">
-                <h4 style="text-align:center;">USD</h4>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Valeur</th>
-                            <th>Quantité</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($cl->billetages->where('currency', 'USD') as $billet)
+        <table style="width: 100%; border: none; border-collapse: collapse;">
+            <tr>
+                <td style="width: 49%; vertical-align: top; padding-right: 1%;">
+                    <h4 style="text-align:center;">USD</h4>
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>${{ number_format($billet->denomination, 0) }}</td>
-                                <td>{{ $billet->quantity }}</td>
-                                <td>${{ number_format($billet->total, 2) }}</td>
+                                <th>Valeur</th>
+                                <th>Quantité</th>
+                                <th>Total</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            <div style="width: 49%; display: inline-block; vertical-align: top; margin-left: 1%;">
-                <h4 style="text-align:center;">CDF</h4>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Valeur</th>
-                            <th>Quantité</th>
-                            <th>Total</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($cl->billetages->where('currency', 'CDF') as $billet)
+                        </thead>
+                        <tbody>
+                            @foreach ($cl->billetages->where('currency', 'USD') as $billet)
+                                <tr>
+                                    <td>${{ number_format($billet->denomination, 0) }}</td>
+                                    <td>{{ $billet->quantity }}</td>
+                                    <td>${{ number_format($billet->total, 2) }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
+                <td style="width: 49%; vertical-align: top; padding-left: 1%;">
+                    <h4 style="text-align:center;">CDF</h4>
+                    <table class="table">
+                        <thead>
                             <tr>
-                                <td>{{ number_format($billet->denomination, 0) }} CDF</td>
-                                <td>{{ $billet->quantity }}</td>
-                                <td>{{ number_format($billet->total, 2) }} CDF</td>
+                                <th>Valeur</th>
+                                <th>Quantité</th>
+                                <th>Total</th>
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        </div>
+                        </thead>
+                        <tbody>
+                            @foreach ($cl->billetages->where('currency', 'CDF') as $billet)
+                                <tr>
+                                    <td>{{ number_format($billet->denomination, 0) }} CDF</td>
+                                    <td>{{ $billet->quantity }}</td>
+                                    <td>{{ number_format($billet->total, 2) }} CDF</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </td>
+            </tr>
+        </table>
 
         <table style="width:100%; margin-top:40px">
             <tr>

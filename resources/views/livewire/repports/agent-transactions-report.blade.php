@@ -111,8 +111,6 @@
                     </div>
                 @empty
                     <div class="p-4 text-center">
-                        <img src="{{ asset('assets/img/illustrations/empty-state.svg') }}" alt="Aucune transaction"
-                            width="120" class="mb-3">
                         <p class="text-muted">Aucune transaction trouvée pour les critères sélectionnés.</p>
                     </div>
                 @endforelse

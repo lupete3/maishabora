@@ -62,22 +62,7 @@
 </head>
 
 <body>
-    <div class="header">
-        <table style="width:100%">
-            <tr>
-                <td style="width:20%"><img
-                        src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('logo.jpg'))) }}"
-                        class="logo"></td>
-                <td style="width:60%; text-align:center">
-                    <h2>{{ strtoupper(config('app.name')) }}</h2>
-                    <p>{{ env('APP_ADRESS') }}<br>Tel: {{ env('APP_PHONE') }}</p>
-                </td>
-                <td style="width:20%"></td>
-            </tr>
-        </table>
-    </div>
-
-    <div class="title">BON DE DÉCAISSEMENT N° {{ $transaction->id }}</div>
+    @include('partials.pdf-header', ['reportTitle' => 'BON DE DÉCAISSEMENT N° ' . $transaction->id])
 
     <div class="content">
         <div class="row">

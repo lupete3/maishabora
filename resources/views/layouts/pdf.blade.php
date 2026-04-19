@@ -77,7 +77,7 @@
 
     @section('footer')
     <div class="footer">
-        Rapport généré le {{ now()->format('d/m/Y H:i') }} - {{ config('app.name') }}
+        Rapport généré le {{ now()->format('d/m/Y H:i') }} - {{ $company->name ?? config('app.name') }}
     </div>
     @show
 
