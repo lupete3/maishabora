@@ -14,7 +14,7 @@
 
     <div class="menu-inner-shadow"></div>
 
-    <ul class="menu-inner py-1" style="margin-bottom:10px">
+    <ul class="menu-inner py-1" style="margin-bottom:20px">
         <!-- Dashboard -->
         <li class="menu-item @if (request()->routeIs('dashboard')) active @endif">
             <a href="{{ route('dashboard') }}" class="menu-link">
