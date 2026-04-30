@@ -229,6 +229,16 @@ Route::post('/logout', function () {
 })->name('logout');
 
 
+// Web Cron Route for scheduled tasks (bypasses hosting cron limits)
+Route::get('/cron/executer-retards/{token}', function ($token) {
+    $secretToken = 'maishabora_cron_secret_7x9A2mP5vK3'; 
+    if ($token !== $secretToken) {
+        abort(403, 'Accès refusé');
+    }
+    \Illuminate\Support\Facades\Artisan::call('check:overdue-repayments');
+    return 'Vérification des retards exécutée avec succès à ' . now();
+});
+
 //Route to 404 page not found
 Route::fallback(function () {
     return view('not-found');
