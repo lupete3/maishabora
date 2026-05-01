@@ -416,10 +416,17 @@
                 </ul>
             </li>
 
-            <li class="menu-item @if (request()->routeIs('repayments.simulation')) active @endif">
+            <li class="menu-item @if (request()->routeIs('rapports.logs')) active @endif">
                 <a href="{{ route('rapports.logs') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-history"></i> <!-- Icône de calculateur -->
                     <div data-i18n="Analytics">Logs du système</div>
+                </a>
+            </li>
+
+            <li class="menu-item">
+                <a href="{{ route('system.run-cron') }}" class="menu-link" onclick="return confirm('Voulez-vous forcer l\'exécution de la vérification des retards maintenant ?')">
+                    <i class="menu-icon tf-icons bx bx-cog"></i>
+                    <div data-i18n="Analytics">Forcer l'exécution (Cron)</div>
                 </a>
             </li>
         @endcan
