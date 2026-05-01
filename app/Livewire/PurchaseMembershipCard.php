@@ -47,6 +47,7 @@ class PurchaseMembershipCard extends Component
     public $edit_price;
     public $edit_subscription_amount;
     public $edit_agent_id;
+    public $edit_card_type;
 
     protected $rules = [
         'agent_id' => 'nullable|exists:users,id',
@@ -323,12 +324,19 @@ class PurchaseMembershipCard extends Component
             return;
         }
 
+        // Blocage si des mises ont déjà été payées
+        if ($card->contributions()->where('is_paid', true)->exists()) {
+            notyf()->error('Modification impossible : une mise a déjà été effectuée sur ce carnet.');
+            return;
+        }
+
         $this->editCardId = $card->id;
         $this->edit_code = $card->code;
         $this->edit_currency = $card->currency;
         $this->edit_price = $card->price;
         $this->edit_subscription_amount = $card->subscription_amount;
         $this->edit_agent_id = $card->user_id;
+        $this->edit_card_type = $card->card_type;
 
         $this->editModal = true;
     }
@@ -359,13 +367,21 @@ class PurchaseMembershipCard extends Component
             'user_id' => $this->edit_agent_id,
         ]);
 
+        // Si c'est un carnet d'épargne, mettre à jour le montant
+        // de toutes les mises journalières non encore payées
+        if ($card->card_type === 'epargne') {
+            $card->contributions()
+                ->where('is_paid', false)
+                ->update(['amount' => $this->edit_subscription_amount]);
+        }
+
         UserLogHelper::log_user_activity(
             action: 'modification_carte_adhesion',
             description: "Modification de la carte #{$card->id} ({$card->code}) du membre {$card->member->name}"
         );
 
         $this->editModal = false;
-        $this->reset(['editCardId', 'edit_code', 'edit_currency', 'edit_price', 'edit_subscription_amount', 'edit_agent_id']);
+        $this->reset(['editCardId', 'edit_code', 'edit_currency', 'edit_price', 'edit_subscription_amount', 'edit_agent_id', 'edit_card_type']);
         $this->dispatch('$refresh');
         notyf()->success('Carte modifiée avec succès.');
     }
