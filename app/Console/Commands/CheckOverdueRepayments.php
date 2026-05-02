@@ -12,8 +12,10 @@ use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use App\Models\Notification;
 use App\Models\Credit;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class CheckOverdueRepayments extends Command
 {
@@ -58,7 +60,7 @@ class CheckOverdueRepayments extends Command
 
             //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
             $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
-            
+
             // Si le compte est autorisé à tout retirer, le solde minimum est de 0
             if ($account->can_withdraw_all) {
                 $minBalance = 0;
@@ -94,7 +96,7 @@ class CheckOverdueRepayments extends Command
                         'user_id' => $member->id,
                         'type' => 'remboursement_de_credit',
                         'currency' => $credit->currency,
-                        'amount' => $expectedAmount,
+                        'amount' => $totalDue,
                         'balance_after' => $account->balance,
                         'description' => "Remboursement automatique de l'échéance n°{$repayment->id}",
                     ]);
@@ -147,6 +149,19 @@ class CheckOverdueRepayments extends Command
                         'message' => "Votre échéance du {$repayment->due_date} a été remboursée automatiquement avec succès.",
                         'read' => false,
                     ]);
+
+                    // Notifier les utilisateurs concernés
+                    $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+                    $notificationMessage = "Un remboursement de " . number_format($totalDue, 2) . " {$credit->currency} a été effectué pour le membre {$member->name} {$member->postnom} ({$member->code}) ";
+
+                    foreach ($usersToNotify as $notifyUser) {
+                        Notification::create([
+                            'user_id' => $notifyUser->id,
+                            'title' => 'Remboursement Automatique',
+                            'message' => $notificationMessage,
+                            'read' => false,
+                        ]);
+                    }
                 });
             } else {
                 // insuffisant → appliquer pénalité sans virement
