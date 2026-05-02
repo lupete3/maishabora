@@ -157,7 +157,7 @@ class CheckOverdueRepayments extends Command
                     foreach ($usersToNotify as $notifyUser) {
                         Notification::create([
                             'user_id' => $notifyUser->id,
-                            'title' => 'Retrait effectué',
+                            'title' => 'Remboursement automatique effectué',
                             'message' => $notificationMessage,
                             'read' => false,
                         ]);
