@@ -40,6 +40,22 @@ class LoginForm extends Form
             ]);
         }
 
+        $user = Auth::user();
+
+        // Vérifier si l'utilisateur a au moins un rôle attribué via Spatie ET si son compte est actif
+        if ($user && ($user->roles->isEmpty() || !$user->status)) {
+            Auth::logout();
+
+            $errorMessage = !$user->status
+                ? 'Accès refusé. Votre compte est désactivé. Veuillez contacter l\'administrateur.'
+                : 'Accès refusé. Votre compte n\'a pas encore de rôle attribué. Veuillez contacter l\'administrateur.';
+
+            throw ValidationException::withMessages([
+                'form.email' => $errorMessage,
+                notyf()->error(message: $errorMessage)
+            ]);
+        }
+
         RateLimiter::clear($this->throttleKey());
     }
 
@@ -69,7 +85,7 @@ class LoginForm extends Form
      */
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->email).'|'.request()->ip());
+        return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
     }
 
     public function messages(): array
@@ -83,5 +99,4 @@ class LoginForm extends Form
             'remember.boolean' => 'La valeur du champ se souvenir doit être vrai ou faux.',
         ];
     }
-
 }

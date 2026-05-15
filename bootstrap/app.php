@@ -20,15 +20,14 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        // $middleware->alias([
-        //     'role.admin' => EnsureUserIsAdmin::class,
-        //     'role' => EnsureUserRole::class,
-        // ]);
         $middleware->alias([
             'role' => RoleMiddleware::class,
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
+            'check.user' => \App\Http\Middleware\CheckUserStatusAndRole::class,
         ]);
+
+        $middleware->appendToGroup('web', \App\Http\Middleware\CheckUserStatusAndRole::class);
     })
     ->withSchedule(function (Schedule $schedule) {
         // Notification retard paiement

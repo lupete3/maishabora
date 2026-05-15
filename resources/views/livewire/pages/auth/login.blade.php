@@ -22,7 +22,7 @@ new #[Layout('layouts.guest')] class extends Component
 
         Session::regenerate();
 
-        UserLogHelper::log_user_activity('Connexion', 'Utilisateur déconnecté');
+        UserLogHelper::log_user_activity('Connexion', 'Utilisateur connecté');
 
         $this->redirectIntended(default: route('dashboard', absolute: false), navigate: false);
     }
