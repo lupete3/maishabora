@@ -10,17 +10,17 @@ use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
-    public string $name = '';
-    public string $postnom = '';
-    public ?string $prenom = null;
-    public ?string $date_naissance = null;
-    public string $telephone = '';
-    public ?string $adresse_physique = null;
-    public ?string $profession = null;
-    public string $email = '';
-    public string $password = '';
-    public string $password_confirmation = '';
-    public string $role = 'membre'; // Valeur par défaut
+    public $name = '';
+    public $postnom = '';
+    public $prenom = null;
+    public $date_naissance = null;
+    public $telephone = '';
+    public $adresse_physique = null;
+    public $profession = null;
+    public $email = '';
+    public $password = '';
+    public $password_confirmation = '';
+    public $role = 'membre'; // Valeur par défaut
 
 
     /**

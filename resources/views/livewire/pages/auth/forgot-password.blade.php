@@ -1,21 +1,32 @@
 <?php
 
 use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
 
 new #[Layout('layouts.guest')] class extends Component
 {
-    public string $email = '';
+    public $email = '';
 
     /**
      * Send a password reset link to the provided email address.
      */
     public function sendPasswordResetLink(): void
     {
+        // Rate limiting par IP pour éviter le spam de mails
+        if (RateLimiter::tooManyAttempts('forgot-password:'.request()->ip(), 5)) {
+            $seconds = RateLimiter::availableIn('forgot-password:'.request()->ip());
+            $this->addError('email', "Trop de tentatives. Veuillez patienter {$seconds} secondes.");
+            return;
+        }
+
         $this->validate([
             'email' => ['required', 'string', 'email'],
         ]);
+
+        // On enregistre la tentative
+        RateLimiter::hit('forgot-password:'.request()->ip(), 900); // 15 minutes de blocage après 5 essais
 
         // We will send the password reset link to this user. Once we have attempted
         // to send the link, we will examine the response then see the message we

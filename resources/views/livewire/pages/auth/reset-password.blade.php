@@ -13,10 +13,10 @@ use Livewire\Volt\Component;
 new #[Layout('layouts.guest')] class extends Component
 {
     #[Locked]
-    public string $token = '';
-    public string $email = '';
-    public string $password = '';
-    public string $password_confirmation = '';
+    public $token = '';
+    public $email = '';
+    public $password = '';
+    public $password_confirmation = '';
 
     /**
      * Mount the component.
