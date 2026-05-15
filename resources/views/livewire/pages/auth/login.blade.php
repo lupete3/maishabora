@@ -1,32 +1,82 @@
 <?php
 
+use App\Helpers\UserLogHelper;
 use App\Livewire\Forms\LoginForm;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Volt\Component;
-use App\Helpers\UserLogHelper;
-
 
 new #[Layout('layouts.guest')] class extends Component
 {
     public LoginForm $form;
 
     /**
-     * Handle an incoming authentication request.
+     * Authentification utilisateur
      */
     public function login(): void
     {
-        $this->validate();
+        try {
 
-        $this->form->authenticate();
+            /**
+             * Validation sécurisée
+             */
+            $this->form->validate();
 
-        Session::regenerate();
+            /**
+             * Authentification
+             */
+            $this->form->authenticate();
 
-        UserLogHelper::log_user_activity('Connexion', 'Utilisateur connecté');
+            /**
+             * Régénération session
+             */
+            Session::regenerate();
 
-        $this->redirectIntended(default: route('dashboard', absolute: false), navigate: false);
+            /**
+             * Régénération CSRF token
+             */
+            request()->session()->regenerateToken();
+
+            /**
+             * Journal activité
+             */
+            UserLogHelper::log_user_activity(
+                'Connexion',
+                'Utilisateur connecté'
+            );
+
+            /**
+             * Redirection
+             */
+            $this->redirectIntended(
+                default: route('dashboard', absolute: false),
+                navigate: false
+            );
+
+        } catch (ValidationException $e) {
+
+            throw $e;
+
+        } catch (\Throwable $e) {
+
+            /**
+             * Log erreur sécurité
+             */
+            Log::error('Erreur connexion Livewire', [
+                'message' => $e->getMessage(),
+                'ip' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]);
+
+            throw ValidationException::withMessages([
+                'form.email' => 'Une erreur est survenue. Veuillez réessayer.',
+            ]);
+        }
     }
-}; ?>
+};
+?>
 
 <div class="authentication-wrapper authentication-basic container-p-y">
     <div class="authentication-inner">
@@ -106,10 +156,25 @@ new #[Layout('layouts.guest')] class extends Component
                     </div>
 
                     <div class="mb-3">
-                        <button class="btn btn-primary d-grid w-100" type="submit" >
-                            <span wire:loading.remove>Connexion</span>
-                            <i wire:loading class="spinner-border text-white text-center" role="status"
-                            style="margin-left:40%"></i>
+                        <button
+                            class="btn btn-primary d-grid w-100"
+                            type="submit"
+                            wire:loading.attr="disabled"
+                            wire:target="login"
+                        >
+
+                            <span wire:loading.remove wire:target="login">
+                                Connexion
+                            </span>
+
+                            <span
+                                wire:loading.flex
+                                wire:target="login"
+                                class="justify-content-center align-items-center"
+                            >
+                                <i class="spinner-border spinner-border-sm text-white"></i>
+                            </span>
+
                         </button>
                     </div>
 

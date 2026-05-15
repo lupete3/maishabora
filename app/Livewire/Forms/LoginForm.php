@@ -4,6 +4,7 @@ namespace App\Livewire\Forms;
 
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -12,65 +13,160 @@ use Livewire\Form;
 
 class LoginForm extends Form
 {
-    #[Validate('required|string|email')]
-    public $email = '';
+    #[Validate([
+        'required',
+        'string',
+        'email:rfc,dns',
+        'max:255',
+    ])]
+    public string $email = '';
 
-    #[Validate('required|string')]
-    public $password = '';
+    #[Validate([
+        'required',
+        'string',
+        'min:4',
+        'max:255',
+    ])]
+    public string $password = '';
 
     #[Validate('boolean')]
     public bool $remember = false;
 
     /**
-     * Attempt to authenticate the request's credentials.
+     * Authentifier l'utilisateur
      *
-     * @throws \Illuminate\Validation\ValidationException
+     * @throws ValidationException
      */
     public function authenticate(): void
     {
+        /**
+         * Protection supplémentaire contre
+         * les payloads malveillants Livewire
+         */
+        if (
+            !is_string($this->email) ||
+            !is_string($this->password)
+        ) {
+
+            $this->logSecurityEvent(
+                'Payload invalide détecté',
+                [
+                    'email_type' => gettype($this->email),
+                    'password_type' => gettype($this->password),
+                ]
+            );
+
+            throw ValidationException::withMessages([
+                'form.email' => 'Coordonnées invalides.',
+            ]);
+        }
+
+        /**
+         * Nettoyage des données
+         */
+        $this->email = trim(Str::lower($this->email));
+        $this->password = trim($this->password);
+
+        /**
+         * Validation Livewire
+         */
+        $this->validate();
+
+        /**
+         * Vérification brute force
+         */
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only(['email', 'password']), $this->remember)) {
-            RateLimiter::hit($this->throttleKey());
+        /**
+         * Tentative de connexion
+         */
+        if (!Auth::attempt([
+            'email' => $this->email,
+            'password' => $this->password,
+        ], $this->remember)) {
+
+            RateLimiter::hit($this->throttleKey(), 300);
+
+            $this->logSecurityEvent(
+                'Échec connexion',
+                [
+                    'email' => $this->email,
+                ]
+            );
 
             throw ValidationException::withMessages([
-                'form.email' => 'Coordonnées invalides !', //trans('auth.failed')
-                notyf()->error(message: __('Coordonnées invalides !'))
-
+                'form.email' => 'Coordonnées invalides.',
             ]);
         }
 
+        /**
+         * Utilisateur connecté
+         */
         $user = Auth::user();
 
-        // Vérifier si l'utilisateur a au moins un rôle attribué via Spatie ET si son compte est actif
-        if ($user && ($user->roles->isEmpty() || !$user->status)) {
+        /**
+         * Vérification sécurité compte
+         */
+        if (
+            !$user ||
+            $user->roles->isEmpty() ||
+            !$user->status
+        ) {
+
             Auth::logout();
 
-            $errorMessage = !$user->status
-                ? 'Accès refusé. Votre compte est désactivé. Veuillez contacter l\'administrateur.'
-                : 'Accès refusé. Votre compte n\'a pas encore de rôle attribué. Veuillez contacter l\'administrateur.';
+            $this->logSecurityEvent(
+                'Compte refusé après authentification',
+                [
+                    'user_id' => $user?->id,
+                    'email' => $user?->email,
+                    'status' => $user?->status,
+                    'roles_count' => $user?->roles?->count(),
+                ]
+            );
 
+            /**
+             * Message générique
+             * pour éviter l'énumération
+             */
             throw ValidationException::withMessages([
-                'form.email' => $errorMessage,
-                notyf()->error(message: $errorMessage)
+                'form.email' => 'Accès refusé.',
             ]);
         }
 
+        /**
+         * Succès connexion
+         */
         RateLimiter::clear($this->throttleKey());
+
+        $this->logSecurityEvent(
+            'Connexion réussie',
+            [
+                'user_id' => $user->id,
+                'email' => $user->email,
+            ]
+        );
     }
 
     /**
-     * Ensure the authentication request is not rate limited.
+     * Protection brute force
      */
     protected function ensureIsNotRateLimited(): void
     {
-        if (! RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
+        if (!RateLimiter::tooManyAttempts($this->throttleKey(), 5)) {
             return;
         }
 
         event(new Lockout(request()));
 
         $seconds = RateLimiter::availableIn($this->throttleKey());
+
+        $this->logSecurityEvent(
+            'Blocage brute force',
+            [
+                'seconds_remaining' => $seconds,
+            ]
+        );
 
         throw ValidationException::withMessages([
             'form.email' => trans('auth.throttle', [
@@ -81,22 +177,53 @@ class LoginForm extends Form
     }
 
     /**
-     * Get the authentication rate limiting throttle key.
+     * Clé de limitation sécurisée
      */
     protected function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->email) . '|' . request()->ip());
+        $email = is_string($this->email)
+            ? $this->email
+            : 'invalid-email';
+
+        return Str::transliterate(
+            Str::lower($email) . '|' . request()->ip()
+        );
     }
 
+    /**
+     * Logs sécurité
+     */
+    protected function logSecurityEvent(
+        string $message,
+        array $context = []
+    ): void {
+
+        Log::channel('daily')->warning($message, array_merge([
+            'ip' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+            'url' => request()->fullUrl(),
+            'method' => request()->method(),
+        ], $context));
+    }
+
+    /**
+     * Messages validation
+     */
     public function messages(): array
     {
         return [
             'email.required' => 'L’adresse e-mail est obligatoire.',
-            'email.string' => 'L’adresse e-mail doit être une chaîne de caractères.',
-            'email.email' => 'Veuillez entrer une adresse e-mail valide.',
+            'email.string' => 'Format e-mail invalide.',
+            'email.email' => 'Adresse e-mail invalide.',
+            'email.max' => 'Adresse e-mail trop longue.',
+
             'password.required' => 'Le mot de passe est obligatoire.',
-            'password.string' => 'Le mot de passe doit être une chaîne de caractères.',
-            'remember.boolean' => 'La valeur du champ se souvenir doit être vrai ou faux.',
+            'password.string' => 'Format mot de passe invalide.',
+            'password.min' => 'Mot de passe invalide.',
+            'password.max' => 'Mot de passe invalide.',
+
+            'remember.boolean' => 'Valeur invalide.',
         ];
     }
 }
+
