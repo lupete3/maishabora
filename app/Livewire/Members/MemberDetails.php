@@ -262,7 +262,6 @@ class MemberDetails extends Component
             // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', 'Dépôt effectué avec succès !');
-
         } catch (\Throwable $th) {
             $this->handleTransactionError($th, 'dépôt');
         }
@@ -384,6 +383,17 @@ class MemberDetails extends Component
                     $this->getCardRetainedDescription($card)
                 );
 
+                // // Ajout d'une transaction visible pour le client justifiant la diminution du solde
+                // $this->createTransaction(
+                //     $account->id,
+                //     $card->member_id,
+                //     self::TRANSACTION_TYPE_WITHDRAWAL,
+                //     $card->currency,
+                //     $commissionAmount,
+                //     $account->balance,
+                //     "Retenue de la première mise (Frais d'adhésion) sur la carte #{$card->id}"
+                // );
+
             }
 
             UserLogHelper::log_user_activity(
@@ -402,7 +412,6 @@ class MemberDetails extends Component
             // }
 
             $this->afterTransactionSuccess($transaction, 'modalDepositMembre', "Paiement de {$contributionsToPay->count()} mise(s) effectué(s) avec succès !");
-
         } catch (\Throwable $th) {
             $this->handleTransactionError($th, 'dépôt');
         }
@@ -523,7 +532,6 @@ class MemberDetails extends Component
             // }
 
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
-
         } catch (\Throwable $th) {
             $this->handleTransactionError($th, 'retrait');
         }
@@ -552,7 +560,6 @@ class MemberDetails extends Component
             if (!$card->first_mise_retained) {
                 $toRetain = $card->subscription_amount;
                 $total = $card->contributions->where('is_paid', true)->sum('amount');
-
             } else {
                 $toRetain = 0;
                 $total = $card->contributions->where('is_paid', true)->sum('amount') - $card->subscription_amount;
@@ -663,7 +670,6 @@ class MemberDetails extends Component
 
             DB::commit();
             $this->afterTransactionSuccess($transaction, 'modalRetraitMembre', 'Retrait effectué avec succès !');
-
         } catch (\Throwable $th) {
             $this->handleTransactionError($th, 'retrait');
         }
@@ -802,10 +808,11 @@ class MemberDetails extends Component
      */
     private function getOrCreateAccount($userId, $currency, $type = 'current')
     {
-        return Account::firstOrCreate(
+        $account = Account::firstOrCreate(
             ['user_id' => $userId, 'currency' => $currency, 'type' => $type],
             ['balance' => 0]
         );
+        return Account::where('id', $account->id)->lockForUpdate()->first();
     }
 
     /**
@@ -814,10 +821,11 @@ class MemberDetails extends Component
     private function getOrCreateAgentAccount($currency, $userId = null)
     {
         $userId = $userId ?? Auth::id();
-        return AgentAccount::firstOrCreate(
+        $account = AgentAccount::firstOrCreate(
             ['user_id' => $userId, 'currency' => $currency],
             ['balance' => 0]
         );
+        return AgentAccount::where('id', $account->id)->lockForUpdate()->first();
     }
 
     /**
