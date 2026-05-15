@@ -110,10 +110,16 @@
                     </select>
             
                     @if ($filterType === 'range')
-                        <div class="d-flex align-items-center gap-1 w-100 w-md-auto">
-                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm w-100">
-                            <span class="small">au</span>
-                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm w-100">
+                        <div class="row g-1 g-sm-2 align-items-center mt-2 mt-md-0 w-100 w-md-auto ms-0 ms-md-1" style="max-width: 350px;">
+                            <div class="col">
+                                <input type="date" wire:model.live="startDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-auto">
+                                <span class="small">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" wire:model.live="endDate" class="form-control form-control-sm">
+                            </div>
                         </div>
                     @endif
             

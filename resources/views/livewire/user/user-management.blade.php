@@ -7,22 +7,18 @@
     <div class="table-wrapper">
         <div class="card has-actions has-filter">
 
-            <div class="card-header">
-                <div class="w-100 justify-content-between d-flex flex-wrap align-items-center gap-1">
-
-                    <div class="d-flex flex-wrap flex-md-nowrap align-items-center gap-1">
-                        <button class="btn btn-show-table-options" type="button">Rechercher</button>
-
-                        <div class="table-search-input">
-                            <label>
-                                <input type="search" wire:model.live.debounce.300ms="search" class="form-control input-sm"
-                                    placeholder="Rechercher..." style="min-width: 120px">
-                            </label>
+            <div class="card-header border-bottom">
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
+                    <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
+                        <div class="input-group input-group-merge w-100 w-md-auto" style="min-width: 250px;">
+                            <span class="input-group-text"><i class="bx bx-search"></i></span>
+                            <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
+                                placeholder="Rechercher un utilisateur...">
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2">
-                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm">
+                    <div class="d-flex align-items-center gap-2 ms-auto ms-md-0">
+                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm ">
                             <option value="10">10</option>
                             <option value="30">30</option>
                             <option value="50">50</option>
@@ -30,12 +26,11 @@
                             <option value="999999">Tous</option>
                         </select>
 
-                        @can ('ajouter-utilisateur')
-                            <button class="btn btn-sm action-item btn-primary" wire:click='openModal'>
-                                {{ __("Ajouter") }}
+                        @can('ajouter-utilisateur')
+                            <button class="btn btn-primary btn-sm" wire:click='openModal'>
+                                <i class="bx bx-plus me-1"></i> Ajouter
                             </button>
                         @endcan
-
                     </div>
                 </div>
             </div>

@@ -2,53 +2,64 @@
     <h5 class="mb-4">Balance Comptable</h5>
     <div class="card">
 
-        <div class="card-header">
-            <div class="row">
-            <div class="row align-items-center">
-                <div class="col-md-5 mt-2">
-                    <div class="input-group">
+        <div class="card-header border-bottom">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
+                <!-- Recherche -->
+                <div class="w-100 w-lg-auto">
+                    <div class="input-group input-group-merge">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
-                        <input type="text" class="form-control" placeholder="Rechercher..." wire:model.live.debounce.300ms="search">
+                        <input type="text" class="form-control" placeholder="Rechercher..."
+                            wire:model.live.debounce.300ms="search">
                     </div>
                 </div>
-                <div class="col-md-7 mt-2 text-end">
-                    <div class="d-flex justify-content-end gap-2 align-items-center">
-                        {{-- Filtre Période --}}
-                        <select wire:model.live="period_type" class="form-select form-select-sm" style="width: 130px;">
-                            <option value="tout">Tout</option>
-                            <option value="jour">Aujourd'hui</option>
-                            <option value="semaine">Cette semaine</option>
-                            <option value="mois">Ce mois</option>
-                            <option value="trimestre">Ce trimestre</option>
-                            <option value="annee">Cette année</option>
-                            <option value="intervalle">Intervalle</option>
-                        </select>
 
-                        {{-- Dates personnalisées --}}
-                        @if($period_type === 'intervalle')
-                            <input type="date" wire:model.live="date_debut" class="form-control form-control-sm" style="width: 130px;">
-                            <span class="fw-bold">-</span>
-                            <input type="date" wire:model.live="date_fin" class="form-control form-control-sm" style="width: 130px;">
-                        @elseif($date_debut && $date_fin && $period_type !== 'tout')
-                            <span class="badge bg-info text-dark">
-                                {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }} - {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}
-                            </span>
-                        @endif
+                <!-- Filtres -->
+                <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-lg-auto">
+                    {{-- Filtre Période --}}
+                    <select wire:model.live="period_type" class="form-select form-select-sm ">
+                        <option value="tout">Tout</option>
+                        <option value="jour">Aujourd'hui</option>
+                        <option value="semaine">Cette semaine</option>
+                        <option value="mois">Ce mois</option>
+                        <option value="trimestre">Ce trimestre</option>
+                        <option value="annee">Cette année</option>
+                        <option value="intervalle">Intervalle</option>
+                    </select>
 
-                        {{-- Devise --}}
-                        <select class="form-select form-select-sm" wire:model.lazy="filter_devise" style="width: 100px;">
-                            <option value="">Devise</option>
-                            @foreach ($currencies as $cur)
-                                <option value="{{ $cur }}">{{ $cur }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-3 mt-2">
-                    <button class="btn btn-sm btn-warning float-end" wire:click="exportPdf"
+                    {{-- Dates personnalisées --}}
+                    @if ($period_type === 'intervalle')
+                        <div class="row g-1 g-sm-2 align-items-center mt-2 mt-sm-0 w-100 w-sm-auto ms-0 ms-sm-1"
+                            style="max-width: 350px;">
+                            <div class="col">
+                                <input type="date" wire:model.live="date_debut" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-auto">
+                                <span class="fw-bold">-</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" wire:model.live="date_fin" class="form-control form-control-sm">
+                            </div>
+                        </div>
+                    @elseif($date_debut && $date_fin && $period_type !== 'tout')
+                        <span class="badge bg-info text-dark">
+                            {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }} -
+                            {{ \Carbon\Carbon::parse($date_fin)->format('d/m/Y') }}
+                        </span>
+                    @endif
+
+                    {{-- Devise --}}
+                    <select class="form-select form-select-sm " wire:model.lazy="filter_devise">
+                        <option value="">Devise</option>
+                        @foreach ($currencies as $cur)
+                            <option value="{{ $cur }}">{{ $cur }}</option>
+                        @endforeach
+                    </select>
+
+                    {{-- Bouton Export --}}
+                    <button class="btn btn-sm btn-warning ms-auto ms-lg-0" wire:click="exportPdf"
                         wire:loading.attr="disabled">
-                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i class="bx bx-download"></i> Exporter PDF
+                        <span wire:loading class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i class="bx bx-download"></i> PDF
                     </button>
                 </div>
             </div>

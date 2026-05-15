@@ -11,10 +11,10 @@
     <div class="card">
         <!-- Recherche -->
         <div class="card-header border-bottom">
-            <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center gap-3">
                 <!-- Filtres de date et recherche -->
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-lg-auto">
+                    <select wire:model.live="filterType" class="form-select form-select-sm">
                         <option value="day">Aujourd'hui</option>
                         <option value="week">Cette semaine</option>
                         <option value="month">Ce mois</option>
@@ -22,16 +22,20 @@
                     </select>
 
                     @if ($filterType === 'range')
-                        <div class="d-flex align-items-center gap-1">
-                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
-                                style="width: auto;">
-                            <span class="small text-muted">au</span>
-                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
-                                style="width: auto;">
+                        <div class="row g-1 g-sm-2 align-items-center mt-2 mt-sm-0 w-100 w-sm-auto ms-0 ms-sm-1" style="max-width: 350px;">
+                            <div class="col">
+                                <input type="date" wire:model.live="startDate" class="form-control form-control-sm">
+                            </div>
+                            <div class="col-auto">
+                                <span class="small text-muted">au</span>
+                            </div>
+                            <div class="col">
+                                <input type="date" wire:model.live="endDate" class="form-control form-control-sm">
+                            </div>
                         </div>
                     @endif
 
-                    <div class="input-group input-group-merge" style="width: 250px;">
+                    <div class="input-group input-group-merge mt-2 mt-sm-0 w-100 w-md-auto" style="min-width: 200px;">
                         <span class="input-group-text"><i class="bx bx-search-alt"></i></span>
                         <input type="text" wire:model.live.debounce.300ms="search"
                             class="form-control form-control-sm shadow-none" placeholder="Recherche...">
@@ -39,31 +43,30 @@
                 </div>
 
                 <!-- Autres filtres et exports -->
-                <div class="d-flex flex-wrap align-items-center gap-2">
-                    <select wire:model.live="filter_journal_type" class="form-select form-select-sm"
-                        style="width: auto;">
+                <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-lg-auto">
+                    <select wire:model.live="filter_journal_type" class="form-select form-select-sm">
                         <option value="">-- Journaux --</option>
                         @foreach ($journalTypes as $jt)
                             <option value="{{ $jt->id }}">{{ $jt->libelle }}</option>
                         @endforeach
                     </select>
 
-                    <select wire:model.live="filter_account" class="form-select form-select-sm"
-                        style="width: auto; max-width: 250px;">
+                    <select wire:model.live="filter_account" class="form-select form-select-sm">
+                        style="max-width: 250px;">
                         <option value="">-- Comptes --</option>
                         @foreach ($accounts as $acc)
                             <option value="{{ $acc->id }}">{{ $acc->code }} - {{ $acc->intitule }}</option>
                         @endforeach
                     </select>
 
-                    <select wire:model.live="filter_currency" class="form-select form-select-sm" style="width: auto;">
+                    <select wire:model.live="filter_currency" class="form-select form-select-sm">
                         <option value="">-- Devises --</option>
                         @foreach ($currencies as $cur)
                             <option value="{{ $cur }}">{{ $cur }}</option>
                         @endforeach
                     </select>
 
-                    <div class="d-flex gap-2">
+                    <div class="d-flex gap-2 ms-auto ms-lg-0">
                         @if ($journals->count() > 0)
                             <button wire:click="export" class="btn btn-sm btn-danger" wire:loading.attr="disabled">
                                 <span wire:loading wire:target="export" class="spinner-border spinner-border-sm me-1"

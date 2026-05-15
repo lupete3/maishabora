@@ -87,11 +87,11 @@
     <div class="row mt-4">
         <div class="col-md-12">
             <div class="card shadow-sm border-0">
-                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center fw-bold">
+                <div class="card-header bg-dark text-white d-flex flex-column flex-sm-row justify-content-between align-items-sm-center gap-3 fw-bold">
                     <span><i class="bx bx-history me-2"></i>Historique de vos virements récents</span>
 
-                    <div class="d-flex align-items-center gap-2">
-                        <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <select wire:model.live="filterType" class="form-select form-select-sm w-auto">
                             <option value="day">Aujourd'hui</option>
                             <option value="week">Cette semaine</option>
                             <option value="month">Ce mois</option>
@@ -99,11 +99,17 @@
                         </select>
 
                         @if ($filterType === 'range')
-                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm"
-                                style="width: auto;">
-                            <span class="text-white small">au</span>
-                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm"
-                                style="width: auto;">
+                            <div class="row g-1 g-sm-2 align-items-center mt-2 mt-sm-0 ms-0 ms-sm-1" style="max-width: 350px;">
+                                <div class="col">
+                                    <input type="date" wire:model.live="startDate" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-auto">
+                                    <span class="text-white small">au</span>
+                                </div>
+                                <div class="col">
+                                    <input type="date" wire:model.live="endDate" class="form-control form-control-sm">
+                                </div>
+                            </div>
                         @endif
                     </div>
                 </div>

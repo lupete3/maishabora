@@ -1,13 +1,13 @@
 <div>
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <h4 class="text-uppercase fw-bold text-primary">Compte de Résultat</h4>
+    <div class="row mb-4 g-3 align-items-center">
+        <div class="col-12 col-lg-4">
+            <h4 class="text-uppercase fw-bold text-primary mb-0">Compte de Résultat</h4>
         </div>
-        <div class="col-md-6 text-end">
-            <div class="d-flex justify-content-end gap-2 align-items-center">
+        <div class="col-12 col-lg-8">
+            <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
 
                 {{-- Filtre Période --}}
-                <select wire:model.live="period_type" class="form-select form-select-sm" style="width: 130px;">
+                <select wire:model.live="period_type" class="form-select form-select-sm ">
                     <option value="tout">Tout</option>
                     <option value="jour">Aujourd'hui</option>
                     <option value="semaine">Cette semaine</option>
@@ -18,12 +18,18 @@
                 </select>
 
                 {{-- Dates personnalisées --}}
-                @if($period_type === 'intervalle')
-                    <input type="date" wire:model.live="date_debut" class="form-control form-control-sm"
-                        style="width: 130px;">
-                    <span class="fw-bold">-</span>
-                    <input type="date" wire:model.live="date_fin" class="form-control form-control-sm"
-                        style="width: 130px;">
+                @if ($period_type === 'intervalle')
+                    <div class="row g-1 g-sm-2 align-items-center w-100 w-sm-auto ms-0 ms-sm-1" style="max-width: 350px;">
+                        <div class="col">
+                            <input type="date" wire:model.live="date_debut" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-auto">
+                            <span class="fw-bold">-</span>
+                        </div>
+                        <div class="col">
+                            <input type="date" wire:model.live="date_fin" class="form-control form-control-sm">
+                        </div>
+                    </div>
                 @elseif($date_debut && $date_fin && $period_type !== 'tout')
                     <span class="badge bg-info text-dark">
                         {{ \Carbon\Carbon::parse($date_debut)->format('d/m/Y') }} -
@@ -32,18 +38,22 @@
                 @endif
 
                 {{-- Recherche --}}
-                <input type="text" wire:model.live.debounce.300ms="search" class="form-control form-control-sm"
-                    style="width: 150px;" placeholder="Rechercher...">
+                <div class="input-group input-group-sm w-100 w-sm-auto" style="min-width: 150px;">
+                    <span class="input-group-text"><i class="bx bx-search"></i></span>
+                    <input type="text" wire:model.live.debounce.300ms="search" class="form-control shadow-none"
+                        placeholder="Rechercher...">
+                </div>
 
                 {{-- Devise --}}
-                <select wire:model.lazy="filter_currency" class="form-select form-select-sm" style="width: 100px;">
+                <select wire:model.lazy="filter_currency" class="form-select form-select-sm ">
                     <option value="">Devise</option>
                     <option value="USD">USD</option>
                     <option value="CDF">CDF</option>
                 </select>
 
                 {{-- Export --}}
-                <button class="btn btn-danger btn-sm" wire:click="export" wire:loading.attr="disabled">
+                <button class="btn btn-danger btn-sm ms-auto ms-lg-0" wire:click="export"
+                    wire:loading.attr="disabled">
                     <i class="bx bxs-file-pdf"></i>
                 </button>
             </div>

@@ -320,17 +320,17 @@
                         </div>
 
                         @if($date_filter === 'custom')
-                            <div class="flex gap-2 mt-3 items-end">
-                                <div class="flex-1">
-                                    <label class="text-xs font-medium">Du</label>
-                                    <input type="date" wire:model="date_from" class="form-control form-control-sm">
+                            <div class="flex flex-col sm:flex-row gap-3 mt-3 sm:items-end">
+                                <div class="w-full sm:flex-1">
+                                    <label class="text-xs font-medium mb-1 d-block">Du</label>
+                                    <input type="date" wire:model="date_from" class="form-control form-control-sm w-full">
                                 </div>
-                                <div class="flex-1">
-                                    <label class="text-xs font-medium">Au</label>
-                                    <input type="date" wire:model="date_to" class="form-control form-control-sm">
+                                <div class="w-full sm:flex-1">
+                                    <label class="text-xs font-medium mb-1 d-block">Au</label>
+                                    <input type="date" wire:model="date_to" class="form-control form-control-sm w-full">
                                 </div>
                                 <button type="button" wire:click="applyCustomFilter"
-                                    class="btn btn-primary btn-sm">Ok</button>
+                                    class="btn btn-primary btn-sm w-full sm:w-auto mt-2 sm:mt-0">Ok</button>
                             </div>
                         @endif
                     </div>

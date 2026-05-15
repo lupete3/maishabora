@@ -180,7 +180,7 @@
 
             <div class="card-body row g-3">
                 {{-- Agent --}}
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <div class="position-relative">
                         <label class="form-label fw-bold">Agent (Bénéficiaire)</label>
                         <div class="table-search-input">
@@ -211,7 +211,7 @@
                 </div>
 
                 {{-- Caisse / Caissier --}}
-                <div class="col-md-3">
+                <div class="col-12 col-md-3">
                     <div class="position-relative">
                         <label class="form-label fw-bold">Caisse / Caissier (Retrait)</label>
                         <div class="table-search-input">
@@ -236,7 +236,7 @@
                 </div>
 
                 {{-- Devise --}}
-                <div class="col-md-1">
+                <div class="col-6 col-md-1">
                     <label class="form-label fw-bold">Devise</label>
                     <select class="form-select" wire:model="currency">
                         <option value="CDF">CDF</option>
@@ -245,24 +245,24 @@
                 </div>
 
                 {{-- Période --}}
-                <div class="col-md-2">
+                <div class="col-6 col-md-2">
                     <label class="form-label fw-bold">Période</label>
                     <input type="month" class="form-control" wire:model="period">
                 </div>
 
                 {{-- Retenu Salaire % --}}
-                <div class="col-md-2">
-                    <label class="form-label fw-bold">Retenu Salaire (%)</label>
+                <div class="col-12 col-md-1">
+                    <label class="form-label fw-bold">Retenu (%)</label>
                     <div class="input-group">
                         <input type="number" step="0.1" min="0" max="100"
-                            class="form-control" wire:model.live="retenuRate"
+                            class="form-control px-2" wire:model.live="retenuRate"
                             placeholder="10">
-                        <span class="input-group-text">%</span>
+                        <span class="input-group-text px-1">%</span>
                     </div>
                 </div>
 
                 {{-- Bouton --}}
-                <div class="col-md-2 d-flex align-items-end">
+                <div class="col-12 col-md-2 d-flex align-items-end">
                     <button class="btn btn-primary w-100" wire:click="confirmPayment({{ $user_id ?? 'null' }})"
                         wire:loading.attr="disabled" @if(!$user_id || !$caisse_id) disabled @endif>
                         <span wire:loading wire:target="confirmPayment"
@@ -345,11 +345,11 @@
 
     {{-- HISTORIQUE DES PAIEMENTS --}}
     <div class="card has-actions has-filter">
-        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 fw-bold">
             <h5 class="mb-0 text-primary"><i class="bx bx-history me-2"></i> Historique des Salaires Payés</h5>
             
-            <div class="d-flex align-items-center gap-2">
-                <select wire:model.live="filterType" class="form-select form-select-sm" style="width: auto;">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <select wire:model.live="filterType" class="form-select form-select-sm w-auto">
                     <option value="day">Aujourd'hui</option>
                     <option value="week">Cette semaine</option>
                     <option value="month">Ce mois</option>
@@ -357,12 +357,20 @@
                 </select>
 
                 @if ($filterType === 'range')
-                    <input type="date" wire:model.live="startDate" class="form-control form-control-sm" style="width: auto;">
-                    <span class="small">au</span>
-                    <input type="date" wire:model.live="endDate" class="form-control form-control-sm" style="width: auto;">
+                    <div class="row g-1 g-sm-2 align-items-center mt-2 mt-sm-0 ms-0 ms-sm-1" style="max-width: 350px;">
+                        <div class="col">
+                            <input type="date" wire:model.live="startDate" class="form-control form-control-sm">
+                        </div>
+                        <div class="col-auto">
+                            <span class="small">au</span>
+                        </div>
+                        <div class="col">
+                            <input type="date" wire:model.live="endDate" class="form-control form-control-sm">
+                        </div>
+                    </div>
                 @endif
 
-                <div class="table-search-input">
+                <div class="table-search-input mt-2 mt-md-0 w-100 w-md-auto">
                     <input type="search" wire:model.live.debounce.300ms="search" class="form-control form-control-sm"
                         placeholder="Rechercher un agent...">
                 </div>

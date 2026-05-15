@@ -1,11 +1,14 @@
 <div>
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h4>Overview des Carnets (Anomalies de Solde)</h4>
-        <div class="d-flex">
-            <input wire:model.live.debounce.300ms="search" type="text" class="form-control me-2"
-                placeholder="Nom, Postnom ou Code membre..." style="width: 300px;">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mb-4">
+        <h4 class="mb-0">Overview des Carnets (Anomalies)</h4>
+        <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
+            <div class="input-group input-group-merge w-100 w-sm-auto" style="min-width: 250px;">
+                <span class="input-group-text"><i class="bx bx-search"></i></span>
+                <input wire:model.live.debounce.300ms="search" type="text" class="form-control"
+                    placeholder="Nom, Postnom ou Code membre...">
+            </div>
             <a href="{{ route('members.overview-carnets.pdf', ['search' => $search]) }}" target="_blank"
-                class="btn btn-outline-danger">
+                class="btn btn-outline-danger ms-auto ms-md-0">
                 <i class="bx bxs-file-pdf me-1"></i> PDF
             </a>
         </div>
