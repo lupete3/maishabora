@@ -1,20 +1,37 @@
 <div class="row">
+    <!-- Vue d'ensemble -->
+    <div class="col-12 mb-3">
+        <h5 class="mb-0 fw-bold text-dark d-flex align-items-center">
+            <i class="bx bx-list-check me-2 text-primary fs-3"></i>Vue d'ensemble du Suivi
+        </h5>
+    </div>
+
     <div class="col-md-6 mb-4">
         <div class="card h-100 shadow-sm border-0">
             <div class="card-header bg-label-danger py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-danger">
+                <div class="d-flex justify-content-between align-items-center flex-wrap g-2">
+                    <h5 class="mb-0 fw-bold text-danger d-flex align-items-center">
                         <i class="bx bx-error-alt me-2"></i>Échéances en retard
                     </h5>
-                    @if ($overdueTotals->isNotEmpty())
-                        <div class="text-end">
-                            @foreach ($overdueTotals as $currency => $total)
-                                <span class="badge bg-danger ms-1">
-                                    {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                </span>
-                            @endforeach
-                        </div>
-                    @endif
+                    <div class="d-flex align-items-center">
+                        @if ($overdueTotals->isNotEmpty())
+                            <div class="me-3">
+                                @foreach ($overdueTotals as $currency => $total)
+                                    <span class="badge bg-danger ms-1">
+                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
+                        <button wire:click="exportOverduePDF" wire:loading.attr="disabled" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            <span wire:loading.remove wire:target="exportOverduePDF">
+                                <i class="bx bxs-file-pdf me-1"></i> PDF
+                            </span>
+                            <span wire:loading wire:target="exportOverduePDF">
+                                <span class="spinner-border spinner-border-sm" role="status" style="width: 0.75rem; height: 0.75rem;"></span>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="card-body p-0">
@@ -87,19 +104,29 @@
     <div class="col-md-6 mb-4">
         <div class="card h-100 shadow-sm border-0">
             <div class="card-header bg-label-warning py-3">
-                <div class="d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold text-warning">
+                <div class="d-flex justify-content-between align-items-center flex-wrap g-2">
+                    <h5 class="mb-0 fw-bold text-warning d-flex align-items-center">
                         <i class="bx bx-calendar me-2"></i>Échéances à venir (7 jours)
                     </h5>
-                    @if ($upcomingTotals->isNotEmpty())
-                        <div class="text-end">
-                            @foreach ($upcomingTotals as $currency => $total)
-                                <span class="badge bg-warning text-dark ms-1">
-                                    {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                </span>
-                            @endforeach
-                        </div>
-                    @endif
+                    <div class="d-flex align-items-center">
+                        @if ($upcomingTotals->isNotEmpty())
+                            <div class="me-3">
+                                @foreach ($upcomingTotals as $currency => $total)
+                                    <span class="badge bg-warning text-dark ms-1">
+                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
+                                    </span>
+                                @endforeach
+                            </div>
+                        @endif
+                        <button wire:click="exportUpcomingPDF" wire:loading.attr="disabled" class="btn btn-warning text-dark btn-sm shadow-sm d-flex align-items-center" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                            <span wire:loading.remove wire:target="exportUpcomingPDF">
+                                <i class="bx bxs-file-pdf me-1"></i> PDF
+                            </span>
+                            <span wire:loading wire:target="exportUpcomingPDF">
+                                <span class="spinner-border spinner-border-sm" role="status" style="width: 0.75rem; height: 0.75rem;"></span>
+                            </span>
+                        </button>
+                    </div>
                 </div>
             </div>
             <div class="card-body p-0">
