@@ -31,9 +31,11 @@ class ClientCreditSituation extends Component
         $this->selectedCreditId = $creditId;
 
         $this->selectedRepayments = $credit->repayments->map(function ($repayment) {
-            $daysLate = null;
+            $daysLate = 0;
             if (!$repayment->is_paid && $repayment->due_date < now()) {
                 $daysLate = Carbon::parse($repayment->due_date)->diffInDays(now());
+            } elseif ($repayment->is_paid && $repayment->paid_date && $repayment->paid_date > $repayment->due_date) {
+                $daysLate = Carbon::parse($repayment->due_date)->diffInDays($repayment->paid_date);
             }
 
             return [
@@ -46,6 +48,11 @@ class ClientCreditSituation extends Component
                 'is_paid' => $repayment->is_paid,
                 'paid_date' => $repayment->paid_date,
                 'days_late' => $daysLate,
+                'principal_amount' => floatval($repayment->principal_amount ?? $repayment->expected_amount),
+                'interest_amount' => floatval($repayment->interest_amount ?? 0),
+                'paid_principal' => floatval($repayment->paid_principal),
+                'paid_interest' => floatval($repayment->paid_interest),
+                'paid_penalty' => floatval($repayment->paid_penalty),
             ];
         })->toArray();
 
@@ -57,9 +64,10 @@ class ClientCreditSituation extends Component
     {
         $credits = $this->user->credits->map(function ($credit) {
             $totalPaid = $credit->repayments->sum('paid_amount');
-            $totalDue = $credit->repayments->sum('total_due');
             $penalties = $credit->repayments->sum('penalty');
-            $remaining = $totalDue - ($totalPaid + $penalties);
+            
+            // Le montant restant est la somme des restants dus par échéance (total_due - paid_amount)
+            $remaining = $credit->repayments->sum(fn($r) => max(0.0, floatval($r->total_due) - floatval($r->paid_amount)));
 
             $lateCount = $credit->repayments->where('is_paid', false)
                 ->where('due_date', '<', now())

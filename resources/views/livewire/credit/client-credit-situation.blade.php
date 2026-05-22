@@ -76,42 +76,81 @@
                         <p>Aucune échéance trouvée.</p>
                     @else
                         <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
+                            <table class="table table-bordered table-striped align-middle table-sm">
+                                <thead class="table-light">
                                     <tr>
-                                        <th>Date prévue</th>
-                                        <th>Montant attendu</th>
-                                        <th>Montant payé</th>
-                                        <th>Pénalité</th>
+                                        <th>Date d'échéance</th>
+                                        <th>Attendu (Ventilation)</th>
+                                        <th>Pénalité cumul.</th>
                                         <th>Total dû</th>
+                                        <th>Déjà payé (Ventilation)</th>
+                                        <th class="text-danger">Reste à payer</th>
                                         <th>Statut</th>
                                         <th>Retard (jours)</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach ($selectedRepayments as $rep)
-                                        <tr>
+                                        @php
+                                            $principal = floatval($rep['principal_amount']);
+                                            $interest  = floatval($rep['interest_amount']);
+                                            $penalty   = floatval($rep['penalty']);
+                                            $totalDue  = floatval($rep['total_due']);
+
+                                            $paidTotal = floatval($rep['paid_amount']);
+                                            $paidPri   = floatval($rep['paid_principal']);
+                                            $paidInt   = floatval($rep['paid_interest']);
+                                            $paidPen   = floatval($rep['paid_penalty']);
+
+                                            $remaining = max(0.0, $totalDue - $paidTotal);
+
+                                            // Row styling based on status
+                                            $rowClass = '';
+                                            if ($rep['is_paid']) {
+                                                $rowClass = 'table-success-light';
+                                            } elseif (\Carbon\Carbon::parse($rep['due_date'])->isPast()) {
+                                                $rowClass = 'table-danger-light';
+                                            }
+                                        @endphp
+                                        <tr class="{{ $rowClass }}">
                                             <td>{{ \Carbon\Carbon::parse($rep['due_date'])->format('d/m/Y') }}</td>
-                                            <td>{{ number_format($rep['expected_amount'], 2) }}</td>
-                                            <td class="text-success">{{ number_format($rep['paid_amount'], 2) }}</td>
-                                            <td class="text-warning">{{ number_format($rep['penalty'], 2) }}</td>
-                                            <td class="fw-bold">{{ number_format($rep['total_due'], 2) }}</td>
+                                            <td>
+                                                <small class="d-block">Capital : <strong>{{ number_format($principal, 2) }}</strong></small>
+                                                <small class="d-block text-muted">Intérêt : {{ number_format($interest, 2) }}</small>
+                                            </td>
+                                            <td class="{{ $penalty > 0 ? 'text-danger fw-semibold' : 'text-muted' }}">
+                                                {{ number_format($penalty, 2) }}
+                                            </td>
+                                            <td class="fw-semibold">{{ number_format($totalDue, 2) }}</td>
+                                            <td>
+                                                @if ($paidTotal > 0)
+                                                    <small class="d-block text-success">Cap : {{ number_format($paidPri, 2) }}</small>
+                                                    <small class="d-block text-info">Int : {{ number_format($paidInt, 2) }}</small>
+                                                    @if ($paidPen > 0)
+                                                        <small class="d-block text-danger">Pén : {{ number_format($paidPen, 2) }}</small>
+                                                    @endif
+                                                    <small class="d-block fw-bold text-dark border-top mt-1">Total : {{ number_format($paidTotal, 2) }}</small>
+                                                @else
+                                                    <span class="text-muted small">Aucun paiement</span>
+                                                @endif
+                                            </td>
+                                            <td class="{{ $remaining > 0 ? 'fw-bold text-danger' : 'text-muted' }}">
+                                                {{ number_format($remaining, 2) }}
+                                            </td>
                                             <td>
                                                 @if ($rep['is_paid'])
                                                     <span class="badge bg-success">Payé</span>
+                                                @elseif ($paidTotal > 0 && $remaining > 0)
+                                                    <span class="badge bg-warning text-dark">Partiel</span>
                                                 @else
                                                     <span class="badge bg-danger">Non payé</span>
                                                 @endif
                                             </td>
                                             <td>
-                                                @php
-                                                    $daysLate = \Carbon\Carbon::parse($rep['due_date'])->diffInDays($rep['paid_date']);
-                                                @endphp
-                                                @if ($daysLate > 0)
-                                                    <span class="text-danger">{{ number_format($daysLate, 0) }}
-                                                        jours</span>
+                                                @if ($rep['days_late'] > 0)
+                                                    <span class="text-danger fw-semibold">{{ $rep['days_late'] }} jours</span>
                                                 @else
-                                                    0
+                                                    <span class="text-muted">0</span>
                                                 @endif
                                             </td>
                                         </tr>
