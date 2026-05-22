@@ -203,6 +203,14 @@ class ManageRepayments extends Component
                 } else {
                     // Solder sans intérêt : allocation directe au capital restant
                     $paidPri = min($amountToPay, $remainingPrincipal);
+
+                    // Si le capital restant est entièrement soldé, on annule (waive) l'intérêt et la pénalité restants
+                    if ($paidPri >= $remainingPrincipal) {
+                        $repayment->interest_amount = $repayment->paid_interest;
+                        $repayment->penalty = $repayment->paid_penalty;
+                        // On met à jour les variables locales pour le calcul de total_due ci-dessous
+                        $interestAmount = floatval($repayment->interest_amount);
+                    }
                 }
 
                 $totalPaid = round($paidPen + $paidInt + $paidPri, 3);
