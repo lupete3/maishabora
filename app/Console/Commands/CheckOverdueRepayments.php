@@ -1,21 +1,16 @@
 <?php
 
-
-
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Models\Repayment;
 use App\Models\Account;
 use App\Models\AgentAccount;
-use App\Models\MainCashRegister;
 use App\Models\Transaction;
 use App\Models\Notification;
-use App\Models\Credit;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 
 class CheckOverdueRepayments extends Command
 {
@@ -29,7 +24,7 @@ class CheckOverdueRepayments extends Command
     {
         $today = Carbon::today();
 
-        //Trouver toutes les échéances non payées avec date < aujourd'hui
+        // Trouver toutes les échéances non payées dont la date d'échéance est passée
         $overdue = Repayment::where('due_date', '<=', $today)
             ->where('is_paid', false)
             ->get();
@@ -38,144 +33,202 @@ class CheckOverdueRepayments extends Command
             $credit = $repayment->credit;
             $member = $credit->user;
 
-            //Récupérer le compte du membre
+            // Récupérer le compte courant du membre
             $account = Account::firstOrCreate(
                 [
-                    'user_id' => $member->id,
+                    'user_id'  => $member->id,
                     'currency' => $credit->currency,
-                    'type' => 'current'
+                    'type'     => 'current',
                 ],
                 ['balance' => 0]
             );
 
-            //Calcul du montant dû + pénalité
-            $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
-            $dailyPenaltyRate = 0.003; //0.3% par jour
-            $expectedAmount = round((float) $repayment->expected_amount, 3);
-            $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 3);
-            $totalDue = round($expectedAmount + $penaltyAmount, 3);
-            $interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
-            //$interestAfter = $interestPart+$penaltyAmount;
+            // ---------------------------------------------------------------
+            // 1. CALCUL DE LA PÉNALITÉ SUR LE SOLDE RESTANT
+            // ---------------------------------------------------------------
+            // Parts de l'échéance (utilise les nouvelles colonnes si disponibles)
+            $principalAmount = floatval($repayment->principal_amount ?? $repayment->expected_amount);
+            $interestAmount  = floatval($repayment->interest_amount ?? 0);
 
+            // Soldes encore impayés
+            $remainingPrincipal = max(0.0, $principalAmount - floatval($repayment->paid_principal));
+            $remainingInterest  = max(0.0, $interestAmount  - floatval($repayment->paid_interest));
+            $remainingExpected  = $remainingPrincipal + $remainingInterest;
 
-            //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
+            // Jours écoulés depuis le dernier calcul de pénalité (idempotent)
+            $lastCalcDate = $repayment->last_penalty_calculation_date ?? $repayment->due_date;
+            $daysLate     = max(0, Carbon::parse($lastCalcDate)->diffInDays($today));
+            $newPenalty   = 0.0;
+
+            if ($daysLate > 0) {
+                $newPenalty = round($remainingExpected * 0.003 * $daysLate, 3); // 0.3 % / jour
+                $repayment->penalty += $newPenalty;
+                $repayment->last_penalty_calculation_date = $today;
+            }
+
+            // Pénalité encore impayée
+            $remainingPenalty = max(0.0, floatval($repayment->penalty) - floatval($repayment->paid_penalty));
+
+            // Total restant à régler sur cette échéance
+            $totalDueRemaining = round($remainingExpected + $remainingPenalty, 3);
+
+            // Mettre à jour total_due (somme cumulée : capital + intérêt + toutes pénalités)
+            $repayment->total_due = round($principalAmount + $interestAmount + floatval($repayment->penalty), 3);
+            $repayment->save();
+
+            // Si tout est déjà soldé, marquer l'échéance et passer à la suivante
+            if ($totalDueRemaining <= 0) {
+                $repayment->is_paid   = true;
+                $repayment->paid_date = now();
+                $repayment->save();
+
+                if (!$repayment->credit->repayments->where('is_paid', false)->count()) {
+                    $repayment->credit->is_paid = true;
+                    $repayment->credit->save();
+                }
+                continue;
+            }
+
+            // ---------------------------------------------------------------
+            // 2. TENTATIVE DE PRÉLÈVEMENT AUTOMATIQUE
+            // ---------------------------------------------------------------
             $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
-
-            // Si le compte est autorisé à tout retirer, le solde minimum est de 0
             if ($account->can_withdraw_all) {
                 $minBalance = 0;
             }
 
-            if (($account->balance - $totalDue) >= $minBalance) {
-                DB::transaction(function () use ($account, $totalDue, $credit, $penaltyAmount, $interestPart, $expectedAmount, $repayment, $member) {
-                    //Débiter le compte du membre
-                    $account->balance -= $totalDue;
+            $availableBalance = floatval($account->balance) - $minBalance;
+
+            if ($availableBalance > 0) {
+                // On prélève au maximum ce qui est disponible
+                $amountToPay = min($availableBalance, $totalDueRemaining);
+
+                DB::transaction(function () use (
+                    $account, $amountToPay, $credit, $repayment, $member,
+                    $remainingPenalty, $remainingInterest, $remainingPrincipal, $today
+                ) {
+                    // ---- Allocation : Pénalité → Intérêt → Capital ----
+                    $rem = $amountToPay;
+
+                    $paidPen = min($rem, $remainingPenalty); $rem -= $paidPen;
+                    $paidInt = min($rem, $remainingInterest); $rem -= $paidInt;
+                    $paidPri = min($rem, $remainingPrincipal);
+
+                    $totalPaidThisTime = round($paidPen + $paidInt + $paidPri, 3);
+
+                    if ($totalPaidThisTime <= 0) {
+                        return;
+                    }
+
+                    // Débiter le compte membre
+                    $account->balance -= $totalPaidThisTime;
                     $account->save();
 
-                    //Crediter la caisse centrale
-                    $agentAccount = AgentAccount::firstOrCreate(
-                        ['user_id' => 95, 'currency' => $credit->currency],
-                        ['balance' => 0]
-                    );
+                    // Créditer le compte intérêts (agent 95)
+                    if ($paidInt > 0) {
+                        $agentAccount = AgentAccount::firstOrCreate(
+                            ['user_id' => 95, 'currency' => $credit->currency],
+                            ['balance' => 0]
+                        );
+                        $agentAccount->balance += $paidInt;
+                        $agentAccount->save();
 
-                    //Crediter la caisse centrale
-                    $penalityAccount = AgentAccount::firstOrCreate(
-                        ['user_id' => 472, 'currency' => $credit->currency],
-                        ['balance' => 0]
-                    );
-
-                    $penalityAccount->balance += $penaltyAmount;
-                    $agentAccount->balance += $interestPart;
-
-                    $penalityAccount->save();
-                    $agentAccount->save();
-
-                    //Enregistrer la transaction
-                    Transaction::create([
-                        'account_id' => $account->id,
-                        'user_id' => $member->id,
-                        'type' => 'remboursement_de_credit',
-                        'currency' => $credit->currency,
-                        'amount' => $totalDue,
-                        'balance_after' => $account->balance,
-                        'description' => "Remboursement automatique de l'échéance n°{$repayment->id}",
-                    ]);
-
-
-                    //Enregistrement de la transaction
-                    if ($penaltyAmount > 0) {
                         Transaction::create([
-                            'account_id' => NULL,
-                            'agent_account_id' => $penalityAccount->id,
-                            'user_id' => 472,
-                            'type' => 'Pénalité du credit',
-                            'currency' => $credit->currency,
-                            'amount' => $penaltyAmount,
-                            'balance_after' => $penalityAccount->balance,
-                            'description' => "Pénalité du credit #{$credit->id} - Montant: {$penaltyAmount} {$credit->currency} du compte client {$member->code} {$member->name} {$member->postnom}",
+                            'account_id'       => null,
+                            'agent_account_id' => $agentAccount->id,
+                            'user_id'          => 95,
+                            'type'             => 'Interêt du credit',
+                            'currency'         => $credit->currency,
+                            'amount'           => $paidInt,
+                            'balance_after'    => $agentAccount->balance,
+                            'description'      => "Interêt du credit #{$credit->id} - {$paidInt} {$credit->currency} - client {$member->code} {$member->name} {$member->postnom}",
                         ]);
                     }
 
-                    //Enregistrement de la transaction
+                    // Créditer le compte pénalités (agent 472)
+                    if ($paidPen > 0) {
+                        $penalityAccount = AgentAccount::firstOrCreate(
+                            ['user_id' => 472, 'currency' => $credit->currency],
+                            ['balance' => 0]
+                        );
+                        $penalityAccount->balance += $paidPen;
+                        $penalityAccount->save();
+
+                        Transaction::create([
+                            'account_id'       => null,
+                            'agent_account_id' => $penalityAccount->id,
+                            'user_id'          => 472,
+                            'type'             => 'Pénalité du credit',
+                            'currency'         => $credit->currency,
+                            'amount'           => $paidPen,
+                            'balance_after'    => $penalityAccount->balance,
+                            'description'      => "Pénalité du credit #{$credit->id} - {$paidPen} {$credit->currency} - client {$member->code} {$member->name} {$member->postnom}",
+                        ]);
+                    }
+
+                    // Transaction de débit client
                     Transaction::create([
-                        'account_id' => NULL,
-                        'agent_account_id' => $agentAccount->id,
-                        'user_id' => 95,
-                        'type' => 'Interêt du credit',
-                        'currency' => $credit->currency,
-                        'amount' => $interestPart,
-                        'balance_after' => $agentAccount->balance,
-                        'description' => "Interêt du credit #{$credit->id} - Montant: {$interestPart} {$credit->currency} du compte client {$member->code} {$member->name} {$member->postnom}",
+                        'account_id'    => $account->id,
+                        'user_id'       => $member->id,
+                        'type'          => 'remboursement_de_credit',
+                        'currency'      => $credit->currency,
+                        'amount'        => $totalPaidThisTime,
+                        'balance_after' => $account->balance,
+                        'description'   => "Remboursement automatique partiel/total de l'échéance n°{$repayment->id}",
                     ]);
 
-                    //Mettre à jour l'échéance
-                    $repayment->paid_date = now();
-                    $repayment->paid_amount = $expectedAmount;
-                    $repayment->is_paid = true;
-                    $repayment->penalty = $penaltyAmount;
-                    $repayment->total_due = $totalDue;
+                    // Mettre à jour les colonnes de ventilation de l'échéance
+                    $repayment->paid_penalty  = floatval($repayment->paid_penalty) + $paidPen;
+                    $repayment->paid_interest = floatval($repayment->paid_interest) + $paidInt;
+                    $repayment->paid_principal = floatval($repayment->paid_principal) + $paidPri;
+                    $repayment->paid_amount   = floatval($repayment->paid_amount) + $totalPaidThisTime;
+
+                    // Marquer comme payé si le total réglé couvre le total dû
+                    $repayment->is_paid = ($repayment->paid_amount >= $repayment->total_due);
+                    if ($repayment->is_paid) {
+                        $repayment->paid_date = $today;
+                    }
                     $repayment->save();
 
-                    // si tout est remboursé
+                    // Vérifier si tout le crédit est remboursé
                     if (!$repayment->credit->repayments->where('is_paid', false)->count()) {
                         $repayment->credit->is_paid = true;
                         $repayment->credit->save();
                     }
 
-                    //Notification de remboursement automatique
+                    // Notification membre
                     Notification::create([
                         'user_id' => $member->id,
-                        'title' => 'Remboursement Automatique',
-                        'message' => "Votre échéance du {$repayment->due_date} a été remboursée automatiquement avec succès.",
-                        'read' => false,
+                        'title'   => 'Remboursement Automatique',
+                        'message' => "Un prélèvement automatique de " . number_format($totalPaidThisTime, 2) . " {$credit->currency} a été effectué pour votre échéance du {$repayment->due_date->format('d/m/Y')}.",
+                        'read'    => false,
                     ]);
 
-                    // Notifier les utilisateurs concernés
+                    // Notification équipe
                     $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
-                    $notificationMessage = "Un remboursement de " . number_format($totalDue, 2) . " {$credit->currency} a été effectué pour le membre {$member->name} {$member->postnom} ({$member->code}) par " . (Auth::user() ? Auth::user()->name . "." . Auth::user()->postnom : "Système") . ".";
+                    $msg = "Remboursement automatique de " . number_format($totalPaidThisTime, 2)
+                        . " {$credit->currency} effectué pour {$member->name} {$member->postnom} ({$member->code}) — échéance n°{$repayment->id}.";
 
                     foreach ($usersToNotify as $notifyUser) {
                         Notification::create([
                             'user_id' => $notifyUser->id,
-                            'title' => 'Remboursement automatique effectué',
-                            'message' => $notificationMessage,
-                            'read' => false,
+                            'title'   => 'Remboursement automatique effectué',
+                            'message' => $msg,
+                            'read'    => false,
                         ]);
                     }
                 });
-            } else {
-                // insuffisant → appliquer pénalité sans virement
-                if ($repayment->penalty != $penaltyAmount) {
-                    $repayment->penalty = $penaltyAmount;
-                    $repayment->total_due = $totalDue;
-                    $repayment->save();
 
-                    //Notification de pénalité
+            } else {
+                // Solde insuffisant : la pénalité a déjà été mise à jour ci-dessus.
+                // Envoyer une notification seulement si une nouvelle pénalité vient d'être calculée.
+                if ($daysLate > 0 && $newPenalty > 0) {
                     Notification::create([
                         'user_id' => $member->id,
-                        'title' => 'Retard de remboursement',
-                        'message' => "Votre échéance du {$repayment->due_date} est en retard de {$daysLate} jour(s). Une pénalité de " . round($penaltyAmount, 2) . " a été appliquée.",
-                        'read' => false,
+                        'title'   => 'Retard de remboursement',
+                        'message' => "Votre échéance du {$repayment->due_date->format('d/m/Y')} est en retard. Une pénalité de "
+                            . number_format($newPenalty, 2) . " {$credit->currency} a été appliquée sur le solde restant dû.",
+                        'read'    => false,
                     ]);
                 }
             }

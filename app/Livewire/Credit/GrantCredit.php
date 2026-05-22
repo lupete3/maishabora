@@ -397,9 +397,12 @@ class GrantCredit extends Component
                     $interest = $remainingCapital * ($this->interest_rate / 100);
                     $installmentTotal = $capitalPart + $interest;
 
-                    // Ajustement pour la dernière échéance pour éviter les erreurs d'arrondi
+                    $principal = $capitalPart;
+                    $interestAmount = $interest;
                     if ($i === $this->installments - 1) {
                         $installmentTotal = $remainingCapital + $interest;
+                        $principal = $remainingCapital;
+                        $interestAmount = $installmentTotal - $principal;
                     }
 
                     Repayment::create([
@@ -407,6 +410,9 @@ class GrantCredit extends Component
                         'due_date' => $currentDate->toDateString(),
                         'expected_amount' => round($installmentTotal, 2),
                         'total_due' => round($installmentTotal, 2),
+                        'principal_amount' => round($principal, 2),
+                        'interest_amount' => round($interestAmount, 2),
+                        'last_penalty_calculation_date' => $currentDate->toDateString(),
                     ]);
 
                     $remainingCapital -= $capitalPart;
@@ -449,6 +455,7 @@ class GrantCredit extends Component
 
                     // La part de capital est la part constante, sauf à la dernière échéance
                     $capitalPart = $monthlyCapital;
+                    $interestAmount = $interest;
 
                     // La mensualité (annuity) est la valeur constante par défaut
                     $annuity = $annuity_flat;
@@ -466,6 +473,9 @@ class GrantCredit extends Component
                         'due_date' => $currentDate->toDateString(),
                         'expected_amount' => round($annuity, 2),
                         'total_due' => round($annuity, 2),
+                        'principal_amount' => round($capitalPart, 2),
+                        'interest_amount' => round($interestAmount, 2),
+                        'last_penalty_calculation_date' => $currentDate->toDateString(),
                     ]);
 
                     // Déduction du capital remboursé
