@@ -163,6 +163,96 @@ class RepaymentScheduleController extends Controller
         return $pdf->stream("plan_rem_{$credit->id}.pdf");
     }
 
+    public function exportSituationPdf($creditId)
+    {
+        $credit = Credit::with(['user', 'repayments'])->findOrFail($creditId);
+        $member = $credit->user;
+        $agent = Auth::user();
+
+        $repayments = $credit->repayments->sortBy('due_date');
+
+        $totalPrincipalExpected = 0;
+        $totalInterestExpected  = 0;
+        $totalPenaltyCumulative = 0;
+        $totalDueCumulative     = 0;
+
+        $totalPrincipalPaid = 0;
+        $totalInterestPaid  = 0;
+        $totalPenaltyPaid   = 0;
+        $totalPaid          = 0;
+
+        $totalRemaining     = 0;
+
+        $detailedRepayments = [];
+
+        foreach ($repayments as $r) {
+            $principal = floatval($r->principal_amount ?? $r->expected_amount);
+            $interest  = floatval($r->interest_amount ?? 0);
+            $penalty   = floatval($r->penalty);
+            $totalDue  = floatval($r->total_due);
+
+            $paidTotal = floatval($r->paid_amount);
+            $paidPri   = floatval($r->paid_principal);
+            $paidInt   = floatval($r->paid_interest);
+            $paidPen   = floatval($r->paid_penalty);
+
+            $remaining = max(0.0, $totalDue - $paidTotal);
+
+            $daysLate = 0;
+            if (!$r->is_paid && $r->due_date < now()) {
+                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
+            } elseif ($r->is_paid && $r->paid_date && $r->paid_date > $r->due_date) {
+                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays($r->paid_date);
+            }
+
+            $detailedRepayments[] = [
+                'due_date'          => $r->due_date,
+                'principal_amount'  => $principal,
+                'interest_amount'   => $interest,
+                'penalty'           => $penalty,
+                'total_due'         => $totalDue,
+                'paid_amount'       => $paidTotal,
+                'paid_principal'    => $paidPri,
+                'paid_interest'     => $paidInt,
+                'paid_penalty'      => $paidPen,
+                'remaining'         => $remaining,
+                'is_paid'           => $r->is_paid,
+                'days_late'         => $daysLate,
+            ];
+
+            $totalPrincipalExpected += $principal;
+            $totalInterestExpected  += $interest;
+            $totalPenaltyCumulative += $penalty;
+            $totalDueCumulative     += $totalDue;
+
+            $totalPrincipalPaid     += $paidPri;
+            $totalInterestPaid      += $paidInt;
+            $totalPenaltyPaid       += $paidPen;
+            $totalPaid              += $paidTotal;
+
+            $totalRemaining         += $remaining;
+        }
+
+        $data = [
+            'credit'                 => $credit,
+            'member'                 => $member,
+            'agent'                  => $agent,
+            'repayments'             => $detailedRepayments,
+            'totalPrincipalExpected' => $totalPrincipalExpected,
+            'totalInterestExpected'  => $totalInterestExpected,
+            'totalPenaltyCumulative' => $totalPenaltyCumulative,
+            'totalDueCumulative'     => $totalDueCumulative,
+            'totalPrincipalPaid'     => $totalPrincipalPaid,
+            'totalInterestPaid'      => $totalInterestPaid,
+            'totalPenaltyPaid'       => $totalPenaltyPaid,
+            'totalPaid'              => $totalPaid,
+            'totalRemaining'         => $totalRemaining,
+        ];
+
+        $pdf = Pdf::loadView('pdf.credit-situation-export', $data);
+        return $pdf->stream("situation_credit_{$credit->id}_{$member->code}.pdf");
+    }
+
     public function simulation()
     {
         return view('simulation');

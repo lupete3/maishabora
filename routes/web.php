@@ -103,6 +103,8 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-credit'])->group
     Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
     Route::get('/plan-de-remboursement/{creditId}', [RepaymentScheduleController::class, 'generate'])
         ->name('schedule.generate');
+    Route::get('/credit/situation-pdf/{creditId}', [RepaymentScheduleController::class, 'exportSituationPdf'])
+        ->name('credit.situation.pdf');
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class, 'index'])->name('report.credit.overview');
     Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');

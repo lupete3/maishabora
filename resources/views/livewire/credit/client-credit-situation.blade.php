@@ -40,17 +40,23 @@
                                         <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
                                     </p>
 
-                                    <div class="d-flex justify-content-between">
+                                    <div class="d-flex justify-content-between align-items-center">
                                         @if ($credit['is_paid'])
                                             <span class="badge bg-success">Payé</span>
                                         @else
                                             <span class="badge bg-warning">Encours</span>
                                         @endif
 
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            wire:click="showRepayments({{ $credit['id'] }})">
-                                            Voir remboursements
-                                        </button>
+                                        <div class="d-flex gap-1">
+                                            <a href="{{ route('credit.situation.pdf', ['creditId' => $credit['id']]) }}" target="_blank"
+                                                class="btn btn-sm btn-outline-danger" title="Exporter Situation PDF">
+                                                <i class="icon-base bx bxs-file-pdf"></i> PDF
+                                            </a>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                wire:click="showRepayments({{ $credit['id'] }})">
+                                                Détails
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -68,6 +74,14 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="repaymentsModalLabel">Détails des remboursements</h5>
+                    <div class="d-flex align-items-center gap-2 ms-auto me-2">
+                        @if ($selectedCreditId)
+                            <a href="{{ route('credit.situation.pdf', ['creditId' => $selectedCreditId]) }}" target="_blank"
+                                class="btn btn-sm btn-danger">
+                                <i class="icon-base bx bxs-file-pdf me-1"></i>Situation PDF
+                            </a>
+                        @endif
+                    </div>
                     <button type="button" class="btn-close" wire:click="closeRepaymentsModal()"
                         aria-label="Fermer"></button>
                 </div>
