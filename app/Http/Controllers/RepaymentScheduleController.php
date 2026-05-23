@@ -200,9 +200,9 @@ class RepaymentScheduleController extends Controller
 
             $daysLate = 0;
             if (!$r->is_paid && $r->due_date < now()) {
-                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
+                $daysLate = intval(\Carbon\Carbon::parse($r->due_date)->diffInDays(now()));
             } elseif ($r->is_paid && $r->paid_date && $r->paid_date > $r->due_date) {
-                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays($r->paid_date);
+                $daysLate = intval(\Carbon\Carbon::parse($r->due_date)->diffInDays($r->paid_date));
             }
 
             $detailedRepayments[] = [

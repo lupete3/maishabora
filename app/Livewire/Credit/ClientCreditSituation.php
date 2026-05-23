@@ -33,9 +33,9 @@ class ClientCreditSituation extends Component
         $this->selectedRepayments = $credit->repayments->map(function ($repayment) {
             $daysLate = 0;
             if (!$repayment->is_paid && $repayment->due_date < now()) {
-                $daysLate = Carbon::parse($repayment->due_date)->diffInDays(now());
+                $daysLate = intval(Carbon::parse($repayment->due_date)->diffInDays(now()));
             } elseif ($repayment->is_paid && $repayment->paid_date && $repayment->paid_date > $repayment->due_date) {
-                $daysLate = Carbon::parse($repayment->due_date)->diffInDays($repayment->paid_date);
+                $daysLate = intval(Carbon::parse($repayment->due_date)->diffInDays($repayment->paid_date));
             }
 
             return [

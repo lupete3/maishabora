@@ -147,7 +147,7 @@
                     </td>
                     <td class="text-center">
                         @if ($r['days_late'] > 0)
-                            <span style="color: red; font-weight: bold;">{{ $r['days_late'] }}j</span>
+                            <span style="color: red; font-weight: bold;">{{ number_format($r['days_late'], 0) }}j</span>
                         @else
                             0
                         @endif

@@ -162,7 +162,7 @@
                                             </td>
                                             <td>
                                                 @if ($rep['days_late'] > 0)
-                                                    <span class="text-danger fw-semibold">{{ $rep['days_late'] }} jours</span>
+                                                    <span class="text-danger fw-semibold">{{ number_format($rep['days_late'], 0) }} jours</span>
                                                 @else
                                                     <span class="text-muted">0</span>
                                                 @endif
