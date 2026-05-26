@@ -180,7 +180,44 @@ class ManageRepayments extends Component
                         ['balance' => 0]
                     );
 
-                    $interestPart = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
+                    //$interestPart = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
+                    if ($credit->credit_type === 'degressif') {
+
+                        // Capital restant avant cette échéance
+                        $remainingCapital = floatval($credit->amount);
+
+                        foreach ($credit->repayments->sortBy('due_date') as $schedule) {
+
+                            $currentInterest = round(
+                                $remainingCapital * (floatval($credit->interest_rate) / 100),
+                                2
+                            );
+
+                            $capitalPart = round(
+                                floatval($schedule->expected_amount) - $currentInterest,
+                                2
+                            );
+
+                            // Si c'est l'échéance actuelle → on récupère son intérêt
+                            if ($schedule->id == $repayment->id) {
+                                $interestPart = $currentInterest;
+                                break;
+                            }
+
+                            // Déduire le capital pour passer à l’échéance suivante
+                            $remainingCapital -= $capitalPart;
+                        }
+
+                    } else {
+
+                        // Crédit constant
+                        $interestPart = round(
+                            floatval($credit->amount) *
+                            (floatval($credit->interest_rate) / 100),
+                            2
+                        );
+                    }
+
                     $penality = floatval($repayment->penalty);
 
                     $agentAccount->balance = floatval($agentAccount->balance) + ($interestPart);

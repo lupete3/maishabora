@@ -54,9 +54,44 @@ class CheckOverdueRepayments extends Command
             $expectedAmount = round((float) $repayment->expected_amount, 3);
             $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 3);
             $totalDue = round($expectedAmount + $penaltyAmount, 3);
-            $interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
+            //$interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
             //$interestAfter = $interestPart+$penaltyAmount;
 
+            if ($credit->credit_type === 'degressif') {
+
+                // Capital restant avant cette échéance
+                $remainingCapital = floatval($credit->amount);
+
+                foreach ($credit->repayments->sortBy('due_date') as $schedule) {
+
+                    $currentInterest = round(
+                        $remainingCapital * (floatval($credit->interest_rate) / 100),
+                        2
+                    );
+
+                    $capitalPart = round(
+                        floatval($schedule->expected_amount) - $currentInterest,
+                        2
+                    );
+
+                    // Si c'est l'échéance actuelle → on récupère son intérêt
+                    if ($schedule->id == $repayment->id) {
+                        $interestPart = $currentInterest;
+                        break;
+                    }
+
+                    // Déduire le capital pour passer à l’échéance suivante
+                    $remainingCapital -= $capitalPart;
+                }
+            } else {
+
+                // Crédit constant
+                $interestPart = round(
+                    floatval($credit->amount) *
+                        (floatval($credit->interest_rate) / 100),
+                    2
+                );
+            }
 
             //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
             $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
