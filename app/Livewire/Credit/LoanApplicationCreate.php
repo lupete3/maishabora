@@ -7,6 +7,7 @@ use App\Models\LoanApplication;
 use App\Models\Business;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class LoanApplicationCreate extends Component
 {
@@ -41,6 +42,8 @@ class LoanApplicationCreate extends Component
 
     public function mount($loanApplicationId = null)
     {
+        Gate::authorize('ajouter-demandes-credit', User::class);
+
         $this->loanApplicationId = $loanApplicationId;
         $this->date_demande = now()->toDateString();
 

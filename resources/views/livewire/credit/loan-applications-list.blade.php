@@ -69,7 +69,9 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Liste des Demandes de Crédit</h5>
-            <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
+            @can('ajouter-demandes-credit')
+                <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
+            @endcan
         </div>
         <div class="card-body">
             @if (session()->has('message'))

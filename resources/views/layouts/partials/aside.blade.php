@@ -86,6 +86,15 @@
             </li>
         @endcan
 
+        @can('afficher-demandes-credit')
+            <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
+                <a href="{{ route('credit.applications.list') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-list-ul"></i>
+                    <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
+                </a>
+            </li>
+        @endcan
+
         @can('afficher-rapport-credit')
             <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage', 'credit.applications.*')) active @endif"
                 wire:ignore.self>
@@ -102,13 +111,6 @@
                             </a>
                         </li>
                     @endcan
-
-                    <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
-                        <a href="{{ route('credit.applications.list') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-list-ul"></i>
-                            <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
-                        </a>
-                    </li>
 
                     @can('afficher-credit')
                         <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">

@@ -3,6 +3,8 @@
 namespace App\Livewire\Credit;
 
 use App\Models\LoanApplication;
+use App\Models\User;
+use Illuminate\Support\Facades\Gate;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -17,6 +19,11 @@ class LoanApplicationsList extends Component
     public $statusFilter = null;
 
     protected $listeners = ['loanSaved' => '$refresh'];
+
+    public function mount()
+    {
+        Gate::authorize('afficher-demandes-credit', User::class);
+    }
 
     public function updatingSearch()
     {
