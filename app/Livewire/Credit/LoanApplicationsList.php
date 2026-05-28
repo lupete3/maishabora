@@ -60,7 +60,7 @@ class LoanApplicationsList extends Component
             'total_cdf' => LoanApplication::where('currency', 'CDF')->sum('montant_demande'),
         ];
 
-        $loans = $query->orderBy('id', 'desc')->paginate(10);
+        $loans = $query->orderBy('id', 'asc')->paginate(10);
         return view('livewire.credit.loan-applications-list', [
             'loans' => $loans,
             'stats' => $stats
