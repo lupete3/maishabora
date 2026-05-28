@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Notification;
+use Illuminate\Validation\Rule;
 
 class MemberDetails extends Component
 {
@@ -211,6 +212,15 @@ class MemberDetails extends Component
             'amount' => 'required|numeric|min:0.01',
             'memberId' => 'required|exists:users,id',
             'currency' => 'required|in:USD,CDF',
+            'amount' => [
+                'required',
+                'numeric',
+                Rule::when(
+                    $this->currency === 'CDF',
+                    ['min:1000'],
+                    ['min:0.1']
+                ),
+            ],
         ]);
 
         DB::beginTransaction();
