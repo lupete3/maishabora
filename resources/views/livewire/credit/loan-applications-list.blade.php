@@ -69,9 +69,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Liste des Demandes de Crédit</h5>
-            @can('ajouter-demandes-credit')
-                <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
-            @endcan
+            <div class="d-flex gap-2">
+                <a href="{{ route('credit.applications.print-blank') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bx bx-printer me-1"></i> Fiche Terrain Vierge
+                </a>
+                @can('ajouter-demandes-credit')
+                    <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
+                @endcan
+            </div>
         </div>
         <div class="card-body">
             @if (session()->has('message'))
@@ -151,6 +156,9 @@
                                             <a class="dropdown-item"
                                                 href="{{ route('credit.applications.show', $loan->id) }}"><i
                                                     class="bx bx-show me-1"></i> Voir Détails</a>
+                                            <a class="dropdown-item" target="_blank"
+                                                href="{{ route('credit.applications.print-filled', $loan->id) }}"><i
+                                                    class="bx bx-printer me-1"></i> Imprimer Dossier</a>
                                             <div class="dropdown-divider"></div>
                                             <button class="dropdown-item text-danger"
                                                 onclick="confirm('Êtes-vous sûr de vouloir supprimer cette demande ?') || event.stopImmediatePropagation()"

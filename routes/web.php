@@ -118,6 +118,8 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-simulation-credi
 Route::middleware(['auth', 'auth.session'])->group(function () {
     Route::get('/credit/applications', [CreditController::class, 'index'])->name('credit.applications.list');
     Route::get('/credit/applications/create', [CreditController::class, 'create'])->name('credit.applications.create');
+    Route::get('/credit/applications/print-blank', [App\Http\Controllers\CreditPrintController::class, 'printBlank'])->name('credit.applications.print-blank');
+    Route::get('/credit/applications/{id}/print-filled', [App\Http\Controllers\CreditPrintController::class, 'printFilled'])->name('credit.applications.print-filled');
     Route::get('/credit/applications/{id}', function ($id) {
         $loan = \App\Models\LoanApplication::with(['user', 'business', 'ratios', 'cashflow', 'balance', 'securities'])->findOrFail($id);
         return view('credit.applications.show', compact('loan'));
