@@ -185,6 +185,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
 Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {
     Route::get('/rapport-client', [ClientStatReportController::class, 'rapportClient'])->name('rapports.clients');
     Route::get('/rapport-compte-clients-pdf', [ClientStatReportController::class, 'compteClientsPdf'])->name('rapports.compte-clients.pdf');
+    Route::get('/rapport-compte-clients-excel', [ClientStatReportController::class, 'compteClientsExcel'])->name('rapports.compte-clients.excel');
     Route::get('/rapport-carnets', [ClientStatReportController::class, 'rapportCarnets'])->name('rapports.carnets');
     Route::get('/membres/overview-carnets', function () {
         return view('members.carnet-overview');

@@ -114,10 +114,14 @@
                 </select>
             </div>
 
-            <div class="col-md-2 mb-3">
-                <button wire:click="exportPdf" class="btn btn-primary w-100" wire:loading.attr="disabled">
-                    <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                    <i class="bx bx-download"></i> Télécharger PDF
+            <div class="col-md-2 mb-3 d-flex gap-2">
+                <button wire:click="exportPdf" class="btn btn-primary flex-grow-1 p-2" wire:loading.attr="disabled" title="Télécharger PDF">
+                    <span wire:loading class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <i class="bx bx-file"></i> PDF
+                </button>
+                <button wire:click="exportExcel" class="btn btn-success flex-grow-1 p-2" wire:loading.attr="disabled" title="Exporter Excel">
+                    <span wire:loading class="spinner-border spinner-border-sm me-1" role="status"></span>
+                    <i class="bx bx-spreadsheet"></i> Excel
                 </button>
             </div>
         </div>

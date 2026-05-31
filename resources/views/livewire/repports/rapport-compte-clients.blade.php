@@ -53,7 +53,7 @@
                         <option value="savings">Épargne Uniquement</option>
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-1">
                     <label class="form-label small fw-bold">Devise</label>
                     <select wire:model.live="currencyFilter" class="form-control">
                         <option value="all">Toutes</option>
@@ -79,10 +79,14 @@
                     <input type="number" wire:model.live.debounce.500ms="minBalance" class="form-control"
                         placeholder="0.00">
                 </div>
-                <div class="col-md-1 d-flex align-items-end">
+                <div class="col-md-2 d-flex gap-2 align-items-end">
                     <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
-                        target="_blank" class="btn btn-danger w-100 p-2">
-                        <i class="bx bx-download"></i> PDF
+                        target="_blank" class="btn btn-danger flex-grow-1 p-2" title="Télécharger PDF">
+                        <i class="bx bx-file"></i> PDF
+                    </a>
+                    <a href="{{ route('rapports.compte-clients.excel', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
+                        target="_blank" class="btn btn-success flex-grow-1 p-2" title="Exporter Excel">
+                        <i class="bx bx-spreadsheet"></i> Excel
                     </a>
                 </div>
             </div>
