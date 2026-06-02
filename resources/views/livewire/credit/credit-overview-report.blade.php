@@ -185,5 +185,8 @@
                 </tfoot>
             </table>
         </div>
+        <div class="card-footer bg-white border-top">
+            {{ $credits->links() }}
+        </div>
     </div>
 </div>

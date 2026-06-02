@@ -2,16 +2,21 @@
 
 namespace App\Livewire\Credit;
 
-use Livewire\Component;
 use App\Models\Credit;
 use Carbon\Carbon;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class CreditOverviewReport extends Component
 {
-    public $credits = [];
+    use WithPagination;
+
     public $totaux = [];
     public $selectedCurrency = 'all';
     public $stats = [];
+    public $perPage = 50;
+
+    protected $paginationTheme = 'bootstrap';
 
     public function mount()
     {
@@ -20,48 +25,32 @@ class CreditOverviewReport extends Component
 
     public function updatedSelectedCurrency()
     {
+        $this->resetPage();
         $this->loadCredits();
     }
 
     public function loadCredits()
     {
-        // 🚀 Optimisation : Filtrage direct en SQL au lieu de filter() en PHP
-        $query = Credit::where('is_paid', false)
-            ->with(['user', 'repayments'])
-            ->whereHas('user', fn($q) => $q->where('role', 'membre'))
-            ->whereHas('repayments', function ($q) {
-                $q->where('is_paid', false)
-                    ->where('due_date', '<', now());
-            });
-
-        if ($this->selectedCurrency !== 'all') {
-            $query->where('currency', $this->selectedCurrency);
-        }
-
-        $rawCredits = $query->get();
-
-        $this->credits = [];
         $this->initializeTotals();
 
         $totalLateDays = 0;
         $count = 0;
 
-        foreach ($rawCredits as $credit) {
-            $details = $this->calculateCreditDetails($credit);
-            $this->credits[] = $details;
+        $this->buildCreditsQuery()->chunkById(500, function ($credits) use (&$totalLateDays, &$count) {
+            foreach ($credits as $credit) {
+                $details = $this->calculateCreditDetails($credit);
 
-            // Cumul des totaux
-            foreach ($this->totaux as $key => $value) {
-                if (isset($details[$key])) {
-                    $this->totaux[$key] += $details[$key];
+                foreach ($this->totaux as $key => $value) {
+                    if (isset($details[$key])) {
+                        $this->totaux[$key] += $details[$key];
+                    }
                 }
+
+                $totalLateDays += $details['days_late'];
+                $count++;
             }
+        });
 
-            $totalLateDays += $details['days_late'];
-            $count++;
-        }
-
-        // 📊 Données pour les KPI Cards
         $this->stats = [
             'total_late_amount' => $this->totaux['remaining_balance'],
             'case_count' => $count,
@@ -88,16 +77,35 @@ class CreditOverviewReport extends Component
         ], 0);
     }
 
+    private function buildCreditsQuery()
+    {
+        $query = Credit::where('is_paid', false)
+            ->with(['user', 'repayments'])
+            ->whereHas('user', fn($q) => $q->where('role', 'membre'))
+            ->whereHas('repayments', function ($q) {
+                $q->where('is_paid', false)
+                    ->where('due_date', '<', now());
+            });
+
+        if ($this->selectedCurrency !== 'all') {
+            $query->where('currency', $this->selectedCurrency);
+        }
+
+        return $query;
+    }
+
     private function calculateCreditDetails($credit)
     {
+        $now = now();
         $unpaid = $credit->repayments->where('is_paid', false);
         $totalPaid = $credit->repayments->where('is_paid', true)->sum('paid_amount');
 
         $totalPenalty = $unpaid->sum('penalty');
         $remaining = round($credit->amount - $totalPaid, 2);
 
-        $maxLate = $unpaid->filter(fn($r) => $r->due_date->lt(now()))
-            ->max(fn($r) => $r->due_date->diffInDays(now()));
+        $maxLate = $unpaid->filter(fn($r) => Carbon::parse($r->due_date)->lt($now))
+            ->max(fn($r) => Carbon::parse($r->due_date)->diffInDays($now));
+        $maxLate = (int) floor($maxLate ?? 0);
 
         $ranges = array_fill_keys([
             'range_1',
@@ -136,13 +144,22 @@ class CreditOverviewReport extends Component
             'remaining_balance' => $remaining,
             'total_penalty' => $totalPenalty,
             'penalty_percentage' => $remaining > 0 ? round(($totalPenalty / $remaining) * 100, 2) : 0,
-            'days_late' => (int) $maxLate,
+            'days_late' => $maxLate,
         ]);
     }
 
     public function render()
     {
+        $credits = $this->buildCreditsQuery()
+            ->orderBy('id')
+            ->paginate($this->perPage);
+
+        $credits->setCollection(
+            $credits->getCollection()->map(fn($credit) => $this->calculateCreditDetails($credit))
+        );
+
         return view('livewire.credit.credit-overview-report', [
+            'credits' => $credits,
             'currencies' => Credit::distinct()->pluck('currency')->prepend('toutes')
         ]);
     }
