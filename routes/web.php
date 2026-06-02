@@ -105,6 +105,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-credit'])->group
         ->name('schedule.generate');
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class, 'index'])->name('report.credit.overview');
     Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
+    Route::get('/export/credits-retard-csv', [CreditOverviewReportController::class, 'exportCsv'])->name('credits-retard.csv');
     Route::get('/suivi-des-credits', [CreditFollowUpReportController::class, 'index'])->name('report.credit.followup');
     Route::get('/rapport-remboursements', [RepaymentReportController::class, 'index'])->name('report.repayments');
     Route::get('/comptes-membres', [MemberDetailsController::class, 'comptes'])->name('member.accounts');
@@ -238,7 +239,7 @@ Route::post('/logout', function () {
 
 // Web Cron Route for scheduled tasks (bypasses hosting cron limits)
 Route::get('/cron/executer-retards/{token}', function ($token) {
-    $secretToken = 'maishabora_cron_secret_7x9A2mP5vK3'; 
+    $secretToken = 'maishabora_cron_secret_7x9A2mP5vK3';
     if ($token !== $secretToken) {
         abort(403, 'Accès refusé');
     }
