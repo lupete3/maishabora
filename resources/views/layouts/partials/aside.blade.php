@@ -425,6 +425,13 @@
                 </a>
             </li>
 
+            <li class="menu-item @if (request()->routeIs('admin.user-sessions')) active @endif">
+                <a href="{{ route('admin.user-sessions') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-shield-quarter"></i>
+                    <div data-i18n="Analytics">Sessions utilisateurs</div>
+                </a>
+            </li>
+
             <li class="menu-item">
                 <a href="{{ route('system.run-cron') }}" class="menu-link" onclick="return confirm('Voulez-vous forcer l\'exécution de la vérification des retards maintenant ?')">
                     <i class="menu-icon tf-icons bx bx-cog"></i>

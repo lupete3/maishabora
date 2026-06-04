@@ -208,6 +208,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-logs'])->group(f
         return view('reports.ai-sales');
     })->name('ai.reports.sales');
     Route::get('/rapport-logs', [DashboardController::class, 'rapportLogs'])->name('rapports.logs');
+    Route::get('/sessions-utilisateurs', [DashboardController::class, 'userSessions'])->name('admin.user-sessions');
     Route::get('/system/run-cron', function() {
         \Illuminate\Support\Facades\Artisan::call('check:overdue-repayments');
         return back()->with('success', 'La vérification des retards a été exécutée manuellement avec succès.');
