@@ -17,6 +17,7 @@ class UserSessions extends Component
 
     public $search = '';
     public $statusFilter = 'active';
+    public $audienceFilter = 'authenticated';
     public $perPage = 15;
 
     protected $paginationTheme = 'bootstrap';
@@ -32,6 +33,16 @@ class UserSessions extends Component
     }
 
     public function updatedStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedAudienceFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
     {
         $this->resetPage();
     }
