@@ -127,7 +127,7 @@
                                         <small class="text-muted">{{ $loan->user->code }}</small>
                                     </div>
                                 </td>
-                                <td>{{ number_format($loan->montant_demande, 2) }}</td>
+                                <td>{{ number_format($loan->montant_demande, 2) }} {{ $loan->currency }}</td>
                                 <td>{{ $loan->duree_mois }} mois</td>
                                 <td>{{ $loan->date_demande }}</td>
                                 <td>
