@@ -995,7 +995,10 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
         notyf()->success($successMessage);
         $this->resetInputFields();
-        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
+        $this->dispatch('demander-impression', 
+            urlPC: route('receipt.generate', ['id' => $transaction->id]),
+            urlPOS: route('receipt.generate_pos', ['id' => $transaction->id])
+        );
     }
 
     /**

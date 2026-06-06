@@ -179,6 +179,32 @@
             const url = event.detail.url;
             printFacture(url);
         });
+
+        window.addEventListener('demander-impression', function (event) {
+            Swal.fire({
+                title: 'Impression du reçu',
+                text: 'Voulez-vous imprimer le reçu pour cette opération ?',
+                icon: 'question',
+                showCancelButton: true,
+                showDenyButton: true,
+                confirmButtonColor: '#3085d6',
+                denyButtonColor: '#10b981',
+                cancelButtonColor: '#aaa',
+                confirmButtonText: 'Format A4 (PC)',
+                denyButtonText: 'Format Ticket (POS)',
+                cancelButtonText: 'Non, Retour'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    printFacture(event.detail.urlPC);
+                    window.location.reload();
+                } else if (result.isDenied) {
+                    printFacture(event.detail.urlPOS);
+                    window.location.reload();
+                } else {
+                    window.location.reload();
+                }
+            });
+        });
     </script>
 
     <script>
