@@ -230,10 +230,21 @@ class MemberDetails extends Component
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
             // Mise à jour des soldes
-            $account->balance += $this->amount;
-            $agentAccount->balance += $this->amount;
-            $account->save();
-            $agentAccount->save();
+            // $account->balance += $this->amount;
+            // $agentAccount->balance += $this->amount;
+            // $account->save();
+            // $agentAccount->save();
+
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->amount);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->amount);
+
+            $account->refresh();
+            $agentAccount->refresh();
 
             // Création des transactions
             $this->createTransaction(
@@ -332,10 +343,21 @@ class MemberDetails extends Component
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
             $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
-            $account->balance += $totalPaid;
-            $agentAccount->balance += $totalPaid;
-            $account->save();
-            $agentAccount->save();
+            // $account->balance += $totalPaid;
+            // $agentAccount->balance += $totalPaid;
+            // $account->save();
+            // $agentAccount->save();
+
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->increment('balance', $totalPaid);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $totalPaid);
+
+            $account->refresh();
+            $agentAccount->refresh();
 
             // Créer les transactions
             $this->createTransaction(
@@ -373,12 +395,21 @@ class MemberDetails extends Component
 
                 // Créditer le compte du membre et de l'agent
                 $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
-                $account->balance -= $commissionAmount;
-                $account->save();
-
                 $commissionAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
-                $commissionAccount->balance += $commissionAmount;
-                $commissionAccount->save();
+
+                // $account->balance -= $commissionAmount;
+                // $account->save();
+
+                // $commissionAccount->balance += $commissionAmount;
+                // $commissionAccount->save();
+
+                Account::where('id', $account->id)
+                        ->decrement('balance', $commissionAmount);
+                $account->refresh();
+
+                AgentAccount::where('id', $commissionAccount->id)
+                        ->increment('balance', $commissionAmount);
+                $commissionAccount->refresh();
 
                 $card->first_mise_retained = true;
                 $card->save();
@@ -472,13 +503,29 @@ class MemberDetails extends Component
             }
 
             // Mettre à jour les soldes
-            $account->balance -= $totalAmount;
-            $agentAccount->balance -= $this->amount;
-            $retainedAccount->balance += $this->a_retenir;
+            // $account->balance -= $totalAmount;
+            // $agentAccount->balance -= $this->amount;
+            // $retainedAccount->balance += $this->a_retenir;
 
-            $account->save();
-            $agentAccount->save();
-            $retainedAccount->save();
+            // $account->save();
+            // $agentAccount->save();
+            // $retainedAccount->save();
+
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->decrement('balance', $totalAmount);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->decrement('balance', $this->amount);
+
+            AgentAccount::where('id', $retainedAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->a_retenir);
+
+            $account->refresh();
+            $agentAccount->refresh();
+            $retainedAccount->refresh();
 
             // Créer les transactions
             $this->createTransaction(
@@ -615,13 +662,29 @@ class MemberDetails extends Component
             }
 
             // Mettre à jour les soldes
-            $account->balance -= $total;
-            $agentAccount->balance -= ($total - $toRetain);
-            $retainedAccount->balance += $toRetain;
+            // $account->balance -= $total;
+            // $agentAccount->balance -= ($total - $toRetain);
+            // $retainedAccount->balance += $toRetain;
 
-            $account->save();
-            $agentAccount->save();
-            $retainedAccount->save();
+            // $account->save();
+            // $agentAccount->save();
+            // $retainedAccount->save();
+
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->decrement('balance', $total);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->decrement('balance', $toRetain);
+
+            AgentAccount::where('id', $retainedAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $toRetain);
+
+            $account->refresh();
+            $agentAccount->refresh();
+            $retainedAccount->refresh();
 
             // Marquer la carte comme inactive
             $card->is_active = false;
