@@ -676,7 +676,7 @@ class MemberDetails extends Component
 
             AgentAccount::where('id', $agentAccount->id)
                 ->lockForUpdate()
-                ->decrement('balance', $toRetain);
+                ->decrement('balance', ($total - $toRetain));
 
             AgentAccount::where('id', $retainedAccount->id)
                 ->lockForUpdate()
@@ -995,7 +995,7 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
         notyf()->success($successMessage);
         $this->resetInputFields();
-        $this->dispatch('demander-impression', 
+        $this->dispatch('demander-impression',
             urlPC: route('receipt.generate', ['id' => $transaction->id]),
             urlPOS: route('receipt.generate_pos', ['id' => $transaction->id])
         );
