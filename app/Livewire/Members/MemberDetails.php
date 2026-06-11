@@ -40,6 +40,9 @@ class MemberDetails extends Component
     public $cardDetail;
     public $openConfirmDepositNormal = false;
     public $openConfirmRetraitNormal = false;
+    public $openPrintReceiptModal = false;
+    public $printReceiptUrlPC = '';
+    public $printReceiptUrlPOS = '';
 
     // Filtres de date pour les transactions
     public $date_filter = '30_days';
@@ -995,10 +998,11 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
         notyf()->success($successMessage);
         $this->resetInputFields();
-        $this->dispatch('demander-impression',
-            urlPC: route('receipt.generate', ['id' => $transaction->id]),
-            urlPOS: route('receipt.generate_pos', ['id' => $transaction->id])
-        );
+        // Dispatch event to trigger SweetAlert for print options
+        $this->dispatch('demander-impression', [
+            'urlPC' => route('receipt.generate', ['id' => $transaction->id]),
+            'urlPOS' => route('receipt.generate_pos', ['id' => $transaction->id]),
+        ]);
     }
 
     /**
@@ -1022,10 +1026,14 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
     }
 
+    public function closePrintReceiptModal()
+    {
+        $this->openPrintReceiptModal = false;
+        $this->printReceiptUrlPC = '';
+        $this->printReceiptUrlPOS = '';
+    }
     public function toggleWithdrawAll($accountId)
     {
-        Gate::authorize('autoriser-tout-retirer', User::class);
-
         $account = Account::findOrFail($accountId);
         $account->can_withdraw_all = !$account->can_withdraw_all;
         $account->save();

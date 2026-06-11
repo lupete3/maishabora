@@ -89,3 +89,24 @@
         </div>
     </div>
 </div>
+
+    <!-- Modal Print Receipt -->
+    <div class="modal fade @if($openPrintReceiptModal) show @endif" id="modalPrintReceipt" tabindex="-1"
+         style="@if($openPrintReceiptModal) display: block; background: rgba(0,0,0,0.5); @else display: none; @endif">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Imprimer le reçu</h5>
+                    <button type="button" class="btn-close" wire:click="$set('openPrintReceiptModal', false)"></button>
+                </div>
+                <div class="modal-body">
+                    <iframe src="{{ $printReceiptUrlPC }}" width="100%" height="500px"></iframe>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-primary" onclick="window.open('{{ $printReceiptUrlPC }}', '_blank')">Imprimer (PC)</button>
+                    <button class="btn btn-secondary" onclick="window.open('{{ $printReceiptUrlPOS }}', '_blank')">Imprimer (POS)</button>
+                    <button class="btn btn-secondary" wire:click="$set('openPrintReceiptModal', false)">Fermer</button>
+                </div>
+            </div>
+        </div>
+    </div>
