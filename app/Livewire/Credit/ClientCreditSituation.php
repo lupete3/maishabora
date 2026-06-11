@@ -12,6 +12,7 @@ class ClientCreditSituation extends Component
     public $user;
     public $selectedRepayments = [];
     public $selectedCreditId;
+    public $selectedCredit;
 
     public function mount($userId)
     {
@@ -29,6 +30,7 @@ class ClientCreditSituation extends Component
         $credit = Credit::with('repayments')->findOrFail($creditId);
 
         $this->selectedCreditId = $creditId;
+        $this->selectedCredit = $credit;
 
         $this->selectedRepayments = $credit->repayments->map(function ($repayment) {
             $daysLate = null;

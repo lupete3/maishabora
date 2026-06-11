@@ -993,16 +993,14 @@ class MemberDetails extends Component
      */
     private function afterTransactionSuccess($transaction, $modalName, $successMessage)
     {
+        $this->printReceiptUrlPC = route('receipt.generate', ['id' => $transaction->id]);
+        $this->printReceiptUrlPOS = route('receipt.generate_pos', ['id' => $transaction->id]);
+        $this->openPrintReceiptModal = true;
+
         $this->reset(['amount', 'description']);
         $this->dispatch('closeModal', name: $modalName);
-        $this->dispatch('$refresh');
         notyf()->success($successMessage);
         $this->resetInputFields();
-        // Dispatch event to trigger SweetAlert for print options
-        $this->dispatch('demander-impression', [
-            'urlPC' => route('receipt.generate', ['id' => $transaction->id]),
-            'urlPOS' => route('receipt.generate_pos', ['id' => $transaction->id]),
-        ]);
     }
 
     /**

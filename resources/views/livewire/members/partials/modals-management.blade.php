@@ -93,19 +93,29 @@
     <!-- Modal Print Receipt -->
     <div class="modal fade @if($openPrintReceiptModal) show @endif" id="modalPrintReceipt" tabindex="-1"
          style="@if($openPrintReceiptModal) display: block; background: rgba(0,0,0,0.5); @else display: none; @endif">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-dialog modal-dialog-centered modal-md">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title">Imprimer le reçu</h5>
-                    <button type="button" class="btn-close" wire:click="$set('openPrintReceiptModal', false)"></button>
+                    <button type="button" class="btn-close" wire:click="closePrintReceiptModal"></button>
                 </div>
                 <div class="modal-body">
-                    <iframe src="{{ $printReceiptUrlPC }}" width="100%" height="500px"></iframe>
+                    <p class="mb-0">
+                        Choisissez le format du reçu à imprimer.
+                    </p>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-primary" onclick="window.open('{{ $printReceiptUrlPC }}', '_blank')">Imprimer (PC)</button>
-                    <button class="btn btn-secondary" onclick="window.open('{{ $printReceiptUrlPOS }}', '_blank')">Imprimer (POS)</button>
-                    <button class="btn btn-secondary" wire:click="$set('openPrintReceiptModal', false)">Fermer</button>
+                    @if($printReceiptUrlPC)
+                        <a class="btn btn-primary" href="{{ $printReceiptUrlPC }}" target="_blank" rel="noopener">
+                            Ouvrir / imprimer A4
+                        </a>
+                    @endif
+                    @if($printReceiptUrlPOS)
+                        <a class="btn btn-secondary" href="{{ $printReceiptUrlPOS }}" target="_blank" rel="noopener">
+                            Ouvrir / imprimer POS
+                        </a>
+                    @endif
+                    <button type="button" class="btn btn-outline-secondary" wire:click="closePrintReceiptModal">Fermer</button>
                 </div>
             </div>
         </div>

@@ -2,7 +2,6 @@
 <div class="mt-0">
     @include('livewire.credit.partials.modals-management')
 
-
     <h3>Gestion Remboursement Crédits</h3>
 
     <div class="card">
@@ -13,7 +12,6 @@
                     <div class="col-md-6 mb-3">
                         <div class="position-relative">
                             <label>Membre</label>
-
                             <div class="table-search-input">
                                 <div class="input-group input-group-merge">
                                     <span class="input-group-text" id="basic-addon-search31"><i
@@ -145,10 +143,6 @@
             @endif
     </div>
 </div>
-
-
-
-
 <!-- Modal de confirmation -->
 <div wire:ignore.self class="modal fade" id="confirm-repayment" tabindex="-1">
     <div class="modal-dialog">
