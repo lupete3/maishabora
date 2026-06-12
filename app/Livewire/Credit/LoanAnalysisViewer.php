@@ -24,7 +24,20 @@ class LoanAnalysisViewer extends Component
 
     public function loadAnalysis()
     {
-        $loan = LoanApplication::with(['user', 'business', 'cashflow', 'balance', 'ratios', 'securities', 'decision'])->find($this->loan_application_id);
+        $loan = LoanApplication::with([
+            'user',
+            'business',
+            'cashflow',
+            'balance',
+            'ratios',
+            'securities',
+            'decision',
+            'fieldVisit',
+            'businessProfile',
+            'balanceSheetDetail',
+            'cashflowAnalysis',
+            'agentProposal',
+        ])->find($this->loan_application_id);
         if (!$loan)
             return;
 

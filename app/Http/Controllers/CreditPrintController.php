@@ -27,12 +27,26 @@ class CreditPrintController extends Controller
         Gate::authorize('afficher-demandes-credit', User::class);
 
         $loan = LoanApplication::with([
-            'user', 
-            'business', 
-            'cashflow', 
-            'balance', 
-            'securities', 
-            'decision'
+            'user',
+            'agent',
+            'business',
+            'cashflow',
+            'balance',
+            'securities',
+            'decision',
+            'fieldVisit',
+            'familyMembers',
+            'householdReferences',
+            'businessProfile',
+            'investmentPlanItems',
+            'creditHistories',
+            'balanceSheetDetail',
+            'cashflowAnalysis',
+            'expenseLines',
+            'inventoryItems',
+            'collateralProperty',
+            'coBorrower',
+            'agentProposal',
         ])->findOrFail($id);
 
         return view('credit.print.filled', compact('loan'));
