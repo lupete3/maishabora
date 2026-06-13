@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CompanyInformation;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 
 class CompanyInformationController extends Controller
@@ -48,6 +49,8 @@ class CompanyInformationController extends Controller
             $data['is_active'] = true;
             CompanyInformation::create($data);
         }
+
+        Cache::forget('company_information.active');
 
         notyf()->success('Informations de l\'entreprise mises à jour avec succès.');
 
