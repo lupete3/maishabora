@@ -208,10 +208,11 @@
     </script>
 
     <script>
-        document.addEventListener("livewire:load", () => {
-            Livewire.hook('request.failed', ({ status }) => {
-                if (status === 419) {
-                    window.location.reload();
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('request.failed', ({ status, preventDefault }) => {
+                if ([401, 419].includes(status)) {
+                    preventDefault();
+                    window.location.href = @json(route('login'));
                 }
             });
         });
