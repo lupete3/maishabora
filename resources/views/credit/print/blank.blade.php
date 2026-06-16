@@ -37,7 +37,7 @@
         .table-custom { margin-bottom: 11px; }
         .table-custom th, .table-custom td { border: 1px solid #aaa; padding: 4px 6px; text-align: left; vertical-align: middle; }
         .table-custom th { background: #f3f4f6; color: #0a802e; font-weight: bold; font-size: 8px; text-transform: uppercase; }
-        .blank-cell { height: 20px; background: #fafafa; }
+        .blank-cell { height: 10px; background: #fafafa; }
         .total-row td { background: #f3f4f6; font-weight: bold; }
         .calc-row td { background: #eef6ff; color: #1d4ed8; font-weight: bold; }
         .two-columns { display: flex; gap: 12px; align-items: flex-start; }
@@ -186,6 +186,9 @@
         <div class="subsection-title">A. Structure familiale</div>
         <table class="table-custom">
             <thead><tr><th>Nom</th><th>Lien avec client</th><th>Occupation</th><th>Observations utiles</th></tr></thead>
+            <colgroup>
+                <col style="width:40%">
+            </colgroup>
             <tbody>
                 @for($i = 0; $i < 5; $i++)
                     <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
@@ -223,9 +226,9 @@
                 <tr><td>Date ou periode de debut</td><td class="blank-cell"></td></tr>
                 <tr><td>Nombre d'employes</td><td class="blank-cell"></td></tr>
                 <tr><td>Marge estimee (%)</td><td class="blank-cell"></td></tr>
-                <tr><td>Historique de l'entreprise</td><td class="blank-cell" style="height: 42px;"></td></tr>
-                <tr><td>Observations qualitatives</td><td class="blank-cell" style="height: 42px;"></td></tr>
-                <tr><td>Commentaires achat, vente a credit, concurrence</td><td class="blank-cell" style="height: 42px;"></td></tr>
+                <tr><td>Historique de l'entreprise</td><td class="blank-cell" style="height: 22px;"></td></tr>
+                <tr><td>Observations qualitatives</td><td class="blank-cell" style="height: 22px;"></td></tr>
+                <tr><td>Commentaires achat, vente a credit, concurrence</td><td class="blank-cell" style="height: 22px;"></td></tr>
             </tbody>
         </table>
 
@@ -238,8 +241,6 @@
                 @endfor
             </tbody>
         </table>
-
-        <div class="page-break"></div>
 
         <div class="section-title">V. Details du bilan a encoder</div>
         <div class="subsection-title">A. Details sur le stock</div>
@@ -284,18 +285,32 @@
             </tbody>
         </table>
 
+        <div class="page-break"></div>
+
         <div class="two-columns">
             <div>
                 <div class="subsection-title">B. Charges entreprise</div>
                 <table class="table-custom">
+                    <colgroup>
+                        <col style="width:50%">
+                        <col style="width:50%">
+                    </colgroup>
+
                     <tbody>
                         @foreach(['Loyer', 'Personnel', 'Transport', 'Eau et electricite', 'Communication', 'Autres charges'] as $label)
-                            <tr><td>{{ $label }}</td><td class="blank-cell"></td></tr>
+                            <tr>
+                                <td>{{ $label }}</td>
+                                <td class="blank-cell"></td>
+                            </tr>
                         @endforeach
-                        <tr class="total-row"><td>Total charges entreprise <span class="required">*</span></td><td class="blank-cell"></td></tr>
+                        <tr class="total-row">
+                            <td>Total charges entreprise <span class="required">*</span></td>
+                            <td class="blank-cell"></td>
+                        </tr>
                     </tbody>
                 </table>
-            </div>
+                </div>
+            <div>
             <div>
                 <div class="subsection-title">C. Depenses menage</div>
                 <table class="table-custom">
@@ -307,6 +322,7 @@
                         <tr class="calc-row"><td>Marge securite 10%</td><td>Calcule par le systeme</td></tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
         <div class="row-grid">
@@ -325,8 +341,6 @@
                 @endfor
             </tbody>
         </table>
-
-        <div class="page-break"></div>
 
         <div class="section-title">VII. Garanties</div>
         <div class="subsection-title">A. Biens proposes en garantie</div>
@@ -358,6 +372,8 @@
             <div class="col-6"><div class="field-box"><div class="field-label">Adresse</div><div class="field-value-blank"></div></div></div>
             <div class="col-6"><div class="field-box"><div class="field-label">Relation avec emprunteur</div><div class="field-value-blank"></div></div></div>
         </div>
+
+        <div class="page-break"></div>
 
         <div class="section-title">VIII. Proposition de l'agent de credit</div>
         <div class="field-box"><div class="field-label">Conclusions finales : impressions, risques, perspectives <span class="required">*</span></div><div class="field-value-blank notes"></div></div>
