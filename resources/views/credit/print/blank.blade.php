@@ -162,7 +162,7 @@
 
         <div class="subsection-title">C. Destination du credit et plan d'investissement</div>
         <table class="table-custom">
-            <thead><tr><th>Destination precise</th><th>Montant</th><th>Debut prevu</th><th>Fin prevue</th><th>Part client</th><th>Part CAHI</th><th>Part tiers</th></tr></thead>
+            <thead><tr><th>Destination precise</th><th>Montant</th><th>Debut prevu</th><th>Fin prevue</th><th>Part client</th><th>Part Maisga Bora</th><th>Part tiers</th></tr></thead>
             <tbody>
                 @for($i = 0; $i < 5; $i++)
                     <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>

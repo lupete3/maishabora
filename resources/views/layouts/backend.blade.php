@@ -48,7 +48,6 @@
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 
-
     <!-- Scripts -->
     @livewireStyles
     {{-- @vite(['resources/js/app.js']) --}}
@@ -209,12 +208,32 @@
 
     <script>
         document.addEventListener('livewire:init', () => {
-            Livewire.hook('request.failed', ({ status, preventDefault }) => {
-                if ([401, 419].includes(status)) {
-                    preventDefault();
-                    window.location.href = @json(route('login'));
-                }
+
+            Livewire.hook('request', ({ fail }) => {
+
+                fail(({ status, preventDefault }) => {
+
+                    if (status === 419) {
+
+                        preventDefault();
+
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Session expirée',
+                            text: 'Votre session a expiré. Veuillez vous reconnecter.',
+                            confirmButtonText: 'Se reconnecter'
+                        }).then(() => {
+
+                            window.location.href = "{{ route('login') }}";
+
+                        });
+
+                    }
+
+                });
+
             });
+
         });
     </script>
 
