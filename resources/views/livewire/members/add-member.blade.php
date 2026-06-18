@@ -293,13 +293,13 @@
                                     <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="current" id="active_type_current" wire:model.defer="active_account_types">
+                                            <input class="form-check-input" type="checkbox" value="current" id="active_type_current" wire:model="active_account_types">
                                             <label class="form-check-label" for="active_type_current">
                                                 Compte Courant (USD & CDF)
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="savings" id="active_type_savings" wire:model.defer="active_account_types">
+                                            <input class="form-check-input" type="checkbox" value="savings" id="active_type_savings" wire:model="active_account_types">
                                             <label class="form-check-label" for="active_type_savings">
                                                 Compte Épargne (USD & CDF)
                                             </label>
@@ -659,13 +659,13 @@
                                     <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="current" id="edit_active_type_current" wire:model.defer="active_account_types">
+                                            <input class="form-check-input" type="checkbox" value="current" id="edit_active_type_current" wire:model="active_account_types">
                                             <label class="form-check-label" for="edit_active_type_current">
                                                 Compte Courant (USD & CDF)
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="savings" id="edit_active_type_savings" wire:model.defer="active_account_types">
+                                            <input class="form-check-input" type="checkbox" value="savings" id="edit_active_type_savings" wire:model="active_account_types">
                                             <label class="form-check-label" for="edit_active_type_savings">
                                                 Compte Épargne (USD & CDF)
                                             </label>
