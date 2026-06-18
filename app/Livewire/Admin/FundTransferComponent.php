@@ -167,6 +167,11 @@ class FundTransferComponent extends Component
                         ['balance' => 0]
                     );
 
+                    if ($account->status === 'Inactif') {
+                        notyf()->error("Opération refusée. Le compte {$this->currency} de ce membre est Inactif.");
+                        return;
+                    }
+
                     $account->balance += $this->amount;
                     $account->save();
 

@@ -47,6 +47,11 @@ class DepositForMember extends Component
             ['balance' => 0]
         );
 
+        if ($account->status === 'Inactif') {
+            notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+            return;
+        }
+
         // Récupérer la caisse de l'agent
         $agentAccount = AgentAccount::firstOrCreate(
             ['user_id' => Auth::id(), 'currency' => $this->currency],

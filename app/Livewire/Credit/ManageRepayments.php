@@ -128,6 +128,11 @@ class ManageRepayments extends Component
                     ['balance' => 0]
                 );
 
+                if ($account->status === 'Inactif') {
+                    notyf()->error("Opération refusée. Le compte courant {$credit->currency} de ce membre est Inactif.");
+                    return;
+                }
+
                 // Calcul du montant à payer
                 if ($withInterest) {
                     $expectedAmount = floatval($repayment->expected_amount);

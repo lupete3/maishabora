@@ -274,6 +274,10 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
+            if ($account->status === 'Inactif') {
+                throw new \Exception("Opération refusée. Le compte courant {$this->currency} de cet agent est Inactif.");
+            }
+
             // Crédit compte agent
             $accountRetenuSalaire = Account::firstOrCreate(
                 ['user_id' => self::RETAINED_ACCOUNT_USER_ID, 'currency' => $this->currency, 'type' => 'current'],

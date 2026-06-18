@@ -212,6 +212,12 @@ class GrantCredit extends Component
                 return;
             }
 
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $mainCash = MainCashRegister::where('currency', $this->currency)
                 ->lockForUpdate()
                 ->firstOrCreate(['currency' => $this->currency], ['balance' => 0]);

@@ -55,7 +55,7 @@ class PurchaseMembershipCard extends Component
         'code' => 'required|string|unique:membership_cards,code',
         'currency' => 'required|string',
         'price' => 'required|numeric|min:0',
-        'subscription_amount' => 'required|numeric|min:0',
+        'subscription_amount' => 'required|numeric|min:1',
     ];
 
     public function mount()
@@ -133,6 +133,23 @@ class PurchaseMembershipCard extends Component
             // Récupération du membre
             $member = User::findOrFail($this->member_id);
 
+            if ($this->card_type === 'epargne') {
+
+                $hasActiveSavingsAccount = $member->accounts()
+                    ->where('type', 'savings')
+                    ->where('currency', $this->currency)
+                    ->where('status', 'Actif')
+                    ->exists();
+
+                if (!$hasActiveSavingsAccount) {
+                    notyf()->error(
+                        "Ce membre ne possède aucun compte épargne actif en {$this->currency}."
+                    );
+
+                    return;
+                }
+            }
+
             // Définition des dates
             $startDate = now();
 
@@ -154,7 +171,7 @@ class PurchaseMembershipCard extends Component
             ]);
 
             // Génération des mises UNIQUEMENT pour le carnet épargne
-            if ($this->card_type === 'epargne') {
+            if ($this->card_type === 'epargne' && $this->subscription_amount > 0 && $member->accounts()->where('type', 'savings')->where('currency', $this->currency)->where('status', 'Actif')->exists()) {
                 for ($i = 0; $i < 31; $i++) {
                     $card->contributions()->create([
                         'membership_card_id' => $card->id,

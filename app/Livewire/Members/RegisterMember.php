@@ -76,6 +76,7 @@ class RegisterMember extends Component
     public $scan_piece = null;
     public ?string $photo_profil_url = null;
     public ?string $scan_piece_url = null;
+    public array $active_account_types = [];
 
     // Utilitaires Livewire
     public $search = '';
@@ -168,6 +169,7 @@ class RegisterMember extends Component
                     'nationalite' => ['nullable', 'string', 'max:255'],
                     'niveau_etude' => ['nullable', 'string', 'max:255'],
                     'remarque' => ['nullable', 'string'],
+                    'active_account_types' => ['required', 'array', 'min:1'],
                 ];
                 break;
         }
@@ -212,6 +214,7 @@ class RegisterMember extends Component
             'email' => $this->email,
             'role' => $this->role,
             'status' => $this->status,
+            'active_account_types' => $this->active_account_types,
         ], [
             'name' => ['required', 'string', 'max:255'],
             'postnom' => ['required', 'string', 'max:255'],
@@ -255,6 +258,7 @@ class RegisterMember extends Component
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
             'role' => ['nullable', 'in:admin,caissier,recouvreur,comptable,receptionniste,membre'],
             'status' => ['required', 'in:0,1'],
+            'active_account_types' => ['required', 'array', 'min:1'],
             'photo_profil' => ['nullable', 'image', 'max:4048'], // max 2MB
             'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
         ], [
@@ -273,6 +277,8 @@ class RegisterMember extends Component
             'role.in' => 'Le rôle sélectionné est invalide.',
             'status.required' => 'Choisir le statut.',
             'status.in' => 'Le statut est invalide.',
+            'active_account_types.required' => 'Vous devez sélectionner au moins un type de compte à rendre actif.',
+            'active_account_types.min' => 'Vous devez sélectionner au moins un type de compte à rendre actif.',
         ]);
 
         if ($validator->fails()) {
@@ -305,6 +311,7 @@ class RegisterMember extends Component
                 'currency' => $currency,
                 'type' => 'current',
                 'balance' => 0,
+                'status' => in_array('current', $this->active_account_types) ? 'Actif' : 'Inactif',
             ]);
 
             // Compte Epargne (Pour les carnets/mises)
@@ -313,6 +320,7 @@ class RegisterMember extends Component
                 'currency' => $currency,
                 'type' => 'savings',
                 'balance' => 0,
+                'status' => in_array('savings', $this->active_account_types) ? 'Actif' : 'Inactif',
             ]);
         }
 
@@ -356,7 +364,8 @@ class RegisterMember extends Component
             'role',
             'status',
             'photo_profil',
-            'scan_piece'
+            'scan_piece',
+            'active_account_types'
         ]);
 
         $this->dispatch('closeModal', name: 'modalMembre');
@@ -415,6 +424,11 @@ class RegisterMember extends Component
             $this->photo_profil_url = $user->photo_profil;
             $this->scan_piece_url = $user->scan_piece;
 
+            $this->active_account_types = Account::where('user_id', $user->id)
+                ->where('status', 'Actif')
+                ->pluck('type')
+                ->unique()
+                ->toArray();
 
             $this->editModal = true;
             $this->dispatch('openModal', name: 'modalMembre');
@@ -492,6 +506,7 @@ class RegisterMember extends Component
                 'role' => ['nullable', 'in:admin,caissier,recouvreur,comptable,receptionniste,membre'],
                 'photo_profil' => ['nullable', 'image', 'max:4048'], // max 2MB
                 'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
+                'active_account_types' => ['required', 'array', 'min:1'],
             ]);
 
             $validated['status'] = $status;
@@ -510,7 +525,36 @@ class RegisterMember extends Component
                 $validated['scan_piece'] = $this->scan_piece_url; // conserver l'ancien
             }
 
+            $activeTypes = $validated['active_account_types'] ?? [];
+            unset($validated['active_account_types']);
+
             User::findOrFail($this->userId)->update($validated);
+
+            foreach (['USD', 'CDF'] as $currency) {
+                // Compte Courant
+                Account::updateOrCreate(
+                    [
+                        'user_id' => $this->userId,
+                        'currency' => $currency,
+                        'type' => 'current',
+                    ],
+                    [
+                        'status' => in_array('current', $activeTypes) ? 'Actif' : 'Inactif',
+                    ]
+                );
+
+                // Compte Epargne
+                Account::updateOrCreate(
+                    [
+                        'user_id' => $this->userId,
+                        'currency' => $currency,
+                        'type' => 'savings',
+                    ],
+                    [
+                        'status' => in_array('savings', $activeTypes) ? 'Actif' : 'Inactif',
+                    ]
+                );
+            }
 
             UserLogHelper::log_user_activity(
                 action: 'mise_a_jour_membre',
@@ -600,7 +644,8 @@ class RegisterMember extends Component
                 'role',
                 'status',
                 'photo_profil',
-                'scan_piece'
+                'scan_piece',
+                'active_account_types'
             ]);
             $this->dispatch('openModal', name: 'modalMembre');
 

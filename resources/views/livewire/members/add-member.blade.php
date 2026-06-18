@@ -289,6 +289,24 @@
                                     <label class="form-label">Remarque</label>
                                     <textarea wire:model.defer="remarque" class="form-control" rows="3"></textarea>
                                 </div>
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="current" id="active_type_current" wire:model.defer="active_account_types">
+                                            <label class="form-check-label" for="active_type_current">
+                                                Compte Courant (USD & CDF)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="savings" id="active_type_savings" wire:model.defer="active_account_types">
+                                            <label class="form-check-label" for="active_type_savings">
+                                                Compte Épargne (USD & CDF)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @error('active_account_types') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -318,6 +336,11 @@
                         <li class="nav-item col-md-4 mb-1" role="presentation">
                             <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
                                 <i class="bx bx-image me-1"></i> Média / Docs
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link" id="comptes-tab" data-bs-toggle="tab" data-bs-target="#comptes" type="button" role="tab">
+                                <i class="bx bx-wallet me-1"></i> Comptes
                             </button>
                         </li>
                     </ul>
@@ -625,6 +648,30 @@
                                     <label class="form-label">Remarque</label>
                                     <textarea wire:model.defer="remarque" class="form-control"
                                         rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet 6 : Comptes -->
+                        <div class="tab-pane fade" id="comptes" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="current" id="edit_active_type_current" wire:model.defer="active_account_types">
+                                            <label class="form-check-label" for="edit_active_type_current">
+                                                Compte Courant (USD & CDF)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" value="savings" id="edit_active_type_savings" wire:model.defer="active_account_types">
+                                            <label class="form-check-label" for="edit_active_type_savings">
+                                                Compte Épargne (USD & CDF)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @error('active_account_types') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>

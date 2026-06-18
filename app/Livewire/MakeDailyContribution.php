@@ -79,15 +79,20 @@ class MakeDailyContribution extends Component
             return;
         }
 
-        // Mettre à jour la mise
-        $contribution->is_paid = true;
-        $contribution->save();
-
         // Créditer le compte du membre
         $account = Account::firstOrCreate(
             ['user_id' => $card->member_id, 'currency' => $card->currency, 'type' => $accountType],
             ['balance' => 0]
         );
+
+        if ($account->status === 'Inactif') {
+            notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
+            return;
+        }
+
+        // Mettre à jour la mise
+        $contribution->is_paid = true;
+        $contribution->save();
 
         $account->balance += $this->amount;
         $account->save();

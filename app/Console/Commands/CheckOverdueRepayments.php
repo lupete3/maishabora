@@ -48,6 +48,10 @@ class CheckOverdueRepayments extends Command
                 ['balance' => 0]
             );
 
+            if ($account->status === 'Inactif') {
+                continue;
+            }
+
             //Calcul du montant dû + pénalité
             $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
             $dailyPenaltyRate = 0.003; //0.3% par jour

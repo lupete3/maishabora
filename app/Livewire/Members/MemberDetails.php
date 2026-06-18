@@ -230,6 +230,13 @@ class MemberDetails extends Component
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
             // Mise à jour des soldes
@@ -344,6 +351,13 @@ class MemberDetails extends Component
 
             // Mettre à jour les comptes
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
             // $account->balance += $totalPaid;
@@ -479,6 +493,13 @@ class MemberDetails extends Component
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
             $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
@@ -637,6 +658,12 @@ class MemberDetails extends Component
             $accountType = $useCurrentAccount ? 'current' : 'savings';
 
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
+                return;
+            }
 
             if ($accountType === 'current') {
                 $minBalance = ($card->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;

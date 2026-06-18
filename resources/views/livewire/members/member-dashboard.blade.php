@@ -268,6 +268,7 @@
 
                     <div class="row g-3">
                         {{-- ── Compte Courant ── --}}
+                        @if($member->accounts->where('type', 'current')->where('status', 'Actif')->count() > 0)
                         <div class="col-md-6">
                             <div class="account-card card-courant">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -292,19 +293,23 @@
 
                                 @foreach(['USD', 'CDF'] as $curr)
                                     @php
-                                        $acc     = $member->accounts->where('currency', $curr)->where('type', 'current')->first();
-                                        $balance = (float)($acc?->balance ?? 0);
+                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'current')->where('status', 'Actif')->first();
                                     @endphp
-                                    <div class="balance-row">
-                                        <span class="balance-currency-badge">{{ $curr }}</span>
-                                        <span class="balance-amount">
-                                            @if($showBalances)
-                                                {{ number_format($balance, 2, '.', ' ') }}
-                                            @else
-                                                <span style="letter-spacing:3px;opacity:.7">••••••</span>
-                                            @endif
-                                        </span>
-                                    </div>
+                                    @if($acc)
+                                        @php
+                                            $balance = (float)$acc->balance;
+                                        @endphp
+                                        <div class="balance-row">
+                                            <span class="balance-currency-badge">{{ $curr }}</span>
+                                            <span class="balance-amount">
+                                                @if($showBalances)
+                                                    {{ number_format($balance, 2, '.', ' ') }}
+                                                @else
+                                                    <span style="letter-spacing:3px;opacity:.7">••••••</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
                                 @endforeach
 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -315,8 +320,10 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
 
                         {{-- ── Compte Épargne ── --}}
+                        @if($member->accounts->where('type', 'savings')->where('status', 'Actif')->count() > 0)
                         <div class="col-md-6">
                             <div class="account-card card-epargne">
                                 <div class="d-flex justify-content-between align-items-start mb-3">
@@ -341,19 +348,23 @@
 
                                 @foreach(['USD', 'CDF'] as $curr)
                                     @php
-                                        $acc     = $member->accounts->where('currency', $curr)->where('type', 'savings')->first();
-                                        $balance = (float)($acc?->balance ?? 0);
+                                        $acc     = $member->accounts->where('currency', $curr)->where('type', 'savings')->where('status', 'Actif')->first();
                                     @endphp
-                                    <div class="balance-row">
-                                        <span class="balance-currency-badge">{{ $curr }}</span>
-                                        <span class="balance-amount">
-                                            @if($showBalances)
-                                                {{ number_format($balance, 2, '.', ' ') }}
-                                            @else
-                                                <span style="letter-spacing:3px;opacity:.7">••••••</span>
-                                            @endif
-                                        </span>
-                                    </div>
+                                    @if($acc)
+                                        @php
+                                            $balance = (float)$acc->balance;
+                                        @endphp
+                                        <div class="balance-row">
+                                            <span class="balance-currency-badge">{{ $curr }}</span>
+                                            <span class="balance-amount">
+                                                @if($showBalances)
+                                                    {{ number_format($balance, 2, '.', ' ') }}
+                                                @else
+                                                    <span style="letter-spacing:3px;opacity:.7">••••••</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
                                 @endforeach
 
                                 <div class="d-flex justify-content-between align-items-center mt-3">
@@ -364,14 +375,17 @@
                                 </div>
                             </div>
                         </div>
+                        @endif
                     </div>
                 </div>
 
                 <!-- Section: Statistiques Carnets -->
+                @if($member->accounts->where('type', 'savings')->where('status', 'Actif')->count() > 0)
                 <div class="mb-4" wire:ignore>
                     <h5 class="fw-bold mb-3 text-muted text-uppercase fs-7 ls-1">Statistiques Carnets</h5>
                     <livewire:membership-card-stats wire:key="membership-stats" />
                 </div>
+                @endif
 
                 @if ($credits->where('is_paid', false)->isNotEmpty())
                 <div class="row g-4 mb-4">
