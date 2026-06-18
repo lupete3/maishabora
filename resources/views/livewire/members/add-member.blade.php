@@ -657,19 +657,36 @@
                             <div class="row g-3">
                                 <div class="col-md-12 mb-1 mt-3">
                                     <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
-                                    <div class="d-flex gap-3">
+                                    <div class="d-flex gap-4">
+
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="current" id="edit_active_type_current" wire:model="active_account_types">
-                                            <label class="form-check-label" for="edit_active_type_current">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                id="edit_active_type_current"
+                                                wire:model.live="current_account_active">
+
+                                            <label
+                                                class="form-check-label"
+                                                for="edit_active_type_current">
                                                 Compte Courant (USD & CDF)
                                             </label>
                                         </div>
+
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="savings" id="edit_active_type_savings" wire:model="active_account_types">
-                                            <label class="form-check-label" for="edit_active_type_savings">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                id="edit_active_type_savings"
+                                                wire:model.live="savings_account_active">
+
+                                            <label
+                                                class="form-check-label"
+                                                for="edit_active_type_savings">
                                                 Compte Épargne (USD & CDF)
                                             </label>
                                         </div>
+
                                     </div>
                                     @error('active_account_types') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                 </div>
