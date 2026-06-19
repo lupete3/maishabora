@@ -55,7 +55,7 @@ class PurchaseMembershipCard extends Component
         'code' => 'required|string|unique:membership_cards,code',
         'currency' => 'required|string',
         'price' => 'required|numeric|min:0',
-        'subscription_amount' => 'required|numeric|min:1',
+        'subscription_amount' => 'required|numeric|min:0',
     ];
 
     public function mount()
@@ -252,8 +252,6 @@ class PurchaseMembershipCard extends Component
 
     public function showConfirmation()
     {
-        $this->validate();
-
         $member = User::find($this->member_id);
         $this->selectedMemberName = $member ? "{$member->name} {$member->postnom}" : 'Inconnu';
 
