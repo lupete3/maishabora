@@ -171,7 +171,8 @@ class RegisterMember extends Component
                     'nationalite' => ['nullable', 'string', 'max:255'],
                     'niveau_etude' => ['nullable', 'string', 'max:255'],
                     'remarque' => ['nullable', 'string'],
-                    'active_account_types' => ['required', 'array', 'min:1'],
+                    'current_account_active' => ['required', 'boolean'],
+                    'savings_account_active' => ['required', 'boolean'],
                 ];
                 break;
         }
@@ -382,7 +383,7 @@ class RegisterMember extends Component
             'photo_profil',
             'scan_piece',
             'current_account_active',
-            'savings_account_active',        
+            'savings_account_active',
         ]);
 
         $this->current_account_active = false;

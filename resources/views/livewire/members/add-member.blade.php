@@ -293,19 +293,20 @@
                                     <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
                                     <div class="d-flex gap-3">
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="current" id="active_type_current" wire:model="active_account_types">
+                                            <input class="form-check-input" type="checkbox" id="active_type_current" wire:model="current_account_active">
                                             <label class="form-check-label" for="active_type_current">
                                                 Compte Courant (USD & CDF)
                                             </label>
                                         </div>
                                         <div class="form-check">
-                                            <input class="form-check-input" type="checkbox" value="savings" id="active_type_savings" wire:model="active_account_types">
+                                            <input class="form-check-input" type="checkbox" id="active_type_savings" wire:model="savings_account_active">
                                             <label class="form-check-label" for="active_type_savings">
                                                 Compte Épargne (USD & CDF)
                                             </label>
                                         </div>
                                     </div>
-                                    @error('active_account_types') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
@@ -688,7 +689,8 @@
                                         </div>
 
                                     </div>
-                                    @error('active_account_types') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>
