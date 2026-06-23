@@ -704,7 +704,7 @@
                                 </div>
                                 <div class="col-md-6 mb-1">
                                     <label class="form-label">Agent responsable (optionnel)</label>
-                                    <select wire:model.defer="agent_id" class="form-select">
+                                    <select wire:model="agent_id" class="form-select">
                                         <option value="">Aucun</option>
                                         @foreach($agents as $agent)
                                             <option value="{{ $agent->id }}">{{ $agent->name . ' ' . $agent->postnom }}</option>

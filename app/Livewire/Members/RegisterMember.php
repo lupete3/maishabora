@@ -464,7 +464,7 @@ class RegisterMember extends Component
             $this->editModal = true;
             $this->dispatch('openModal', name: 'modalMembre');
 
-            $this->agent_id = $user->agent; // Récupère l'agent responsable (si applicable)
+            $this->agent_id = $user->agent_id; // Récupère l'agent responsable (si applicable)
 
         } catch (ModelNotFoundException $e) {
             notyf()->error('Membre non trouvé.');
@@ -685,7 +685,6 @@ class RegisterMember extends Component
                 'scan_piece',
                 'current_account_active',
                 'savings_account_active',
-                'agent_id'
             ]);
             $this->current_account_active = true;
             $this->savings_account_active = true;
