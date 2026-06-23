@@ -313,7 +313,7 @@
                                     <select class="form-select" wire:model="agent_id">
                                         <option value="">Aucun</option>
                                         @foreach($agents as $agent)
-                                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                            <option value="{{ $agent->id }}">{{ $agent->name . ' ' . $agent->postnom }}</option>
                                         @endforeach
                                     </select>
                                     @error('agent_id') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
@@ -707,7 +707,7 @@
                                     <select wire:model.defer="agent_id" class="form-select">
                                         <option value="">Aucun</option>
                                         @foreach($agents as $agent)
-                                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                            <option value="{{ $agent->id }}">{{ $agent->name . ' ' . $agent->postnom }}</option>
                                         @endforeach
                                     </select>
                                     @error('agent_id') <span class="text-danger">{{ $message }}</span> @enderror
