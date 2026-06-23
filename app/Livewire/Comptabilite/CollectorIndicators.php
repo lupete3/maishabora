@@ -3,8 +3,10 @@
 namespace App\Livewire\Comptabilite;
 
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Component;
 use Carbon\Carbon;
+use Livewire\WithPagination;
 
 
 class CollectorIndicators extends Component
@@ -13,6 +15,10 @@ class CollectorIndicators extends Component
     public $period = 'month'; // today, week, month, year, custom
     public $startDate;
     public $endDate;
+    public $status = 'all';
+
+    use WithPagination;
+    protected $paginationTheme = 'bootstrap';
 
     public function mount()
     {
@@ -25,6 +31,19 @@ class CollectorIndicators extends Component
         return view('livewire.comptabilite.collector-indicators', [
             'stats' => $this->getStatistics(),
             'agents' => $this->getAgents(),
+            'members' => $this->getMembersQuery()
+            ->select(
+                'id',
+                'code',
+                'name',
+                'postnom',
+                'prenom',
+                'telephone',
+                'agent_id',
+                'last_transaction_at'
+            )
+            ->with('agent:id,name,postnom')
+            ->paginate(20)
         ]);
     }
 
@@ -142,12 +161,129 @@ class CollectorIndicators extends Component
         ];
     }
 
+    private function getMembersQuery()
+    {
+        [$start, $end] = $this->getPeriodDates();
+
+        $query = User::query()
+
+            ->where('role', 'membre')
+
+            ->when(
+                $this->agentId,
+                fn($q) => $q->where('agent_id', $this->agentId)
+            );
+
+        // Filtre selon le statut
+
+        switch ($this->status) {
+
+            case 'active':
+
+                $query->whereBetween(
+                    'last_transaction_at',
+                    [$start, $end]
+                );
+
+                break;
+
+            case 'follow':
+
+                $query->whereBetween(
+                    'last_transaction_at',
+                    [
+                        now()->subDays(90),
+                        now()->subDays(31)
+                    ]
+                );
+
+                break;
+
+            case 'inactive':
+
+                $query->where(function ($q) {
+
+                    $q->whereNull('last_transaction_at')
+
+                        ->orWhere(
+                            'last_transaction_at',
+                            '<',
+                            now()->subDays(90)
+                        );
+                });
+
+                break;
+        }
+
+        return $query;
+    }
+
     private function getAgents()
     {
         return User::query()
-            ->where('role', 'agent')
+            ->where('role', '!=', 'membre')
             ->orderBy('name')
             ->select('id', 'name', 'postnom')
             ->get();
+    }
+
+
+    public function exportPdf()
+    {
+        $members = $this->getMembersQuery()
+
+            ->with('agent:id,name,postnom')
+
+            ->orderBy('name')
+
+            ->get();
+
+        $pdf = Pdf::loadView(
+            'pdf.members-indicators',
+            [
+                'members' => $members,
+                'status' => $this->status,
+                'periodLabel' => $this->getPeriodLabel(),
+                'agentName' => $this->agentId
+                    ? User::find($this->agentId)?->name
+                    : null
+            ]
+        );
+
+        return response()->streamDownload(
+
+            fn () => print($pdf->output()),
+
+            'indicateurs-membres-'.now()->format('YmdHis').'.pdf'
+
+        );
+
+    }
+
+    private function getPeriodLabel(): string
+    {
+        return match ($this->period) {
+
+            'today' => "Aujourd'hui",
+
+            'week' => "Cette semaine (" .
+                now()->startOfWeek()->format('d/m/Y') .
+                " au " .
+                now()->endOfWeek()->format('d/m/Y') . ")",
+
+            'month' => "Ce mois (" .
+                now()->startOfMonth()->format('d/m/Y') .
+                " au " .
+                now()->endOfMonth()->format('d/m/Y') . ")",
+
+            'year' => "Année " . now()->year,
+
+            'custom' => "Du " .
+                Carbon::parse($this->startDate)->format('d/m/Y') .
+                " au " .
+                Carbon::parse($this->endDate)->format('d/m/Y'),
+
+            default => "Période non définie",
+        };
     }
 }

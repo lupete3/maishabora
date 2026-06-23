@@ -133,7 +133,7 @@
         {{-- ACTIFS --}}
         <div class="col-xl-3 col-md-6 col-sm-6 mb-4">
 
-            <div class="card border-start border-success  h-100">
+            <div wire:click="$set('status','active')" style="cursor:pointer" class="card border-start border-success  h-100" >
 
                 <div class="card-body">
 
@@ -186,7 +186,7 @@
         {{-- A RELANCER --}}
         <div class="col-xl-3 col-md-6 col-sm-6 mb-4">
 
-            <div class="card border-start border-warning  h-100">
+            <div wire:click="$set('status','follow')" style="cursor:pointer" class="card border-start border-warning  h-100">
 
                 <div class="card-body">
 
@@ -237,7 +237,7 @@
         {{-- INACTIFS --}}
         <div class="col-xl-3 col-md-6 col-sm-6 mb-4">
 
-            <div class="card border-start border-danger  h-100">
+            <div wire:click="$set('status','inactive')" style="cursor:pointer" class="card border-start border-danger  h-100">
 
                 <div class="card-body">
 
@@ -286,52 +286,110 @@
 
     </div>
 
+    {{-- TABLEAU DES MEMBRES --}}
+    <div class="card mt-4">
 
-    {{-- RESUME --}}
-    <div class="card">
+        <div class="card-header d-flex justify-content-between">
 
-        <div class="card-header">
-            <h5 class="mb-0">
-                <i class="bx bx-pie-chart-alt-2 me-1"></i>
-                Résumé du portefeuille
+            <h5>
+                Liste détaillée
             </h5>
+
+            <button class="btn btn-primary"
+                    wire:click="exportPdf">
+
+                <i class="bx bx-printer"></i>
+
+                Export PDF
+
+            </button>
+
         </div>
 
-        <div class="card-body">
+        <div class="table-responsive">
 
-            <div class="alert alert-primary mb-0">
+            <table class="table table-hover">
 
-                <strong>Synthèse :</strong>
+                <thead>
 
-                Sur un total de
+                <tr>
+                    <th>Code</th>
+                    <th>Noms</th>
+                    <th>Téléphone</th>
+                    <th>Collecteur</th>
+                    <th>Dernier mouvement</th>
+                </tr>
 
-                <strong>
-                    {{ number_format($stats['total']) }}
-                </strong>
+                </thead>
 
-                membres,
+                <tbody>
 
-                <strong class="text-success">
-                    {{ $stats['active'] }}
-                </strong>
+                @forelse($members as $member)
 
-                sont actifs,
+                    <tr>
 
-                <strong class="text-warning">
-                    {{ $stats['follow'] }}
-                </strong>
+                        <td>{{ $member->code }}</td>
 
-                nécessitent une relance,
+                        <td>
+                            {{ $member->name }}
+                            {{ $member->postnom }}
+                        </td>
 
-                et
+                        <td>{{ $member->telephone }}</td>
 
-                <strong class="text-danger">
-                    {{ $stats['inactive'] }}
-                </strong>
+                        <td>
+                            {{ $member->agent?->name }}
+                        </td>
 
-                sont inactifs.
+                        <td>
 
-            </div>
+                            @if($member->last_transaction_at)
+
+                                {{ $member->last_transaction_at->format('d/m/Y') }}
+
+                                <br>
+
+                                <small class="text-muted">
+
+                                    il y a
+
+                                    {{ $member->last_transaction_at->diffForHumans() }}
+
+                                </small>
+
+                            @else
+
+                                <span class="badge bg-label-danger">
+
+                                    Aucun mouvement
+
+                                </span>
+
+                            @endif
+
+                        </td>
+
+                    </tr>
+
+                @empty
+
+                    <tr>
+                        <td colspan="5" class="text-center">
+                            Aucun membre trouvé.
+                        </td>
+                    </tr>
+
+                @endforelse
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        <div class="card-footer">
+
+            {{ $members->links() }}
 
         </div>
 
