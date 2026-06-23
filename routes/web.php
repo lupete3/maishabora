@@ -35,6 +35,7 @@ use App\Http\Controllers\RepaymentReportController;
 use App\Http\Controllers\ReportAIController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\CollectorIndcatorController;
 use App\Http\Livewire\Credit\LoanApplicationCreate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -193,6 +194,7 @@ Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-comptabl
     Route::get('/ratios-gestion', function () {
         return view('reports.management-ratios');
     })->name('comptabilite.ratios');
+    Route::get('/indicateurs-collecteurs', [CollectorIndcatorController::class, 'index'])->name('comptabilite.collector.indicators');
 });
 
 Route::middleware(['auth', 'auth.session', 'permission:afficher-rapport-client|afficher-rapport-carnet'])->group(function () {

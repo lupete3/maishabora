@@ -173,7 +173,10 @@
                     'comptabilite.compte_resultat',
                     'comptabilite.bilan',
                     'comptabilite.provisions',
-                    'comptabilite.resultats'
+                    'comptabilite.resultats',
+                    'comptabilite.ratios',
+                    'reports.agent-performance',
+                    'comptabilite.collector.indicators'
                 )
             ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
@@ -259,6 +262,11 @@
                             <div data-i18n="Analytics">Performance Agents</div>
                         </a>
                     </li>
+                    <li class="menu-item @if (request()->routeIs('comptabilite.collector.indicators')) active @endif">
+                        <a href="{{ route('comptabilite.collector.indicators') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-pie-chart-alt-2"></i>
+                            <div data-i18n="Analytics">Indicateurs Collecteurs</div>
+                        </a>
                 </ul>
             </li>
         @endcan

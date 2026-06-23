@@ -239,12 +239,6 @@ class MemberDetails extends Component
 
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
-            // Mise à jour des soldes
-            // $account->balance += $this->amount;
-            // $agentAccount->balance += $this->amount;
-            // $account->save();
-            // $agentAccount->save();
-
             Account::where('id', $account->id)
                 ->lockForUpdate()
                 ->increment('balance', $this->amount);
@@ -276,6 +270,8 @@ class MemberDetails extends Component
                 $account->balance,
                 $this->getDepositDescription($user, false)
             );
+
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_DEPOSIT,
@@ -360,11 +356,6 @@ class MemberDetails extends Component
 
             $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
-            // $account->balance += $totalPaid;
-            // $agentAccount->balance += $totalPaid;
-            // $account->save();
-            // $agentAccount->save();
-
             Account::where('id', $account->id)
                 ->lockForUpdate()
                 ->increment('balance', $totalPaid);
@@ -414,12 +405,6 @@ class MemberDetails extends Component
                 $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
                 $commissionAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
 
-                // $account->balance -= $commissionAmount;
-                // $account->save();
-
-                // $commissionAccount->balance += $commissionAmount;
-                // $commissionAccount->save();
-
                 Account::where('id', $account->id)
                         ->decrement('balance', $commissionAmount);
                 $account->refresh();
@@ -441,18 +426,11 @@ class MemberDetails extends Component
                     $this->getCardRetainedDescription($card)
                 );
 
-                // // Ajout d'une transaction visible pour le client justifiant la diminution du solde
-                // $this->createTransaction(
-                //     $account->id,
-                //     $card->member_id,
-                //     self::TRANSACTION_TYPE_WITHDRAWAL,
-                //     $card->currency,
-                //     $commissionAmount,
-                //     $account->balance,
-                //     "Retenue de la première mise (Frais d'adhésion) sur la carte #{$card->id}"
-                // );
 
             }
+
+            $user = User::find($card->member_id);
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
@@ -526,15 +504,6 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Mettre à jour les soldes
-            // $account->balance -= $totalAmount;
-            // $agentAccount->balance -= $this->amount;
-            // $retainedAccount->balance += $this->a_retenir;
-
-            // $account->save();
-            // $agentAccount->save();
-            // $retainedAccount->save();
-
             Account::where('id', $account->id)
                 ->lockForUpdate()
                 ->decrement('balance', $totalAmount);
@@ -583,6 +552,8 @@ class MemberDetails extends Component
                     $this->getRetainedDescription($user)
                 );
             }
+
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_WITHDRAWAL,
@@ -691,15 +662,6 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Mettre à jour les soldes
-            // $account->balance -= $total;
-            // $agentAccount->balance -= ($total - $toRetain);
-            // $retainedAccount->balance += $toRetain;
-
-            // $account->save();
-            // $agentAccount->save();
-            // $retainedAccount->save();
-
             Account::where('id', $account->id)
                 ->lockForUpdate()
                 ->decrement('balance', $total);
@@ -752,6 +714,9 @@ class MemberDetails extends Component
                     $this->getCardRetainedDescription($card)
                 );
             }
+
+            $user = User::find($card->member_id);
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,

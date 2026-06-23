@@ -308,6 +308,16 @@
                                     @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                     @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                 </div>
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Agent responsable (optionnel)</strong></label>
+                                    <select class="form-select" wire:model="agent_id">
+                                        <option value="">Aucun</option>
+                                        @foreach($agents as $agent)
+                                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('agent_id') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -691,6 +701,16 @@
                                     </div>
                                     @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
                                     @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label">Agent responsable (optionnel)</label>
+                                    <select wire:model.defer="agent_id" class="form-select">
+                                        <option value="">Aucun</option>
+                                        @foreach($agents as $agent)
+                                            <option value="{{ $agent->id }}">{{ $agent->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('agent_id') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>

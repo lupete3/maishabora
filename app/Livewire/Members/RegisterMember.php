@@ -80,6 +80,8 @@ class RegisterMember extends Component
     public bool $current_account_active = false;
     public bool $savings_account_active = false;
 
+    public $agent_id = null; // Agent responsable (si applicable)
+
     // Utilitaires Livewire
     public $search = '';
     public $perPage = 10;
@@ -173,6 +175,7 @@ class RegisterMember extends Component
                     'remarque' => ['nullable', 'string'],
                     'current_account_active' => ['required', 'boolean'],
                     'savings_account_active' => ['required', 'boolean'],
+                    'agent_id' => ['nullable', 'exists:users,id'],
                 ];
                 break;
         }
@@ -218,6 +221,7 @@ class RegisterMember extends Component
             'status' => $this->status,
             'current_account_active' => $this->current_account_active,
             'savings_account_active' => $this->savings_account_active,
+            'agent_id' => $this->agent_id,
         ], [
             'name' => ['required', 'string', 'max:255'],
             'postnom' => ['required', 'string', 'max:255'],
@@ -265,6 +269,7 @@ class RegisterMember extends Component
             'savings_account_active' => ['required', 'boolean'],
             'photo_profil' => ['nullable', 'image', 'max:4048'], // max 2MB
             'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
+            'agent_id' => ['nullable', 'exists:users,id'],
         ], [
             'name.required' => 'Le nom est obligatoire.',
             'postnom.required' => 'Le post-nom est obligatoire.',
@@ -384,6 +389,7 @@ class RegisterMember extends Component
             'scan_piece',
             'current_account_active',
             'savings_account_active',
+            'agent_id'
         ]);
 
         $this->current_account_active = false;
@@ -458,9 +464,12 @@ class RegisterMember extends Component
             $this->editModal = true;
             $this->dispatch('openModal', name: 'modalMembre');
 
+            $this->agent_id = $user->agent; // Récupère l'agent responsable (si applicable)
+
         } catch (ModelNotFoundException $e) {
             notyf()->error('Membre non trouvé.');
         } catch (Throwable $th) {
+            dd($th);
             notyf()->error('Une erreur est survenue lors du chargement du membre.');
         }
     }
@@ -533,6 +542,7 @@ class RegisterMember extends Component
                 'scan_piece' => ['nullable', 'mimes:jpeg,png,pdf', 'max:4096'],
                 'current_account_active' => ['required', 'boolean'],
                 'savings_account_active' => ['required', 'boolean'],
+                'agent_id' => ['nullable', 'exists:users,id']
             ]);
 
             $validated['status'] = $status;
@@ -675,6 +685,7 @@ class RegisterMember extends Component
                 'scan_piece',
                 'current_account_active',
                 'savings_account_active',
+                'agent_id'
             ]);
             $this->current_account_active = true;
             $this->savings_account_active = true;
@@ -715,14 +726,16 @@ class RegisterMember extends Component
             }
 
             $members = $query->paginate($this->perPage);
+            $agents = User::where('role', '!=', 'membre')->get();
 
             return view('livewire.members.register-member', [
                 'members' => $members,
+                'agents' => $agents,
             ]);
 
         } catch (Throwable $th) {
             notyf()->error('Erreur lors du chargement des membres.');
-            return view('livewire.members.register-member', ['members' => []]);
+            return view('livewire.members.register-member', ['members' => [], 'agents' => []]);
         }
     }
 

@@ -56,6 +56,8 @@ class PurchaseMembershipCard extends Component
         'currency' => 'required|string',
         'price' => 'required|numeric|min:0',
         'subscription_amount' => 'required|numeric|min:0',
+        'agent_id' => 'nullable|exists:users,id',
+        'card_type' => 'required|in:epargne,simple',
     ];
 
     public function mount()

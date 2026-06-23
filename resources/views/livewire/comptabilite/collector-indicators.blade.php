@@ -254,7 +254,7 @@
                             </span>
 
                             <h3 class="card-title text-danger mb-2">
-                                {{ number_format($stats['inactive']) }atus
+                                {{ number_format($stats['inactive']) }}
                             </h3>
 
                         </div>
