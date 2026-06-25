@@ -183,6 +183,9 @@ class MemberDetails extends Component
 
     public function showConfirmRetraitNormal()
     {
+        $this->amount = (float) $this->amount;
+        $this->a_retenir = (float) $this->a_retenir;
+
         if ($this->operation_type === self::DEPOSIT_TYPE_CARD) {
             $this->cardDetail = MembershipCard::find($this->card_id);
         }
