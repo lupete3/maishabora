@@ -351,9 +351,18 @@ class LoanFieldAnalysisForm extends Component
                 continue;
             }
 
+            $data = Arr::except($row, ['id', 'created_at', 'updated_at', 'loan_application_id']);
+
+            // Clean specific numeric fields if they exist
+            foreach (['amount', 'purchase_price', 'sale_price', 'quantity', 'client_share', 'institution_share', 'third_party_share', 'valeur_estimee', 'income'] as $numKey) {
+                if (array_key_exists($numKey, $data)) {
+                    $data[$numKey] = $this->cleanNumber($data[$numKey]);
+                }
+            }
+
             $model::create(array_merge(
                 ['loan_application_id' => $this->loan->id],
-                $this->moneyData(Arr::except($row, ['id', 'created_at', 'updated_at', 'loan_application_id']))
+                $this->moneyData($data)
             ));
         }
     }
@@ -441,6 +450,73 @@ class LoanFieldAnalysisForm extends Component
         }
 
         return (float) str_replace(',', '.', (string) $value);
+    }
+
+    // Dynamic row addition and removal methods
+    public function addFamilyMember(): void
+    {
+        $this->familyMembers[] = ['name' => null, 'relationship' => null, 'occupation' => null, 'observations' => null];
+    }
+
+    public function removeFamilyMember(int $index): void
+    {
+        unset($this->familyMembers[$index]);
+        $this->familyMembers = array_values($this->familyMembers);
+    }
+
+    public function addHouseholdReference(): void
+    {
+        $this->householdReferences[] = ['name' => null, 'address' => null, 'phone' => null, 'reference_type' => 'autre'];
+    }
+
+    public function removeHouseholdReference(int $index): void
+    {
+        unset($this->householdReferences[$index]);
+        $this->householdReferences = array_values($this->householdReferences);
+    }
+
+    public function addInvestmentPlanItem(): void
+    {
+        $this->investmentPlanItems[] = ['destination' => null, 'amount' => null, 'starts_on' => null, 'ends_on' => null, 'client_share' => null, 'institution_share' => null, 'third_party_share' => null];
+    }
+
+    public function removeInvestmentPlanItem(int $index): void
+    {
+        unset($this->investmentPlanItems[$index]);
+        $this->investmentPlanItems = array_values($this->investmentPlanItems);
+    }
+
+    public function addCreditHistory(): void
+    {
+        $this->creditHistories[] = ['institution' => null, 'amount' => null, 'status' => null, 'observations' => null];
+    }
+
+    public function removeCreditHistory(int $index): void
+    {
+        unset($this->creditHistories[$index]);
+        $this->creditHistories = array_values($this->creditHistories);
+    }
+
+    public function addInventoryItem(): void
+    {
+        $this->inventoryItems[] = ['section' => 'stock', 'description' => null, 'purchase_price' => null, 'sale_price' => null, 'quantity' => null, 'amount' => null, 'observations' => null];
+    }
+
+    public function removeInventoryItem(int $index): void
+    {
+        unset($this->inventoryItems[$index]);
+        $this->inventoryItems = array_values($this->inventoryItems);
+    }
+
+    public function addSecurity(): void
+    {
+        $this->securities[] = ['type' => null, 'nature_bien' => null, 'description' => null, 'valeur_estimee' => null, 'proprietaire' => null];
+    }
+
+    public function removeSecurity(int $index): void
+    {
+        unset($this->securities[$index]);
+        $this->securities = array_values($this->securities);
     }
 
     public function render()

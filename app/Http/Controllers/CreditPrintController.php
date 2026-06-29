@@ -32,6 +32,7 @@ class CreditPrintController extends Controller
             'business',
             'cashflow',
             'balance',
+            'ratios',
             'securities',
             'decision',
             'fieldVisit',

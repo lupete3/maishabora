@@ -59,6 +59,7 @@
         $balance = $loan->balanceSheetDetail;
         $legacyBalance = $loan->balance;
         $proposal = $loan->agentProposal;
+        $ratios = $loan->ratios;
         $businessExpenses = $loan->expenseLines->where('section', 'business');
         $householdExpenses = $loan->expenseLines->where('section', 'household');
         $stockItems = $loan->inventoryItems->where('section', 'stock');
@@ -174,6 +175,7 @@
                         <tr><td>Banque</td><td>{{ $fmt($balance?->bank) }}</td></tr>
                         <tr><td>Epargne</td><td>{{ $fmt($balance?->savings) }}</td></tr>
                         <tr><td>Creances</td><td>{{ $fmt($balance?->receivables ?? $legacyBalance?->creances) }}</td></tr>
+                        <tr><td>Avances fournisseurs</td><td>{{ $fmt($balance?->supplier_advances) }}</td></tr>
                         <tr><td>Stock</td><td>{{ $fmt($balance?->stock ?? $legacyBalance?->stock) }}</td></tr>
                         <tr><td>Actifs immobilises</td><td>{{ $fmt(($balance?->machines_tools ?? 0) + ($balance?->transport_assets ?? 0) + ($balance?->buildings_land ?? 0) ?: $legacyBalance?->actifs_immobilises) }}</td></tr>
                         <tr class="total-row"><td>Total actif</td><td>{{ $fmt($balance?->total_assets ?? $legacyBalance?->total_actif) }}</td></tr>
@@ -205,6 +207,28 @@
                 @empty
                     <tr><td colspan="7">Aucun plan d'investissement renseigne.</td></tr>
                 @endforelse
+            </tbody>
+        </table>
+
+        <div class="subsection-title">D. Ratios financiers (calculés par le système)</div>
+        <table class="table-custom" style="width: 100%;">
+            <thead>
+                <tr>
+                    <th>Fonds de roulement</th>
+                    <th>Liquidité générale</th>
+                    <th>Solvabilité</th>
+                    <th>Indépendance financière</th>
+                    <th>Profitabilité nette</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>{{ $ratios?->fonds_roulement ? number_format($ratios->fonds_roulement, 2) . ' ' . $loan->currency : 'N/A' }}</td>
+                    <td>{{ $ratios?->liquidite_generale ? number_format($ratios->liquidite_generale, 3) : 'N/A' }}</td>
+                    <td>{{ $ratios?->solvabilite ? number_format($ratios->solvabilite, 3) : 'N/A' }}</td>
+                    <td>{{ $ratios?->independance_financiere ? number_format($ratios->independance_financiere * 100, 2) . ' %' : 'N/A' }}</td>
+                    <td>{{ $ratios?->profitabilite_nette ? number_format($ratios->profitabilite_nette, 2) . ' %' : 'N/A' }}</td>
+                </tr>
             </tbody>
         </table>
 
@@ -424,6 +448,42 @@
             <div class="col-3"><div class="field-box"><div class="field-label">Periode grace</div><div class="field-value">{{ $proposal?->grace_period_months ?? 0 }} mois</div></div></div>
             <div class="col-6"><div class="field-box"><div class="field-label">Modalites remboursement</div><div class="field-value">{{ $proposal?->repayment_modality ?? 'N/A' }}</div></div></div>
             <div class="col-6"><div class="field-box"><div class="field-label">Paiement irregulier</div><div class="field-value">{{ $proposal?->irregular_payment_explanation ?? 'N/A' }}</div></div></div>
+        </div>
+
+        @php
+            $proposedEmi = 0;
+            $tauxEffort = null;
+            if ($proposal && $proposal->proposed_maturity_months > 0) {
+                $principal = $proposal->proposed_amount;
+                $months = $proposal->proposed_maturity_months;
+                $rate = $proposal->proposed_rate;
+                if ($rate <= 0) {
+                    $proposedEmi = $principal / $months;
+                } else {
+                    $monthlyRate = ($rate / 100) / 12;
+                    $denominator = pow(1 + $monthlyRate, $months) - 1;
+                    if ($denominator > 0) {
+                        $proposedEmi = ($principal * $monthlyRate * pow(1 + $monthlyRate, $months)) / $denominator;
+                    }
+                }
+
+                $capacity = $cashflow?->repayment_capacity ?? $legacyCashflow?->capacite_remboursement_mensuelle ?? 0;
+                if ($capacity > 0) {
+                    $tauxEffort = ($proposedEmi / $capacity) * 100;
+                }
+            }
+
+            $totalSecurities = $loan->securities->sum('valeur_estimee') ?: 0;
+            $coverageRatio = null;
+            if ($proposal && $proposal->proposed_amount > 0) {
+                $coverageRatio = ($totalSecurities / $proposal->proposed_amount) * 100;
+            }
+        @endphp
+        <div class="subsection-title" style="color: #14532d; margin-top: 10px;">Indicateurs d'aide à la décision</div>
+        <div class="row-grid" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 4px;">
+            <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Mensualité simulée (EMI)</div><div class="field-value" style="font-weight: bold; background: #fff;">{{ $fmt($proposedEmi) }}</div></div></div>
+            <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Taux d'effort (Mensualité / Capacité)</div><div class="field-value" style="font-weight: bold; background: #fff; color: {{ $tauxEffort > 80 ? '#b91c1c' : '#14532d' }};">{{ $tauxEffort ? number_format($tauxEffort, 2) . ' %' : 'N/A' }}</div></div></div>
+            <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Couverture des garanties</div><div class="field-value" style="font-weight: bold; background: #fff;">{{ $coverageRatio ? number_format($coverageRatio, 2) . ' %' : 'N/A' }}</div></div></div>
         </div>
 
         <p style="font-size: 9px; margin-top: 18px;">

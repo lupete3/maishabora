@@ -82,7 +82,7 @@
                 <h6 class="mt-4">Structure familiale</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Nom</th><th>Lien</th><th>Occupation</th><th>Observations</th></tr></thead>
+                        <thead><tr><th>Nom</th><th>Lien</th><th>Occupation</th><th>Observations</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($familyMembers as $i => $row)
                                 <tr>
@@ -90,16 +90,24 @@
                                     <td><input class="form-control form-control-sm" wire:model="familyMembers.{{ $i }}.relationship"></td>
                                     <td><input class="form-control form-control-sm" wire:model="familyMembers.{{ $i }}.occupation"></td>
                                     <td><input class="form-control form-control-sm" wire:model="familyMembers.{{ $i }}.observations"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeFamilyMember({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addFamilyMember">
+                        <i class="bx bx-plus"></i> Ajouter un membre
+                    </button>
                 </div>
 
                 <h6 class="mt-4">References du menage</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Nom</th><th>Adresse</th><th>Telephone</th><th>Type</th></tr></thead>
+                        <thead><tr><th>Nom</th><th>Adresse</th><th>Telephone</th><th>Type</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($householdReferences as $i => $row)
                                 <tr>
@@ -115,10 +123,18 @@
                                             <option value="autre">Autre</option>
                                         </select>
                                     </td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeHouseholdReference({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addHouseholdReference">
+                        <i class="bx bx-plus"></i> Ajouter une référence
+                    </button>
                 </div>
             </div>
         </div>
@@ -170,7 +186,7 @@
                 <h6 class="mt-4">Destination du credit</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Destination</th><th>Montant</th><th>Debut</th><th>Fin</th><th>Part client</th><th>Part MAISHA BORA</th><th>Part tiers</th></tr></thead>
+                        <thead><tr><th>Destination</th><th>Montant</th><th>Debut</th><th>Fin</th><th>Part client</th><th>Part MAISHA BORA</th><th>Part tiers</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($investmentPlanItems as $i => $row)
                                 <tr>
@@ -181,10 +197,18 @@
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="investmentPlanItems.{{ $i }}.client_share"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="investmentPlanItems.{{ $i }}.institution_share"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="investmentPlanItems.{{ $i }}.third_party_share"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeInvestmentPlanItem({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addInvestmentPlanItem">
+                        <i class="bx bx-plus"></i> Ajouter un plan
+                    </button>
                 </div>
             </div>
         </div>
@@ -295,7 +319,7 @@
                 <h6 class="mt-4">Stock, immobilises, CAMV ou production</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Section</th><th>Description</th><th>PA</th><th>PV</th><th>Qte</th><th>Montant</th><th>Observations</th></tr></thead>
+                        <thead><tr><th>Section</th><th>Description</th><th>PA</th><th>PV</th><th>Qte</th><th>Montant</th><th>Observations</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($inventoryItems as $i => $row)
                                 <tr>
@@ -314,16 +338,24 @@
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.quantity"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.amount"></td>
                                     <td><input class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.observations"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeInventoryItem({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addInventoryItem">
+                        <i class="bx bx-plus"></i> Ajouter un article
+                    </button>
                 </div>
 
                 <h6 class="mt-4">Historique de credit</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Institution</th><th>Montant</th><th>Statut</th><th>Observations</th></tr></thead>
+                        <thead><tr><th>Institution</th><th>Montant</th><th>Statut</th><th>Observations</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($creditHistories as $i => $row)
                                 <tr>
@@ -331,10 +363,18 @@
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="creditHistories.{{ $i }}.amount"></td>
                                     <td><input class="form-control form-control-sm" wire:model="creditHistories.{{ $i }}.status"></td>
                                     <td><input class="form-control form-control-sm" wire:model="creditHistories.{{ $i }}.observations"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeCreditHistory({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addCreditHistory">
+                        <i class="bx bx-plus"></i> Ajouter un historique
+                    </button>
                 </div>
             </div>
         </div>
@@ -345,7 +385,7 @@
                 <h6>Biens de l emprunteur</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Type</th><th>Nature</th><th>Description</th><th>Valeur</th><th>Proprietaire</th></tr></thead>
+                        <thead><tr><th>Type</th><th>Nature</th><th>Description</th><th>Valeur</th><th>Proprietaire</th><th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($securities as $i => $row)
                                 <tr>
@@ -354,10 +394,18 @@
                                     <td><input class="form-control form-control-sm" wire:model="securities.{{ $i }}.description"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="securities.{{ $i }}.valeur_estimee"></td>
                                     <td><input class="form-control form-control-sm" wire:model="securities.{{ $i }}.proprietaire"></td>
+                                    <td class="text-center">
+                                        <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeSecurity({{ $i }})">
+                                            <i class="bx bx-trash"></i>
+                                        </button>
+                                    </td>
                                 </tr>
                             @endforeach
                         </tbody>
                     </table>
+                    <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addSecurity">
+                        <i class="bx bx-plus"></i> Ajouter une garantie
+                    </button>
                 </div>
 
                 <div class="row g-3 mt-2">
