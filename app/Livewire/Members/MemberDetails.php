@@ -846,10 +846,11 @@ class MemberDetails extends Component
                 $searchTerm = "%{$this->search}%";
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('type', 'like', $searchTerm)
-                        ->orWhere('currency', 'like', $searchTerm);
+                    ->orWhere('currency', 'like', $searchTerm);
                 });
             })
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($this->perPage);
 
         return view('livewire.members.member-details', [
