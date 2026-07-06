@@ -72,7 +72,8 @@ class MemberDashboard extends Component
     {
         // Dernières transactions
         $transactions = Transaction::whereIn('account_id', $this->accounts->pluck('id'))
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->limit(10)
             ->get();
 
