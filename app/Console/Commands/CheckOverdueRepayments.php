@@ -176,9 +176,10 @@ class CheckOverdueRepayments extends Command
                     $repayment->save();
 
                     // si tout est remboursé
-                    if (!$repayment->credit->repayments->where('is_paid', false)->count()) {
-                        $repayment->credit->is_paid = true;
-                        $repayment->credit->save();
+                    if (!$credit->repayments()->where('is_paid', false)->exists()) {
+                        $credit->update([
+                            'is_paid' => true,
+                        ]);
                     }
 
                     //Notification de remboursement automatique
