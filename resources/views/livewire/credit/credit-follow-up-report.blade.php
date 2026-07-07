@@ -220,6 +220,7 @@
                             </td>
                             <td class="text-center">
 
+                                @can('modifier-credit')
                                 <div class="form-check form-switch d-flex justify-content-center">
                                     <input
                                         class="form-check-input"
@@ -237,6 +238,7 @@
                                         @endif
                                     >
                                 </div>
+                                @endcan
 
                                 @if($credit->is_paid)
                                     <small class="text-success fw-bold">

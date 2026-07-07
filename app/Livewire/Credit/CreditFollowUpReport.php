@@ -6,10 +6,12 @@ use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Credit;
+use App\Models\User;
 use App\Models\UserLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class CreditFollowUpReport extends Component
 {
@@ -203,6 +205,8 @@ class CreditFollowUpReport extends Component
 
     public function toggleCreditStatus($creditId)
     {
+        Gate::authorize('modifier-credit', User::class);
+
         try {
             $credit = Credit::findOrFail($creditId);
 
