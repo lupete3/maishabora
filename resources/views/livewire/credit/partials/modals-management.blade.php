@@ -9,10 +9,16 @@
             </div>
             <div class="modal-body">
                 <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
-                <div>
+                <div class="mb-4 mx-auto" style="max-width: 400px;">
                     <label>Penalités à payer : </label>
                     <input type="number" class="form-control" value="{{ number_format((float) $penality, 2, '.', '') }}"
                         wire:model="penality">
+                </div>
+                <div class="mb-4 mx-auto" style="max-width: 400px;">
+                    <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
+                    <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
+                        id="password" wire:model="password" placeholder="••••••••">
+                    @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
                 </div>
             </div>
             <div class="modal-footer">

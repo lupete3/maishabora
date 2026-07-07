@@ -34,6 +34,7 @@ class ManageRepayments extends Component
     public $applyInterest = true; // valeur par défaut
 
     public $penality = 0;
+    public $password;
 
     public $openModalConfirm = false;
 
@@ -109,7 +110,14 @@ class ManageRepayments extends Component
     {
         $repaymentId = $this->repaymentToPay;
 
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
+
         try {
+
             DB::transaction(function () use ($repaymentId, $withInterest) {
 
                 $repayment = Repayment::findOrFail($repaymentId);
