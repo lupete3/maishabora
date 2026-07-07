@@ -24,6 +24,7 @@ class TransferToCentralCash extends Component
     public $filterType = 'month'; // 'day', 'week', 'month', 'range'
     public $startDate;
     public $endDate;
+    public $password = '';
 
     // ✅ Nouveau : contrôle d’affichage du modal
     public $showConfirmation = false;
@@ -95,6 +96,12 @@ class TransferToCentralCash extends Component
     public function confirmSubmit()
     {
         $this->validate();
+
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
 
         $agentAccount = AgentAccount::firstOrCreate(
             ['user_id' => Auth::id(), 'currency' => $this->currency],

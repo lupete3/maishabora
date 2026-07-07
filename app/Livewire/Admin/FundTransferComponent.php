@@ -31,6 +31,8 @@ class FundTransferComponent extends Component
     public $filterType = 'month'; // 'day', 'week', 'month', 'range'
     public $startDate;
     public $endDate;
+    public $password;
+
     protected $paginationTheme = 'bootstrap';
 
     public $members = [];
@@ -90,17 +92,19 @@ class FundTransferComponent extends Component
             'recipient_id' => 'required|integer',
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|in:CDF,USD',
+            'password' => 'required|string',
         ]);
 
         try {
+
             DB::transaction(function () {
                 $recipient = User::findOrFail($this->recipient_id);
-                
+
                 if ($this->transfer_type === 'agent' && $recipient->role === 'membre') {
                     notyf()->error('Le destinataire doit être un agent, pas un membre.');
                     return;
                 }
-                
+
                 if ($this->transfer_type === 'member' && $recipient->role !== 'membre') {
                     notyf()->error('Le destinataire doit avoir le rôle membre.');
                     return;
@@ -304,7 +308,7 @@ class FundTransferComponent extends Component
             notyf()->error('Le destinataire doit être un agent, pas un membre.');
             return;
         }
-        
+
         if ($this->transfer_type === 'member' && $user->role !== 'membre') {
             notyf()->error('Le destinataire doit avoir le rôle membre.');
             return;
@@ -325,6 +329,11 @@ class FundTransferComponent extends Component
 
     public function confirmTransfer()
     {
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
         $this->showPreview = false;
         $this->submitTransfer();
     }

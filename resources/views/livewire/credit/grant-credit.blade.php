@@ -262,6 +262,13 @@
                         </tbody>
                     </table>
 
+                    <div class="mb-4 mx-auto" style="max-width: 400px;">
+                        <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
+                        <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
+                            id="password" wire:model="password" placeholder="••••••••">
+                        @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                    </div>
+
                     <div class="alert alert-warning mt-3">
                         <i class="bx bx-error-circle"></i>
                         Cette opération est irréversible. Vérifiez bien les informations avant de confirmer.

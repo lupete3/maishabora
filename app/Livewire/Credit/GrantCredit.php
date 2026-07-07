@@ -50,7 +50,7 @@ class GrantCredit extends Component
     public $showConfirmModal = false;
     public $creditSummary = [];
     public $hasActiveCredit = false;
-
+    public $password;
 
     protected $rules = [
         'member_id' => 'required|exists:users,id',
@@ -554,6 +554,11 @@ class GrantCredit extends Component
 
     public function confirmSubmit()
     {
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
         $this->showConfirmModal = false;
         $this->submit(); // Exécute la logique principale d’octroi
     }
