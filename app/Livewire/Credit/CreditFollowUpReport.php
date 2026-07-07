@@ -203,20 +203,23 @@ class CreditFollowUpReport extends Component
 
     public function toggleCreditStatus($creditId)
     {
-        $credit = Credit::findOrFail($creditId);
+        try {
+            $credit = Credit::findOrFail($creditId);
 
-        $credit->update([
-            'is_paid' => !$credit->is_paid,
-        ]);
-        UserLogHelper::log_user_activity(
-            action: 'Changement du statut du crédit',
-            description: "Le statut du crédit ID: {$credit->id} a été changé à " . ($credit->is_paid ? 'soldé' : 'en cours'),
-        );
+            $credit->update([
+                'is_paid' => !$credit->is_paid,
+            ]);
+            UserLogHelper::log_user_activity(
+                action: 'Changement du statut du crédit',
+                description: "Le statut du crédit ID: {$credit->id} a été changé à " . ($credit->is_paid ? 'soldé' : 'en cours'),
+            );
 
-        notyf()->success($credit->is_paid
-                ? 'Le crédit a été marqué comme soldé.'
-                : 'Le crédit a été remis en cours.');
+            notyf()->success($credit->is_paid
+                    ? 'Le crédit a été marqué comme soldé.'
+                    : 'Le crédit a été remis en cours.');
 
-        $this->emit('creditStatusToggled');
+        } catch (\Exception $e) {
+            notyf()->error('Erreur lors de la mise à jour du statut du crédit: ' . $e->getMessage());
+        }
     }
 }
