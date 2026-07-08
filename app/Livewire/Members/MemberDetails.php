@@ -1275,4 +1275,26 @@ class MemberDetails extends Component
         $this->resetPage();
         notyf()->success('Filtre personnalisé appliqué avec succès.');
     }
+
+    public function getAnciennete($date)
+    {
+        $created = Carbon::parse($date);
+        $now = Carbon::now();
+
+        if ($created->diffInMonths($now) < 1) {
+            $jours = round($created->diffInDays($now));
+
+            return $jours . ' jour' . ($jours > 1 ? 's' : '');
+        }
+
+        if ($created->diffInYears($now) < 1) {
+            $mois = round($created->diffInMonths($now));
+
+            return $mois . ' mois';
+        }
+
+        $annees = round($created->diffInYears($now));
+
+        return $annees . ' an' . ($annees > 1 ? 's' : '');
+    }
 }
