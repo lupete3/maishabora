@@ -26,7 +26,24 @@ class ClientStatReportController extends Controller
         $minBalance = $request->query('minBalance', 0);
         $alphabetRange = $request->query('alphabetRange', 'all');
 
-        $query = User::where('role', 'membre')->with('accounts')->orderBy('name', 'asc');
+        $query = User::where('role', 'membre')
+            ->with([
+                'accounts' => function ($q) use ($accountType, $currencyFilter, $minBalance) {
+
+                    if ($accountType !== 'all') {
+                        $q->where('type', $accountType);
+                    }
+
+                    if ($currencyFilter !== 'all') {
+                        $q->where('currency', $currencyFilter);
+                    }
+
+                    if ($minBalance > 0) {
+                        $q->where('balance', '>=', $minBalance);
+                    }
+                }
+            ])
+            ->orderBy('name', 'asc');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -116,7 +133,24 @@ class ClientStatReportController extends Controller
         $minBalance = $request->query('minBalance', 0);
         $alphabetRange = $request->query('alphabetRange', 'all');
 
-        $query = User::where('role', 'membre')->orderBy('name', 'asc');
+        $query = User::where('role', 'membre')
+            ->with([
+                'accounts' => function ($q) use ($accountType, $currencyFilter, $minBalance) {
+
+                    if ($accountType !== 'all') {
+                        $q->where('type', $accountType);
+                    }
+
+                    if ($currencyFilter !== 'all') {
+                        $q->where('currency', $currencyFilter);
+                    }
+
+                    if ($minBalance > 0) {
+                        $q->where('balance', '>=', $minBalance);
+                    }
+                }
+            ])
+            ->orderBy('name', 'asc');
 
         if ($search) {
             $query->where(function ($q) use ($search) {
@@ -151,10 +185,10 @@ class ClientStatReportController extends Controller
 
         $response = new \Symfony\Component\HttpFoundation\StreamedResponse(function() use ($query, $accountType, $currencyFilter) {
             $handle = fopen('php://output', 'w');
-            
+
             // Excel separator instruction
             fwrite($handle, "sep=;\n");
-            
+
             // Write column headers in Windows-1252 for Excel compatibility
             $headers = [
                 'Code Membre',
@@ -170,7 +204,7 @@ class ClientStatReportController extends Controller
             $headers = array_map(function($val) {
                 return mb_convert_encoding($val, 'Windows-1252', 'UTF-8');
             }, $headers);
-            
+
             fputcsv($handle, $headers, ';');
 
             // Chunk process members to keep RAM near 0
