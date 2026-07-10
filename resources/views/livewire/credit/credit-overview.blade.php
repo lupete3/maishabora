@@ -15,15 +15,28 @@
                     </h5>
                     <div class="d-flex align-items-center">
                         @if ($overdueTotals->isNotEmpty())
-                            <div class="me-3">
-                                @foreach ($overdueTotals as $currency => $total)
-                                    <span class="badge bg-danger ms-1">
-                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                    </span>
+                            <div class="d-flex flex-column gap-2 mb-3">
+                                <h6 class="fw-bold text-danger mb-1">Résumé des retards par devise :</h6>
+                                @foreach ($overdueTotals as $currency => $amounts)
+                                    <div class="p-2 border rounded bg-light d-inline-block">
+                                        <strong class="text-dark">{{ $currency }} :</strong>
+                                        <span class="badge bg-secondary ms-1">
+                                            Capital: {{ number_format($amounts['capital'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-info ms-1">
+                                            Intérêt: {{ number_format($amounts['interest'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-warning text-dark ms-1">
+                                            Pénalité: {{ number_format($amounts['penalty'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-danger ms-1">
+                                            Total Dû: {{ number_format($amounts['total'], 2, '.', ' ') }}
+                                        </span>
+                                    </div>
                                 @endforeach
                             </div>
                         @endif
-                        <button wire:click="exportOverduePDF" wire:loading.attr="disabled" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                        <button wire:click="exportOverduePDF" wire:loading.attr="disabled" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center ml-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
                             <span wire:loading.remove wire:target="exportOverduePDF">
                                 <i class="bx bxs-file-pdf me-1"></i> PDF
                             </span>
@@ -110,11 +123,23 @@
                     </h5>
                     <div class="d-flex align-items-center">
                         @if ($upcomingTotals->isNotEmpty())
-                            <div class="me-3">
-                                @foreach ($upcomingTotals as $currency => $total)
-                                    <span class="badge bg-warning text-dark ms-1">
-                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                    </span>
+                            <div class="d-flex flex-wrap align-items-center me-3 gap-2">
+                                @foreach ($upcomingTotals as $currency => $amounts)
+                                    <div class="d-inline-flex align-items-center p-1 border rounded bg-light">
+                                        <strong class="text-dark px-2 small">{{ $currency }} :</strong>
+                                        
+                                        <span class="badge bg-secondary ms-1">
+                                            Principal : {{ number_format($amounts['capital'], 2, '.', ' ') }}
+                                        </span>
+                                        
+                                        <span class="badge bg-info text-dark ms-1">
+                                            Intérêt : {{ number_format($amounts['interest'], 2, '.', ' ') }}
+                                        </span>
+                                        
+                                        <span class="badge bg-warning text-dark ms-1 fw-bold">
+                                            Total : {{ number_format($amounts['total'], 2, '.', ' ') }}
+                                        </span>
+                                    </div>
                                 @endforeach
                             </div>
                         @endif

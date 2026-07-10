@@ -14,17 +14,67 @@ class CreditOverview extends Component
     protected $paginationTheme = 'bootstrap';
 
     /**
-     * Exporte les échéances en retard en PDF avec requêtes hautement optimisées
+     * Centralise le calcul détaillé des totaux (Principal, Intérêt, Pénalité) par devise
+     * pour éviter la duplication de code entre l'export PDF et les propriétés de la page.
      */
+    private function calculateDetailedTotals($repayments)
+    {
+        // 1. Charger tous les remboursements du même crédit pour recalculer correctement le dégressif
+        $creditIds = $repayments->pluck('credit_id')->unique();
+        
+        // On récupère tout l'historique utile de ces crédits, trié par date d'échéance
+        $allRepaymentsForCredits = Repayment::with('credit')
+            ->whereIn('credit_id', $creditIds)
+            ->orderBy('due_date', 'asc')
+            ->get()
+            ->groupBy('credit_id');
+
+        $totalsPerCurrency = [];
+
+        // 2. Simuler l'amortissement pour chaque crédit impliqué
+        foreach ($allRepaymentsForCredits as $creditId => $creditRepayments) {
+            $firstRepayment = $creditRepayments->first();
+            if (!$firstRepayment || !$firstRepayment->credit) continue;
+
+            $credit = $firstRepayment->credit;
+            $currency = $credit->currency;
+            $remainingCapital = floatval($credit->amount);
+
+            if (!isset($totalsPerCurrency[$currency])) {
+                $totalsPerCurrency[$currency] = ['capital' => 0, 'interest' => 0, 'penalty' => 0, 'total' => 0];
+            }
+
+            foreach ($creditRepayments as $r) {
+                // Calcul de l'intérêt selon le type de crédit
+                if ($credit->credit_type === 'degressif') {
+                    $interest = round($remainingCapital * (floatval($credit->interest_rate) / 100), 2);
+                } else {
+                    $interest = round(floatval($credit->amount) * (floatval($credit->interest_rate) / 100), 2);
+                }
+
+                $capital = round(floatval($r->expected_amount) - $interest, 2);
+                $remainingCapital = round($remainingCapital - $capital, 2);
+
+                // IMPORTANT : On accumule le montant UNIQUEMENT si cette échéance fait partie de la sélection d'origine (en retard ou à venir)
+                if ($repayments->contains('id', $r->id)) {
+                    $totalsPerCurrency[$currency]['capital'] += $capital;
+                    $totalsPerCurrency[$currency]['interest'] += $interest;
+                    $totalsPerCurrency[$currency]['penalty'] += floatval($r->penalty);
+                    $totalsPerCurrency[$currency]['total'] += floatval($r->total_due);
+                }
+            }
+        }
+
+        return collect($totalsPerCurrency);
+    }
+
     public function exportOverduePDF()
     {
-        // Prévenir les timeouts et débordements de mémoire pour les grands volumes
         ini_set('memory_limit', '512M');
         set_time_limit(180);
 
-        // Optimisation de la requête : sélection stricte des colonnes nécessaires
         $overdueCredits = Repayment::with([
-            'credit:id,user_id,currency',
+            'credit:id,user_id,currency,credit_type,amount,interest_rate', // Ajout des colonnes de calcul
             'credit.user:id,code,name,postnom',
             'credit.user.accounts:id,user_id,currency,type,balance'
         ])
@@ -33,11 +83,8 @@ class CreditOverview extends Component
             ->latest()
             ->get();
 
-        // Calcul des totaux en mémoire pour éviter des requêtes SQL supplémentaires
-        $overdueTotals = $overdueCredits->groupBy('credit.currency')
-            ->map(function ($items) {
-                return $items->sum('total_due');
-            });
+        // Calcul des totaux détaillés
+        $overdueTotals = $this->calculateDetailedTotals($overdueCredits);
 
         $company = CompanyInformation::getActiveOrDefault();
 
@@ -52,18 +99,13 @@ class CreditOverview extends Component
         }, 'credits_en_retard_' . now()->format('Y-m-d') . '.pdf');
     }
 
-    /**
-     * Exporte les échéances des 7 prochains jours en PDF avec requêtes hautement optimisées
-     */
     public function exportUpcomingPDF()
     {
-        // Prévenir les timeouts et débordements de mémoire pour les grands volumes
         ini_set('memory_limit', '512M');
         set_time_limit(180);
 
-        // Optimisation de la requête : sélection stricte des colonnes nécessaires
         $upcomingCredits = Repayment::with([
-            'credit:id,user_id,currency',
+            'credit:id,user_id,currency,credit_type,amount,interest_rate', // Ajout des colonnes de calcul
             'credit.user:id,code,name,postnom',
             'credit.user.accounts:id,user_id,currency,type,balance'
         ])
@@ -72,11 +114,8 @@ class CreditOverview extends Component
             ->orderBy('due_date', 'asc')
             ->get();
 
-        // Calcul des totaux en mémoire pour éviter des requêtes SQL supplémentaires
-        $upcomingTotals = $upcomingCredits->groupBy('credit.currency')
-            ->map(function ($items) {
-                return $items->sum('total_due');
-            });
+        // Calcul des totaux détaillés
+        $upcomingTotals = $this->calculateDetailedTotals($upcomingCredits);
 
         $company = CompanyInformation::getActiveOrDefault();
 
@@ -91,7 +130,6 @@ class CreditOverview extends Component
         }, 'credits_a_venir_' . now()->format('Y-m-d') . '.pdf');
     }
 
-    // Paiements en retard (pour affichage paginé dans l'interface web)
     public function getOverdueCreditsProperty()
     {
         return Repayment::with(['credit.user.accounts'])
@@ -101,7 +139,6 @@ class CreditOverview extends Component
             ->paginate(5, pageName: 'pageOverdue');
     }
 
-    // Paiements à venir (pour affichage paginé dans l'interface web)
     public function getUpcomingCreditsProperty()
     {
         return Repayment::with(['credit.user.accounts'])
@@ -111,44 +148,35 @@ class CreditOverview extends Component
             ->paginate(5, pageName: 'pageUpcoming');
     }
 
-    // NOUVEAU: Calcule le total dû en retard par devise
+    // Propriété calculée pour la vue Web (Retard)
     public function getOverdueTotalsProperty()
     {
-        return Repayment::where('due_date', '<', now())
+        $overdueCredits = Repayment::with('credit')
+            ->where('due_date', '<', now())
             ->where('is_paid', false)
-            ->with('credit')
-            ->get()
-            ->groupBy('credit.currency')
-            ->map(function ($items, $currency) {
-                return $items->sum('total_due');
-            });
+            ->get();
+
+        return $this->calculateDetailedTotals($overdueCredits);
     }
 
-    // NOUVEAU: Calcule le total dû à venir par devise
+    // Propriété calculée pour la vue Web (À venir)
     public function getUpcomingTotalsProperty()
     {
-        return Repayment::whereBetween('due_date', [now(), now()->addDays(7)])
+        $upcomingCredits = Repayment::with('credit')
+            ->whereBetween('due_date', [now(), now()->addDays(7)])
             ->where('is_paid', false)
-            ->with('credit')
-            ->get()
-            ->groupBy('credit.currency')
-            ->map(function ($items, $currency) {
-                return $items->sum('total_due');
-            });
+            ->get();
+
+        return $this->calculateDetailedTotals($upcomingCredits);
     }
 
     public function render()
     {
-        $overdueCredits = $this->overdueCredits;
-        $upcomingCredits = $this->upcomingCredits;
-        $overdueTotals = $this->overdueTotals;
-        $upcomingTotals = $this->upcomingTotals;
-
-        return view('livewire.credit.credit-overview', compact(
-            'overdueCredits',
-            'upcomingCredits',
-            'overdueTotals',
-            'upcomingTotals',
-        ));
+        return view('livewire.credit.credit-overview', [
+            'overdueCredits' => $this->overdueCredits,
+            'upcomingCredits' => $this->upcomingCredits,
+            'overdueTotals' => $this->overdueTotals,
+            'upcomingTotals' => $this->upcomingTotals,
+        ]);
     }
 }

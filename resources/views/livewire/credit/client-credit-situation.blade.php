@@ -75,68 +75,77 @@
                     @if (empty($selectedRepayments))
                         <p>Aucune échéance trouvée.</p>
                     @else
-                       
                         <div class="table-responsive">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Date d'échéance</th>
-                                    <th>Principal</th>
-                                    <th>Intérêt</th>
-                                    <th>Montant dû</th>
-                                    <th>Pénalité</th>
-                                    <th>Total</th>
-                                    <th>Status</th>
-                                    <th>Retard (jours)</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @php
-                                    $remainingCapital = floatval($selectedCredit->amount);
-                                @endphp
-                                @forelse($selectedCredit->repayments->sortBy('due_date') as $r)
-                                    @php
-                                        if ($selectedCredit->credit_type === 'degressif') {
-                                            $interest = round($remainingCapital * (floatval($selectedCredit->interest_rate) / 100), 2);
-                                        } else {
-                                            $interest = round(floatval($selectedCredit->amount) * (floatval($selectedCredit->interest_rate) / 100), 2);
-                                        }
-                                        $capital = round(floatval($r->expected_amount) - $interest, 2);
-                                        $remainingCapital = round($remainingCapital - $capital, 2);
-                                    @endphp
+                            <table class="table table-bordered">
+                                <thead>
                                     <tr>
-                                        <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
-                                        <td>{{ number_format($capital, 2) }}</td>
-                                        <td>{{ number_format($interest, 2) }}</td>
-                                        <td>{{ number_format($r->expected_amount, 2) }}</td>
-                                        <td>{{ number_format($r->penalty, 2) }}</td>
-                                        <td>{{ number_format($r->total_due, 2) }}</td>
-                                        <td>
-                                            @if ($r->is_paid)
-                                                <span class="badge bg-success">Payé</span>
-                                            @else
-                                                <span class="badge bg-warning">En attente</span>
-                                            @endif
-                                        </td>
-                                        <td>
-                                            @php
-                                                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays($r->paid_date);
-                                            @endphp
-                                            @if ($daysLate > 0)
-                                                <span class="text-danger">{{ number_format($daysLate, 0) }}
-                                                    jours</span>
-                                            @else
-                                                0
-                                            @endif
-                                        </td>
-                                @empty
-                                    <tr>
-                                        <td colspan="8" class="text-center">Aucune échéance trouvée.</td>
+                                        <th>Date d'échéance</th>
+                                        <th>Principal</th>
+                                        <th>Intérêt</th>
+                                        <th>Montant dû</th>
+                                        <th>Pénalité</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+                                        <th>Retard (jours)</th>
                                     </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    @php
+                                        $remainingCapital = floatval($selectedCredit->amount);
+                                    @endphp
+                                    @forelse($selectedCredit->repayments->sortBy('due_date') as $r)
+                                        @php
+                                            if ($selectedCredit->credit_type === 'degressif') {
+                                                $interest = round(
+                                                    $remainingCapital *
+                                                        (floatval($selectedCredit->interest_rate) / 100),
+                                                    2,
+                                                );
+                                            } else {
+                                                $interest = round(
+                                                    floatval($selectedCredit->amount) *
+                                                        (floatval($selectedCredit->interest_rate) / 100),
+                                                    2,
+                                                );
+                                            }
+                                            $capital = round(floatval($r->expected_amount) - $interest, 2);
+                                            $remainingCapital = round($remainingCapital - $capital, 2);
+                                        @endphp
+                                        <tr>
+                                            <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                            <td>{{ number_format($capital, 2) }}</td>
+                                            <td>{{ number_format($interest, 2) }}</td>
+                                            <td>{{ number_format($r->expected_amount, 2) }}</td>
+                                            <td>{{ number_format($r->penalty, 2) }}</td>
+                                            <td>{{ number_format($r->total_due, 2) }}</td>
+                                            <td>
+                                                @if ($r->is_paid)
+                                                    <span class="badge bg-success">Payé</span>
+                                                @else
+                                                    <span class="badge bg-warning">En attente</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @php
+                                                    $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(
+                                                        $r->paid_date,
+                                                    );
+                                                @endphp
+                                                @if ($daysLate > 0)
+                                                    <span class="text-danger">{{ number_format($daysLate, 0) }}
+                                                        jours</span>
+                                                @else
+                                                    0
+                                                @endif
+                                            </td>
+                                        @empty
+                                        <tr>
+                                            <td colspan="8" class="text-center">Aucune échéance trouvée.</td>
+                                        </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
 
                     @endif
                 </div>
