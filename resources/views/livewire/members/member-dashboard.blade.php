@@ -17,7 +17,7 @@
                 
                 @if($showBalances)
                     {{-- Bouton Masquer avec l'œil barré Boxicons --}}
-                    <button class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2" wire:click="hideBalances">
+                    <button class="btn btn-outline-success rounded-pill px-3 d-flex align-items-center gap-2" wire:click="hideBalances">
                         <i class="bx bx-hide fs-5"></i> 
                         <span>Masquer soldes</span>
                     </button>
