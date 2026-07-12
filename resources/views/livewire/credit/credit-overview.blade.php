@@ -18,7 +18,7 @@
                             <div class="d-flex flex-column gap-2 mb-3">
                                 @foreach ($overdueTotals as $currency => $amounts)
                                     <div class="p-2 border rounded d-inline-block">
-                                        <strong class="text-dark">{{ $currency }} :</strong>
+                                        <strong class="text-dark">{{ $currency }} </strong>
                                         <span class="badge bg-secondary ms-1">
                                             Capital: {{ number_format($amounts['capital'], 2, '.', ' ') }}
                                         </span>
@@ -124,17 +124,17 @@
                         @if ($upcomingTotals->isNotEmpty())
                             <div class="d-flex flex-wrap align-items-center me-3 gap-2">
                                 @foreach ($upcomingTotals as $currency => $amounts)
-                                    <div class="d-inline-flex align-items-center p-1 border rounded">
-                                        <strong class="text-dark px-2 small">{{ $currency }} :</strong>
-                                        
+                                    <div class="p-2 border rounded d-inline-block">
+                                        <strong class="text-dark px-2 small">{{ $currency }} </strong>
+
                                         <span class="badge bg-secondary ms-1">
                                             Principal : {{ number_format($amounts['capital'], 2, '.', ' ') }}
                                         </span>
-                                        
+
                                         <span class="badge bg-info text-dark ms-1">
                                             Intérêt : {{ number_format($amounts['interest'], 2, '.', ' ') }}
                                         </span>
-                                        
+
                                         <span class="badge bg-warning text-dark ms-1 fw-bold">
                                             Total : {{ number_format($amounts['total'], 2, '.', ' ') }}
                                         </span>
