@@ -3,22 +3,29 @@
     @can('afficher-tableaudebord-client')
 
         <!-- Header & Quick Actions -->
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center pb-4 mb-4 border-bottom">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center pb-4 mb-4 border-bottom gap-3">
             <div>
                 <h3 class="fw-bold mb-0 text-primary">Tableau de bord</h3>
                 <p class="text-muted mb-0">Bienvenue, {{ $member->name }} {{ $member->postnom }}</p>
             </div>
-            <div class="mt-3 mt-md-0 d-flex flex-wrap gap-2">
-                <button class="btn btn-primary rounded-pill shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#transferModal">
-                    <i class="fas fa-paper-plane me-2"></i> Virement
+            <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
+                {{-- Bouton Virement avec l'icône de partage/envoi Boxicons --}}
+                <button class="btn btn-primary rounded-pill shadow-sm px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="bx bx-send fs-5"></i> 
+                    <span>Virement</span>
                 </button>
+                
                 @if($showBalances)
-                    <button class="btn btn-outline-secondary rounded-pill px-3" wire:click="hideBalances">
-                        <i class="fas fa-eye-slash me-2"></i> Masquer soldes
+                    {{-- Bouton Masquer avec l'œil barré Boxicons --}}
+                    <button class="btn btn-outline-secondary rounded-pill px-3 d-flex align-items-center gap-2" wire:click="hideBalances">
+                        <i class="bx bx-hide fs-5"></i> 
+                        <span>Masquer soldes</span>
                     </button>
                 @else
-                    <button class="btn btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#revealModal">
-                        <i class="fas fa-lock me-2"></i> Afficher soldes
+                    {{-- Bouton Afficher avec le cadenas ouvert ou l'œil affiché Boxicons --}}
+                    <button class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#revealModal">
+                        <i class="bx bx-show fs-5"></i> 
+                        <span>Afficher soldes</span>
                     </button>
                 @endif
             </div>
