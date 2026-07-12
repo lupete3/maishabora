@@ -597,7 +597,6 @@
                         <div class="d-flex flex-column gap-2">
                             @forelse ($transactions as $transaction)
                                 @php
-                                    // Remplacement des classes "fas fa-..." par les équivalents "bx bx-..."
                                     $typeMap = [
                                         'dépôt' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Dépôt'],
                                         'retrait' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Retrait'],
@@ -608,22 +607,25 @@
                                         'octroi_de_credit' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Octroi de crédit'],
                                         'frais_mutuelle' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Frais mutuelle'],
                                         'commission_credit' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Commission crédit'],
-                                        'Salaire reçu' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Salaire reçu'],
-                                        'remboursement_de_credit' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Remboursement de crédit'],
+                                        'paie_entrant' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Salaire reçu'],
+                                        'remboursement_de_credit' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Remboursement de crédit'],
                                     ];
 
                                     $t = $typeMap[$transaction->type] ?? ['icon' => 'bx bx-dots-horizontal-rounded', 'color' => 'secondary', 'label' => $transaction->type];
-                                    $isDebit = in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion', 'frais_mutuelle', 'commission_credit']);
+                                    $isDebit = in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion', 'frais_mutuelle', 'commission_credit', 'remboursement_de_credit',]);
                                 @endphp
 
-                                <div class="border rounded-4 p-3 bg-light-subtle">
-                                    <div class="d-flex justify-content-between align-items-start gap-2">
-                                        <div class="d-flex align-items-start gap-2">
-                                            {{-- Correction de l'affichage des icônes --}}
-                                            <div class="rounded-circle p-2 bg-{{ $t['color'] }}-subtle text-{{ $t['color'] }} d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <div class="border rounded-2 p-3 bg-light-subtle">
+                                    {{-- flex-column sur mobile, row sur tablettes/ordinateurs --}}
+                                    <div class="d-flex flex-column flex-sm-row justify-content-sm-between align-items-start gap-2">
+
+                                        {{-- Partie Gauche : Icône + Texte --}}
+                                        <div class="d-flex align-items-start gap-2 w-100">
+                                            <div class="rounded-circle p-2 bg-{{ $t['color'] }}-subtle text-{{ $t['color'] }} d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
                                                 <i class="{{ $t['icon'] }} fs-4"></i>
                                             </div>
-                                            <div>
+                                            {{-- On empêche la description de casser le layout --}}
+                                            <div class="text-break">
                                                 <div class="fw-semibold text-dark">{{ $transaction->description }}</div>
                                                 <div class="text-muted small">
                                                     {{ $transaction->created_at->format('d/m/Y H:i') }}
@@ -633,8 +635,11 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="text-end">
-                                            <div class="fw-bold {{ $isDebit ? 'text-danger' : 'text-success' }}">
+
+                                        {{-- Partie Droite : Montant + Solde --}}
+                                        {{-- text-sm-end pour s'aligner à droite uniquement sur grand écran. ms-auto aligne à droite sur mobile --}}
+                                        <div class="text-start text-sm-end ms-auto mt-1 mt-sm-0 flex-shrink-0">
+                                            <div class="fw-bold {{ $isDebit ? 'text-danger' : 'text-success' }} fs-5 fs-sm-6">
                                                 {{ $isDebit ? '-' : '+' }}{{ number_format($transaction->amount, 2) }} {{ $transaction->currency }}
                                             </div>
                                             <div class="text-muted small">
@@ -645,11 +650,11 @@
                                                 @endif
                                             </div>
                                         </div>
+
                                     </div>
                                 </div>
                             @empty
                                 <div class="text-center py-5">
-                                    {{-- Icône de la liste vide aussi corrigée en Boxicons --}}
                                     <div class="mb-2"><i class="bx bx-wallet fs-1 text-muted opacity-25"></i></div>
                                     <p class="text-muted mb-0">Aucune transaction trouvée.</p>
                                 </div>
