@@ -117,7 +117,7 @@
                                 <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
                                     <i class="bx bx-phone me-1"></i> {{ $member->telephone }}
                                 </span>
-                                <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
+                                <span class="bg-light text-dark px-3 py-2 rounded-pill">
                                     <i class="bx bx-envelope me-1"></i> {{
                                         	Illuminate\Support\Str::limit($member->email ?? 'Non renseigné', 20)
                                     }}
@@ -165,115 +165,6 @@
                         font-size: 1.1rem;
                     }
                 </style>
-
-                <div class="row g-3 mb-4">
-                    <div class="col-md-4">
-                        <div class="card overview-card h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="overview-card-icon bg-success-subtle text-success">
-                                        <i class="bx bx-wallet"></i>
-                                    </span>
-                                    <span class="badge bg-success-subtle text-success rounded-pill">Disponible</span>
-                                </div>
-                                <h6 class="text-muted text-uppercase fs-7 mb-2">Solde global</h6>
-                                <div class="mb-1">
-                                    @if($showBalances)
-                                        @if($accountBalanceByCurrency->isNotEmpty())
-                                            @foreach($accountBalanceByCurrency as $currency => $amount)
-                                                <h4 class="fw-bold mb-1 ">
-                                                    {{ number_format($amount, 2, '.', ' ') }}
-                                                    <span class="fs-6 opacity-75 fw-medium">{{ $currency }}</span>
-                                                </h4>
-                                            @endforeach
-                                        @else
-                                            <h4 class="fw-bold mb-1 ">0.00 <span class="fs-6 opacity-75 fw-medium">USD</span></h4>
-                                        @endif
-                                    @else
-                                        <h4 class="fw-bold mb-1  opacity-50">••••••</h4>
-                                    @endif
-                                </div>
-                                <p class="text-muted small mb-0">Sur vos comptes actifs</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card overview-card h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="overview-card-icon bg-warning-subtle text-warning">
-                                        <i class="bx bx-credit-card"></i>
-                                    </span>
-                                    <span class="badge bg-warning-subtle text-warning rounded-pill">En cours</span>
-                                </div>
-
-                                <h6 class="text-muted text-uppercase fs-7 mb-2">Crédits actifs</h6>
-                                <h4 class="fw-bold mb-2">{{ $activeCredits->count() }}</h4>
-
-                                <div class="mt-2">
-                                    @if($showBalances)
-                                        {{-- On groupe les crédits actifs par devise --}}
-                                        @php
-                                            $groupedCredits = $activeCredits->groupBy('currency');
-                                        @endphp
-
-                                        @if($groupedCredits->isNotEmpty())
-                                            @foreach($groupedCredits as $currency => $credits)
-                                                <p class="text-dark small fw-semibold mb-1">
-                                                    Total : {{ number_format($credits->sum('amount'), 2, '.', ' ') }}
-                                                    <span class="text-muted fs-7">{{ $currency }}</span>
-                                                </p>
-                                            @endforeach
-                                        @else
-                                            <p class="text-muted small mb-0">Aucun crédit actif</p>
-                                        @endif
-                                    @else
-                                        <p class="text-muted small mb-0">Total : <span class="opacity-50">••••••</span></p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="col-md-4">
-                        <div class="card overview-card h-100">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="overview-card-icon bg-danger-subtle text-danger">
-                                        <i class="bx bx-alarm-exclamation"></i>
-                                    </span>
-                                    <span class="badge bg-danger-subtle text-danger rounded-pill">À traiter</span>
-                                </div>
-
-                                <h6 class="text-muted text-uppercase fs-7 mb-2">Échéances en retard</h6>
-                                <h4 class="fw-bold mb-2">{{ $overdueRepayments->count() }}</h4>
-
-                                <div class="mt-2">
-                                    @if($showBalances)
-                                        {{-- On groupe les retards par devise pour calculer les totaux à la volée --}}
-                                        @php
-                                            $groupedOverdue = $overdueRepayments->groupBy('credit.currency');
-                                        @endphp
-
-                                        @if($groupedOverdue->isNotEmpty())
-                                            @foreach($groupedOverdue as $currency => $repayments)
-                                                <p class="text-danger small fw-semibold mb-1">
-                                                    Montant dû : {{ number_format($repayments->sum('total_due'), 2, '.', ' ') }}
-                                                    <span class="text-muted fs-7">{{ $currency }}</span>
-                                                </p>
-                                            @endforeach
-                                        @else
-                                            <p class="text-muted small mb-0">Aucun montant dû</p>
-                                        @endif
-                                    @else
-                                        <p class="text-muted small mb-0">Montant dû : <span class="opacity-50">••••••</span></p>
-                                    @endif
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Section: Comptes Bancaires Courant -->
                 <div class="mb-4" x-data="{ revealTimer: null }" x-init="$watch('@js($showBalances)', value => {
@@ -510,7 +401,7 @@
                 @if ($credits->where('is_paid', false)->isNotEmpty())
                 <div class="row g-4 mb-4">
                     <!-- Section: Crédits Actifs -->
-                    <div class="col-md-6">
+                    <div class="col-md-@if(!$overdueRepayments->isEmpty()){{6}}@else{{12}} @endif">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
                                 <h5 class="card-title fw-bold mb-0"><i
@@ -545,6 +436,7 @@
                     </div>
 
                     <!-- Section: Échéances en retard -->
+                    @if(!$overdueRepayments->isEmpty())
                     <div class="col-md-6">
                         <div class="card border-0 shadow-sm h-100">
                             <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
@@ -580,6 +472,46 @@
                                     </div>
                                 @endif
                             </div>
+                        </div>
+                    </div>
+                    @endif
+
+                </div>
+                @endif
+
+                @if ($credits->where('is_paid', true)->isNotEmpty())
+                <div class="mb-4">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0">
+                            <h5 class="card-title fw-bold mb-0"><i
+                                    class="fas fa-check-circle me-2 text-success"></i> Crédits remboursés</h5>
+                        </div>
+                        <div class="card-body">
+                            @if($credits->where('is_paid', true)->isEmpty())
+                                <div class="text-center py-4 text-muted">
+                                    <i class="fas fa-smile fa-2x mb-2 text-success opacity-50"></i>
+                                    <p class="mb-0">Aucun crédit remboursé.</p>
+                                </div>
+                            @else
+                                <div class="list-group list-group-flush">
+                                    @foreach ($credits->where('is_paid', true) as $credit)
+                                        <div class="list-group-item px-0 py-3 border-bottom-dashed">
+                                            <div class="d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="mb-1 fw-bold">{{ number_format($credit->amount, 2) }}
+                                                        {{ $credit->currency }}
+                                                    </h6>
+                                                    <small class="text-muted"><i class="bx bx-calendar-alt me-1"></i>
+                                                        Date début : {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</small>
+                                                    <small class="text-muted"><i class="bx bx-calendar-alt me-1"></i>
+                                                        Date fin : {{ \Carbon\Carbon::parse($credit->end_date)->format('d/m/Y') }}</small>
+                                                </div>
+                                                <span class="badge bg-label-success">Remboursé</span>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>
