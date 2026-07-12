@@ -8,17 +8,26 @@
                 <h3 class="fw-bold mb-0 text-primary">Tableau de bord</h3>
                 <p class="text-muted mb-0">Bienvenue, {{ $member->name }} {{ $member->postnom }}</p>
             </div>
-            <div class="mt-3 mt-md-0">
-                <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#transferModal">
-                    <i class="fas fa-paper-plane me-2"></i> Faire un virement
+            <div class="mt-3 mt-md-0 d-flex flex-wrap gap-2">
+                <button class="btn btn-primary rounded-pill shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#transferModal">
+                    <i class="fas fa-paper-plane me-2"></i> Virement
                 </button>
+                @if($showBalances)
+                    <button class="btn btn-outline-secondary rounded-pill px-3" wire:click="hideBalances">
+                        <i class="fas fa-eye-slash me-2"></i> Masquer soldes
+                    </button>
+                @else
+                    <button class="btn btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#revealModal">
+                        <i class="fas fa-lock me-2"></i> Afficher soldes
+                    </button>
+                @endif
             </div>
         </div>
 
         <div class="row g-4">
 
             <!-- Sidebar: Profile & Contact -->
-            <div class="col-lg-4">
+            <div class="col-lg-4 order-2 order-lg-1">
                 <style>
                     .profile-card {
                         border-radius: 20px;
@@ -103,37 +112,21 @@
                             </span>
                         </div>
 
-                        <div class="text-start mt-4">
-                            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Coordonnées</h6>
-                            
-                            <div class="contact-item d-flex align-items-center">
-                                <div class="contact-icon-wrapper me-3">
-                                    <i class="bx bx-map"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Adresse</small>
-                                    <span class="fw-semibold text-dark">{{ $member->adresse_physique }}</span>
-                                </div>
+                        <div class="mt-4">
+                            <div class="d-flex flex-wrap justify-content-center gap-2">
+                                <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
+                                    <i class="bx bx-phone me-1"></i> {{ $member->telephone }}
+                                </span>
+                                <span class="badge bg-light text-dark px-3 py-2 rounded-pill">
+                                    <i class="bx bx-envelope me-1"></i> {{
+                                        	Illuminate\Support\Str::limit($member->email ?? 'Non renseigné', 20)
+                                    }}
+                                </span>
                             </div>
-                            
-                            <div class="contact-item d-flex align-items-center">
-                                <div class="contact-icon-wrapper me-3">
-                                    <i class="bx bx-phone"></i>
-                                </div>
-                                <div>
-                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Téléphone</small>
-                                    <span class="fw-semibold text-dark">{{ $member->telephone }}</span>
-                                </div>
-                            </div>
-                            
-                            <div class="contact-item d-flex align-items-center mb-0">
-                                <div class="contact-icon-wrapper me-3">
-                                    <i class="bx bx-envelope"></i>
-                                </div>
-                                <div class="text-truncate">
-                                    <small class="text-muted d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 0.5px;">Email</small>
-                                    <span class="fw-semibold text-dark text-truncate">{{ $member->email ?? 'Non renseigné' }}</span>
-                                </div>
+                            <div class="mt-2 text-muted small text-center">
+                                <i class="bx bx-map me-1"></i> {{
+                                    	Illuminate\Support\Str::limit($member->adresse_physique ?? 'Non renseigné', 35)
+                                }}
                             </div>
                         </div>
                     </div>
@@ -141,7 +134,146 @@
             </div>
 
             <!-- Main Content: Financials & Stats -->
-            <div class="col-lg-8">
+            <div class="col-lg-8 order-1 order-lg-2">
+
+                @php
+                    $activeAccounts = $member->accounts->filter(fn($account) => $account->status === 'Actif');
+                    $accountBalanceByCurrency = $activeAccounts->groupBy('currency')->map(fn($accounts) => $accounts->sum(fn($account) => (float) $account->balance));
+                    $activeCredits = $credits->where('is_paid', false);
+                    $creditTotal = $activeCredits->sum('amount');
+                    $overdueTotal = $overdueRepayments->sum('total_due');
+                @endphp
+
+                <style>
+                    .overview-card {
+                        border: 0;
+                        border-radius: 18px;
+                        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+                        transition: transform .2s ease, box-shadow .2s ease;
+                    }
+                    .overview-card:hover {
+                        transform: translateY(-2px);
+                        box-shadow: 0 16px 34px rgba(15, 23, 42, 0.1);
+                    }
+                    .overview-card-icon {
+                        width: 44px;
+                        height: 44px;
+                        border-radius: 14px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-size: 1.1rem;
+                    }
+                </style>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-4">
+                        <div class="card overview-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="overview-card-icon bg-success-subtle text-success">
+                                        <i class="bx bx-wallet"></i>
+                                    </span>
+                                    <span class="badge bg-success-subtle text-success rounded-pill">Disponible</span>
+                                </div>
+                                <h6 class="text-muted text-uppercase fs-7 mb-2">Solde global</h6>
+                                <div class="mb-1">
+                                    @if($showBalances)
+                                        @if($accountBalanceByCurrency->isNotEmpty())
+                                            @foreach($accountBalanceByCurrency as $currency => $amount)
+                                                <h4 class="fw-bold mb-1 ">
+                                                    {{ number_format($amount, 2, '.', ' ') }}
+                                                    <span class="fs-6 opacity-75 fw-medium">{{ $currency }}</span>
+                                                </h4>
+                                            @endforeach
+                                        @else
+                                            <h4 class="fw-bold mb-1 ">0.00 <span class="fs-6 opacity-75 fw-medium">USD</span></h4>
+                                        @endif
+                                    @else
+                                        <h4 class="fw-bold mb-1  opacity-50">••••••</h4>
+                                    @endif
+                                </div>
+                                <p class="text-muted small mb-0">Sur vos comptes actifs</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card overview-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="overview-card-icon bg-warning-subtle text-warning">
+                                        <i class="bx bx-credit-card"></i>
+                                    </span>
+                                    <span class="badge bg-warning-subtle text-warning rounded-pill">En cours</span>
+                                </div>
+
+                                <h6 class="text-muted text-uppercase fs-7 mb-2">Crédits actifs</h6>
+                                <h4 class="fw-bold mb-2">{{ $activeCredits->count() }}</h4>
+
+                                <div class="mt-2">
+                                    @if($showBalances)
+                                        {{-- On groupe les crédits actifs par devise --}}
+                                        @php
+                                            $groupedCredits = $activeCredits->groupBy('currency');
+                                        @endphp
+
+                                        @if($groupedCredits->isNotEmpty())
+                                            @foreach($groupedCredits as $currency => $credits)
+                                                <p class="text-dark small fw-semibold mb-1">
+                                                    Total : {{ number_format($credits->sum('amount'), 2, '.', ' ') }}
+                                                    <span class="text-muted fs-7">{{ $currency }}</span>
+                                                </p>
+                                            @endforeach
+                                        @else
+                                            <p class="text-muted small mb-0">Aucun crédit actif</p>
+                                        @endif
+                                    @else
+                                        <p class="text-muted small mb-0">Total : <span class="opacity-50">••••••</span></p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card overview-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="overview-card-icon bg-danger-subtle text-danger">
+                                        <i class="bx bx-alarm-exclamation"></i>
+                                    </span>
+                                    <span class="badge bg-danger-subtle text-danger rounded-pill">À traiter</span>
+                                </div>
+
+                                <h6 class="text-muted text-uppercase fs-7 mb-2">Échéances en retard</h6>
+                                <h4 class="fw-bold mb-2">{{ $overdueRepayments->count() }}</h4>
+
+                                <div class="mt-2">
+                                    @if($showBalances)
+                                        {{-- On groupe les retards par devise pour calculer les totaux à la volée --}}
+                                        @php
+                                            $groupedOverdue = $overdueRepayments->groupBy('credit.currency');
+                                        @endphp
+
+                                        @if($groupedOverdue->isNotEmpty())
+                                            @foreach($groupedOverdue as $currency => $repayments)
+                                                <p class="text-danger small fw-semibold mb-1">
+                                                    Montant dû : {{ number_format($repayments->sum('total_due'), 2, '.', ' ') }}
+                                                    <span class="text-muted fs-7">{{ $currency }}</span>
+                                                </p>
+                                            @endforeach
+                                        @else
+                                            <p class="text-muted small mb-0">Aucun montant dû</p>
+                                        @endif
+                                    @else
+                                        <p class="text-muted small mb-0">Montant dû : <span class="opacity-50">••••••</span></p>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Section: Comptes Bancaires Courant -->
                 <div class="mb-4" x-data="{ revealTimer: null }" x-init="$watch('@js($showBalances)', value => {
@@ -150,18 +282,6 @@
                             revealTimer = setTimeout(() => { $wire.hideBalances() }, 15000);
                         }
                     })">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h5 class="fw-bold mb-0 text-muted text-uppercase fs-7 ls-1">Mes Comptes</h5>
-                        @if($showBalances)
-                            <button class="btn btn-sm btn-outline-secondary py-1" wire:click="hideBalances">
-                                <i class="fas fa-eye-slash me-1"></i> Masquer
-                            </button>
-                        @else
-                            <button class="btn btn-sm btn-outline-primary py-1" data-bs-toggle="modal" data-bs-target="#revealModal">
-                                <i class="fas fa-lock me-1"></i> Afficher les soldes
-                            </button>
-                        @endif
-                    </div>
 
                     {{-- ── STYLES CARTES ── --}}
                     <style>
@@ -452,7 +572,7 @@
                                                         <td class="text-danger fw-medium">
                                                             {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
                                                         </td>
-                                                        <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }}</td>
+                                                        <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }} {{ $r->credit->currency }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
@@ -468,77 +588,73 @@
                 <!-- Section: Historique Transactions -->
                 <div class="card border-0 shadow-sm">
                     <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
-                        <h5 class="fw-bold mb-0"><i class="fas fa-history me-2 text-muted"></i> Transactions Récentes</h5>
+                        <div>
+                            <h5 class="fw-bold mb-0"><i class="fas fa-history me-2 text-muted"></i> Activité récente</h5>
+                            <small class="text-muted">Les 10 dernières opérations de votre compte</small>
+                        </div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th class="text-nowrap ps-4">Date</th>
-                                    <th>Description</th>
-                                    <th class="text-center">Type</th>
-                                    <th class="text-end">Montant</th>
-                                    <th class="text-end pe-4">Solde</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse ($transactions as $transaction)
-                                    <tr>
-                                        <td class="ps-4">
-                                            <span
-                                                class="fw-medium text-dark">{{ $transaction->created_at->format('d/m/Y') }}</span>
-                                            <small
-                                                class="d-block text-muted">{{ $transaction->created_at->format('H:i') }}</small>
-                                        </td>
-                                        <td>
-                                            <span class="text-wrap d-block" style="max-width: 300px;">
-                                                {{ $transaction->description }}
-                                                @if(in_array($transaction->type, ['transfert_entrant', 'transfert_sortant']))
-                                                    <br><small
-                                                        class="text-muted fst-italic">{{ $transaction->counterparty_name }}</small>
+                    <div class="card-body p-2 p-md-3">
+                        <div class="d-flex flex-column gap-2">
+                            @forelse ($transactions as $transaction)
+                                @php
+                                    // Remplacement des classes "fas fa-..." par les équivalents "bx bx-..."
+                                    $typeMap = [
+                                        'dépôt' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Dépôt'],
+                                        'retrait' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Retrait'],
+                                        'transfert_entrant' => ['icon' => 'bx bx-left-top-arrow-circle', 'color' => 'info', 'label' => 'Reçu'],
+                                        'transfert_sortant' => ['icon' => 'bx bx-send', 'color' => 'warning', 'label' => 'Envoyé'],
+                                        'retrait_carte_adhesion' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Retrait'],
+                                        'mise_quotidienne' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Mise quotidienne'],
+                                        'octroi_de_credit' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Octroi de crédit'],
+                                        'frais_mutuelle' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Frais mutuelle'],
+                                        'commission_credit' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Commission crédit'],
+                                        'Salaire reçu' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Salaire reçu'],
+                                        'remboursement_de_credit' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Remboursement de crédit'],
+                                    ];
+
+                                    $t = $typeMap[$transaction->type] ?? ['icon' => 'bx bx-dots-horizontal-rounded', 'color' => 'secondary', 'label' => $transaction->type];
+                                    $isDebit = in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion', 'frais_mutuelle', 'commission_credit']);
+                                @endphp
+
+                                <div class="border rounded-4 p-3 bg-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-start gap-2">
+                                        <div class="d-flex align-items-start gap-2">
+                                            {{-- Correction de l'affichage des icônes --}}
+                                            <div class="rounded-circle p-2 bg-{{ $t['color'] }}-subtle text-{{ $t['color'] }} d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="{{ $t['icon'] }} fs-4"></i>
+                                            </div>
+                                            <div>
+                                                <div class="fw-semibold text-dark">{{ $transaction->description }}</div>
+                                                <div class="text-muted small">
+                                                    {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                                    @if(in_array($transaction->type, ['transfert_entrant', 'transfert_sortant']))
+                                                        • {{ $transaction->counterparty_name }}
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="text-end">
+                                            <div class="fw-bold {{ $isDebit ? 'text-danger' : 'text-success' }}">
+                                                {{ $isDebit ? '-' : '+' }}{{ number_format($transaction->amount, 2) }} {{ $transaction->currency }}
+                                            </div>
+                                            <div class="text-muted small">
+                                                @if($showBalances)
+                                                    Solde {{ number_format($transaction->balance_after, 2) }}
+                                                @else
+                                                    Solde ••••••
                                                 @endif
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            @php
-                                                $typeMap = [
-                                                    'dépôt' => ['icon' => 'fas fa-arrow-down', 'color' => 'success', 'label' => 'Dépôt'],
-                                                    'retrait' => ['icon' => 'fas fa-arrow-up', 'color' => 'danger', 'label' => 'Retrait'],
-                                                    'transfert_entrant' => ['icon' => 'fas fa-long-arrow-alt-down', 'color' => 'info', 'label' => 'Reçu'],
-                                                    'transfert_sortant' => ['icon' => 'fas fa-paper-plane', 'color' => 'warning', 'label' => 'Envoyé'],
-                                                    'retrait_carte_adhesion' => ['icon' => 'fas fa-arrow-up', 'color' => 'danger', 'label' => 'Retrait'],
-                                                    'mise_quotidienne' => ['icon' => 'fas fa-arrow-down', 'color' => 'success', 'label' => 'Mise quotidienne']
-                                                ];
-                                                $t = $typeMap[$transaction->type] ?? ['icon' => 'fas fa-circle', 'color' => 'secondary', 'label' => $transaction->type];
-                                             @endphp
-                                            <span class="badge bg-label-{{ $t['color'] }} rounded-pill text-uppercase fs-xs">
-                                                <i class="{{ $t['icon'] }} me-1"></i> {{ $t['label'] }}
-                                            </span>
-                                        </td>
-                                        <td
-                                            class="text-end fw-bold {{ in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion']) ? 'text-danger' : 'text-success' }}">
-                                            {{ in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion']) ? '-' : '+' }}{{ number_format($transaction->amount, 2) }}
-                                            <small>{{ $transaction->currency }}</small>
-                                        </td>
-                                        <td class="text-end pe-4 text-muted fw-medium">
-                                            @if($showBalances)
-                                                {{ number_format($transaction->balance_after, 2) }}
-                                            @else
-                                                <span class="opacity-50">••••••</span>
-                                            @endif
-                                            <small>{{ $transaction->currency }}</small>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-5">
-                                            <div class="mb-2"><i class="fas fa-wallet fa-3x text-muted opacity-25"></i></div>
-                                            <p class="text-muted mb-0">Aucune transaction trouvée.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @empty
+                                <div class="text-center py-5">
+                                    {{-- Icône de la liste vide aussi corrigée en Boxicons --}}
+                                    <div class="mb-2"><i class="bx bx-wallet fs-1 text-muted opacity-25"></i></div>
+                                    <p class="text-muted mb-0">Aucune transaction trouvée.</p>
+                                </div>
+                            @endforelse
+                        </div>
                     </div>
                     <div class="card-footer bg-white border-top py-2">
                         <small class="text-muted fst-italic">Affichage des 10 dernières transactions.</small>
@@ -578,13 +694,13 @@
                         </div>
                         <h5 class="fw-bold mb-2">Sécurité</h5>
                         <p class="text-muted small mb-4">Veuillez renseigner votre mot de passe pour afficher les soldes de vos comptes.</p>
-                        
+
                         <form wire:submit.prevent="revealBalances">
                             <input type="password" wire:model="balancePassword" class="form-control text-center mb-2 @error('balancePassword') is-invalid @enderror" placeholder="••••••••" required>
-                            @error('balancePassword') 
-                                <span class="text-danger small d-block mb-2">{{ $message }}</span> 
+                            @error('balancePassword')
+                                <span class="text-danger small d-block mb-2">{{ $message }}</span>
                             @enderror
-                            
+
                             <div class="d-flex gap-2 justify-content-center mt-4">
                                 <button type="button" class="btn btn-label-secondary w-50" data-bs-dismiss="modal">Annuler</button>
                                 <button type="submit" class="btn btn-primary w-50" wire:loading.attr="disabled">
@@ -610,8 +726,6 @@
                 }
             })
         "></div>
-
-
     @endcan
 
 </div>
