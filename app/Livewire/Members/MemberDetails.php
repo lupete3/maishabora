@@ -31,6 +31,7 @@ class MemberDetails extends Component
     public $card_id;
     public $cards = [];
     public $allCards = [];
+    public $activeCards = [];
     public $selectedCard;
     public $contribution_date;
     public $amount = 0;
@@ -97,6 +98,13 @@ class MemberDetails extends Component
             ->get();
 
         $this->allCards = MembershipCard::where('member_id', $this->memberId)
+            ->where('is_active', false)
+            ->with(['contributions'])
+            ->latest()
+            ->get();
+
+        $this->activeCards = MembershipCard::where('member_id', $this->memberId)
+            ->where('is_active', true)
             ->with(['contributions'])
             ->latest()
             ->get();
@@ -1026,6 +1034,7 @@ class MemberDetails extends Component
         $this->printReceiptUrlPC = '';
         $this->printReceiptUrlPOS = '';
     }
+
     public function toggleWithdrawAll($accountId)
     {
         $account = Account::findOrFail($accountId);
@@ -1038,7 +1047,6 @@ class MemberDetails extends Component
     }
 
     // --- GESTION DIRECTE DES SOLDES ---
-
     public function confirmUpdateBalance($accountId)
     {
         Gate::authorize('modifier-solde-compte', User::class);

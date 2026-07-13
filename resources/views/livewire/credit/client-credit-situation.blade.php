@@ -2,60 +2,123 @@
     <div class="card mb-4">
         <div class="card-header fw-bold">
             Situation des crédits - {{ $user->name }}
+            <ul class="nav nav-tabs card-header-tabs" id="creditTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="encourscredit-tab" data-bs-toggle="tab"
+                        data-bs-target="#encourscredit" type="button" role="tab">
+                        Encours
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="clotures-tab" data-bs-toggle="tab"
+                        data-bs-target="#cloturescredit" type="button" role="tab">
+                        Remboursés
+                    </button>
+                </li>
+            </ul>
         </div>
         <div class="card-body">
             @if ($credits->isEmpty())
                 <p>Aucun crédit trouvé pour ce client.</p>
             @else
-                <div class="row">
-                    @foreach ($credits as $credit)
-                        <div class="col-md-4 mb-4">
-                            <div class="card h-100 shadow-sm">
-                                <div class="card-body">
-                                    <h5 class="card-title">
-                                        Crédit #{{ $credit['id'] }} ({{ $credit['currency'] }})
-                                    </h5>
-                                    <p><strong>Montant initial : </strong>
-                                        {{ number_format($credit['amount'], 2) }} {{ $credit['currency'] }}
-                                    </p>
-                                    <p><strong>Taux intérêt : </strong>{{ $credit['interest_rate'] }}%</p>
-                                    <p><strong>Date début :
-                                        </strong>{{ \Carbon\Carbon::parse($credit['start_date'])->format('d/m/Y') }}</p>
-                                    <p><strong>Date échéance :
-                                        </strong>{{ \Carbon\Carbon::parse($credit['due_date'])->format('d/m/Y') }}</p>
-                                    <hr>
-                                    <p><strong>Total payé : </strong>
-                                        <span class="text-success">{{ number_format($credit['total_paid'], 2) }}
-                                            {{ $credit['currency'] }}</span>
-                                    </p>
-                                    <p><strong>Montant restant : </strong>
-                                        <span class="text-danger">{{ number_format($credit['remaining'], 2) }}
-                                            {{ $credit['currency'] }}</span>
-                                    </p>
-                                    <p><strong>Pénalités cumulées : </strong>
-                                        <span class="text-warning">{{ number_format($credit['penalties'], 2) }}
-                                            {{ $credit['currency'] }}</span>
-                                    </p>
-                                    <p><strong>Nombre de retards : </strong>
-                                        <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
-                                    </p>
-
-                                    <div class="d-flex justify-content-between">
-                                        @if ($credit['is_paid'])
-                                            <span class="badge bg-success">Payé</span>
-                                        @else
+            <div class="tab-content" id="creditTabsContent">
+                <div class="tab-pane fade show active" id="encourscredit" role="tabpanel" aria-labelledby="encourscredit-tab">
+                    <div class="row">
+                        @foreach ($credits->where('is_paid', false) as $credit)
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            Crédit #{{ $credit['id'] }} ({{ $credit['currency'] }})
+                                        </h5>
+                                        <p><strong>Montant initial : </strong>
+                                            {{ number_format($credit['amount'], 2) }} {{ $credit['currency'] }}
+                                        </p>
+                                        <p><strong>Taux intérêt : </strong>{{ $credit['interest_rate'] }}%</p>
+                                        <p><strong>Date début :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['start_date'])->format('d/m/Y') }}</p>
+                                        <p><strong>Date échéance :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['due_date'])->format('d/m/Y') }}</p>
+                                        <hr>
+                                        <p><strong>Total payé : </strong>
+                                            <span class="text-success">{{ number_format($credit['total_paid'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Montant restant : </strong>
+                                            <span class="text-danger">{{ number_format($credit['remaining'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Pénalités cumulées : </strong>
+                                            <span class="text-warning">{{ number_format($credit['penalties'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Nombre de retards : </strong>
+                                            <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
+                                        </p>
+                                        <div class="d-flex justify-content-between">
                                             <span class="badge bg-warning">Encours</span>
-                                        @endif
-
-                                        <button class="btn btn-sm btn-outline-primary"
-                                            wire:click="showRepayments({{ $credit['id'] }})">
-                                            Voir remboursements
-                                        </button>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                wire:click="showRepayments({{ $credit['id'] }})">
+                                                Voir remboursements
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
+                </div>
+                <div class="tab-pane fade" id="cloturescredit" role="tabpanel" aria-labelledby="clotures-tab">
+                    <div class="row">
+                        @foreach ($credits->where('is_paid', true) as $credit)
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            Crédit #{{ $credit['id'] }} ({{ $credit['currency'] }})
+                                        </h5>
+                                        <p><strong>Montant initial : </strong>
+                                            {{ number_format($credit['amount'], 2) }} {{ $credit['currency'] }}
+                                        </p>
+                                        <p><strong>Taux intérêt : </strong>{{ $credit['interest_rate'] }}%</p>
+                                        <p><strong>Date début :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['start_date'])->format('d/m/Y') }}</p>
+                                        <p><strong>Date échéance :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['due_date'])->format('d/m/Y') }}</p>
+                                        <hr>
+                                        <p><strong>Total payé : </strong>
+                                            <span class="text-success">{{ number_format($credit['total_paid'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Montant restant : </strong>
+                                            <span class="text-danger">{{ number_format($credit['remaining'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Pénalités cumulées : </strong>
+                                            <span class="text-warning">{{ number_format($credit['penalties'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Nombre de retards : </strong>
+                                            <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
+                                        </p>
+
+                                        <div class="d-flex justify-content-between">
+                                            @if ($credit['is_paid'])
+                                                <span class="badge bg-success">Payé</span>
+                                            @else
+                                                <span class="badge bg-warning">Encours</span>
+                                            @endif
+
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                wire:click="showRepayments({{ $credit['id'] }})">
+                                                Voir remboursements
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
                 </div>
             @endif
         </div>
@@ -146,7 +209,6 @@
                                 </tbody>
                             </table>
                         </div>
-
                     @endif
                 </div>
             </div>
