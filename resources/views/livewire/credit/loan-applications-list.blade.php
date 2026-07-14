@@ -89,10 +89,10 @@
             <div class="row mb-4">
                 <div class="col-md-4">
                     <input type="text" class="form-control" placeholder="Rechercher un membre..."
-                        wire:model.debounce.300ms="search">
+                        wire:model.live.debounce.300ms="search">
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select" wire:model="statusFilter">
+                    <select class="form-select" wire:model.lazy="statusFilter">
                         <option value="">Tous les statuts</option>
                         <option value="en_analyse">En Analyse</option>
                         <option value="approuve">Approuvé</option>
@@ -120,7 +120,10 @@
                         @forelse($loans as $loan)
                             <tr>
                                 <td><strong>#{{ $loan->id }}</strong></td>
-                                <td>
+                                <td @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $loan->user->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif>
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold"></span>{{ $loan->user->name }}
                                         {{ $loan->user->postnom }}</span>

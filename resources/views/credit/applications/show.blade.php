@@ -4,11 +4,21 @@
 
 @section('content')
     <div class="container-xxl flex-grow-1 container-p-y">
-        <div class="d-flex justify-content-between align-items-center mb-3">
+        <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
             <h4 class="fw-bold py-3 mb-0"><span class="text-muted fw-light">Crédit /</span> Dossier #{{ $loan->id }}</h4>
-            <a href="{{ route('credit.applications.print-filled', $loan->id) }}" target="_blank" class="btn btn-primary">
+            <div>
+                <a href="{{ route('credit.applications.list') }}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bx bx-arrow-back me-1"></i> Retour à la liste
+                </a>
+            </div>
+        </div>
+        <div class="d-flex justify-content-end align-items-center mb-3 gap-2">
+            <a href="{{ route('credit.applications.print-filled', $loan->id) }}" target="_blank" class="btn btn-primary btn-sm">
                 <i class="bx bx-printer me-1"></i> Imprimer la Fiche Terrain Remplie
             </a>
+            @can('ajouter-demandes-credit')
+                <a href="{{ route('credit.applications.create') }}" class="btn btn-outline-primary btn-sm">Nouvelle Demande</a>
+            @endcan
         </div>
 
         <div class="row mb-3 g-3">
