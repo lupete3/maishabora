@@ -104,7 +104,8 @@ class PermissionSeeder extends Seeder
             "annuler-paye",
 
             "afficher-informations-entreprise",
-            "modifier-informations-entreprise"
+            "modifier-informations-entreprise",
+            "adherer-membre"
 
 
         ];

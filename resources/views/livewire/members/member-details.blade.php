@@ -177,12 +177,17 @@
                                             @php
                                                 $balance = (float) $acc->balance;
                                                 $color = $curr === 'USD' ? 'green' : 'blue';
+                                                $symbol = $curr === 'USD' ? '$' : 'FC';
                                             @endphp
                                             <div
                                                 class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
                                                 <div class="flex items-center gap-2">
                                                     <span
-                                                        class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                                        class="font-bold text-{{ $color }}-600">{{ $symbol }}
+                                                        @if ($acc->subscribed)
+                                                          <i class="bx bx-check-circle text-success"></i>
+                                                        @endif
+                                                    </span>
                                                     @can('autoriser-tout-retirer')
                                                         <div class="form-check form-switch ms-2 mb-0"
                                                             title="Autoriser à tout retirer">
@@ -191,6 +196,16 @@
                                                                 wire:click="toggleWithdrawAll({{ $acc->id }})"
                                                                 {{ $acc->can_withdraw_all ? 'checked' : '' }}
                                                                 style="cursor: pointer; width: 2.2em; height: 1.1em;">
+                                                        </div>
+
+                                                        <div class="form-check form-switch ms-2 mb-0"
+                                                            title="Retirer Frais Adhésion">
+                                                            @if (!$acc->subscribed)
+                                                            <input class="form-check-input" type="checkbox" role="switch"
+                                                                wire:click="toggleSubscribed({{ $acc->id }})"
+                                                                {{ $acc->subscribed ? 'checked' : '' }}
+                                                                style="cursor: pointer; width: 2.2em; height: 1.1em;">
+                                                            @endif
                                                         </div>
                                                     @endcan
                                                 </div>
@@ -230,11 +245,12 @@
                                             @php
                                                 $balance = (float) $acc->balance;
                                                 $color = $curr === 'USD' ? 'green' : 'blue';
+                                                $symbol = $curr === 'USD' ? '$' : 'FC';
                                             @endphp
                                             <div
                                                 class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
                                                 <span
-                                                    class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
+                                                    class="font-bold text-{{ $color }}-600">{{ $symbol }}</span>
                                                 <span class="font-semibold flex items-center gap-2">
                                                     @if ($member->visible_account)
                                                         {{ number_format($balance, 2, '.', ' ') }}
