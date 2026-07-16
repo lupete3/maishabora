@@ -1,4 +1,5 @@
 <div>
+    @if (!$credits->isEmpty())
     <div class="card mb-4">
         <div class="card-header fw-bold">
             Situation des crédits - {{ $user->name }}
@@ -18,9 +19,6 @@
             </ul>
         </div>
         <div class="card-body">
-            @if ($credits->isEmpty())
-                <p>Aucun crédit trouvé pour ce client.</p>
-            @else
             <div class="tab-content" id="creditTabsContent">
                 <div class="tab-pane fade show active" id="encourscredit" role="tabpanel" aria-labelledby="encourscredit-tab">
                     <div class="row">
@@ -120,7 +118,7 @@
                         @endforeach
                     </div>
                 </div>
-            @endif
+            </div>
         </div>
     </div>
 
@@ -214,4 +212,5 @@
             </div>
         </div>
     </div>
+    @endif
 </div>
