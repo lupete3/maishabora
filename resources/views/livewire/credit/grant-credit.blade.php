@@ -209,59 +209,60 @@
                     @endif
                     <p class="fw-bold text-center mb-3">Merci de vérifier les détails ci-dessous avant de confirmer :
                     </p>
-                    <table class="table table-bordered">
-                        <tbody>
-                            <tr>
-                                <th>Membre</th>
-                                <td>{{ $creditSummary['membre'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Montant du crédit</th>
-                                <td>{{ $creditSummary['montant'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Taux d'intérêt</th>
-                                <td>{{ $creditSummary['taux'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Frais du dossier</th>
-                                <td>{{ $creditSummary['frais'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Frais Mutuelle</th>
-                                <td>{{ $creditSummary['mutuelle'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Total à rembourser (approximatif)</th>
-                                <td class="fw-bold text-success">{{ $creditSummary['total'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Nombre d'échéances</th>
-                                <td>{{ $creditSummary['echeances'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Date de début</th>
-                                <td>{{ $creditSummary['debut'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Type de remboursement</th>
-                                <td>{{ $creditSummary['type'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Agent Crédit</th>
-                                <td>{{ $creditSummary['agent'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Source (Caissier)</th>
-                                <td>{{ $creditSummary['disbursing_agent'] ?? '' }}</td>
-                            </tr>
-                            <tr>
-                                <th>Description</th>
-                                <td>{{ $creditSummary['description'] ?? '' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-
+                    <div class="table-responsive mb-3">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <th>Membre</th>
+                                    <td>{{ $creditSummary['membre'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Montant du crédit</th>
+                                    <td>{{ $creditSummary['montant'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Taux d'intérêt</th>
+                                    <td>{{ $creditSummary['taux'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Frais du dossier</th>
+                                    <td>{{ $creditSummary['frais'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Frais Mutuelle</th>
+                                    <td>{{ $creditSummary['mutuelle'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Total à rembourser (approximatif)</th>
+                                    <td class="fw-bold text-success">{{ $creditSummary['total'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Nombre d'échéances</th>
+                                    <td>{{ $creditSummary['echeances'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Date de début</th>
+                                    <td>{{ $creditSummary['debut'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Type de remboursement</th>
+                                    <td>{{ $creditSummary['type'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Agent Crédit</th>
+                                    <td>{{ $creditSummary['agent'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Source (Caissier)</th>
+                                    <td>{{ $creditSummary['disbursing_agent'] ?? '' }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Description</th>
+                                    <td>{{ $creditSummary['description'] ?? '' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <div class="mb-4 mx-auto" style="max-width: 400px;">
                         <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
                         <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
