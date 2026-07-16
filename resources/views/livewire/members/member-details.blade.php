@@ -144,171 +144,160 @@
                         </div>
                     </div>
                 </div>
-                <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-landmark h-6 w-6 text-primary">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm max-w-full overflow-hidden">
+                    <!-- En-tête plus compact sur mobile -->
+                    <div class="p-3 border-b">
+                        <div class="font-semibold tracking-tight flex items-center gap-2 text-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark h-5 w-5 text-primary shrink-0">
                                 <line x1="3" x2="21" y1="22" y2="22"></line>
                                 <line x1="6" x2="6" y1="18" y2="11"></line>
                                 <line x1="10" x2="10" y1="18" y2="11"></line>
                                 <line x1="14" x2="14" y1="18" y2="11"></line>
                                 <line x1="18" x2="18" y1="18" y2="11"></line>
                                 <polygon points="12 2 20 7 4 7"></polygon>
-                            </svg>Balances des comptes</div>
-                    </div>
-                    <div class="p-6 pt-0 space-y-4">
-                        <div class="space-y-4">
-                            <!-- Compte Courant -->
-                            @if ($member->accounts->where('type', 'current')->where('status', 'Actif')->count() > 0)
-                                <div class="border rounded-md p-3">
-                                    <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">
-                                        Compte Courant</h6>
-                                    @foreach (['USD', 'CDF'] as $curr)
-                                        @php
-                                            $acc = $member->accounts
-                                                ->where('currency', $curr)
-                                                ->where('type', 'current')
-                                                ->where('status', 'Actif')
-                                                ->first();
-                                        @endphp
-                                        @if ($acc)
-                                            @php
-                                                $balance = (float) $acc->balance;
-                                                $color = $curr === 'USD' ? 'green' : 'blue';
-                                                $symbol = $curr === 'USD' ? '$' : 'FC';
-                                            @endphp
-                                            <div
-                                                class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
-                                                <div class="flex items-left gap-1">
-                                                    <span
-                                                        class="font-bold text-{{ $color }}-600">{{ $symbol }}
-                                                        @if ($acc->subscribed)
-                                                          <i class="bx bx-check-circle text-success"></i>
-                                                        @endif
-                                                    </span>
-                                                    @can('autoriser-tout-retirer')
-                                                    <div class="flex  gap-1">
-                                                        <div class="form-check form-switch ms-2 mb-0"
-                                                            title="Autoriser à tout retirer">
-                                                            <input class="form-check-input" type="checkbox"
-                                                                role="switch"
-                                                                wire:click="toggleWithdrawAll({{ $acc->id }})"
-                                                                {{ $acc->can_withdraw_all ? 'checked' : '' }}
-                                                                style="cursor: pointer; width: 1.6em; height: 1.1em;">
-                                                        </div>
-
-                                                        <div class="form-check ms-2 mb-0"
-                                                            title="Retirer Frais Adhésion">
-                                                            @if (!$acc->subscribed)
-                                                            <input class="form-check-input" type="checkbox" role="switch"
-                                                                wire:click="toggleSubscribed({{ $acc->id }})"
-                                                                {{ $acc->subscribed ? 'checked' : '' }}
-                                                                style="cursor: pointer; width: 1.0em; height: 1.1em;">
-                                                                
-                                                            @endif
-                                                        </div>
-                                                    </div>
-                                                    @endcan
-                                                </div>
-                                                <span class="font-semibold flex items-center gap-2">
-                                                    @if ($member->visible_account)
-                                                        {{ number_format($balance, 2, '.', ' ') }}
-                                                        @can('modifier-solde-compte')
-                                                            <button wire:click="confirmUpdateBalance({{ $acc->id }})"
-                                                                class="btn btn-link btn-xs p-0 text-primary">
-                                                                ✏️
-                                                            </button>
-                                                        @endcan
-                                                    @else
-                                                        ****
-                                                    @endif
-                                                </span>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            <!-- Compte Epargne -->
-                            @if ($member->accounts->where('type', 'savings')->where('status', 'Actif')->count() > 0)
-                                <div class="border rounded-md p-3">
-                                    <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">
-                                        Compte Epargne (Carnets)</h6>
-                                    @foreach (['USD', 'CDF'] as $curr)
-                                        @php
-                                            $acc = $member->accounts
-                                                ->where('currency', $curr)
-                                                ->where('type', 'savings')
-                                                ->where('status', 'Actif')
-                                                ->first();
-                                        @endphp
-                                        @if ($acc)
-                                            @php
-                                                $balance = (float) $acc->balance;
-                                                $color = $curr === 'USD' ? 'green' : 'blue';
-                                                $symbol = $curr === 'USD' ? '$' : 'FC';
-                                            @endphp
-                                            <div
-                                                class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
-                                                <span
-                                                    class="font-bold text-{{ $color }}-600">{{ $symbol }}</span>
-                                                <span class="font-semibold flex items-center gap-2">
-                                                    @if ($member->visible_account)
-                                                        {{ number_format($balance, 2, '.', ' ') }}
-                                                        @can('modifier-solde-compte')
-                                                            <button wire:click="confirmUpdateBalance({{ $acc->id }})"
-                                                                class="btn btn-link btn-xs p-0 text-primary">
-                                                                ✏️
-                                                            </button>
-                                                        @endcan
-                                                    @else
-                                                        ****
-                                                    @endif
-                                                </span>
-                                            </div>
-                                        @endif
-                                    @endforeach
-                                </div>
-                            @endif
-
-                            <!-- Migration Tool (Admin Only) -->
-                            @can('migrer-comptes')
-                                <div class="mt-2 text-right">
-                                    <!-- <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
-                                            ⚠️ Vérifier/Migrer Comptes
-                                        </button> -->
-                                </div>
-                            @endcan
+                            </svg>
+                            <span>Balances des comptes</span>
                         </div>
                     </div>
 
-                    <div class="items-center p-6 pt-0 flex justify-between gap-2">
+                    <div class="p-3 space-y-3">
+                        <!-- Compte Courant -->
+                        @if ($member->accounts->where('type', 'current')->where('status', 'Actif')->count() > 0)
+                            <div class="border rounded-lg p-2.5 bg-muted/10">
+                                <h6 class="font-bold text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+                                    Compte Courant
+                                </h6>
+                                @foreach (['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts
+                                            ->where('currency', $curr)
+                                            ->where('type', 'current')
+                                            ->where('status', 'Actif')
+                                            ->first();
+                                    @endphp
+                                    @if ($acc)
+                                        @php
+                                            $balance = (float) $acc->balance;
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                            $symbol = $curr === 'USD' ? '$' : 'FC';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-1.5 bg-secondary/10 rounded-md gap-2">
+                                            <!-- Devise & Switchs Admin (alignés horizontalement) -->
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                <span class="font-bold text-sm text-{{ $color }}-600 flex items-center gap-1">
+                                                    {{ $symbol }}
+                                                    @if ($acc->subscribed)
+                                                        <i class="bx bx-check-circle text-success text-xs"></i>
+                                                    @endif
+                                                </span>
+                                                
+                                                @can('autoriser-tout-retirer')
+                                                    <div class="flex items-center gap-1">
+                                                        <!-- Switch Retrait Total -->
+                                                        <div class="form-check form-switch m-0 p-0 pl-4" title="Autoriser à tout retirer">
+                                                            <input class="form-check-input m-0 align-middle" type="checkbox" role="switch"
+                                                                wire:click="toggleWithdrawAll({{ $acc->id }})"
+                                                                {{ $acc->can_withdraw_all ? 'checked' : '' }}
+                                                                style="cursor: pointer; width: 1.4em; height: 0.9em;">
+                                                        </div>
+
+                                                        <!-- Switch Frais Adhésion -->
+                                                        @if (!$acc->subscribed)
+                                                            <div class="form-check m-0 p-0 pl-3" title="Retirer Frais Adhésion">
+                                                                <input class="form-check-input m-0 align-middle" type="checkbox" role="switch"
+                                                                    wire:click="toggleSubscribed({{ $acc->id }})"
+                                                                    {{ $acc->subscribed ? 'checked' : '' }}
+                                                                    style="cursor: pointer; width: 0.9em; height: 0.9em;">
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endcan
+                                            </div>
+
+                                            <!-- Solde & Edition (alignés à droite) -->
+                                            <span class="font-semibold text-sm flex items-center gap-1.5 truncate">
+                                                @if ($member->visible_account)
+                                                    <span class="truncate">{{ number_format($balance, 2, '.', ' ') }}</span>
+                                                    @can('modifier-solde-compte')
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="text-primary hover:opacity-80 p-0.5 shrink-0" style="font-size: 0.8rem;">
+                                                            ✏️
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-muted-foreground">****</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <!-- Compte Epargne -->
+                        @if ($member->accounts->where('type', 'savings')->where('status', 'Actif')->count() > 0)
+                            <div class="border rounded-lg p-2.5 bg-muted/10">
+                                <h6 class="font-bold text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+                                    Compte Epargne (Carnets)
+                                </h6>
+                                @foreach (['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts
+                                            ->where('currency', $curr)
+                                            ->where('type', 'savings')
+                                            ->where('status', 'Actif')
+                                            ->first();
+                                    @endphp
+                                    @if ($acc)
+                                        @php
+                                            $balance = (float) $acc->balance;
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                            $symbol = $curr === 'USD' ? '$' : 'FC';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-1.5 bg-secondary/10 rounded-md gap-2">
+                                            <span class="font-bold text-sm text-{{ $color }}-600 shrink-0">{{ $symbol }}</span>
+                                            
+                                            <span class="font-semibold text-sm flex items-center gap-1.5 truncate">
+                                                @if ($member->visible_account)
+                                                    <span class="truncate">{{ number_format($balance, 2, '.', ' ') }}</span>
+                                                    @can('modifier-solde-compte')
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="text-primary hover:opacity-80 p-0.5 shrink-0" style="font-size: 0.8rem;">
+                                                            ✏️
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-muted-foreground">****</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Actions principales : côte à côte à 50% de largeur sur mobile -->
+                    <div class="p-3 pt-0 flex gap-2 w-full">
                         @can('depot-compte-membre')
                             <button wire:click='openDepositModal'
-                                class="btn-outline-success inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-arrow-down-to-line mr-2 h-4 w-4">
+                                class="w-1/2 btn-outline-success inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line shrink-0 text-success">
                                     <path d="M12 17V3"></path>
                                     <path d="m6 11 6 6 6-6"></path>
                                     <path d="M19 21H5"></path>
-                                </svg> Dépôt
+                                </svg> 
+                                <span>Dépôt</span>
                             </button>
                         @endcan
+                        
                         @can('retrait-compte-membre')
                             <button wire:click='openRetraitModal'
-                                class="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
-                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                    stroke-linecap="round" stroke-linejoin="round"
-                                    class="lucide lucide-arrow-up-from-line mr-2 h-4 w-4">
+                                class="w-1/2 inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-from-line shrink-0 text-destructive">
                                     <path d="m18 9-6-6-6 6"></path>
                                     <path d="M12 3v14"></path>
                                     <path d="M5 21h14"></path>
-                                </svg> Retrait
+                                </svg> 
+                                <span>Retrait</span>
                             </button>
                         @endcan
                     </div>
