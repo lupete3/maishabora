@@ -279,7 +279,7 @@
                     <div class="p-3 pt-0 flex gap-2 w-full">
                         @can('depot-compte-membre')
                             <button wire:click='openDepositModal'
-                                class="w-1/2 btn-outline-success inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-2">
+                                class="w-1/2 btn-outline-success inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-16 px-2">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line shrink-0 text-success">
                                     <path d="M12 17V3"></path>
                                     <path d="m6 11 6 6 6-6"></path>
@@ -291,8 +291,8 @@
                         
                         @can('retrait-compte-membre')
                             <button wire:click='openRetraitModal'
-                                class="w-1/2 inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-9 px-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-from-line shrink-0 text-destructive">
+                                class="w-1/2 btn-outline-danger inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-16 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-from-line shrink-0 text-danger">
                                     <path d="m18 9-6-6-6 6"></path>
                                     <path d="M12 3v14"></path>
                                     <path d="M5 21h14"></path>
