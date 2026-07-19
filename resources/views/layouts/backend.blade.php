@@ -24,6 +24,9 @@
     <!-- Icons. Uncomment required icon fonts -->
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/fonts/boxicons.css" />
 
+    @livewireStyles
+    @vite(['resources/css/backend.css', 'resources/js/app.js'])
+
     <!-- Core CSS -->
     <link rel="stylesheet" href="{{ asset('/') }}assets/vendor/css/core.css" class="template-customizer-core-css" />
 
@@ -47,11 +50,6 @@
 
     <!-- ApexCharts -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-
-    <!-- Scripts -->
-    @livewireStyles
-    {{-- @vite(['resources/js/app.js']) --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
