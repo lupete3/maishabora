@@ -21,7 +21,7 @@ class CreditOverview extends Component
     {
         // 1. Charger tous les remboursements du même crédit pour recalculer correctement le dégressif
         $creditIds = $repayments->pluck('credit_id')->unique();
-        
+
         // On récupère tout l'historique utile de ces crédits, trié par date d'échéance
         $allRepaymentsForCredits = Repayment::with('credit')
             ->whereIn('credit_id', $creditIds)
@@ -136,7 +136,7 @@ class CreditOverview extends Component
             ->where('due_date', '<', now())
             ->where('is_paid', false)
             ->latest()
-            ->paginate(5, pageName: 'pageOverdue');
+            ->paginate(10, pageName: 'pageOverdue');
     }
 
     public function getUpcomingCreditsProperty()
@@ -145,7 +145,7 @@ class CreditOverview extends Component
             ->whereBetween('due_date', [now(), now()->addDays(7)])
             ->where('is_paid', false)
             ->orderBy('due_date', 'asc')
-            ->paginate(5, pageName: 'pageUpcoming');
+            ->paginate(10, pageName: 'pageUpcoming');
     }
 
     // Propriété calculée pour la vue Web (Retard)
