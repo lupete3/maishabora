@@ -109,7 +109,7 @@
             </div>
             <div class="card-footer bg-transparent border-0 p-3">
                 <div>
-                {{ $overdueCredits->links(data: ['pageName' => 'pageOverdue']) }}
+                    {{ $overdueCredits->links(data: ['pageName' => 'pageOverdue']) }}
                 </div>
                 <div class="d-flex justify-content-between align-items-center gap-3">
                     <div>

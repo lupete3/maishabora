@@ -24,7 +24,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Agent de</th>
+                        <th>Agent</th>
                         <th>Date</th>
                         <th>Solde Théorique USD</th>
                         <th>Solde Théorique CDF</th>
@@ -39,8 +39,8 @@
                 <tbody>
                     @foreach ($closings as $closing)
                         <tr>
-                            <td>{{ $closing->user->name }}</td>
-                            <td>{{ \Carbon\Carbon::parse($closing->closing_date)->format('d/m/Y') }}</td>
+                            <td>{{ $closing->user->name. ' '. $closing->user->postnom }}</td>
+                            <td>{{ \Carbon\Carbon::parse($closing->closing_date)->format('d/m/Y H:i') }}</td>
                             <td>{{ number_format($closing->logical_usd, 2) }} $</td>
                             <td>{{ number_format($closing->physical_cdf, 2) }} Fc</td>
                             <td>{{ number_format($closing->logical_usd, 2) }} $</td>
