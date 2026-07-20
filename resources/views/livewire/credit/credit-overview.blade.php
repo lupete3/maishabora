@@ -108,7 +108,26 @@
                 @endif
             </div>
             <div class="card-footer bg-transparent border-0 p-3">
+                <div>
                 {{ $overdueCredits->links(data: ['pageName' => 'pageOverdue']) }}
+                </div>
+                <div class="d-flex justify-content-between align-items-center gap-3">
+                    <div>
+                        <label>
+                            <select wire:model.lazy="perPage" class="form-select form-select-sm">
+                                <option value="10">10</option>
+                                <option value="30">30</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="999999">Tous</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="text-muted">
+                        Affichage de {{ $overdueCredits->firstItem() }} à {{ $overdueCredits->lastItem() }} sur
+                        <span class="badge bg-primary">{{ $overdueCredits->total() }}</span> opérations
+                    </div>
+                </div>
             </div>
         </div>
     </div>
