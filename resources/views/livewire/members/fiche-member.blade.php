@@ -192,6 +192,10 @@
                     <th>Nombre de dépendants</th>
                     <td>{{ $member->nombre_dependants }}</td>
                 </tr>
+                <tr>
+                    <th>Remarque</th>
+                    <td>{{ $member->remarque }}</td>
+                </tr>
             </table>
 
             <div class="section-title">Infos Économiques et Professionnelles</div>
