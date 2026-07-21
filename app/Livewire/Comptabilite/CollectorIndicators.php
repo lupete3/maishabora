@@ -99,119 +99,69 @@ class CollectorIndicators extends Component
 
     public function getStatistics(): array
     {
-        [$start, $end] = $this->getPeriodDates();
-
         $base = $this->baseQuery();
-
         $total = (clone $base)->count();
 
+        // 1. Actifs : Moins de 30 jours
         $active = (clone $base)
-            ->whereBetween('last_transaction_at', [$start, $end])
+            ->where('last_transaction_at', '>=', now()->subDays(30))
             ->count();
 
+        // 2. A relancer : Entre 31 jours et 90 jours
         $follow = (clone $base)
-            ->whereBetween(
-                'last_transaction_at',
-                [
-                    now()->subDays(90),
-                    now()->subDays(31)
-                ]
-            )
+            ->whereBetween('last_transaction_at', [
+                now()->subDays(90)->startOfDay(),
+                now()->subDays(31)->endOfDay()
+            ])
             ->count();
 
+        // 3. Inactifs : Plus de 90 jours OU Jamais de transaction
         $inactive = (clone $base)
             ->where(function ($q) {
-
                 $q->whereNull('last_transaction_at')
-                    ->orWhere(
-                        'last_transaction_at',
-                        '<',
-                        now()->subDays(90)
-                    );
+                ->orWhere('last_transaction_at', '<', now()->subDays(90)->startOfDay());
             })
             ->count();
-        
+            
         $neverMoved = (clone $base)
             ->whereNull('last_transaction_at')
             ->count();
 
         return [
-
             'total' => $total,
-
             'active' => $active,
-
             'follow' => $follow,
-
             'inactive' => $inactive,
-
-            'active_rate' => $total
-                ? round($active * 100 / $total, 2)
-                : 0,
-
-            'follow_rate' => $total
-                ? round($follow * 100 / $total, 2)
-                : 0,
-
-            'inactive_rate' => $total
-                ? round($inactive * 100 / $total, 2)
-                : 0,
-
+            'active_rate' => $total ? round($active * 100 / $total, 2) : 0,
+            'follow_rate' => $total ? round($follow * 100 / $total, 2) : 0,
+            'inactive_rate' => $total ? round($inactive * 100 / $total, 2) : 0,
             'never_moved' => $neverMoved,
         ];
     }
 
     private function getMembersQuery()
     {
-        [$start, $end] = $this->getPeriodDates();
-
         $query = User::query()
-
             ->where('role', 'membre')
-
-            ->when(
-                $this->agentId,
-                fn($q) => $q->where('agent_id', $this->agentId)
-            );
-
-        // Filtre selon le statut
+            ->when($this->agentId, fn($q) => $q->where('agent_id', $this->agentId));
 
         switch ($this->status) {
-
             case 'active':
-
-                $query->whereBetween(
-                    'last_transaction_at',
-                    [$start, $end]
-                );
-
+                $query->where('last_transaction_at', '>=', now()->subDays(30));
                 break;
 
             case 'follow':
-
-                $query->whereBetween(
-                    'last_transaction_at',
-                    [
-                        now()->subDays(90),
-                        now()->subDays(31)
-                    ]
-                );
-
+                $query->whereBetween('last_transaction_at', [
+                    now()->subDays(90)->startOfDay(),
+                    now()->subDays(31)->endOfDay()
+                ]);
                 break;
 
             case 'inactive':
-
                 $query->where(function ($q) {
-
                     $q->whereNull('last_transaction_at')
-
-                        ->orWhere(
-                            'last_transaction_at',
-                            '<',
-                            now()->subDays(90)
-                        );
+                    ->orWhere('last_transaction_at', '<', now()->subDays(90)->startOfDay());
                 });
-
                 break;
         }
 
@@ -246,6 +196,9 @@ class CollectorIndicators extends Component
                 'periodLabel' => $this->getPeriodLabel(),
                 'agentName' => $this->agentId
                     ? User::find($this->agentId)?->name
+                    : null,
+                'agentLastName' => $this->agentId
+                    ? User::find($this->agentId)?->postnom
                     : null
             ]
         );
