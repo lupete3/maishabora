@@ -75,6 +75,9 @@
             .photo {
                 border: 1px solid #ccc;
                 border-radius: 4px;
+                max-width: 100px;
+                max-height: 100px;
+                object-fit: cover;
             }
 
             .text-muted {
