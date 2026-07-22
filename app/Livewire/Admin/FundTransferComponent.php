@@ -128,7 +128,7 @@ class FundTransferComponent extends Component
                     'currency' => $this->currency,
                     'amount' => $this->amount,
                     'balance_after' => $mainCash->balance,
-                    'description' => 'Virement sortant vers ' . $this->transfer_type,
+                    'description' => 'Virement sortant vers ' . $this->transfer_type . ' '. $recipient->name . ' ' . $recipient->postnom,
                 ]);
 
                 $transfer = '';
