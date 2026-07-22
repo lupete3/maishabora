@@ -135,7 +135,7 @@ class GrantCredit extends Component
     {
         $user = User::find($id);
         if ($user) {
-            $this->search = "{$user->name} {$user->postnom}";
+            $this->search = "{$user->name} {$user->postnom} {$user->prenom}";
             $this->results = [];
 
             $this->member_id = $user->id;

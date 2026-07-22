@@ -148,6 +148,7 @@
                                         <th>Total</th>
                                         <th>Status</th>
                                         <th>Retard (jours)</th>
+                                        <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -199,9 +200,19 @@
                                                     0
                                                 @endif
                                             </td>
+                                            <td>
+                                                @if (!$r->is_paid)
+                                                    <button class="btn btn-sm btn-outline-success"
+                                                        wire:click="showEditRepaymentMaodal({{ $r->id }})">
+                                                        Modifier
+                                                    </button>
+                                                @else
+                                                    <span class="text-muted">Aucune action</span>
+                                                @endif
+                                            </td>
                                         @empty
                                         <tr>
-                                            <td colspan="8" class="text-center">Aucune échéance trouvée.</td>
+                                            <td colspan="9" class="text-center">Aucune échéance trouvée.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -212,5 +223,60 @@
             </div>
         </div>
     </div>
+
+    <div wire:ignore.self class="modal fade" id="editRepaymentModal" tabindex="-1"
+        aria-labelledby="editRepaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRepaymentModalLabel">Modifier le remboursement</h5>
+                    <button type="button" class="btn-close" wire:click="closeRepaymentsEditModal()"
+                        aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!empty($selectedRepaymentEdit))
+                        <form wire:submit.prevent="updateRepayment({{ $selectedRepaymentEdit->id }})">
+                            <div class="mb-3">
+                                
+                                <label for="due_date" class="form-label">Date d'échéance</label>
+                                <input type="date" id="due_date"
+                                    wire:model="edit_due_date"
+                                    class="form-control">
+                                @error('edit_due_date')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="expected_amount" class="form-label">Montant à payer</label>
+                                <input type="number" step="0.01" id="expected_amount"
+                                    wire:model.defer="edit_expected_amount" class="form-control">
+                                @error('edit_expected_amount')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="penalty" class="form-label">Pénalité</label>
+                                <input type="number" step="0.01" id="penalty"
+                                    wire:model.defer="edit_penalty" class="form-control">
+                                @error('edit_penalty')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="total_due" class="form-label">Total dû</label>
+                                <input type="number" step="0.01" id="total_due"
+                                    wire:model.defer="edit_total_due" class="form-control">
+                                @error('edit_total_due')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                        </form>
+                    @else
+                        <p>Aucune échéance sélectionnée.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
     @endif
 </div>
