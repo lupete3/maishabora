@@ -148,7 +148,7 @@
                                         <th>Total</th>
                                         <th>Status</th>
                                         <th>Retard (jours)</th>
-                                        <th>Action</th>
+                                        @can('modifier-transaction-compte')<th>Action</th>@endcan
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -202,10 +202,12 @@
                                             </td>
                                             <td>
                                                 @if (!$r->is_paid)
-                                                    <button class="btn btn-sm btn-outline-success"
-                                                        wire:click="showEditRepaymentMaodal({{ $r->id }})">
-                                                        Modifier
-                                                    </button>
+                                                    @can('modifier-transaction-compte')
+                                                        <button class="btn btn-sm btn-outline-success"
+                                                            wire:click="showEditRepaymentMaodal({{ $r->id }})">
+                                                            Modifier
+                                                        </button>
+                                                    @endcan
                                                 @else
                                                     <span class="text-muted">Aucune action</span>
                                                 @endif
