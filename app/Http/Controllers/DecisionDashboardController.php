@@ -24,7 +24,6 @@ class DecisionDashboardController extends Controller
         $monthStart = now()->startOfMonth();
         $depositTypes = ['dépôt', 'mise_quotidienne'];
         $withdrawalTypes = ['retrait', 'retrait_carte_adhesion'];
-        $repaymentTypes = ['remboursement'];
 
         $members = User::where('role', 'membre');
         $activeMembers = (clone $members)->where('status', true)->count();
@@ -41,7 +40,7 @@ class DecisionDashboardController extends Controller
             ['label' => 'Encours crédits', 'value' => $this->moneyByCurrency(Credit::where('is_paid', false)), 'icon' => 'bx-credit-card', 'url' => route('report.credit.overview'), 'is_money' => true, 'source' => 'Somme des montants des crédits non soldés, regroupée par devise.'],
             ['label' => 'Crédits actifs', 'value' => Credit::where('is_paid', false)->count(), 'icon' => 'bx-list-check', 'url' => route('report.credit.overview'), 'source' => 'Nombre de crédits dont le champ soldé est encore non.'],
             ['label' => 'Collecté aujourd’hui', 'value' => $this->moneyByCurrency(Transaction::whereIn('type', $depositTypes)->whereDate('created_at', $today)), 'icon' => 'bx-trending-up', 'url' => route('rapports.transactions'), 'is_money' => true, 'source' => 'Somme des transactions de dépôt et mise quotidienne créées aujourd’hui.'],
-            ['label' => 'Remboursé aujourd’hui', 'value' => $this->moneyByCurrency(Transaction::whereIn('type', $repaymentTypes)->whereDate('created_at', $today)), 'icon' => 'bx-refresh', 'url' => route('report.repayments'), 'is_money' => true, 'source' => 'Somme des transactions de remboursement créées aujourd’hui.'],
+            ['label' => 'Remboursé aujourd’hui', 'value' => $this->repaymentMoneyByCurrency(Repayment::whereDate('paid_date', $today)), 'icon' => 'bx-refresh', 'url' => route('report.repayments'), 'is_money' => true, 'source' => 'Somme des échéances marquées payées aujourd’hui, regroupée par devise du crédit.'],
             ['label' => 'Agents actifs', 'value' => User::where('role', 'recouvreur')->where('status', true)->count(), 'icon' => 'bx-user-voice', 'url' => route('reports.agent-performance'), 'source' => 'Nombre d’utilisateurs recouvreurs avec le statut actif.'],
         ];
 
@@ -49,7 +48,7 @@ class DecisionDashboardController extends Controller
             ['label' => 'Dépôts', 'count' => Transaction::whereIn('type', $depositTypes)->whereDate('created_at', $today)->count(), 'amount' => $this->moneyByCurrency(Transaction::whereIn('type', $depositTypes)->whereDate('created_at', $today))],
             ['label' => 'Retraits', 'count' => Transaction::whereIn('type', $withdrawalTypes)->whereDate('created_at', $today)->count(), 'amount' => $this->moneyByCurrency(Transaction::whereIn('type', $withdrawalTypes)->whereDate('created_at', $today))],
             ['label' => 'Transferts', 'count' => Transaction::whereIn('type', ['transfert', 'virement_caisse'])->whereDate('created_at', $today)->count(), 'amount' => $this->moneyByCurrency(Transaction::whereIn('type', ['transfert', 'virement_caisse'])->whereDate('created_at', $today))],
-            ['label' => 'Remboursements', 'count' => Transaction::whereIn('type', $repaymentTypes)->whereDate('created_at', $today)->count(), 'amount' => $this->moneyByCurrency(Transaction::whereIn('type', $repaymentTypes)->whereDate('created_at', $today))],
+            ['label' => 'Remboursements', 'count' => Repayment::whereDate('paid_date', $today)->count(), 'amount' => $this->repaymentMoneyByCurrency(Repayment::whereDate('paid_date', $today))],
             ['label' => 'Crédits accordés', 'count' => Credit::whereDate('created_at', $today)->count(), 'amount' => $this->moneyByCurrency(Credit::whereDate('created_at', $today))],
             ['label' => 'Nouveaux membres', 'count' => (clone $members)->whereDate('created_at', $today)->count(), 'amount' => null],
         ];
@@ -57,7 +56,7 @@ class DecisionDashboardController extends Controller
         $inactiveBuckets = $this->inactiveMemberBuckets();
         $creditAlerts = $this->creditAlerts();
         $agents = $this->agentPerformance($depositTypes);
-        $trends = $this->trends($depositTypes, $withdrawalTypes, $repaymentTypes);
+        $trends = $this->trends($depositTypes, $withdrawalTypes);
         $financialAlerts = $this->financialAlerts($depositTypes, $withdrawalTypes);
         $analysis = $this->analysis($trends, $inactiveBuckets, $creditAlerts, $financialAlerts);
         $priorities = $this->priorities($inactiveBuckets, $creditAlerts, $financialAlerts);
@@ -80,6 +79,17 @@ class DecisionDashboardController extends Controller
         return (clone $query)
             ->select('currency', DB::raw("SUM({$column}) as total"))
             ->groupBy('currency')
+            ->pluck('total', 'currency')
+            ->map(fn ($amount) => (float) $amount)
+            ->toArray();
+    }
+
+    private function repaymentMoneyByCurrency($query, string $column = 'total_due'): array
+    {
+        return (clone $query)
+            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
+            ->select('credits.currency', DB::raw("SUM(repayments.{$column}) as total"))
+            ->groupBy('credits.currency')
             ->pluck('total', 'currency')
             ->map(fn ($amount) => (float) $amount)
             ->toArray();
@@ -209,7 +219,7 @@ class DecisionDashboardController extends Controller
             ->get();
     }
 
-    private function trends(array $depositTypes, array $withdrawalTypes, array $repaymentTypes): array
+    private function trends(array $depositTypes, array $withdrawalTypes): array
     {
         $labels = collect(range(29, 0))->map(fn ($days) => now()->subDays($days)->format('d/m'))->values();
 
@@ -227,11 +237,24 @@ class DecisionDashboardController extends Controller
             })->values();
         };
 
+        $repaymentRows = Repayment::query()
+            ->selectRaw('DATE(paid_date) as day, SUM(total_due) as total')
+            ->whereNotNull('paid_date')
+            ->where('paid_date', '>=', now()->subDays(29)->startOfDay())
+            ->groupBy('day')
+            ->pluck('total', 'day');
+
+        $repaymentSeries = collect(range(29, 0))->map(function ($days) use ($repaymentRows) {
+            $key = now()->subDays($days)->toDateString();
+
+            return round((float) ($repaymentRows[$key] ?? 0), 2);
+        })->values();
+
         return [
             'labels' => $labels,
             'collectes' => $seriesFor(Transaction::whereIn('type', $depositTypes)),
             'retraits' => $seriesFor(Transaction::whereIn('type', $withdrawalTypes)),
-            'remboursements' => $seriesFor(Transaction::whereIn('type', $repaymentTypes)),
+            'remboursements' => $repaymentSeries,
             'credits' => $seriesFor(Transaction::where('type', 'octroi_de_credit')),
         ];
     }
