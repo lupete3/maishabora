@@ -23,7 +23,15 @@
             </a>
         </li>
 
-        @can('afficher-caisse-centrale')
+	@can('afficher-caisse-centrale')
+
+        <li class="menu-item @if (request()->routeIs('decision.dashboard')) active @endif">
+            <a href="{{ route('decision.dashboard') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-pulse"></i>
+                <div data-i18n="Analytics">Cockpit décisionnel</div>
+            </a>
+        </li>
+
             <li class="menu-item @if (request()->routeIs('cash.register')) active @endif">
                 <a href="{{ route('cash.register') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->

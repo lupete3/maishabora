@@ -14,6 +14,7 @@ use App\Http\Controllers\CreditFollowUpReportController;
 use App\Http\Controllers\CreditOverviewReportController;
 use App\Http\Controllers\CreditReceiptController;
 use App\Http\Controllers\CreditReportPdfController;
+use App\Http\Controllers\DecisionDashboardController;
 use App\Http\Controllers\DepositForMemberController;
 use App\Http\Controllers\FundTransferController;
 use App\Http\Controllers\GlobalReportController;
@@ -232,6 +233,10 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 Route::get('dashboard', [DashboardController::class, 'index'])
     ->middleware(['auth', 'check.status', 'auth.session', 'verified'])
     ->name('dashboard');
+
+Route::get('tableau-de-bord-decisionnel', [DecisionDashboardController::class, 'index'])
+    ->middleware(['auth', 'check.status', 'auth.session', 'verified'])
+    ->name('decision.dashboard');
 
 Route::view('profile', 'profile')
     ->middleware(['auth', 'check.status', 'auth.session'])

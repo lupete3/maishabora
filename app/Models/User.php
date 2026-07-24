@@ -151,6 +151,11 @@ class User extends Authenticatable
         return $this->hasMany(Credit::class);
     }
 
+    public function managedCredits()
+    {
+        return $this->hasMany(Credit::class, 'agent_id');
+    }
+
     public function repayments()
     {
         return $this->hasMany(Repayment::class);
