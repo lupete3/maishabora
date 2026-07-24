@@ -176,12 +176,48 @@
     <div class="row g-3 mb-4">
         <div class="col-xl-5">
             <div class="decision-card p-3 h-100">
-                <h5 class="mb-3 decision-heading">
-                    Activités du jour
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Compte et totalise les opérations créées aujourd’hui selon leur type de transaction ou de crédit.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h5>
+                <div class="d-flex flex-column gap-3 mb-3">
+                    <div class="d-flex justify-content-between align-items-start gap-2">
+                        <h5 class="mb-0 decision-heading">
+                            Activités du jour
+                            <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Compte uniquement les opérations client liées à un compte membre. Le filtre agent utilise le client propriétaire du compte, puis son agent responsable.">
+                                <i class="bx bx-info-circle"></i>
+                            </span>
+                        </h5>
+                        @if ($selectedCurrency || $selectedAgentId)
+                            <a href="{{ route('decision.dashboard') }}" class="btn btn-sm btn-outline-secondary">
+                                <i class="bx bx-reset me-1"></i> Réinitialiser
+                            </a>
+                        @endif
+                    </div>
+
+                    <form method="GET" action="{{ route('decision.dashboard') }}" class="row g-2 align-items-end">
+                        <div class="col-12 col-sm-4">
+                            <label for="activity-currency" class="form-label mb-1">Devise</label>
+                            <select id="activity-currency" name="currency" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Toutes</option>
+                                <option value="USD" @selected($selectedCurrency === 'USD')>USD</option>
+                                <option value="CDF" @selected($selectedCurrency === 'CDF')>CDF</option>
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-6">
+                            <label for="activity-agent" class="form-label mb-1">Agent</label>
+                            <select id="activity-agent" name="agent_id" class="form-select form-select-sm" onchange="this.form.submit()">
+                                <option value="">Tous les agents</option>
+                                @foreach ($agentOptions as $agent)
+                                    <option value="{{ $agent->id }}" @selected((int) $selectedAgentId === (int) $agent->id)>
+                                        {{ trim($agent->name . ' ' . $agent->postnom . ' ' . $agent->prenom) }} - {{ $agent->role }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-12 col-sm-2">
+                            <button type="submit" class="btn btn-sm btn-primary w-100">
+                                <i class="bx bx-filter-alt"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
                 <div class="table-responsive">
                     <table class="table table-sm decision-table mb-0">
                         <thead>
