@@ -235,7 +235,7 @@
                                 <tr>
                                     <td>{{ $line['label'] }}</td>
                                     <td>{{ number_format($line['count'], 0, ',', ' ') }}</td>
-                                    <td>{{ $line['amount'] ? $money($line['amount']) : '-' }}</td>
+                                    <td>{!! $line['amount'] ? $money($line['amount']) : '-' !!}</td>
                                 </tr>
                             @endforeach
                         </tbody>
