@@ -94,6 +94,23 @@
         </div>
     @endcan
 
+    <div>
+        <!-- SECTION GRAPHIQUE DE LA SEMAINE -->
+        <div class="card mb-4 shadow-sm mt-4">
+            <div class="card-header bg-white font-weight-bold">
+                📊 Statistique des carnets vendus cette semaine
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <canvas id="cardsWeeklyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RESTE DE VOTRE CODE (FILTRES, TABLEAU DE SÉLECTION, PAGINATION) -->
+        <!-- ... -->
+    </div>
+
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">
         <div class="card">
@@ -108,7 +125,7 @@
                         <option value="month">Ce mois</option>
                         <option value="range">Intervalle personnalisé</option>
                     </select>
-            
+
                     @if ($filterType === 'range')
                         <div class="row g-1 g-sm-2 align-items-center mt-2 mt-md-0 w-100 w-md-auto ms-0 ms-md-1" style="max-width: 350px;">
                             <div class="col">
@@ -122,7 +139,7 @@
                             </div>
                         </div>
                     @endif
-            
+
                     <!-- Barre de recherche -->
                     <div class="input-group input-group-sm w-100 w-md-auto" style="min-width: 200px;">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -258,4 +275,60 @@
     @include('livewire.validePurchaseCard')
     @include('livewire.editPurchaseCard')
 
+    <script>
+        document.addEventListener('livewire:init', () => {
+            let chart = null;
+
+            function renderChart() {
+                const el = document.querySelector("#cardsWeeklyChart");
+                if (!el || typeof ApexCharts === 'undefined') return;
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                chart = new ApexCharts(el, {
+                    chart: {
+                        type: 'area',
+                        height: 300,
+                        toolbar: { show: false }
+                    },
+                    stroke: { curve: 'smooth', width: 2 },
+                    series: [{
+                        name: 'Carnets vendus',
+                        data: @json($trends['total'])
+                    }],
+                    xaxis: {
+                        categories: @json($trends['labels'])
+                    },
+                    colors: ['#696cff'],
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.7,
+                            opacityTo: 0.2,
+                            stops: [0, 90, 100]
+                        }
+                    },
+                    dataLabels: { enabled: false },
+                    yaxis: {
+                        labels: {
+                            formatter: function (val) {
+                                return Math.floor(val);
+                            }
+                        }
+                    }
+                });
+
+                chart.render();
+            }
+
+            renderChart();
+
+            Livewire.hook('morph.updated', () => {
+                renderChart();
+            });
+        });
+    </script>
 </div>
