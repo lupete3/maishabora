@@ -11,7 +11,7 @@
 
         return collect($values)->map(function ($amount, $currency) {
             return number_format((float) $amount, 2, ',', ' ') . ' ' . $currency;
-        })->implode(' / ');
+        })->implode(' <br> ');
     };
 
     $fullName = fn ($user) => trim(($user?->name ?? '') . ' ' . ($user?->postnom ?? '') . ' ' . ($user?->prenom ?? '')) ?: 'Non renseigné';
@@ -24,7 +24,7 @@
     .decision-kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(35, 38, 47, .08); color: inherit; }
     .decision-icon { width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #eef4ff; color: #315bb8; flex: 0 0 auto; }
     .decision-label { color: #697386; font-size: .78rem; text-transform: uppercase; letter-spacing: 0; font-weight: 700; }
-    .decision-value { color: #1f2937; font-size: 1.25rem; line-height: 1.3; font-weight: 800; word-break: break-word; }
+    .decision-value { color: #1f2937; font-size: 0.8rem; line-height: 1.3; font-weight: 800; word-break: break-word; }
     .decision-band { border-left: 4px solid #315bb8; }
     .decision-alert { border-left: 4px solid #d93025; }
     .decision-good { border-left: 4px solid #188038; }
@@ -36,7 +36,7 @@
     .decision-help:hover { color: #315bb8; background: #e4ebff; }
     .decision-heading { display: flex; align-items: center; gap: .45rem; }
     @media (max-width: 767.98px) {
-        .decision-value { font-size: 1.05rem; }
+        .decision-value { font-size: 0.8rem; }
         .decision-kpi { min-height: auto; }
     }
 </style>
@@ -73,7 +73,7 @@
                             </span>
                         </span>
                         <span class="decision-value d-block mt-1">
-                            {{ ! empty($item['is_money']) ? $money($item['value']) : number_format((float) $item['value'], 0, ',', ' ') }}
+                            {!! !empty($item['is_money']) ? $money($item['value']) : number_format((float) $item['value'], 0, ',', ' ') !!}
                         </span>
                     </span>
                 </a>
@@ -122,12 +122,15 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse (collect($inactiveBuckets)->flatMap(fn ($bucket) => $bucket['members'])->take(8) as $member)
+                            @forelse (collect($inactiveBuckets)->flatMap(fn ($bucket) => $bucket['members'])->take(10) as $member)
                                 @php
                                     $lastActivity = $member->last_transaction_at ?? $member->created_at;
                                 @endphp
-                                <tr>
-                                    <td>{{ $fullName($member) }}</td>
+                                <tr @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $member->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif >
+                                    <td>{{ $fullName($member) }} <br> {{ $member->code }}</td>
                                     <td>{{ $fullName($member->agent) }}</td>
                                     <td>{{ $lastActivity?->format('d/m/Y') ?? 'Non renseigné' }}</td>
                                     <td>{{ $lastActivity ? (int) abs(now()->startOfDay()->diffInDays($lastActivity->copy()->startOfDay(), false)) : '-' }}</td>
@@ -294,8 +297,11 @@
                         </thead>
                         <tbody>
                             @forelse (collect($creditAlerts['overdue'])->flatMap(fn ($bucket) => $bucket['items'])->take(8) as $repayment)
-                                <tr>
-                                    <td>{{ $fullName($repayment->credit?->user) }}</td>
+                                <tr @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $repayment->credit?->user->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif>
+                                    <td>{{ $fullName($repayment->credit?->user) }} <br>{{ $repayment->credit?->user->code }}</td>
                                     <td>{{ $fullName($repayment->credit?->agent) }}</td>
                                     <td>{{ number_format(max(0, (float) $repayment->total_due - (float) $repayment->paid_amount), 2, ',', ' ') }} {{ $repayment->credit?->currency }}</td>
                                     <td>{{ (int) abs(now()->startOfDay()->diffInDays($repayment->due_date->copy()->startOfDay(), false)) }} jours</td>
