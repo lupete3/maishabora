@@ -96,16 +96,19 @@
 
     <div>
         <!-- SECTION GRAPHIQUE DE LA SEMAINE -->
-        <div class="card mb-4 shadow-sm mt-4">
+        <div>
+        <!-- SECTION GRAPHIQUE DE LA SEMAINE -->
+        <div class="card mb-4 mt-4 shadow-sm">
             <div class="card-header bg-white font-weight-bold">
                 📊 Statistique des carnets vendus cette semaine
             </div>
             <div class="card-body">
                 <div style="height: 300px;">
-                    <canvas id="cardsWeeklyChart"></canvas>
+                    <div id="cardsWeeklyChart"></div>
                 </div>
             </div>
         </div>
+    </div>
 
         <!-- RESTE DE VOTRE CODE (FILTRES, TABLEAU DE SÉLECTION, PAGINATION) -->
         <!-- ... -->
