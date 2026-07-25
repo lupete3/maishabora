@@ -77,6 +77,22 @@
         </div>
     </div>
 
+    <!-- Section Graphiques -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Tendance des Inscriptions</h5>
+                    <small class="text-muted">Évolution temporelle</small>
+                </div>
+                <div class="card-body">
+                    <!-- wire:ignore empêche Livewire de supprimer ce div lors d'un filtre -->
+                    <div id="memberTrendChart" wire:ignore></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Filtres -->
     <div class="card mb-3">
         <div class="card-body row g-3 align-items-end">
@@ -168,4 +184,41 @@
     <div class="mt-2">
         {{ $clients->links() }}
     </div>
+
+    <script>
+        document.addEventListener('livewire:init', () => {
+            let chart = null;
+
+            function renderChart() {
+                const el = document.querySelector("#memberTrendChart");
+                if (!el) return;
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                chart = new ApexCharts(el, {
+                    chart: { type: 'area', height: 330, toolbar: { show: false } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    series: [
+                        { name: 'Total Inscrits', data: @json($trends['total']) },
+                        { name: 'Hommes', data: @json($trends['hommes']) },
+                        { name: 'Femmes', data: @json($trends['femmes']) }
+                    ],
+                    xaxis: { categories: @json($trends['labels']) },
+                    colors: ['#696cff', '#71dd37', '#ffab00']
+                });
+
+                chart.render();
+            }
+
+            // Premier rendu
+            renderChart();
+
+            // Hook spécifique à Livewire 3 appelé après chaque mise à jour du DOM
+            Livewire.hook('morph.updated', ({ el, component }) => {
+                renderChart();
+            });
+        });
+    </script>
 </div>

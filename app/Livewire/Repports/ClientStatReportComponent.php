@@ -214,10 +214,8 @@ class ClientStatReportComponent extends Component
     public function render()
     {
         $clients = $this->getFilteredClients();
+        $filtered = $this->getFilteredClients(false);
 
-        $filtered = $this->getFilteredClients(false); // Pas de pagination ici
-
-        // Statistiques dynamiques filtrées
         $total = $filtered->count();
         $totalMale = $filtered->where('sexe', 'Masculin')->count();
         $totalFemale = $filtered->where('sexe', 'Féminin')->count();
@@ -225,6 +223,35 @@ class ClientStatReportComponent extends Component
 
         $percentMale = $total > 0 ? round(($totalMale / $total) * 100, 1) : 0;
         $percentFemale = $total > 0 ? round(($totalFemale / $total) * 100, 1) : 0;
+
+        // Calcul des tendances
+        $labels = [];
+        $totalTrend = [];
+        $maleTrend = [];
+        $femaleTrend = [];
+
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $labels[] = $date->translatedFormat('M Y');
+
+            $monthData = $filtered->filter(function ($client) use ($date) {
+                return \Carbon\Carbon::parse($client->created_at)->format('Y-m') === $date->format('Y-m');
+            });
+
+            $totalTrend[] = $monthData->count();
+            $maleTrend[] = $monthData->where('sexe', 'Masculin')->count();
+            $femaleTrend[] = $monthData->where('sexe', 'Féminin')->count();
+        }
+
+        $trends = [
+            'labels' => $labels,
+            'total' => $totalTrend,
+            'hommes' => $maleTrend,
+            'femmes' => $femaleTrend,
+        ];
+
+        // Émettre l'événement pour la mise à jour dynamique du graphique sans rechargement
+        $this->dispatch('updateTrendChart', $trends);
 
         return view('livewire.repports.client-stat-report-component', [
             'clients' => $clients,
@@ -234,6 +261,7 @@ class ClientStatReportComponent extends Component
             'newClients' => $newClients,
             'percentMale' => $percentMale,
             'percentFemale' => $percentFemale,
+            'trends' => $trends,
         ]);
     }
 
