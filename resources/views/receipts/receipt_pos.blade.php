@@ -20,10 +20,10 @@
 
     body {
       margin: 0;
-      padding: 10px;
+      padding: 6px;
       font-family: 'Courier New', monospace;
       font-size: 35px;
-      line-height: 1.8; /* Augmenté pour aérer le texte */
+      line-height: 1.2;
     }
 
     .center {
@@ -36,17 +36,17 @@
 
     .line {
       border-top: 4px dashed #000;
-      margin: 18px 0; /* Plus d'espace autour des lignes */
+      margin: 18px 0;
     }
 
     .info-item {
-      margin: 12px 0; /* Plus d'espace pour les infos client */
+      margin: 12px 0;
     }
 
     .row {
       display: flex;
       justify-content: space-between;
-      margin: 12px 0; /* Plus d'espace entre les éléments côte à côte */
+      margin: 6px 0;
     }
 
     .footer {
@@ -62,9 +62,18 @@
       max-width: 100px;
     }
 
-    .signatures {
+    /* Table pour aligner parfaitement les signatures */
+    .signatures-table {
+      width: 100%;
       margin-top: 35px;
       margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+
+    .signatures-table td {
+      vertical-align: top;
+      font-size: 35px;
+      line-height: 1.2;
     }
   </style>
 </head>
@@ -103,52 +112,42 @@
 
   <div class="line"></div>
 
-  <!-- Transaction -->
+  <!-- Transaction (Erreurs HTML fermées correctement) -->
   <div class="row">
     <div>Type: <strong>{{ ucfirst($transaction->type) }}</strong></div>
   </div>
   <div class="row">
-    <div>Montant:</div>
-    <div class="bold">
+    <div>Montant: <strong>
       @if($transaction->type == 'retrait') - @endif
       {{ number_format($transaction->amount, 2, ',', ' ') }} {{ $transaction->currency }}
-    </div>
+    </strong></div>
   </div>
   <div class="row">
-    <div>Date:</div>
-    <div class="bold">{{ $transaction->created_at->format('d/m/Y H:i') }}</div>
+    <div>Date: <strong>{{ $transaction->created_at->format('d/m/Y H:i') }}</strong></div>
   </div>
   <div class="row">
-    <div>Réf:</div>
-    <div class="bold">#{{ $transaction->id }}</div>
+    <div>Réf: <strong>#{{ $transaction->id }}</strong></div>
   </div>
   <div class="row">
-    <div>Agent:</div>
-    <div class="bold">{{ $agent->name }}</div>
+    <div>Agent: <strong>{{ $agent->name }}</strong></div>
   </div>
 
   <div class="line"></div>
   <div class="center bold" style="margin: 15px 0;">Merci pour votre confiance</div>
-
   <!-- Pied de page -->
-  <div class="footer">
-    Ce reçu est la preuve de transaction.<br>
-    Aucun remboursement sans ce document.
-  </div>
-
-  <div class="line"></div>
-
-  <!-- Signatures Client et Agent -->
-  <div class="row signatures">
-    <div>
-      Sig. Client:<br>
-      <strong>{{ $member->name }} {{ $member->postnom }}</strong>
-    </div>
-    <div style="text-align: right;">
-      Sig. Agent:<br>
-      <strong>{{ $agent->name }}</strong>
-    </div>
-  </div>
+  <!-- Signatures Client et Agent alignées côte à côte via Tableau HTML -->
+  <table class="signatures-table">
+    <tr>
+      <td style="text-align: left; width: 50%;">
+        Sig. Client:<br>
+        <strong>{{ $member->name }} {{ $member->postnom }}</strong>
+      </td>
+      <td style="text-align: right; width: 50%;">
+        Sig. Agent:<br>
+        <strong>{{ $agent->name }}</strong>
+      </td>
+    </tr>
+  </table>
 
   <!-- Impression auto -->
   <script>
