@@ -158,7 +158,8 @@
                     <table class="table table-bordered table-striped">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
+                                <th>N°</th>
+                                <th>Code Carnet</th>
                                 <th>Membre</th>
                                 <th>Type de carte</th>
                                 <th>Prix de la carte</th>
@@ -178,8 +179,12 @@
                         <tbody>
                             @forelse ($cards as $index => $card)
                                 <tr>
+                                    <td>{{ $card->id }}</td>
                                     <td>{{ $card->code }}</td>
-                                    <td>{{ optional($card->member)->code ?? 'N/A' }}
+                                    <td @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $card->member->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif>{{ optional($card->member)->code ?? 'N/A' }}
                                         {{ optional($card->member)->name ?? 'N/A' }}
                                         {{ optional($card->member)->postnom ?? 'N/A' }}
                                         {{ optional($card->member)->prenom ?? 'N/A' }}
@@ -253,7 +258,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="text-center">Aucune carte trouvée.</td>
+                                    <td colspan="12" class="text-center">Aucune carte trouvée.</td>
                                 </tr>
                             @endforelse
                         </tbody>
