@@ -3,203 +3,154 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Reçu #{{ $transaction->id }}</title>
   <style>
-    /* Configuration d'impression sans marges pour occuper tout le papier */
-    @page {
-      margin: 0;
-      size: auto;
+    @media print {
+      @page {
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: 'Courier New', monospace;
+        font-size: 35px;
+      }
     }
 
-    * {
-      box-sizing: border-box;
+    body {
       margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      width: 100%;
-      background-color: #fff;
-      color: #000;
+      padding: 10px;
       font-family: 'Courier New', monospace;
-      /* Police agrandie et lisible pour impression thermique */
-      font-size: 18px;
-      font-weight: 600;
-      line-height: 1.3;
+      font-size: 35px;
+      line-height: 1.8; /* Augmenté pour aérer le texte */
     }
 
-    /* Le conteneur occupe toute la largeur de la tête d'impression */
-    .receipt {
-      width: 100%;
-      padding: 5px 8px;
+    .center {
+      text-align: center;
     }
 
-    /* Alignements et utilitaires */
-    .text-center { text-align: center; }
-    .text-right { text-align: right; }
-    .bold { font-weight: bold; }
-    .uppercase { text-transform: uppercase; }
+    .bold {
+      font-weight: bold;
+    }
 
-    /* Lignes séparatrices bien visibles */
     .line {
-      border-top: 3px dashed #000;
-      margin: 10px 0;
-      width: 100%;
+      border-top: 4px dashed #000;
+      margin: 18px 0; /* Plus d'espace autour des lignes */
     }
 
-    /* Dispositions en lignes (clé / valeur) */
+    .info-item {
+      margin: 12px 0; /* Plus d'espace pour les infos client */
+    }
+
     .row {
       display: flex;
       justify-content: space-between;
-      align-items: baseline;
-      margin: 5px 0;
-      word-break: break-word;
-    }
-
-    /* En-tête */
-    .company-name {
-      font-size: 24px;
-      font-weight: 900;
-      text-transform: uppercase;
-      margin-bottom: 4px;
-    }
-
-    .company-info {
-      font-size: 16px;
-      font-weight: normal;
-    }
-
-    .receipt-title {
-      font-size: 22px;
-      font-weight: 900;
-      margin: 6px 0 2px 0;
-    }
-
-    /* Bloc Montant très lisible */
-    .amount-box {
-      font-size: 24px;
-      font-weight: 900;
-      margin: 12px 0;
-      padding: 4px 0;
-    }
-
-    .logo {
-      display: block;
-      margin: 0 auto 8px auto;
-      max-width: 90px;
-      height: auto;
+      margin: 12px 0; /* Plus d'espace entre les éléments côte à côte */
     }
 
     .footer {
-      font-size: 14px;
+      font-size: 25px;
       text-align: center;
-      margin-top: 10px;
-      font-weight: normal;
+      margin-top: 25px;
+      margin-bottom: 25px;
     }
 
-    .signature-area {
-      margin-top: 20px;
-      font-size: 16px;
+    .img-center {
+      display: block;
+      margin: 0 auto 10px auto;
+      max-width: 100px;
+    }
+
+    .signatures {
+      margin-top: 35px;
+      margin-bottom: 20px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="receipt">
-
-    <!-- Logo & En-tête entreprise -->
-    @php
+  <!-- Logo & En-tête -->
+  @php
       $logoPath = public_path('assets/img/logo.jpg');
       $logoData = file_exists($logoPath) ? base64_encode(file_get_contents($logoPath)) : '';
-    @endphp
-
-    @if($logoData)
-      <div class="text-center">
-        <img class="logo" src="data:image/png;base64,{{ $logoData }}" alt="logo" />
+  @endphp
+  @if($logoData)
+      <div class="center">
+          <img src="data:image/png;base64,{{ $logoData }}" width="80px" alt="logo" />
       </div>
-    @endif
-
-    <div class="text-center company-name">{{ $company?->name ?? config('app.name') }}</div>
-    <div class="text-center company-info">
-      ID: {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
-      Tél: {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}<br>
-      {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}
-    </div>
-
-    <div class="line"></div>
-
-    <!-- Titre du reçu -->
-    <div class="text-center receipt-title">REÇU DE TRANSACTION</div>
-    <div class="text-center" style="font-size: 16px;">{{ now()->format('d/m/Y H:i') }}</div>
-
-    <div class="line"></div>
-
-    <!-- Informations Client -->
-    <div class="row">
-      <span>Client:</span>
-      <span class="bold">{{ $member->name }} {{ $member->postnom }} {{ $member->prenom }}</span>
-    </div>
-    <div class="row">
-      <span>Tél:</span>
-      <span>{{ $member->telephone }}</span>
-    </div>
-    <div class="row">
-      <span>Code:</span>
-      <span>{{ $member->code }}</span>
-    </div>
-
-    <div class="line"></div>
-
-    <!-- Détails Transaction -->
-    <div class="row">
-      <span>Réf:</span>
-      <span class="bold">#{{ $transaction->id }}</span>
-    </div>
-    <div class="row">
-      <span>Type:</span>
-      <span class="bold uppercase">{{ $transaction->type }}</span>
-    </div>
-    <div class="row">
-      <span>Agent:</span>
-      <span>{{ $agent->name }}</span>
-    </div>
-    <div class="row">
-      <span>Date Tx:</span>
-      <span>{{ $transaction->created_at->format('d/m/Y H:i') }}</span>
-    </div>
-
-    <div class="line"></div>
-
-    <!-- Montant (Mise en valeur maximale) -->
-    <div class="row amount-box">
-      <span>MONTANT:</span>
-      <span class="text-right">
-        @if($transaction->type == 'retrait') - @endif
-        {{ number_format($transaction->amount, 2, ',', ' ') }} {{ $transaction->currency }}
-      </span>
-    </div>
-
-    <div class="line"></div>
-
-    <!-- Message & Pied de page -->
-    <div class="text-center bold" style="font-size: 18px; margin-top: 6px;">
-      Merci pour votre confiance !
-    </div>
-
-    <div class="footer">
-      Ce reçu est la preuve de transaction.<br>
-      Aucun remboursement sans ce document.
-    </div>
-
-    <div class="row signature-area">
-      <span>Sig. Client:</span>
-      <span>...............</span>
-    </div>
-
+  @endif
+  <div class="center bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
+  <div class="center" style="font-size: 25px; line-height: 1.5;">
+    N° ID : {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
+    Adresse : {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}<br>
+    Tél : {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}
   </div>
 
+  <div class="line"></div>
+
+  <!-- Titre -->
+  <div class="center bold" style="font-size: 40px; margin: 10px 0;">REÇU DE TRANSACTION</div>
+  <div class="center" style="margin-bottom: 10px;">{{ now()->format('d/m/Y H:i') }}</div>
+
+  <div class="line"></div>
+
+  <!-- Client -->
+  <div class="info-item"><strong>Client:</strong> {{ $member->name }} {{ $member->postnom }} {{ $member->prenom }}</div>
+  <div class="info-item"><strong>Tél:</strong> {{ $member->telephone }}</div>
+  <div class="info-item"><strong>Code:</strong> {{ $member->code }}</div>
+
+  <div class="line"></div>
+
+  <!-- Transaction -->
+  <div class="row">
+    <div>Type: <strong>{{ ucfirst($transaction->type) }}</strong></div>
+  </div>
+  <div class="row">
+    <div>Montant:</div>
+    <div class="bold">
+      @if($transaction->type == 'retrait') - @endif
+      {{ number_format($transaction->amount, 2, ',', ' ') }} {{ $transaction->currency }}
+    </div>
+  </div>
+  <div class="row">
+    <div>Date:</div>
+    <div class="bold">{{ $transaction->created_at->format('d/m/Y H:i') }}</div>
+  </div>
+  <div class="row">
+    <div>Réf:</div>
+    <div class="bold">#{{ $transaction->id }}</div>
+  </div>
+  <div class="row">
+    <div>Agent:</div>
+    <div class="bold">{{ $agent->name }}</div>
+  </div>
+
+  <div class="line"></div>
+  <div class="center bold" style="margin: 15px 0;">Merci pour votre confiance</div>
+
+  <!-- Pied de page -->
+  <div class="footer">
+    Ce reçu est la preuve de transaction.<br>
+    Aucun remboursement sans ce document.
+  </div>
+
+  <div class="line"></div>
+
+  <!-- Signatures Client et Agent -->
+  <div class="row signatures">
+    <div>
+      Sig. Client:<br>
+      <strong>{{ $member->name }} {{ $member->postnom }}</strong>
+    </div>
+    <div style="text-align: right;">
+      Sig. Agent:<br>
+      <strong>{{ $agent->name }}</strong>
+    </div>
+  </div>
+
+  <!-- Impression auto -->
   <script>
     window.onload = function () {
       window.print();
