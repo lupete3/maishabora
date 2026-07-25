@@ -42,7 +42,7 @@
                                 <option value="">Sélectionner un crédit</option>
                                 @foreach ($credits as $credit)
                                     <option value="{{ $credit->id }}">
-                                        {{ $credit->currency }} - {{ number_format($credit->amount, 2) }}
+                                        #{{ $credit->id }} | {{ $credit->currency }} - {{ number_format($credit->amount, 2) }}
                                         ({{ $credit->installments }} échéances)
                                     </option>
                                 @endforeach
