@@ -27,7 +27,7 @@
                                     @foreach ($results as $user)
                                         <li class="list-group-item list-group-item-action"
                                             wire:click="selectResult({{ $user['id'] }})">
-                                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                                            {{ "{$user['code']} {$user['name']} {$user['postnom']} {$user['prenom']}" }}
                                         </li>
                                     @endforeach
                                 </ul>
