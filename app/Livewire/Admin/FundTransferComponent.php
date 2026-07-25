@@ -72,7 +72,7 @@ class FundTransferComponent extends Component
     {
         $user = User::find($id);
         if ($user) {
-            $this->searchagent = "{$user->name} {$user->postnom}";
+            $this->searchagent = "{$user->name} {$user->postnom} {$user->prenom}";
             $this->results = [];
 
             $this->recipient_id = $user->id;
@@ -205,6 +205,19 @@ class FundTransferComponent extends Component
                     'message' => "Vous avez reçu un virement de {$this->amount} {$this->currency} dans votre compte.",
                     'read' => false,
                 ]);
+
+                // Notifier les utilisateurs concernés
+                $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+                $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers {$this->transfer_type} ID:{$this->recipient_id} : {$this->searchagent} par " . (Auth::user() ? Auth::user()->name . "." . Auth::user()->postnom : "Système") . ".";
+
+                foreach ($usersToNotify as $notifyUser) {
+                    Notification::create([
+                        'user_id' => $notifyUser->id,
+                        'title' => 'Transfert effectué',
+                        'message' => $notificationMessage,
+                        'read' => false,
+                    ]);
+                }
 
                 $this->reset(['amount', 'description', 'recipient_id']);
                 $this->dispatch('refreshComponent');
