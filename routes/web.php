@@ -5,6 +5,7 @@ use App\Helpers\UserLogHelper;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\AgentTransactionsReportController;
+use App\Http\Controllers\ClientsNonCollectes;
 use App\Http\Controllers\ClientStatReportController;
 use App\Http\Controllers\ClotureController;
 use App\Http\Controllers\ComptabiliteController;
@@ -237,6 +238,10 @@ Route::get('dashboard', [DashboardController::class, 'index'])
 Route::get('tableau-de-bord-decisionnel', [DecisionDashboardController::class, 'index'])
     ->middleware(['auth', 'check.status', 'auth.session', 'verified'])
     ->name('decision.dashboard');
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:depot-compte-membre'])->group(function () {
+    Route::get('/membres/non-collectes', [ClientsNonCollectes::class, 'index'])->name('agent.clients-non-collectes');
+});
 
 Route::view('profile', 'profile')
     ->middleware(['auth', 'check.status', 'auth.session'])

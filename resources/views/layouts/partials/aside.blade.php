@@ -23,6 +23,15 @@
             </a>
         </li>
 
+        @if(auth()->user()->hasAnyRole(['Admin','Caissier','SUPER IT','Comptable', 'Receptionniste', 'Recouvreur']))
+            <li class="menu-item @if (request()->routeIs('agent.clients-non-collectes')) active @endif">
+                <a href="{{ route('agent.clients-non-collectes') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user"></i> <!-- Tableau de bord -->
+                    <div data-i18n="Analytics">Clients à visiter</div>
+                </a>
+            </li>
+        @endif
+
 	@can('afficher-caisse-centrale')
 
         <li class="menu-item @if (request()->routeIs('decision.dashboard')) active @endif">
