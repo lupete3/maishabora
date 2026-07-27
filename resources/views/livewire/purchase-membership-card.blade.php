@@ -334,9 +334,6 @@
 
             renderChart();
 
-            Livewire.hook('morph.updated', () => {
-                renderChart();
-            });
         });
     </script>
 </div>
