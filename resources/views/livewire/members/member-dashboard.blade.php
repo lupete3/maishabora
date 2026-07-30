@@ -11,20 +11,20 @@
             <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
                 {{-- Bouton Virement avec l'icône de partage/envoi Boxicons --}}
                 <button class="btn btn-primary rounded-pill shadow-sm px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#transferModal">
-                    <i class="bx bx-send fs-5"></i> 
+                    <i class="bx bx-send fs-5"></i>
                     <span>Virement</span>
                 </button>
-                
+
                 @if($showBalances)
                     {{-- Bouton Masquer avec l'œil barré Boxicons --}}
                     <button class="btn btn-outline-success rounded-pill px-3 d-flex align-items-center gap-2" wire:click="hideBalances">
-                        <i class="bx bx-hide fs-5"></i> 
+                        <i class="bx bx-hide fs-5"></i>
                         <span>Masquer soldes</span>
                     </button>
                 @else
                     {{-- Bouton Afficher avec le cadenas ouvert ou l'œil affiché Boxicons --}}
                     <button class="btn btn-outline-primary rounded-pill px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#revealModal">
-                        <i class="bx bx-show fs-5"></i> 
+                        <i class="bx bx-show fs-5"></i>
                         <span>Afficher soldes</span>
                     </button>
                 @endif
@@ -433,6 +433,29 @@
                                                             {{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</small>
                                                     </div>
                                                     <span class="badge bg-label-warning">En cours</span>
+                                                </div>
+                                                <div>
+                                                    Calendrier des remboursements <br>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-sm table-borderless mb-0 align-middle">
+                                                            <thead class="text-muted border-bottom">
+                                                                <tr>
+                                                                    <th class="fw-normal">Date</th>
+                                                                    <th class="fw-normal text-end">Total</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                @foreach ($credit->repayments as $r)
+                                                                    <tr>
+                                                                        <td class="text-{{ $r->is_paid ? 'success' : 'primary' }} fw-medium">
+                                                                            {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
+                                                                        </td>
+                                                                        <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }} {{ $r->credit->currency }}</td>
+                                                                    </tr>
+                                                                @endforeach
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
                                             </div>
                                         @endforeach
