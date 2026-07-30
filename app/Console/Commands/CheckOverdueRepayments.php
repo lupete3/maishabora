@@ -209,14 +209,6 @@ class CheckOverdueRepayments extends Command
                     $repayment->penalty = $penaltyAmount;
                     $repayment->total_due = $totalDue;
                     $repayment->save();
-
-                    //Notification de pénalité
-                    Notification::create([
-                        'user_id' => $member->id,
-                        'title' => 'Retard de remboursement',
-                        'message' => "Votre échéance du {$repayment->due_date} est en retard de {$daysLate} jour(s). Une pénalité de " . round($penaltyAmount, 2) . " a été appliquée.",
-                        'read' => false,
-                    ]);
                 }
             }
         }
