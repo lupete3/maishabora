@@ -448,7 +448,7 @@
                                                                 @foreach ($credit->repayments as $r)
                                                                     <tr>
                                                                         <td class="text-{{ $r->is_paid ? 'success' : 'primary' }} fw-medium">
-                                                                            {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
+                                                                            {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }} {!! $r->is_paid ? '<i class="bx bx-check"></i>' : '' !!}
                                                                         </td>
                                                                         <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }} {{ $r->credit->currency }}</td>
                                                                     </tr>
