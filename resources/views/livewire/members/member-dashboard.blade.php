@@ -8,7 +8,7 @@
                 <h3 class="fw-bold mb-0 text-primary">Tableau de bord</h3>
                 <p class="text-muted mb-0">Bienvenue, {{ $member->name }} {{ $member->postnom }}</p>
             </div>
-            <div class="d-flex flex-wrap gap-2 w-100 w-md-auto justify-content-start justify-content-md-end">
+            <div class="d-flex flex-wrap gap-2  w-md-auto justify-content-start justify-content-md-end">
                 {{-- Bouton Virement avec l'icône de partage/envoi Boxicons --}}
                 <button class="btn btn-primary rounded-pill shadow-sm px-3 d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#transferModal">
                     <i class="bx bx-send fs-5"></i>
