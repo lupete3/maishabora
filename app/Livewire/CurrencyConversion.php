@@ -201,6 +201,12 @@ class CurrencyConversion extends Component
                     return;
                 }
 
+                if ($fromAccount->status === 'Inactif' || $toAccount->status === 'Inactif') {
+                    notyf()->error("Opération refusée. L'un des comptes courants du client est Inactif.");
+                    $this->addError('amount', "L'un des comptes courants du client est Inactif.");
+                    return;
+                }
+
                 if ($fromAccount->balance < $this->amount) {
                     notyf()->error('Solde insuffisant client.');
                     $this->addError('amount', 'Solde insuffisant sur le compte du client.');

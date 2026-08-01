@@ -20,9 +20,10 @@
 
     body {
       margin: 0;
+      padding: 6px;
       font-family: 'Courier New', monospace;
       font-size: 35px;
-      line-height: 1.4;
+      line-height: 1.2;
     }
 
     .center {
@@ -35,25 +36,44 @@
 
     .line {
       border-top: 4px dashed #000;
-      margin: 8px 0;
+      margin: 18px 0;
+    }
+
+    .info-item {
+      margin: 12px 0;
     }
 
     .row {
       display: flex;
       justify-content: space-between;
-      margin: 2px 0;
+      margin: 6px 0;
     }
 
     .footer {
       font-size: 25px;
       text-align: center;
-      margin-top: 15px;
+      margin-top: 25px;
+      margin-bottom: 25px;
     }
 
     .img-center {
       display: block;
-      margin: 0 auto 5px auto;
+      margin: 0 auto 10px auto;
       max-width: 100px;
+    }
+
+    /* Table pour aligner parfaitement les signatures */
+    .signatures-table {
+      width: 100%;
+      margin-top: 35px;
+      margin-bottom: 20px;
+      border-collapse: collapse;
+    }
+
+    .signatures-table td {
+      vertical-align: top;
+      font-size: 35px;
+      line-height: 1.2;
     }
   </style>
 </head>
@@ -71,59 +91,63 @@
       </div>
   @endif
   <div class="center bold">{{ strtoupper($company?->name ?? config('app.name')) }}</div>
-  <div class="center" style="font-size: 25px;">
+  <div class="center" style="font-size: 25px; line-height: 1.5;">
     N° ID : {{ $company?->rccm ?? env('APP_RCCM', '000-000-000') }}<br>
     Adresse : {{ $company?->address ?? env('APP_ADRESS', 'Adresse non définie') }}<br>
     Tél : {{ $company?->phone ?? env('APP_PHONE', '+243 000 000 000') }}
   </div>
+
   <div class="line"></div>
 
   <!-- Titre -->
-  <div class="center bold" style="font-size: 40px;">REÇU DE TRANSACTION</div>
-  <div class="center">{{ now()->format('d/m/Y H:i') }}</div>
+  <div class="center bold" style="font-size: 40px; margin: 10px 0;">REÇU DE TRANSACTION</div>
+  <div class="center" style="margin-bottom: 10px;">{{ now()->format('d/m/Y H:i') }}</div>
+
   <div class="line"></div>
 
   <!-- Client -->
-  <div><strong>Client:</strong> {{ $member->name }} {{ $member->postnom }} {{ $member->prenom }}</div>
-  <div><strong>Tél:</strong> {{ $member->telephone }}</div>
-  <div><strong>Code:</strong> {{ $member->code }}</div>
+  <div class="info-item"><strong>Client:</strong> {{ $member->name }} {{ $member->postnom }} {{ $member->prenom }}</div>
+  <div class="info-item"><strong>Tél:</strong> {{ $member->telephone }}</div>
+  <div class="info-item"><strong>Code:</strong> {{ $member->code }}</div>
+
   <div class="line"></div>
 
-  <!-- Transaction -->
+  <!-- Transaction (Erreurs HTML fermées correctement) -->
   <div class="row">
     <div>Type: <strong>{{ ucfirst($transaction->type) }}</strong></div>
   </div>
   <div class="row">
-    <div>Montant</div>
-    <div class="bold">
+    <div>Montant: <strong>
       @if($transaction->type == 'retrait') - @endif
       {{ number_format($transaction->amount, 2, ',', ' ') }} {{ $transaction->currency }}
-    </div>
+    </strong></div>
   </div>
   <div class="row">
     <div>Date: <strong>{{ $transaction->created_at->format('d/m/Y H:i') }}</strong></div>
   </div>
   <div class="row">
     <div>Réf: <strong>#{{ $transaction->id }}</strong></div>
-
   </div>
   <div class="row">
     <div>Agent: <strong>{{ $agent->name }}</strong></div>
-
   </div>
 
   <div class="line"></div>
-  <div class="center bold">Merci pour votre confiance</div>
-
+  <div class="center bold" style="margin: 15px 0;">Merci pour votre confiance</div>
   <!-- Pied de page -->
-  <div class="footer">
-    Ce reçu est la preuve de transaction.<br>
-    Aucun remboursement sans ce document.
-  </div>
-
-  <div class="row" style="margin-top: 15px;">
-    <div>Client: <strong>{{ $member->name }} {{ $member->postnom }}</strong></div>
-  </div>
+  <!-- Signatures Client et Agent alignées côte à côte via Tableau HTML -->
+  <table class="signatures-table">
+    <tr>
+      <td style="text-align: left; width: 50%;">
+        Sig. Client:<br>
+        <strong>{{ $member->name }} {{ $member->postnom }}</strong>
+      </td>
+      <td style="text-align: right; width: 50%;">
+        Sig. Agent:<br>
+        <strong>{{ $agent->name }}</strong>
+      </td>
+    </tr>
+  </table>
 
   <!-- Impression auto -->
   <script>

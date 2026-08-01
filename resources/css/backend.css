@@ -1,0 +1,5 @@
+/* Backend Tailwind build without Preflight (no @tailwind base) */
+@tailwind components;
+@tailwind utilities;
+
+/* Add backend-specific utility overrides here if needed */

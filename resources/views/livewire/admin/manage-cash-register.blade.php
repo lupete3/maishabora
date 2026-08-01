@@ -81,7 +81,7 @@
                     <div class="tab-content" id="pills-tabContent">
                         <!-- TAB USD -->
                         <div class="tab-pane fade show active" id="pills-usd" role="tabpanel">
-                            <div class="row g-2">
+                            <div class="row">
                                 <div class="col-md-4">
                                     <div class="card bg-label-success border-0 shadow-none h-100">
                                         <div class="card-body">

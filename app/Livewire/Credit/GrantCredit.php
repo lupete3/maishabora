@@ -50,7 +50,7 @@ class GrantCredit extends Component
     public $showConfirmModal = false;
     public $creditSummary = [];
     public $hasActiveCredit = false;
-
+    public $password;
 
     protected $rules = [
         'member_id' => 'required|exists:users,id',
@@ -135,7 +135,7 @@ class GrantCredit extends Component
     {
         $user = User::find($id);
         if ($user) {
-            $this->search = "{$user->name} {$user->postnom}";
+            $this->search = "{$user->name} {$user->postnom} {$user->prenom}";
             $this->results = [];
 
             $this->member_id = $user->id;
@@ -209,6 +209,12 @@ class GrantCredit extends Component
             if (!$account) {
                 DB::rollBack();
                 notyf()->error("Le membre ne possède pas de compte courant en {$this->currency}. Veuillez d'abord lui créer ce compte.");
+                return;
+            }
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
                 return;
             }
 
@@ -558,6 +564,11 @@ class GrantCredit extends Component
 
     public function confirmSubmit()
     {
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
         $this->showConfirmModal = false;
         $this->submit(); // Exécute la logique principale d’octroi
     }

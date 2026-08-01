@@ -2,12 +2,16 @@
 
 namespace App\Livewire\Credit;
 
+use App\Helpers\UserLogHelper;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Credit;
+use App\Models\User;
+use App\Models\UserLog;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class CreditFollowUpReport extends Component
 {
@@ -197,5 +201,29 @@ class CreditFollowUpReport extends Component
             'interestMarginByCurrency' => $interestMarginByCurrency,
             'debtRatioByCurrency' => $debtRatioByCurrency,
         ];
+    }
+
+    public function toggleCreditStatus($creditId)
+    {
+        Gate::authorize('modifier-credit', User::class);
+
+        try {
+            $credit = Credit::findOrFail($creditId);
+
+            $credit->update([
+                'is_paid' => !$credit->is_paid,
+            ]);
+            UserLogHelper::log_user_activity(
+                action: 'Changement du statut du crédit',
+                description: "Le statut du crédit ID: {$credit->id} a été changé à " . ($credit->is_paid ? 'soldé' : 'en cours'),
+            );
+
+            notyf()->success($credit->is_paid
+                    ? 'Le crédit a été marqué comme soldé.'
+                    : 'Le crédit a été remis en cours.');
+
+        } catch (\Exception $e) {
+            notyf()->error('Erreur lors de la mise à jour du statut du crédit: ' . $e->getMessage());
+        }
     }
 }

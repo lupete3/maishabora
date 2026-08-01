@@ -64,9 +64,9 @@
         <thead>
                 <tr>
                     <th>#</th>
-                    <th>Code</th>
+                    <th>Code Carnet</th>
+                    <th>Code Membre</th>
                     <th>Nom complet</th>
-                    <th>Téléphone</th>
                     <th>Devise</th>
                     <th>Jours</th>
                     <th>Déposé</th>
@@ -82,10 +82,10 @@
                     @endphp
                     <tr>
                         <td>{{ $index + 1 }}</td>
+                        <td>{{ $carnet->code }}</td>
                         <td>{{ $carnet->member->code ?? '' }}</td>
                         <td>{{ $carnet->member->name ?? '' }} {{ $carnet->member->postnom ?? '' }}
                             {{ $carnet->member->prenom ?? '' }}</td>
-                        <td>{{ $carnet->member->telephone ?? '' }}</td>
                         <td>{{ strtoupper($carnet->currency) }}</td>
                         <td>{{ $carnet->contributed_days_count }}</td>
                         <td align="right">{{ number_format($totalDepose, 2) }}</td>

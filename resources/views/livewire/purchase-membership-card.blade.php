@@ -94,6 +94,26 @@
         </div>
     @endcan
 
+    <div>
+        <!-- SECTION GRAPHIQUE DE LA SEMAINE -->
+        <div>
+        <!-- SECTION GRAPHIQUE DE LA SEMAINE -->
+        <div class="card mb-4 mt-4 shadow-sm">
+            <div class="card-header bg-white font-weight-bold">
+                📊 Statistique des carnets vendus cette semaine
+            </div>
+            <div class="card-body">
+                <div style="height: 300px;">
+                    <div id="cardsWeeklyChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <!-- RESTE DE VOTRE CODE (FILTRES, TABLEAU DE SÉLECTION, PAGINATION) -->
+        <!-- ... -->
+    </div>
+
     <!-- resources/views/livewire/card-history.blade.php -->
     <div class=" mt-4">
         <div class="card">
@@ -108,7 +128,7 @@
                         <option value="month">Ce mois</option>
                         <option value="range">Intervalle personnalisé</option>
                     </select>
-            
+
                     @if ($filterType === 'range')
                         <div class="row g-1 g-sm-2 align-items-center mt-2 mt-md-0 w-100 w-md-auto ms-0 ms-md-1" style="max-width: 350px;">
                             <div class="col">
@@ -122,7 +142,7 @@
                             </div>
                         </div>
                     @endif
-            
+
                     <!-- Barre de recherche -->
                     <div class="input-group input-group-sm w-100 w-md-auto" style="min-width: 200px;">
                         <span class="input-group-text"><i class="bx bx-search"></i></span>
@@ -138,7 +158,8 @@
                     <table class="table table-bordered table-striped">
                         <thead class="table-light">
                             <tr>
-                                <th>ID</th>
+                                <th>N°</th>
+                                <th>Code Carnet</th>
                                 <th>Membre</th>
                                 <th>Type de carte</th>
                                 <th>Prix de la carte</th>
@@ -158,8 +179,12 @@
                         <tbody>
                             @forelse ($cards as $index => $card)
                                 <tr>
+                                    <td>{{ $card->id }}</td>
                                     <td>{{ $card->code }}</td>
-                                    <td>{{ optional($card->member)->code ?? 'N/A' }}
+                                    <td @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $card->member->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif>{{ optional($card->member)->code ?? 'N/A' }}
                                         {{ optional($card->member)->name ?? 'N/A' }}
                                         {{ optional($card->member)->postnom ?? 'N/A' }}
                                         {{ optional($card->member)->prenom ?? 'N/A' }}
@@ -233,7 +258,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="11" class="text-center">Aucune carte trouvée.</td>
+                                    <td colspan="12" class="text-center">Aucune carte trouvée.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -258,4 +283,57 @@
     @include('livewire.validePurchaseCard')
     @include('livewire.editPurchaseCard')
 
+    <script>
+        document.addEventListener('livewire:init', () => {
+            let chart = null;
+
+            function renderChart() {
+                const el = document.querySelector("#cardsWeeklyChart");
+                if (!el || typeof ApexCharts === 'undefined') return;
+
+                if (chart) {
+                    chart.destroy();
+                }
+
+                chart = new ApexCharts(el, {
+                    chart: {
+                        type: 'area',
+                        height: 300,
+                        toolbar: { show: false }
+                    },
+                    stroke: { curve: 'smooth', width: 2 },
+                    series: [{
+                        name: 'Carnets vendus',
+                        data: @json($trends['total'])
+                    }],
+                    xaxis: {
+                        categories: @json($trends['labels'])
+                    },
+                    colors: ['#696cff'],
+                    fill: {
+                        type: 'gradient',
+                        gradient: {
+                            shadeIntensity: 1,
+                            opacityFrom: 0.7,
+                            opacityTo: 0.2,
+                            stops: [0, 90, 100]
+                        }
+                    },
+                    dataLabels: { enabled: false },
+                    yaxis: {
+                        labels: {
+                            formatter: function (val) {
+                                return Math.floor(val);
+                            }
+                        }
+                    }
+                });
+
+                chart.render();
+            }
+
+            renderChart();
+
+        });
+    </script>
 </div>

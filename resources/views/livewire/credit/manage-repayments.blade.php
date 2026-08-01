@@ -30,7 +30,7 @@
                                     @foreach ($results as $user)
                                         <li class="list-group-item list-group-item-action"
                                             wire:click="selectResult({{ $user['id'] }})">
-                                            {{ "{$user['code']} {$user['name']} {$user['postnom']}" }}
+                                            {{ "{$user['code']} {$user['name']} {$user['postnom']} {$user['prenom']}" }}
                                         </li>
                                     @endforeach
                                 </ul>
@@ -45,7 +45,7 @@
                                 <option value="">Sélectionner un crédit</option>
                                 @foreach ($credits as $credit)
                                     <option value="{{ $credit->id }}">
-                                        {{ $credit->currency }} - {{ number_format($credit->amount, 2) }}
+                                        #{{ $credit->id }} | {{ $credit->currency }} - {{ number_format($credit->amount, 2) }}
                                         ({{ $credit->installments }} échéances)
                                     </option>
                                 @endforeach
@@ -173,6 +173,35 @@
                     </table>
                 </div>
             @endif
+<<<<<<< HEAD
+=======
+    </div>
+</div>
+<!-- Modal de confirmation -->
+<div wire:ignore.self class="modal fade" id="confirm-repayment" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Confirmation remboursement</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
+                <div>
+                    <label>Penalités à payer : </label>
+                    <input type="number" class="form-control" value="{{ number_format((float) $penality, 2, '.', '') }}"
+                        wire:model="penality">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button wire:click="payRepayment(false)" class="btn btn-warning" data-bs-dismiss="modal">
+                    Non, solder sans intérêts
+                </button>
+                <button wire:click="payRepayment(true)" class="btn btn-success" data-bs-dismiss="modal">
+                    Oui, appliquer les intérêts
+                </button>
+            </div>
+>>>>>>> online
         </div>
     </div>
 </div>

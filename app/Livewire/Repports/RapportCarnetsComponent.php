@@ -242,6 +242,126 @@ class RapportCarnetsComponent extends Component
         }, 'rapport-carnets.pdf');
     }
 
+    public function exportExcel()
+    {
+        $carnetsQuery = MembershipCard::query()
+            ->with('member')
+            ->withCount(['contributions as contributed_days_count' => function ($q) {
+                $q->where('is_paid', true);
+            }]);
+
+        if ($this->status === 'open') {
+            $carnetsQuery->where('is_active', true);
+        } elseif ($this->status === 'closed') {
+            $carnetsQuery->where('is_active', false);
+        }
+
+        if ($this->currency) {
+            $carnetsQuery->where('currency', $this->currency);
+        }
+
+        if ($this->periodFilter) {
+            switch ($this->periodFilter) {
+                case 'today':
+                    $carnetsQuery->whereDate('created_at', now()->toDateString());
+                    break;
+                case 'this_week':
+                    $carnetsQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
+                    break;
+                case 'this_month':
+                    $carnetsQuery->whereMonth('created_at', now()->month)
+                                 ->whereYear('created_at', now()->year);
+                    break;
+                case 'this_year':
+                    $carnetsQuery->whereYear('created_at', now()->year);
+                    break;
+            }
+        }
+
+        if ($this->search) {
+            $carnetsQuery->whereHas('member', function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                ->orWhere('postnom', 'like', '%' . $this->search . '%')
+                ->orWhere('prenom', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        // Filtrage par nombre de jours de contribution
+        if ($this->minDaysFilled !== null) {
+            $carnetsQuery->having('contributed_days_count', '>=', $this->minDaysFilled);
+        }
+
+        if ($this->maxDaysFilled !== null) {
+            $carnetsQuery->having('contributed_days_count', '<=', $this->maxDaysFilled);
+        }
+
+        if ($this->exactDaysFilled !== null && is_numeric($this->exactDaysFilled)) {
+            $carnetsQuery->having('contributed_days_count', '=', $this->exactDaysFilled);
+        }
+
+        $fileName = 'rapport_carnets_' . now()->format('Ymd_His') . '.csv';
+
+        return response()->streamDownload(function() use ($carnetsQuery) {
+            $handle = fopen('php://output', 'w');
+            
+            // Excel separator instruction
+            fwrite($handle, "sep=;\n");
+            
+            // Write column headers in Windows-1252
+            $headers = [
+                'Code Carnet',
+                'Code Membre',
+                'Membre',
+                'Mise Journaliere',
+                'Devise',
+                'Jours Cotises',
+                'Total Cotise',
+                'Statut',
+                'Date Creation'
+            ];
+
+            $headers = array_map(function($val) {
+                return mb_convert_encoding($val, 'Windows-1252', 'UTF-8');
+            }, $headers);
+            
+            fputcsv($handle, $headers, ';');
+
+            // Chunk process to avoid RAM limits
+            $carnetsQuery->chunk(200, function($cards) use ($handle) {
+                foreach ($cards as $card) {
+                    $memberName = ($card->member->name ?? '') . ' ' . ($card->member->postnom ?? '') . ' ' . ($card->member->prenom ?? '');
+                    $totalCotise = $card->contributed_days_count * $card->subscription_amount;
+
+                    $row = [
+                        $card->code,
+                        $card->member->code ?? '',
+                        $memberName,
+                        number_format($card->subscription_amount, 2, ',', ''),
+                        $card->currency,
+                        $card->contributed_days_count,
+                        number_format($totalCotise, 2, ',', ''),
+                        $card->is_active ? 'Actif' : 'Ferme',
+                        $card->created_at ? $card->created_at->format('d/m/Y H:i') : ''
+                    ];
+
+                    // Convert to Windows-1252 for French Excel compatibility
+                    $row = array_map(function($val) {
+                        return mb_convert_encoding($val ?? '', 'Windows-1252', 'UTF-8');
+                    }, $row);
+
+                    fputcsv($handle, $row, ';');
+                }
+            });
+
+            fclose($handle);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=Windows-1252',
+            'Cache-Control' => 'no-cache, no-store, must-revalidate',
+            'Pragma' => 'no-cache',
+            'Expires' => '0',
+        ]);
+    }
+
 
     public function render()
     {

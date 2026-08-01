@@ -102,10 +102,14 @@
                         <option value="USD">USD</option>
                     </select>
                 </div>
-                <div class="col-md-3 mb-3">
-                    <button wire:click="exportPdf" class="btn btn-primary w-100" wire:loading.attr="disabled">
-                        <span wire:loading class="spinner-border spinner-border-sm me-2" role="status"></span>
-                        <i class="bx bx-download"></i> Télécharger PDF
+                <div class="col-md-3 mb-3 d-flex gap-2">
+                    <button wire:click="exportPdf" class="btn btn-primary flex-grow-1 p-2" wire:loading.attr="disabled" title="Télécharger PDF">
+                        <span wire:loading class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i class="bx bx-file"></i> PDF
+                    </button>
+                    <button wire:click="exportExcel" class="btn btn-success flex-grow-1 p-2" wire:loading.attr="disabled" title="Exporter Excel">
+                        <span wire:loading class="spinner-border spinner-border-sm me-1" role="status"></span>
+                        <i class="bx bx-spreadsheet"></i> Excel
                     </button>
                 </div>
             </div>
@@ -116,6 +120,7 @@
                 <table class="table table-bordered table-striped">
                     <thead>
                             <tr>
+                                <td>Code Carnet</td>
                                 <td>Nom du membre</td>
                                 <td>Montant/Jour</td>
                                 <td>Jours payés</td>
@@ -132,6 +137,7 @@
                                     $totalRestant = (31 - $carnet->contributed_days_count) * $carnet->subscription_amount;
                                 @endphp
                                 <tr>
+                                    <td>{{ $carnet->code }}</td>
                                     <td>{{ $carnet->member->name . ' ' . $carnet->member->postnom . ' ' . $carnet->member->prenom ?? 'N/A' }}
                                     </td>
                                     <td>{{ number_format($carnet->subscription_amount, 2) }} {{ $carnet->currency }}</td>
@@ -151,7 +157,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5">Aucun carnet trouvé.</td>
+                                <td colspan="7">Aucun carnet trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>

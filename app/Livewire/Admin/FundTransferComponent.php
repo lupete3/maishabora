@@ -31,6 +31,8 @@ class FundTransferComponent extends Component
     public $filterType = 'month'; // 'day', 'week', 'month', 'range'
     public $startDate;
     public $endDate;
+    public $password;
+
     protected $paginationTheme = 'bootstrap';
 
     public $members = [];
@@ -70,7 +72,7 @@ class FundTransferComponent extends Component
     {
         $user = User::find($id);
         if ($user) {
-            $this->searchagent = "{$user->name} {$user->postnom}";
+            $this->searchagent = "{$user->name} {$user->postnom} {$user->prenom}";
             $this->results = [];
 
             $this->recipient_id = $user->id;
@@ -90,17 +92,19 @@ class FundTransferComponent extends Component
             'recipient_id' => 'required|integer',
             'amount' => 'required|numeric|min:0.01',
             'currency' => 'required|in:CDF,USD',
+            'password' => 'required|string',
         ]);
 
         try {
+
             DB::transaction(function () {
                 $recipient = User::findOrFail($this->recipient_id);
-                
+
                 if ($this->transfer_type === 'agent' && $recipient->role === 'membre') {
                     notyf()->error('Le destinataire doit être un agent, pas un membre.');
                     return;
                 }
-                
+
                 if ($this->transfer_type === 'member' && $recipient->role !== 'membre') {
                     notyf()->error('Le destinataire doit avoir le rôle membre.');
                     return;
@@ -124,7 +128,7 @@ class FundTransferComponent extends Component
                     'currency' => $this->currency,
                     'amount' => $this->amount,
                     'balance_after' => $mainCash->balance,
-                    'description' => 'Virement sortant vers ' . $this->transfer_type,
+                    'description' => 'Virement sortant vers ' . $this->transfer_type . ' '. $recipient->name . ' ' . $recipient->postnom,
                 ]);
 
                 $transfer = '';
@@ -167,6 +171,11 @@ class FundTransferComponent extends Component
                         ['balance' => 0]
                     );
 
+                    if ($account->status === 'Inactif') {
+                        notyf()->error("Opération refusée. Le compte {$this->currency} de ce membre est Inactif.");
+                        return;
+                    }
+
                     $account->balance += $this->amount;
                     $account->save();
 
@@ -196,6 +205,19 @@ class FundTransferComponent extends Component
                     'message' => "Vous avez reçu un virement de {$this->amount} {$this->currency} dans votre compte.",
                     'read' => false,
                 ]);
+
+                // Notifier les utilisateurs concernés
+                $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+                $notificationMessage = "Un virement de " . number_format($this->amount, 2) . " {$this->currency} a été effectué vers {$this->transfer_type} ID:{$this->recipient_id} : {$this->searchagent} par " . (Auth::user() ? Auth::user()->name . "." . Auth::user()->postnom : "Système") . ".";
+
+                foreach ($usersToNotify as $notifyUser) {
+                    Notification::create([
+                        'user_id' => $notifyUser->id,
+                        'title' => 'Transfert effectué',
+                        'message' => $notificationMessage,
+                        'read' => false,
+                    ]);
+                }
 
                 $this->reset(['amount', 'description', 'recipient_id']);
                 $this->dispatch('refreshComponent');
@@ -299,7 +321,7 @@ class FundTransferComponent extends Component
             notyf()->error('Le destinataire doit être un agent, pas un membre.');
             return;
         }
-        
+
         if ($this->transfer_type === 'member' && $user->role !== 'membre') {
             notyf()->error('Le destinataire doit avoir le rôle membre.');
             return;
@@ -320,6 +342,11 @@ class FundTransferComponent extends Component
 
     public function confirmTransfer()
     {
+        if (!\Illuminate\Support\Facades\Hash::check($this->password, Auth::user()->password)) {
+            $this->addError('password', 'Mot de passe incorrect.');
+            notyf()->error('Mot de passe incorrect.');
+            return;
+        }
         $this->showPreview = false;
         $this->submitTransfer();
     }

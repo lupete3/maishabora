@@ -5,6 +5,9 @@
             target="_blank">
             <i class="bx bx-file me-1"></i> Exporter PDF
         </a>
+        <a href="{{ route('credits-retard.csv', ['currency' => $selectedCurrency]) }}" class="btn btn-success shadow-sm ms-2">
+            <i class="bx bx-file me-1"></i> Exporter CSV
+        </a>
     </div>
 
     <!-- Statistiques KPI -->
@@ -181,6 +184,9 @@
                     </tr>
                 </tfoot>
             </table>
+        </div>
+        <div class="card-footer bg-white border-top">
+            {{ $credits->links() }}
         </div>
     </div>
 </div>

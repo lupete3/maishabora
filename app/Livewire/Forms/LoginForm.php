@@ -16,7 +16,7 @@ class LoginForm extends Form
     #[Validate([
         'required',
         'string',
-        'email:rfc,dns',
+        'email:rfc',
         'max:255',
     ])]
     public string $email = '';

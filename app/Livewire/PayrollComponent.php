@@ -274,9 +274,13 @@ class PayrollComponent extends Component
                 ['balance' => 0]
             );
 
+            if ($account->status === 'Inactif') {
+                throw new \Exception("Opération refusée. Le compte courant {$this->currency} de cet agent est Inactif.");
+            }
+
             // Crédit compte agent
-            $accountRetenuSalaire = Account::firstOrCreate(
-                ['user_id' => self::RETAINED_ACCOUNT_USER_ID, 'currency' => $this->currency, 'type' => 'current'],
+            $accountRetenuSalaire = AgentAccount::firstOrCreate(
+                ['user_id' => self::RETAINED_ACCOUNT_USER_ID, 'currency' => $this->currency],
                 ['balance' => 0]
             );
 
@@ -312,13 +316,15 @@ class PayrollComponent extends Component
 
             // Création de la transaction de retenue sur salaire
             Transaction::create([
-                'user_id' => $userId,
-                'account_id' => $accountRetenuSalaire->id,
+
+                'account_id' => null,
+                'agent_account_id' => $accountRetenuSalaire->id,
+                'user_id' => $accountRetenuSalaire->user_id,
                 'type' => 'paie_entrant',
                 'currency' => $this->currency,
                 'amount' => $retenuSalaire,
                 'balance_after' => $accountRetenuSalaire->balance,
-                'description' => 'Retenue sur salaire',
+                'description' => "Retenue du salaire de l'agent {$salary->user->code} {$salary->user->name} {$salary->user->postnom}",
             ]);
 
             // Enregistrer dans l’historique payroll

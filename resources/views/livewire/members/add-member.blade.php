@@ -289,6 +289,35 @@
                                     <label class="form-label">Remarque</label>
                                     <textarea wire:model.defer="remarque" class="form-control" rows="3"></textarea>
                                 </div>
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
+                                    <div class="d-flex gap-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="active_type_current" wire:model="current_account_active">
+                                            <label class="form-check-label" for="active_type_current">
+                                                Compte Courant (USD & CDF)
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="active_type_savings" wire:model="savings_account_active">
+                                            <label class="form-check-label" for="active_type_savings">
+                                                Compte Épargne (USD & CDF)
+                                            </label>
+                                        </div>
+                                    </div>
+                                    @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Agent responsable (optionnel)</strong></label>
+                                    <select class="form-select" wire:model="agent_id">
+                                        <option value="">Aucun</option>
+                                        @foreach($agents as $agent)
+                                            <option value="{{ $agent->id }}">{{ $agent->name . ' ' . $agent->postnom }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('agent_id') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -318,6 +347,11 @@
                         <li class="nav-item col-md-4 mb-1" role="presentation">
                             <button class="nav-link" id="media-tab" data-bs-toggle="tab" data-bs-target="#media" type="button" role="tab">
                                 <i class="bx bx-image me-1"></i> Média / Docs
+                            </button>
+                        </li>
+                        <li class="nav-item col-md-4 mb-1" role="presentation">
+                            <button class="nav-link" id="comptes-tab" data-bs-toggle="tab" data-bs-target="#comptes" type="button" role="tab">
+                                <i class="bx bx-wallet me-1"></i> Comptes
                             </button>
                         </li>
                     </ul>
@@ -625,6 +659,58 @@
                                     <label class="form-label">Remarque</label>
                                     <textarea wire:model.defer="remarque" class="form-control"
                                         rows="3"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onglet 6 : Comptes -->
+                        <div class="tab-pane fade" id="comptes" role="tabpanel">
+                            <div class="row g-3">
+                                <div class="col-md-12 mb-1 mt-3">
+                                    <label class="form-label"><strong>Comptes à rendre opérationnels (Actifs) <span class="text-danger">*</span></strong></label>
+                                    <div class="d-flex gap-4">
+
+                                        <div class="form-check">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                id="edit_active_type_current"
+                                                wire:model.live="current_account_active">
+
+                                            <label
+                                                class="form-check-label"
+                                                for="edit_active_type_current">
+                                                Compte Courant (USD & CDF)
+                                            </label>
+                                        </div>
+
+                                        <div class="form-check">
+                                            <input
+                                                class="form-check-input"
+                                                type="checkbox"
+                                                id="edit_active_type_savings"
+                                                wire:model.live="savings_account_active">
+
+                                            <label
+                                                class="form-check-label"
+                                                for="edit_active_type_savings">
+                                                Compte Épargne (USD & CDF)
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                    @error('current_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                    @error('savings_account_active') <span class="text-danger d-block mt-1">{{ $message }}</span> @enderror
+                                </div>
+                                <div class="col-md-6 mb-1">
+                                    <label class="form-label">Agent responsable (optionnel)</label>
+                                    <select wire:model="agent_id" class="form-select">
+                                        <option value="">Aucun</option>
+                                        @foreach($agents as $agent)
+                                            <option value="{{ $agent->id }}">{{ $agent->name . ' ' . $agent->postnom }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('agent_id') <span class="text-danger">{{ $message }}</span> @enderror
                                 </div>
                             </div>
                         </div>

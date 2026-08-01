@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Models\Notification;
+use Illuminate\Validation\Rule;
 
 class MemberDetails extends Component
 {
@@ -30,6 +31,7 @@ class MemberDetails extends Component
     public $card_id;
     public $cards = [];
     public $allCards = [];
+    public $activeCards = [];
     public $selectedCard;
     public $contribution_date;
     public $amount = 0;
@@ -39,6 +41,9 @@ class MemberDetails extends Component
     public $cardDetail;
     public $openConfirmDepositNormal = false;
     public $openConfirmRetraitNormal = false;
+    public $openPrintReceiptModal = false;
+    public $printReceiptUrlPC = '';
+    public $printReceiptUrlPOS = '';
 
     // Filtres de date pour les transactions
     public $date_filter = '30_days';
@@ -59,6 +64,8 @@ class MemberDetails extends Component
     public $openEditTransaction = false;
     public $openConfirmDeleteTransaction = false;
 
+    public $is_subscription = false;
+
     // Constantes pour éviter les "magic strings"
     const DEPOSIT_TYPE_NORMAL = 'normal';
     const DEPOSIT_TYPE_CARD = 'carte';
@@ -67,6 +74,7 @@ class MemberDetails extends Component
     const TRANSACTION_TYPE_DAILY_CONTRIBUTION = 'mise_quotidienne';
     const TRANSACTION_TYPE_CARD_WITHDRAWAL = 'retrait_carte_adhesion';
     const RETAINED_ACCOUNT_USER_ID = 195;
+    const SUBSCRIBE_ACCOUNT_USER_ID = 951;
 
     const CARD_MIGRATION_DATE = '2026-01-08';
 
@@ -93,6 +101,13 @@ class MemberDetails extends Component
             ->get();
 
         $this->allCards = MembershipCard::where('member_id', $this->memberId)
+            ->where('is_active', false)
+            ->with(['contributions'])
+            ->latest()
+            ->get();
+
+        $this->activeCards = MembershipCard::where('member_id', $this->memberId)
+            ->where('is_active', true)
             ->with(['contributions'])
             ->latest()
             ->get();
@@ -179,6 +194,9 @@ class MemberDetails extends Component
 
     public function showConfirmRetraitNormal()
     {
+        $this->amount = (float) $this->amount;
+        $this->a_retenir = (float) $this->a_retenir;
+
         if ($this->operation_type === self::DEPOSIT_TYPE_CARD) {
             $this->cardDetail = MembershipCard::find($this->card_id);
         }
@@ -211,19 +229,123 @@ class MemberDetails extends Component
             'amount' => 'required|numeric|min:0.01',
             'memberId' => 'required|exists:users,id',
             'currency' => 'required|in:USD,CDF',
+            'amount' => [
+                'required',
+                'numeric',
+                Rule::when(
+                    $this->currency === 'CDF',
+                    ['min:1000'],
+                    ['min:0.1']
+                ),
+            ],
         ]);
 
         DB::beginTransaction();
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+                return;
+            }
+
+            if ($this->is_subscription) {
+
+                $account = $this->getOrCreateAccount(
+                    $user->id,
+                    $this->currency,
+                    'current'
+                );
+
+                if ($account->subscribed) {
+                    notyf()->warning("Ce membre est déjà abonné.");
+                    return;
+                }
+
+                $account->update([
+                    'subscribed' => true
+                ]);
+
+                $subscribeAccount = $this->getOrCreateAgentAccount(
+                    $this->currency,
+                    self::SUBSCRIBE_ACCOUNT_USER_ID
+                );
+
+                $agentAccount = $this->getOrCreateAgentAccount(
+                    $this->currency,
+                    Auth::id()
+                );
+
+                AgentAccount::where('id', $subscribeAccount->id)
+                    ->increment('balance', $this->amount);
+                $subscribeAccount->refresh();
+
+                AgentAccount::where('id', $agentAccount->id)
+                    ->lockForUpdate()
+                    ->increment('balance', $this->amount);
+                $agentAccount->refresh();
+
+                // Création des transactions
+                $this->createTransaction(
+                    null,
+                    Auth::id(),
+                    self::TRANSACTION_TYPE_DEPOSIT,
+                    $this->currency,
+                    $this->amount,
+                    $agentAccount->balance,
+                    "Frais d'adhésion du membre {$user->code} {$user->name} {$user->postnom}",
+
+                );
+
+                Transaction::create([
+                    'account_id' => null,
+                    'agent_account_id' => $subscribeAccount->id,
+                    'user_id' => $subscribeAccount->user_id,
+                    'type' => 'depot',
+                    'currency' => $this->currency,
+                    'amount' => $this->amount,
+                    'balance_after' => $subscribeAccount->balance,
+                    'description' => "Frais d'adhésion du membre {$user->code} {$user->name} {$user->postnom}",
+                ]);
+
+                $transaction = $this->createTransaction(
+                    $account->id,
+                    $user->id,
+                    'frais_adhesion',
+                    $this->currency,
+                    $this->amount,
+                    $account->balance,
+                    $this->getDepositDescription($user, false)
+                );
+
+                $user->updateLastTransactionDate();
+
+                UserLogHelper::log_user_activity(
+                    action: self::TRANSACTION_TYPE_DEPOSIT,
+                    description: "Dépôt de {$this->amount} {$this->currency} sur le compte de {$user->name} {$user->postnom} ({$user->code})",
+                );
+
+                DB::commit();
+
+                $this->afterTransactionSuccess($transaction, 'modalDepositMembre', 'Dépôt effectué avec succès !');
+
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
 
-            // Mise à jour des soldes
-            $account->balance += $this->amount;
-            $agentAccount->balance += $this->amount;
-            $account->save();
-            $agentAccount->save();
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->amount);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->amount);
+
+            $account->refresh();
+            $agentAccount->refresh();
 
             // Création des transactions
             $this->createTransaction(
@@ -245,6 +367,8 @@ class MemberDetails extends Component
                 $account->balance,
                 $this->getDepositDescription($user, false)
             );
+
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_DEPOSIT,
@@ -320,12 +444,25 @@ class MemberDetails extends Component
 
             // Mettre à jour les comptes
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($card->currency);
 
-            $account->balance += $totalPaid;
-            $agentAccount->balance += $totalPaid;
-            $account->save();
-            $agentAccount->save();
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->increment('balance', $totalPaid);
+
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $totalPaid);
+
+            $account->refresh();
+            $agentAccount->refresh();
 
             // Créer les transactions
             $this->createTransaction(
@@ -363,12 +500,15 @@ class MemberDetails extends Component
 
                 // Créditer le compte du membre et de l'agent
                 $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
-                $account->balance -= $commissionAmount;
-                $account->save();
-
                 $commissionAccount = $this->getOrCreateAgentAccount($card->currency, self::RETAINED_ACCOUNT_USER_ID);
-                $commissionAccount->balance += $commissionAmount;
-                $commissionAccount->save();
+
+                Account::where('id', $account->id)
+                        ->decrement('balance', $commissionAmount);
+                $account->refresh();
+
+                AgentAccount::where('id', $commissionAccount->id)
+                        ->increment('balance', $commissionAmount);
+                $commissionAccount->refresh();
 
                 $card->first_mise_retained = true;
                 $card->save();
@@ -383,18 +523,11 @@ class MemberDetails extends Component
                     $this->getCardRetainedDescription($card)
                 );
 
-                // // Ajout d'une transaction visible pour le client justifiant la diminution du solde
-                // $this->createTransaction(
-                //     $account->id,
-                //     $card->member_id,
-                //     self::TRANSACTION_TYPE_WITHDRAWAL,
-                //     $card->currency,
-                //     $commissionAmount,
-                //     $account->balance,
-                //     "Retenue de la première mise (Frais d'adhésion) sur la carte #{$card->id}"
-                // );
 
             }
+
+            $user = User::find($card->member_id);
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_DAILY_CONTRIBUTION,
@@ -435,6 +568,13 @@ class MemberDetails extends Component
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte courant {$this->currency} de ce membre est Inactif.");
+                return;
+            }
+
             $agentAccount = $this->getOrCreateAgentAccount($this->currency);
             $retainedAccount = $this->getOrCreateAgentAccount($this->currency, self::RETAINED_ACCOUNT_USER_ID);
 
@@ -461,14 +601,21 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Mettre à jour les soldes
-            $account->balance -= $totalAmount;
-            $agentAccount->balance -= $this->amount;
-            $retainedAccount->balance += $this->a_retenir;
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->decrement('balance', $totalAmount);
 
-            $account->save();
-            $agentAccount->save();
-            $retainedAccount->save();
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->decrement('balance', $this->amount);
+
+            AgentAccount::where('id', $retainedAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $this->a_retenir);
+
+            $account->refresh();
+            $agentAccount->refresh();
+            $retainedAccount->refresh();
 
             // Créer les transactions
             $this->createTransaction(
@@ -502,6 +649,8 @@ class MemberDetails extends Component
                     $this->getRetainedDescription($user)
                 );
             }
+
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_WITHDRAWAL,
@@ -578,6 +727,12 @@ class MemberDetails extends Component
 
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
 
+            if ($account->status === 'Inactif') {
+                DB::rollBack();
+                notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
+                return;
+            }
+
             if ($accountType === 'current') {
                 $minBalance = ($card->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
                 if (!$account->can_withdraw_all) {
@@ -604,14 +759,21 @@ class MemberDetails extends Component
                 return;
             }
 
-            // Mettre à jour les soldes
-            $account->balance -= $total;
-            $agentAccount->balance -= ($total - $toRetain);
-            $retainedAccount->balance += $toRetain;
+            Account::where('id', $account->id)
+                ->lockForUpdate()
+                ->decrement('balance', $total);
 
-            $account->save();
-            $agentAccount->save();
-            $retainedAccount->save();
+            AgentAccount::where('id', $agentAccount->id)
+                ->lockForUpdate()
+                ->decrement('balance', ($total - $toRetain));
+
+            AgentAccount::where('id', $retainedAccount->id)
+                ->lockForUpdate()
+                ->increment('balance', $toRetain);
+
+            $account->refresh();
+            $agentAccount->refresh();
+            $retainedAccount->refresh();
 
             // Marquer la carte comme inactive
             $card->is_active = false;
@@ -649,6 +811,9 @@ class MemberDetails extends Component
                     $this->getCardRetainedDescription($card)
                 );
             }
+
+            $user = User::find($card->member_id);
+            $user->updateLastTransactionDate();
 
             UserLogHelper::log_user_activity(
                 action: self::TRANSACTION_TYPE_CARD_WITHDRAWAL,
@@ -775,10 +940,11 @@ class MemberDetails extends Component
                 $searchTerm = "%{$this->search}%";
                 $query->where(function ($q) use ($searchTerm) {
                     $q->where('type', 'like', $searchTerm)
-                        ->orWhere('currency', 'like', $searchTerm);
+                    ->orWhere('currency', 'like', $searchTerm);
                 });
             })
-            ->latest()
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->paginate($this->perPage);
 
         return view('livewire.members.member-details', [
@@ -917,12 +1083,14 @@ class MemberDetails extends Component
      */
     private function afterTransactionSuccess($transaction, $modalName, $successMessage)
     {
+        $this->printReceiptUrlPC = route('receipt.generate', ['id' => $transaction->id]);
+        $this->printReceiptUrlPOS = route('receipt.generate_pos', ['id' => $transaction->id]);
+        $this->openPrintReceiptModal = true;
+
         $this->reset(['amount', 'description']);
         $this->dispatch('closeModal', name: $modalName);
-        $this->dispatch('$refresh');
         notyf()->success($successMessage);
         $this->resetInputFields();
-        $this->dispatch('facture-validee', url: route('receipt.generate', ['id' => $transaction->id]));
     }
 
     /**
@@ -946,10 +1114,15 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
     }
 
+    public function closePrintReceiptModal()
+    {
+        $this->openPrintReceiptModal = false;
+        $this->printReceiptUrlPC = '';
+        $this->printReceiptUrlPOS = '';
+    }
+
     public function toggleWithdrawAll($accountId)
     {
-        Gate::authorize('autoriser-tout-retirer', User::class);
-
         $account = Account::findOrFail($accountId);
         $account->can_withdraw_all = !$account->can_withdraw_all;
         $account->save();
@@ -959,8 +1132,63 @@ class MemberDetails extends Component
         $this->dispatch('$refresh');
     }
 
-    // --- GESTION DIRECTE DES SOLDES ---
+    public function toggleSubscribed($accountId)
+    {
+        $account = Account::where('id', $accountId)
+            ->where('type', 'current')
+            ->firstOrFail();
 
+        if ($account->subscribed) {
+            notyf()->warning("Ce compte est déjà abonné.");
+            return;
+        }
+
+        $amount = $account->currency === 'USD' ? 5 : 5000;
+
+        DB::transaction(function () use ($account, $amount) {
+            // Débiter uniquement CE compte
+            $account->balance -= $amount;
+            $account->subscribed = true;
+            $account->save();
+
+            // Créditer le compte de l'agent
+            $subscribeAgentAccount = $this->getOrCreateAgentAccount(
+                $account->currency,
+                self::SUBSCRIBE_ACCOUNT_USER_ID
+            );
+
+            $subscribeAgentAccount->balance += $amount;
+            $subscribeAgentAccount->save();
+
+            Transaction::create([
+                'account_id' => $account->id,
+                'agent_account_id' => $subscribeAgentAccount->id,
+                'user_id' => $account->user_id,
+                'type' => 'retrait',
+                'currency' => $account->currency,
+                'amount' => $amount,
+                'balance_after' => $account->balance,
+                'description' => "Frais d'Adhésion dans votre compte {$account->currency} ({$account->user->code}) a été récuperé",
+            ]);
+
+            Transaction::create([
+                'account_id' => null,
+                'agent_account_id' => $subscribeAgentAccount->id,
+                'user_id' => $subscribeAgentAccount->user_id,
+                'type' => 'depot',
+                'currency' => $account->currency,
+                'amount' => $amount,
+                'balance_after' => $subscribeAgentAccount->balance,
+                'description' => "Adhésion pour le compte {$account->currency} du membre {$account->user->name} {$account->user->postnom} ({$account->user->code})",
+            ]);
+        });
+
+        notyf()->success("Adhésion enregistrée avec succès.");
+
+        $this->dispatch('$refresh');
+    }
+
+    // --- GESTION DIRECTE DES SOLDES ---
     public function confirmUpdateBalance($accountId)
     {
         Gate::authorize('modifier-solde-compte', User::class);
@@ -1197,4 +1425,47 @@ class MemberDetails extends Component
         $this->resetPage();
         notyf()->success('Filtre personnalisé appliqué avec succès.');
     }
+
+    public function getAnciennete($date)
+    {
+        $created = Carbon::parse($date);
+        $now = Carbon::now();
+
+        if ($created->diffInMonths($now) < 1) {
+            $jours = round($created->diffInDays($now));
+
+            return $jours . ' jour' . ($jours > 1 ? 's' : '');
+        }
+
+        if ($created->diffInYears($now) < 1) {
+            $mois = round($created->diffInMonths($now));
+
+            return $mois . ' mois';
+        }
+
+        $annees = round($created->diffInYears($now));
+
+        return $annees . ' an' . ($annees > 1 ? 's' : '');
+    }
+
+    public function updatedCurrency()
+    {
+        if ($this->is_subscription) {
+            $this->amount = $this->currency == 'USD'
+                ? 5
+                : 5000;
+        }
+    }
+
+    public function updatedIsSubscription($value)
+    {
+        if ($value) {
+
+            $this->amount = $this->currency == 'USD'
+                ? 5
+                : 5000;
+
+        }
+    }
+
 }

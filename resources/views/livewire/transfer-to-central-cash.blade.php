@@ -242,6 +242,12 @@
                                 </tr>
                             </table>
                         </div>
+                        <div class="mb-4 mx-auto" style="max-width: 400px;">
+                            <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
+                            <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
+                                id="password" wire:model="password" placeholder="••••••••">
+                            @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+                        </div>
                         <p class="mt-3 text-muted small">
                             Confirmez pour valider le virement vers la caisse centrale.
                         </p>

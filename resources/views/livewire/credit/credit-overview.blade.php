@@ -15,15 +15,27 @@
                     </h5>
                     <div class="d-flex align-items-center">
                         @if ($overdueTotals->isNotEmpty())
-                            <div class="me-3">
-                                @foreach ($overdueTotals as $currency => $total)
-                                    <span class="badge bg-danger ms-1">
-                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                    </span>
+                            <div class="d-flex flex-column gap-2 mb-3">
+                                @foreach ($overdueTotals as $currency => $amounts)
+                                    <div class="p-2 border rounded d-inline-block">
+                                        <strong class="text-dark">{{ $currency }} </strong>
+                                        <span class="badge bg-secondary ms-1">
+                                            Capital: {{ number_format($amounts['capital'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-info ms-1">
+                                            Intérêt: {{ number_format($amounts['interest'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-warning text-dark ms-1">
+                                            Pénalité: {{ number_format($amounts['penalty'], 2, '.', ' ') }}
+                                        </span>
+                                        <span class="badge bg-danger ms-1">
+                                            Total Dû: {{ number_format($amounts['total'], 2, '.', ' ') }}
+                                        </span>
+                                    </div>
                                 @endforeach
                             </div>
                         @endif
-                        <button wire:click="exportOverduePDF" wire:loading.attr="disabled" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
+                        <button wire:click="exportOverduePDF" wire:loading.attr="disabled" class="btn btn-danger btn-sm shadow-sm d-flex align-items-center ml-2" style="font-size: 0.75rem; padding: 0.25rem 0.5rem;">
                             <span wire:loading.remove wire:target="exportOverduePDF">
                                 <i class="bx bxs-file-pdf me-1"></i> PDF
                             </span>
@@ -96,7 +108,26 @@
                 @endif
             </div>
             <div class="card-footer bg-transparent border-0 p-3">
-                {{ $overdueCredits->links(data: ['pageName' => 'pageOverdue']) }}
+                <div>
+                    {{ $overdueCredits->links(data: ['pageName' => 'pageOverdue']) }}
+                </div>
+                <div class="d-flex justify-content-between align-items-center gap-3">
+                    <div>
+                        <label>
+                            <select wire:model.lazy="perPage" class="form-select form-select-sm">
+                                <option value="10">10</option>
+                                <option value="30">30</option>
+                                <option value="50">50</option>
+                                <option value="100">100</option>
+                                <option value="999999">Tous</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="text-muted">
+                        Affichage de {{ $overdueCredits->firstItem() }} à {{ $overdueCredits->lastItem() }} sur
+                        <span class="badge bg-primary">{{ $overdueCredits->total() }}</span> opérations
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -110,11 +141,23 @@
                     </h5>
                     <div class="d-flex align-items-center">
                         @if ($upcomingTotals->isNotEmpty())
-                            <div class="me-3">
-                                @foreach ($upcomingTotals as $currency => $total)
-                                    <span class="badge bg-warning text-dark ms-1">
-                                        {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                                    </span>
+                            <div class="d-flex flex-wrap align-items-center me-3 gap-2">
+                                @foreach ($upcomingTotals as $currency => $amounts)
+                                    <div class="p-2 border rounded d-inline-block">
+                                        <strong class="text-dark px-2 small">{{ $currency }} </strong>
+
+                                        <span class="badge bg-secondary ms-1">
+                                            Principal : {{ number_format($amounts['capital'], 2, '.', ' ') }}
+                                        </span>
+
+                                        <span class="badge bg-info text-dark ms-1">
+                                            Intérêt : {{ number_format($amounts['interest'], 2, '.', ' ') }}
+                                        </span>
+
+                                        <span class="badge bg-warning text-dark ms-1 fw-bold">
+                                            Total : {{ number_format($amounts['total'], 2, '.', ' ') }}
+                                        </span>
+                                    </div>
                                 @endforeach
                             </div>
                         @endif

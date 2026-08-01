@@ -23,7 +23,24 @@
             </a>
         </li>
 
-        @can('afficher-caisse-centrale')
+        @if(auth()->user()->hasAnyRole(['Admin','Caissier','SUPER IT','Comptable', 'Receptionniste', 'Recouvreur']))
+            <li class="menu-item @if (request()->routeIs('agent.clients-non-collectes')) active @endif">
+                <a href="{{ route('agent.clients-non-collectes') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user"></i> <!-- Tableau de bord -->
+                    <div data-i18n="Analytics">Clients à visiter</div>
+                </a>
+            </li>
+        @endif
+
+	@can('afficher-caisse-centrale')
+
+        <li class="menu-item @if (request()->routeIs('decision.dashboard')) active @endif">
+            <a href="{{ route('decision.dashboard') }}" class="menu-link">
+                <i class="menu-icon tf-icons bx bx-pulse"></i>
+                <div data-i18n="Analytics">Cockpit décisionnel</div>
+            </a>
+        </li>
+
             <li class="menu-item @if (request()->routeIs('cash.register')) active @endif">
                 <a href="{{ route('cash.register') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-wallet"></i> <!-- Caisse centrale -->
@@ -86,8 +103,17 @@
             </li>
         @endcan
 
+        @can('afficher-demandes-credit')
+            <li class="menu-item @if (request()->routeIs('credit.applications.*')) active @endif">
+                <a href="{{ route('credit.applications.list') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-list-ul"></i>
+                    <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
+                </a>
+            </li>
+        @endcan
+
         @can('afficher-rapport-credit')
-            <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage', 'credit.applications.*')) active @endif"
+            <li class="menu-item @if (request()->routeIs('credit.grant', 'repayments.manage')) active @endif"
                 wire:ignore.self>
                 <a class="menu-link menu-toggle">
                     <i class="menu-icon tf-icons bx bx-credit-card"></i>
@@ -102,13 +128,6 @@
                             </a>
                         </li>
                     @endcan
-
-                    <li class="menu-item @if (request()->routeIs('credit.applications.list')) active @endif">
-                        <a href="{{ route('credit.applications.list') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-list-ul"></i>
-                            <div data-i18n="Analytics">Demandes Crédit & Analyse</div>
-                        </a>
-                    </li>
 
                     @can('afficher-credit')
                         <li class="menu-item @if (request()->routeIs('repayments.manage')) active @endif">
@@ -171,7 +190,10 @@
                     'comptabilite.compte_resultat',
                     'comptabilite.bilan',
                     'comptabilite.provisions',
-                    'comptabilite.resultats'
+                    'comptabilite.resultats',
+                    'comptabilite.ratios',
+                    'reports.agent-performance',
+                    'comptabilite.collector.indicators'
                 )
             ) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
@@ -257,6 +279,11 @@
                             <div data-i18n="Analytics">Performance Agents</div>
                         </a>
                     </li>
+                    <li class="menu-item @if (request()->routeIs('comptabilite.collector.indicators')) active @endif">
+                        <a href="{{ route('comptabilite.collector.indicators') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-pie-chart-alt-2"></i>
+                            <div data-i18n="Analytics">Indicateurs Collecteurs</div>
+                        </a>
                 </ul>
             </li>
         @endcan
@@ -420,6 +447,13 @@
                 <a href="{{ route('rapports.logs') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-history"></i> <!-- Icône de calculateur -->
                     <div data-i18n="Analytics">Logs du système</div>
+                </a>
+            </li>
+
+            <li class="menu-item @if (request()->routeIs('admin.user-sessions')) active @endif">
+                <a href="{{ route('admin.user-sessions') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-shield-quarter"></i>
+                    <div data-i18n="Analytics">Sessions utilisateurs</div>
                 </a>
             </li>
 

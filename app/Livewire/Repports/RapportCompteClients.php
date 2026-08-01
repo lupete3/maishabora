@@ -28,9 +28,25 @@ class RapportCompteClients extends Component
 
     public function render()
     {
-        // 🔍 Base query
-        $query = User::with('accounts')
-            ->where('role', 'membre')
+        // Filtre commun des comptes
+        $accountFilter = function ($q) {
+            if ($this->accountType !== 'all') {
+                $q->where('type', $this->accountType);
+            }
+
+            if ($this->currencyFilter !== 'all') {
+                $q->where('currency', $this->currencyFilter);
+            }
+
+            if ($this->minBalance > 0) {
+                $q->where('balance', '>=', $this->minBalance);
+            }
+        };
+
+        // Requête principale
+        $query = User::where('role', 'membre')
+            ->with(['accounts' => $accountFilter])
+            ->whereHas('accounts', $accountFilter)
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
                     ->orWhere('postnom', 'like', "%{$this->search}%")
@@ -38,46 +54,47 @@ class RapportCompteClients extends Component
                     ->orWhere('code', 'like', "%{$this->search}%");
             });
 
+        // Filtre alphabétique
         if ($this->alphabetRange !== 'all') {
             [$start, $end] = explode('-', $this->alphabetRange);
+
             $query->where(function ($q) use ($start, $end) {
                 $q->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
             });
         }
 
-        // 🎯 Apply account and balance filters in SQL for correct pagination
-        $query->whereHas('accounts', function ($q) {
-            if ($this->accountType !== 'all') {
-                $q->where('type', $this->accountType);
-            }
-            if ($this->currencyFilter !== 'all') {
-                $q->where('currency', $this->currencyFilter);
-            }
-            if ($this->minBalance > 0) {
-                $q->where('balance', '>=', $this->minBalance);
-            }
-        });
-
+        // Pagination
         $members = $query->paginate($this->perPage);
 
-        // Soldes par membre
+        // Calcul des soldes affichés
         $balances = $members->getCollection()->map(function ($member) {
+
             $current_usd = 0;
             $current_cdf = 0;
             $savings_usd = 0;
             $savings_cdf = 0;
 
             foreach ($member->accounts as $account) {
+
                 if ($account->type === 'current') {
-                    if ($account->currency === 'USD')
+
+                    if ($account->currency === 'USD') {
                         $current_usd += $account->balance;
-                    if ($account->currency === 'CDF')
+                    }
+
+                    if ($account->currency === 'CDF') {
                         $current_cdf += $account->balance;
+                    }
+
                 } elseif ($account->type === 'savings') {
-                    if ($account->currency === 'USD')
+
+                    if ($account->currency === 'USD') {
                         $savings_usd += $account->balance;
-                    if ($account->currency === 'CDF')
+                    }
+
+                    if ($account->currency === 'CDF') {
                         $savings_cdf += $account->balance;
+                    }
                 }
             }
 
@@ -97,36 +114,53 @@ class RapportCompteClients extends Component
         $globalSavingsCdf = 0;
 
         $totalQuery = User::where('role', 'membre')
-            ->whereHas('accounts', function ($q) {
-                if ($this->accountType !== 'all') {
-                    $q->where('type', $this->accountType);
-                }
-                if ($this->currencyFilter !== 'all') {
-                    $q->where('currency', $this->currencyFilter);
-                }
-                if ($this->minBalance > 0) {
-                    $q->where('balance', '>=', $this->minBalance);
-                }
+            ->with(['accounts' => $accountFilter])
+            ->whereHas('accounts', $accountFilter)
+            ->where(function ($q) {
+                $q->where('name', 'like', "%{$this->search}%")
+                    ->orWhere('postnom', 'like', "%{$this->search}%")
+                    ->orWhere('prenom', 'like', "%{$this->search}%")
+                    ->orWhere('code', 'like', "%{$this->search}%");
             });
 
-        $totalQuery->with('accounts')->chunk(200, function ($chunk) use (&$globalCurrentUsd, &$globalCurrentCdf, &$globalSavingsUsd, &$globalSavingsCdf) {
+        if ($this->alphabetRange !== 'all') {
+            [$start, $end] = explode('-', $this->alphabetRange);
+
+            $totalQuery->where(function ($q) use ($start, $end) {
+                $q->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
+            });
+        }
+
+        $totalQuery->chunk(200, function ($chunk) use (
+            &$globalCurrentUsd,
+            &$globalCurrentCdf,
+            &$globalSavingsUsd,
+            &$globalSavingsCdf
+        ) {
+
             foreach ($chunk as $member) {
+
                 foreach ($member->accounts as $account) {
-                    if ($this->accountType !== 'all' && $account->type !== $this->accountType)
-                        continue;
-                    if ($this->currencyFilter !== 'all' && $account->currency !== $this->currencyFilter)
-                        continue;
 
                     if ($account->type === 'current') {
-                        if ($account->currency === 'USD')
+
+                        if ($account->currency === 'USD') {
                             $globalCurrentUsd += $account->balance;
-                        elseif ($account->currency === 'CDF')
+                        }
+
+                        if ($account->currency === 'CDF') {
                             $globalCurrentCdf += $account->balance;
+                        }
+
                     } elseif ($account->type === 'savings') {
-                        if ($account->currency === 'USD')
+
+                        if ($account->currency === 'USD') {
                             $globalSavingsUsd += $account->balance;
-                        elseif ($account->currency === 'CDF')
+                        }
+
+                        if ($account->currency === 'CDF') {
                             $globalSavingsCdf += $account->balance;
+                        }
                     }
                 }
             }

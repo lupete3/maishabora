@@ -75,6 +75,9 @@
             .photo {
                 border: 1px solid #ccc;
                 border-radius: 4px;
+                max-width: 100px;
+                max-height: 100px;
+                object-fit: cover;
             }
 
             .text-muted {
@@ -188,6 +191,10 @@
                 <tr>
                     <th>Nombre de dépendants</th>
                     <td>{{ $member->nombre_dependants }}</td>
+                </tr>
+                <tr>
+                    <th>Remarque</th>
+                    <td>{{ $member->remarque }}</td>
                 </tr>
             </table>
 

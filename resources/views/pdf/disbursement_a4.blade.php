@@ -91,15 +91,30 @@
     <div class="footer" style="width: 90%; margin: 50px auto 0 auto;">
         <table style="width:100%">
             <tr>
-                <td style="width:50%; text-align:center">
-                    <strong>L'Agent (Caissier)</strong>
+                <td style="width:20%; text-align:center">
+                    <strong>Caissier</strong>
                     <br><br><br>
                     {{ $transaction->user->name . ' ' . $transaction->user?->prostnom . ' ' . $transaction->user?->prenom }}
                 </td>
-                <td style="width:50%; text-align:center">
+                <td style="width:20%; text-align:center">
+                    <strong>Chef Comptable</strong>
+                    <br><br><br>
+                    .....................
+                </td>
+                <td style="width:20%; text-align:center">
+                    <strong>Bénéficiaire</strong>
+                    <br><br><br>
+                    .....................
+                </td>
+                <td style="width:20%; text-align:center">
+                    <strong>Controleur Interne</strong>
+                    <br><br><br>
+                    .....................
+                </td>
+                <td style="width:20%; text-align:center">
                     <strong>Pour Approbation</strong>
                     <br><br><br>
-                    .....................................
+                    .....................
                 </td>
             </tr>
         </table>

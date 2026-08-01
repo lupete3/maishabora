@@ -25,6 +25,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'permission' => PermissionMiddleware::class,
             'role_or_permission' => RoleOrPermissionMiddleware::class,
             'check.user' => \App\Http\Middleware\CheckUserStatusAndRole::class,
+            'check.status' => \App\Http\Middleware\CheckUserStatus::class,
         ]);
 
         $middleware->appendToGroup('web', \App\Http\Middleware\CheckUserStatusAndRole::class);

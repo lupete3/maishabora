@@ -9,6 +9,7 @@ use App\Models\Account;
 use App\Models\AgentAccount;
 use App\Models\MembershipCard;
 use App\Models\Transaction;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -56,6 +57,8 @@ class PurchaseMembershipCard extends Component
         'currency' => 'required|string',
         'price' => 'required|numeric|min:0',
         'subscription_amount' => 'required|numeric|min:0',
+        'agent_id' => 'nullable|exists:users,id',
+        'card_type' => 'required|in:epargne,simple',
     ];
 
     public function mount()
@@ -133,6 +136,23 @@ class PurchaseMembershipCard extends Component
             // Récupération du membre
             $member = User::findOrFail($this->member_id);
 
+            if ($this->card_type === 'epargne') {
+
+                $hasActiveSavingsAccount = $member->accounts()
+                    ->where('type', 'savings')
+                    ->where('currency', $this->currency)
+                    ->where('status', 'Actif')
+                    ->exists();
+
+                if (!$hasActiveSavingsAccount) {
+                    notyf()->error(
+                        "Ce membre ne possède aucun compte épargne actif en {$this->currency}."
+                    );
+
+                    return;
+                }
+            }
+
             // Définition des dates
             $startDate = now();
 
@@ -154,7 +174,7 @@ class PurchaseMembershipCard extends Component
             ]);
 
             // Génération des mises UNIQUEMENT pour le carnet épargne
-            if ($this->card_type === 'epargne') {
+            if ($this->card_type === 'epargne' && $this->subscription_amount > 0 && $member->accounts()->where('type', 'savings')->where('currency', $this->currency)->where('status', 'Actif')->exists()) {
                 for ($i = 0; $i < 31; $i++) {
                     $card->contributions()->create([
                         'membership_card_id' => $card->id,
@@ -235,8 +255,6 @@ class PurchaseMembershipCard extends Component
 
     public function showConfirmation()
     {
-        $this->validate();
-
         $member = User::find($this->member_id);
         $this->selectedMemberName = $member ? "{$member->name} {$member->postnom}" : 'Inconnu';
 
@@ -269,49 +287,82 @@ class PurchaseMembershipCard extends Component
 
     public function render()
     {
-        $cards = MembershipCard::with(['member', 'agent'])
-            ->when($this->searchCard, function ($query) {
-                // Découpe la recherche en plusieurs termes (séparés par espace)
-                $terms = explode(' ', $this->searchCard);
+        // Construction des statistiques pour ApexCharts
+        $labels = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+        $totals = [0, 0, 0, 0, 0, 0, 0];
 
-                $query->where(function ($mainQuery) use ($terms) {
-                    foreach ($terms as $term) {
-                        $mainQuery->where(function ($q) use ($term) {
-                            $q->where('code', 'like', "%{$term}%")
-                                ->orWhereHas('member', function ($sub) use ($term) {
-                                    $sub->where('role', 'membre')
-                                        ->where(function ($memberQuery) use ($term) {
-                                            $memberQuery->where('code', 'like', "%{$term}%")
-                                                ->orWhere('name', 'like', "%{$term}%")
-                                                ->orWhere('postnom', 'like', "%{$term}%")
-                                                ->orWhere('prenom', 'like', "%{$term}%");
-                                        });
-                                });
-                        });
-                    }
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek   = now()->endOfWeek();
+
+        $weeklyCards = MembershipCard::whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->selectRaw('DAYOFWEEK(created_at) as day, count(*) as count')
+            ->groupBy('day')
+            ->pluck('count', 'day')
+            ->toArray();
+
+        // Réaligner avec lundi (2 dans DAYOFWEEK MySQL)
+        foreach ($weeklyCards as $dayOfWeek => $count) {
+            $index = ($dayOfWeek == 1) ? 6 : $dayOfWeek - 2;
+            if (isset($totals[$index])) {
+                $totals[$index] = $count;
+            }
+        }
+
+        $trends = [
+            'labels' => $labels,
+            'total'  => $totals,
+        ];
+
+        // Filtrage de la liste des cartes
+        $query = MembershipCard::with(['member', 'agent']);
+
+        if (!empty($this->searchCard)) {
+            $query->where('code', 'like', '%' . $this->searchCard . '%')
+                ->orWhereHas('member', function ($q) {
+                    $q->where('name', 'like', '%' . $this->searchCard . '%')
+                      ->orWhere('postnom', 'like', '%' . $this->searchCard . '%');
                 });
-            })
-            ->when($this->filterType === 'day', function ($q) {
-                $q->whereDate('created_at', now()->today());
-            })
-            ->when($this->filterType === 'week', function ($q) {
-                $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
-            })
-            ->when($this->filterType === 'month', function ($q) {
-                $q->whereMonth('created_at', now()->month)
-                    ->whereYear('created_at', now()->year);
-            })
-            ->when($this->filterType === '30days', function ($q) {
-                $q->where('created_at', '>=', now()->subDays(30));
-            })
-            ->when($this->filterType === 'range' && $this->startDate && $this->endDate, function ($q) {
-                $q->whereBetween('created_at', [$this->startDate . ' 00:00:00', $this->endDate . ' 23:59:59']);
-            });
+        }
+
+        $cards = $query->latest()->paginate($this->perPage);
 
         return view('livewire.purchase-membership-card', [
-            'members' => $this->members,
-            'cards' => $cards->latest()->paginate($this->perPage),
+            'cards'  => $cards,
+            'trends' => $trends,
         ]);
+    }
+
+    private function getWeeklyTrends()
+    {
+        $startOfWeek = now()->startOfWeek();
+        $endOfWeek = now()->endOfWeek();
+
+        // Compter le nombre de carnets créés par jour
+        $salesByDay = MembershipCard::select(
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as total')
+            )
+            ->whereBetween('created_at', [$startOfWeek, $endOfWeek])
+            ->groupBy('date')
+            ->pluck('total', 'date');
+
+        $labels = [];
+        $totals = [];
+
+        // Boucle du Lundi au Dimanche
+        for ($i = 0; $i < 7; $i++) {
+            $date = $startOfWeek->copy()->addDays($i);
+            $dateString = $date->format('Y-m-d');
+
+            // Exemple d'étiquette : "Lun 20/05"
+            $labels[] = ucfirst($date->locale('fr')->isoFormat('ddd D/MM'));
+            $totals[] = (int) $salesByDay->get($dateString, 0);
+        }
+
+        return [
+            'labels' => $labels,
+            'total'  => $totals,
+        ];
     }
 
     // Ouvre le modal de modification

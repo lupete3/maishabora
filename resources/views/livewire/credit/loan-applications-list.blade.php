@@ -69,7 +69,14 @@
     <div class="card">
         <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Liste des Demandes de Crédit</h5>
-            <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
+            <div class="d-flex gap-2">
+                <a href="{{ route('credit.applications.print-blank') }}" target="_blank" class="btn btn-outline-secondary btn-sm">
+                    <i class="bx bx-printer me-1"></i> Fiche Terrain Vierge
+                </a>
+                @can('ajouter-demandes-credit')
+                    <a href="{{ route('credit.applications.create') }}" class="btn btn-primary btn-sm">Nouvelle Demande</a>
+                @endcan
+            </div>
         </div>
         <div class="card-body">
             @if (session()->has('message'))
@@ -82,10 +89,10 @@
             <div class="row mb-4">
                 <div class="col-md-4">
                     <input type="text" class="form-control" placeholder="Rechercher un membre..."
-                        wire:model.debounce.300ms="search">
+                        wire:model.live.debounce.300ms="search">
                 </div>
                 <div class="col-md-3">
-                    <select class="form-select" wire:model="statusFilter">
+                    <select class="form-select" wire:model.lazy="statusFilter">
                         <option value="">Tous les statuts</option>
                         <option value="en_analyse">En Analyse</option>
                         <option value="approuve">Approuvé</option>
@@ -113,14 +120,17 @@
                         @forelse($loans as $loan)
                             <tr>
                                 <td><strong>#{{ $loan->id }}</strong></td>
-                                <td>
+                                <td @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
+                                    onclick="window.location.href='{{ route('member.details', $loan->user->id) }}'"
+                                    style="cursor: pointer;"
+                                @endif>
                                     <div class="d-flex flex-column">
                                         <span class="fw-bold"></span>{{ $loan->user->name }}
                                         {{ $loan->user->postnom }}</span>
                                         <small class="text-muted">{{ $loan->user->code }}</small>
                                     </div>
                                 </td>
-                                <td>{{ number_format($loan->montant_demande, 2) }}</td>
+                                <td>{{ number_format($loan->montant_demande, 2) }} {{ $loan->currency }}</td>
                                 <td>{{ $loan->duree_mois }} mois</td>
                                 <td>{{ $loan->date_demande }}</td>
                                 <td>
@@ -149,6 +159,9 @@
                                             <a class="dropdown-item"
                                                 href="{{ route('credit.applications.show', $loan->id) }}"><i
                                                     class="bx bx-show me-1"></i> Voir Détails</a>
+                                            <a class="dropdown-item" target="_blank"
+                                                href="{{ route('credit.applications.print-filled', $loan->id) }}"><i
+                                                    class="bx bx-printer me-1"></i> Imprimer Dossier</a>
                                             <div class="dropdown-divider"></div>
                                             <button class="dropdown-item text-danger"
                                                 onclick="confirm('Êtes-vous sûr de vouloir supprimer cette demande ?') || event.stopImmediatePropagation()"

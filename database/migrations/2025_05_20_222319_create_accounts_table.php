@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('currency'); // USD ou CDF
             $table->decimal('balance', 15, 2)->default(0);
             $table->timestamps();
+            $table->boolean('subscribed')->default(false);
         });
     }
 

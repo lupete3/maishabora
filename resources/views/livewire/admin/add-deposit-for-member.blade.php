@@ -17,6 +17,7 @@
                     </select>
                 </div>
             </div>
+
             @if ($operation_type == 'normal')
                 <form wire:submit.prevent="showConfirmDepositNormal">
                     <div class="modal-body row">
@@ -34,12 +35,28 @@
 
                         <div class="col-md-6 mb-3">
                             <label>Montant</label>
-                            <input type="number" step="0.01" wire:model="amount" class="form-control" />
+                            <input type="number" step="0.01" wire:model="amount" class="form-control" @disabled($is_subscription) />
                             @error('amount')
                                 <span class="text-danger">{{ $message }}</span>
                             @enderror
                         </div>
+                        @can('adherer-membre')
+                        <div class="col-md-12">
+                            <div class="col-md-12 mb-3">
+                                <div class="form-check">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        wire:model.live="is_subscription"
+                                        id="is_subscription">
 
+                                    <label class="form-check-label" for="is_subscription">
+                                        Frais d'adhésion
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        @endcan
                         <div class="col-md-12 mb-3">
                             <label>Description (facultatif)</label>
                             <input type="text" wire:model="description" class="form-control" />

@@ -101,14 +101,38 @@
                             <p><strong class="font-medium">Email:</strong> {{ $member->email }}</p>
                         </div>
                         <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
-                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" stroke-linejoin="round"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                                 class="lucide lucide-info h-4 w-4 text-muted-foreground">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <path d="M12 16v-4"></path>
                                 <path d="M12 8h.01"></path>
                             </svg>
                             <p><strong class="font-medium">ID Client:</strong> {{ $member->code }}</p>
+                        </div>
+                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-info h-4 w-4 text-muted-foreground">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 16v-4"></path>
+                                <path d="M12 8h.01"></path>
+                            </svg>
+                            <p><strong class="font-medium">Code Manuel Client:</strong> {{ $member->id }}</p>
+                        </div>
+                        <div class="flex items-center gap-3"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                                class="lucide lucide-info h-4 w-4 text-muted-foreground">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <path d="M12 16v-4"></path>
+                                <path d="M12 8h.01"></path>
+                            </svg>
+                            <p>
+                                <strong class="font-medium">Ancienneté Client :</strong>
+                                {{ $this->getAnciennete($member->created_at) }}
+                                (Enregistré le {{ \Carbon\Carbon::parse($member->created_at)->format('d/m/Y') }})
+                            </p>
                         </div>
                         <div class="flex items-center gap-3">
                             <a href="{{ route('member.print', $member->id) }}" wire:navigate
@@ -120,126 +144,160 @@
                         </div>
                     </div>
                 </div>
-                <div class="rounded-lg border bg-card text-card-foreground shadow-lg">
-                    <div class="p-6">
-                        <div class="font-semibold tracking-tight flex items-center gap-3 text-xl"><svg
-                                xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-landmark h-6 w-6 text-primary">
+                <div class="rounded-lg border bg-card text-card-foreground shadow-sm max-w-full overflow-hidden">
+                    <!-- En-tête plus compact sur mobile -->
+                    <div class="p-3 border-b">
+                        <div class="font-semibold tracking-tight flex items-center gap-2 text-lg">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-landmark h-5 w-5 text-primary shrink-0">
                                 <line x1="3" x2="21" y1="22" y2="22"></line>
                                 <line x1="6" x2="6" y1="18" y2="11"></line>
                                 <line x1="10" x2="10" y1="18" y2="11"></line>
                                 <line x1="14" x2="14" y1="18" y2="11"></line>
                                 <line x1="18" x2="18" y1="18" y2="11"></line>
                                 <polygon points="12 2 20 7 4 7"></polygon>
-                            </svg>Balances des comptes</div>
-                    </div>
-                    <div class="p-6 pt-0 space-y-4">
-                        <div class="space-y-4">
-                            <!-- Compte Courant -->
-                            <div class="border rounded-md p-3">
-                                <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Courant</h6>
-                                @foreach(['USD', 'CDF'] as $curr)
-                                    @php
-                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'current')->first();
-                                        $balance = (float) ($acc?->balance ?? 0);
-                                        $color = $curr === 'USD' ? 'green' : 'blue';
-                                    @endphp
-                                    <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
-                                        <div class="flex items-center gap-2">
-                                            <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
-                                            @can('autoriser-tout-retirer')
-                                                @if($acc)
-                                                    <div class="form-check form-switch ms-2 mb-0" title="Autoriser à tout retirer">
-                                                        <input class="form-check-input" type="checkbox" role="switch" 
-                                                            wire:click="toggleWithdrawAll({{ $acc->id }})"
-                                                            {{ $acc->can_withdraw_all ? 'checked' : '' }}
-                                                            style="cursor: pointer; width: 2.2em; height: 1.1em;">
-                                                    </div>
-                                                @endif
-                                            @endcan
-                                        </div>
-                                        <span class="font-semibold flex items-center gap-2">
-                                            @if ($member->visible_account)
-                                                {{ number_format($balance, 2, '.', ' ') }}
-                                                @can('modifier-solde-compte')
-                                                    @if($acc)
-                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="btn btn-link btn-xs p-0 text-primary">
-                                                            ✏️
-                                                        </button>
-                                                    @endif
-                                                @endcan
-                                            @else
-                                                ****
-                                            @endif
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            <!-- Compte Epargne -->
-                            <div class="border rounded-md p-3">
-                                <h6 class="font-bold text-sm text-muted-foreground mb-3 uppercase tracking-wider">Compte Epargne (Carnets)</h6>
-                                @foreach(['USD', 'CDF'] as $curr)
-                                    @php
-                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'savings')->first();
-                                        $balance = (float) ($acc?->balance ?? 0);
-                                        $color = $curr === 'USD' ? 'green' : 'blue';
-                                    @endphp
-                                    <div class="flex justify-between items-center p-2 mb-2 bg-secondary/20 rounded">
-                                        <span class="font-bold text-{{ $color }}-600">{{ $curr }}</span>
-                                        <span class="font-semibold flex items-center gap-2">
-                                            @if ($member->visible_account)
-                                                {{ number_format($balance, 2, '.', ' ') }}
-                                                @can('modifier-solde-compte')
-                                                    @if($acc)
-                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="btn btn-link btn-xs p-0 text-primary">
-                                                            ✏️
-                                                        </button>
-                                                    @endif
-                                                @endcan
-                                            @else
-                                                ****
-                                            @endif
-                                        </span>
-                                    </div>
-                                @endforeach
-                            </div>
-
-                            <!-- Migration Tool (Admin Only) -->
-                            @can('migrer-comptes')
-                                <div class="mt-2 text-right">
-                                    <!-- <button wire:click="migrateAccounts" class="btn btn-xs btn-outline-warning" onclick="confirm('Voulez-vous vérifier et réparer les comptes de ce membre ?') || event.stopImmediatePropagation()">
-                                        ⚠️ Vérifier/Migrer Comptes
-                                    </button> -->
-                                </div>
-                            @endcan
+                            </svg>
+                            <span>Balances des comptes</span>
                         </div>
                     </div>
 
-                    <div class="items-center p-6 pt-0 flex justify-between gap-2">
+                    <div class="p-3 space-y-3">
+                        <!-- Compte Courant -->
+                        @if ($member->accounts->where('type', 'current')->where('status', 'Actif')->count() > 0)
+                            <div class="border rounded-lg p-2.5 bg-muted/10">
+                                <h6 class="font-bold text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+                                    Compte Courant
+                                </h6>
+                                @foreach (['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts
+                                            ->where('currency', $curr)
+                                            ->where('type', 'current')
+                                            ->where('status', 'Actif')
+                                            ->first();
+                                    @endphp
+                                    @if ($acc)
+                                        @php
+                                            $balance = (float) $acc->balance;
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                            $symbol = $curr === 'USD' ? '$' : 'FC';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-1.5 bg-secondary/10 rounded-md gap-2">
+                                            <!-- Devise & Switchs Admin (alignés horizontalement) -->
+                                            <div class="flex items-center gap-1.5 shrink-0">
+                                                <span class="font-bold text-sm text-{{ $color }}-600 flex items-center gap-1">
+                                                    {{ $symbol }}
+                                                    @if ($acc->subscribed)
+                                                        <i class="bx bx-check-circle text-success text-xs"></i>
+                                                    @endif
+                                                </span>
+
+                                                @can('autoriser-tout-retirer')
+                                                    <div class="flex items-center gap-1">
+                                                        <!-- Switch Retrait Total -->
+                                                        <div class="form-check form-switch m-0 p-0 pl-4" title="Autoriser à tout retirer">
+                                                            <input class="form-check-input m-0 align-middle" type="checkbox" role="switch"
+                                                                wire:click="toggleWithdrawAll({{ $acc->id }})"
+                                                                {{ $acc->can_withdraw_all ? 'checked' : '' }}
+                                                                style="cursor: pointer; width: 1.4em; height: 0.9em;">
+                                                        </div>
+
+                                                        <!-- Switch Frais Adhésion -->
+                                                        @if (!$acc->subscribed)
+                                                            <div class="form-check m-0 p-0 pl-3" title="Retirer Frais Adhésion">
+                                                                <input class="form-check-input m-0 align-middle" type="checkbox" role="switch"
+                                                                    wire:click="toggleSubscribed({{ $acc->id }})"
+                                                                    {{ $acc->subscribed ? 'checked' : '' }}
+                                                                    style="cursor: pointer; width: 0.9em; height: 0.9em;">
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endcan
+                                            </div>
+
+                                            <!-- Solde & Edition (alignés à droite) -->
+                                            <span class="font-semibold text-sm flex items-center gap-1.5 truncate">
+                                                @if ($member->visible_account)
+                                                    <span class="truncate">{{ number_format($balance, 2, '.', ' ') }}</span>
+                                                    @can('modifier-solde-compte')
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="text-primary hover:opacity-80 p-0.5 shrink-0" style="font-size: 0.8rem;">
+                                                            ✏️
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-muted-foreground">****</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+
+                        <!-- Compte Epargne -->
+                        @if ($member->accounts->where('type', 'savings')->where('status', 'Actif')->count() > 0)
+                            <div class="border rounded-lg p-2.5 bg-muted/10">
+                                <h6 class="font-bold text-xs text-muted-foreground mb-2 uppercase tracking-wider">
+                                    Compte Epargne (Carnets)
+                                </h6>
+                                @foreach (['USD', 'CDF'] as $curr)
+                                    @php
+                                        $acc = $member->accounts
+                                            ->where('currency', $curr)
+                                            ->where('type', 'savings')
+                                            ->where('status', 'Actif')
+                                            ->first();
+                                    @endphp
+                                    @if ($acc)
+                                        @php
+                                            $balance = (float) $acc->balance;
+                                            $color = $curr === 'USD' ? 'green' : 'blue';
+                                            $symbol = $curr === 'USD' ? '$' : 'FC';
+                                        @endphp
+                                        <div class="flex justify-between items-center p-2 mb-1.5 bg-secondary/10 rounded-md gap-2">
+                                            <span class="font-bold text-sm text-{{ $color }}-600 shrink-0">{{ $symbol }}</span>
+
+                                            <span class="font-semibold text-sm flex items-center gap-1.5 truncate">
+                                                @if ($member->visible_account)
+                                                    <span class="truncate">{{ number_format($balance, 2, '.', ' ') }}</span>
+                                                    @can('modifier-solde-compte')
+                                                        <button wire:click="confirmUpdateBalance({{ $acc->id }})" class="text-primary hover:opacity-80 p-0.5 shrink-0" style="font-size: 0.8rem;">
+                                                            ✏️
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-muted-foreground">****</span>
+                                                @endif
+                                            </span>
+                                        </div>
+                                    @endif
+                                @endforeach
+                            </div>
+                        @endif
+                    </div>
+
+                    <!-- Actions principales : côte à côte à 50% de largeur sur mobile -->
+                    <div class="p-3 pt-0 flex gap-2 w-full">
                         @can('depot-compte-membre')
                             <button wire:click='openDepositModal'
-                                class="btn-outline-success inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-arrow-down-to-line mr-2 h-4 w-4">
+                                class="w-1/2 btn-outline-success inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-16 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-down-to-line shrink-0 text-success">
                                     <path d="M12 17V3"></path>
                                     <path d="m6 11 6 6 6-6"></path>
                                     <path d="M19 21H5"></path>
-                                </svg> Dépôt
+                                </svg>
+                                <span>Dépôt</span>
                             </button>
                         @endcan
+
                         @can('retrait-compte-membre')
                             <button wire:click='openRetraitModal'
-                                class="inline-flex items-center justify-center gap-1 whitespace-nowrap rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-10 px-4 py-2">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-arrow-up-from-line mr-2 h-4 w-4">
+                                class="w-1/2 btn-outline-danger inline-flex items-center justify-center gap-1.5 rounded-md text-sm font-medium border border-input bg-background hover:bg-accent h-16 px-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-from-line shrink-0 text-danger">
                                     <path d="m18 9-6-6-6 6"></path>
                                     <path d="M12 3v14"></path>
                                     <path d="M5 21h14"></path>
-                                </svg> Retrait
+                                </svg>
+                                <span>Retrait</span>
                             </button>
                         @endcan
                     </div>
@@ -247,71 +305,56 @@
             </div>
 
             <div class="lg:col-span-2 space-y-6">
-                <div class="bg-card p-4 sm:p-6 rounded-lg shadow-lg">
-                    <div class="flex flex-col sm:flex-row items-center justify-between mb-4 gap-2">
-                        <h4 class="text-xl font-semibold flex items-center gap-2">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                stroke-linejoin="round" class="lucide lucide-list-filter h-6 w-6 text-primary">
-                                <path d="M3 6h18"></path>
-                                <path d="M7 12h10"></path>
-                                <path d="M10 18h4"></path>
-                            </svg>
+                <div class="card p-3 p-sm-4 shadow-sm border-0 mb-4">
+                    <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mb-3 gap-2">
+                        <h4 class="card-title h5 mb-0 d-flex align-items-center gap-2">
+                            <i class="bx bx-list-filter fs-4 text-primary"></i>
                             Historique des transactions
                         </h4>
 
-                        <div class="flex items-center gap-2 w-full sm:w-auto">
-                            <div class="relative w-full sm:w-64">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round"
-                                    class="lucide lucide-search absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground">
-                                    <circle cx="11" cy="11" r="8"></circle>
-                                    <path d="m21 21-4.3-4.3"></path>
-                                </svg>
+                        <div class="d-flex align-items-center gap-2 w-100 w-sm-auto">
+                            <div class="position-relative w-100 w-sm-64">
+                                <i class="bx bx-search position-absolute start-0 top-50 translate-middle-y ms-2.5 text-muted"></i>
                                 <input type="search" wire:model.live.debounce.300ms="search"
                                     placeholder="Rechercher transactions..."
-                                    class="flex h-10 rounded-md border border-input bg-background px-3 py-2 text-sm pl-8 w-full">
+                                    class="form-control form-control-sm ps-5 w-100">
                             </div>
 
                             @php
-                                $exportUrl = route('member.transactions.export', ['id' => $member->id]) . '?filter=' . $date_filter;
+                                $exportUrl =
+                                    route('member.transactions.export', ['id' => $member->id]) .
+                                    '?filter=' .
+                                    $date_filter;
                                 if ($date_filter === 'custom' && $date_from && $date_to) {
                                     $exportUrl .= '&date_from=' . $date_from . '&date_to=' . $date_to;
                                 }
                             @endphp
-                            <a href="{{ $exportUrl }}"
-                                class="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium border border-input bg-background hover:bg-accent h-9 rounded-md px-3">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
-                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" class="lucide lucide-download mr-2 h-4 w-4">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="7 10 12 15 17 10"></polyline>
-                                    <line x1="12" x2="12" y1="15" y2="3"></line>
-                                </svg> PDF
+                            <a href="{{ $exportUrl }}" class="btn btn-outline-secondary btn-sm d-inline-flex align-items-center gap-1 text-nowrap">
+                                <i class="bx bx-download fs-6"></i> PDF
                             </a>
                         </div>
                     </div>
 
                     <!-- Section de filtrage par date -->
-                    <div class="mb-4 p-3 bg-secondary/10 rounded-lg border border-secondary/20">
-                        <div class="flex flex-wrap gap-2 items-center justify-between">
+                    <div class="mb-4 p-3 bg-light rounded border">
+                        <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
                             <div class="btn-group" role="group">
                                 <button type="button" wire:click="$set('date_filter', '30_days')"
-                                    class="btn btn-sm {{ $date_filter === '30_days' ? 'btn-primary' : 'btn-outline-secondary' }}">30
-                                    jours</button>
+                                    class="btn btn-sm {{ $date_filter === '30_days' ? 'btn-primary' : 'btn-outline-secondary' }}">30 jours</button>
                                 <button type="button" wire:click="$set('date_filter', '3_months')"
-                                    class="btn btn-sm {{ $date_filter === '3_months' ? 'btn-primary' : 'btn-outline-secondary' }}">3
-                                    mois</button>
+                                    class="btn btn-sm {{ $date_filter === '3_months' ? 'btn-primary' : 'btn-outline-secondary' }}">3 mois</button>
                                 <button type="button" wire:click="$set('date_filter', 'custom')"
                                     class="btn btn-sm {{ $date_filter === 'custom' ? 'btn-primary' : 'btn-outline-secondary' }}">Personnalisé</button>
                             </div>
 
-                            <div class="flex gap-2 items-center">
+                            <div class="d-flex gap-2 align-items-center">
                                 <span class="badge bg-info text-dark">
-                                    @if($date_filter === '30_days') 30 derniers jours
-                                    @elseif($date_filter === '3_months') 3 derniers mois
-                                    @else {{ $date_from ? \Carbon\Carbon::parse($date_from)->format('d/m') : '...' }} -
+                                    @if ($date_filter === '30_days')
+                                        30 derniers jours
+                                    @elseif($date_filter === '3_months')
+                                        3 derniers mois
+                                    @else
+                                        {{ $date_from ? \Carbon\Carbon::parse($date_from)->format('d/m') : '...' }} -
                                         {{ $date_to ? \Carbon\Carbon::parse($date_to)->format('d/m') : '...' }}
                                     @endif
                                 </span>
@@ -319,109 +362,117 @@
                             </div>
                         </div>
 
-                        @if($date_filter === 'custom')
-                            <div class="flex flex-col sm:flex-row gap-3 mt-3 sm:items-end">
-                                <div class="w-full sm:flex-1">
-                                    <label class="text-xs font-medium mb-1 d-block">Du</label>
-                                    <input type="date" wire:model="date_from" class="form-control form-control-sm w-full">
+                        @if ($date_filter === 'custom')
+                            <div class="row g-2 mt-2 align-items-end">
+                                <div class="col-12 col-sm">
+                                    <label class="small text-muted mb-1 d-block">Du</label>
+                                    <input type="date" wire:model="date_from" class="form-control form-control-sm w-100">
                                 </div>
-                                <div class="w-full sm:flex-1">
-                                    <label class="text-xs font-medium mb-1 d-block">Au</label>
-                                    <input type="date" wire:model="date_to" class="form-control form-control-sm w-full">
+                                <div class="col-12 col-sm">
+                                    <label class="small text-muted mb-1 d-block">Au</label>
+                                    <input type="date" wire:model="date_to" class="form-control form-control-sm w-100">
                                 </div>
-                                <button type="button" wire:click="applyCustomFilter"
-                                    class="btn btn-primary btn-sm w-full sm:w-auto mt-2 sm:mt-0">Ok</button>
+                                <div class="col-12 col-sm-auto">
+                                    <button type="button" wire:click="applyCustomFilter" class="btn btn-primary btn-sm w-100">Ok</button>
+                                </div>
                             </div>
                         @endif
                     </div>
 
-                    <div class="relative overflow-hidden w-full rounded-md border">
-                        <div class="w-full overflow-auto">
-                            <table class="w-full text-sm">
-                                <thead class="border-b bg-muted/50">
+                    <!-- Tableau des transactions -->
+                    <div class="table-responsive rounded border mb-3">
+                        <table class="table table-sm table-hover align-middle m-0 small">
+                            <thead class="table-light border-bottom">
+                                <tr>
+                                    <th class="p-2.5 text-start" style="width: 120px;">Date</th>
+                                    <th class="p-2.5 text-start">Description</th>
+                                    <th class="p-2.5 text-start" style="width: 120px;">Type</th>
+                                    <th class="p-2.5 text-end" style="width: 120px;">Montant</th>
+                                    @if ($member->visible_account)
+                                        <th class="p-2.5 text-end" style="width: 120px;">Solde</th>
+                                    @endif
+                                    <th class="p-2.5 text-center" style="width: 100px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody class="table-group-divider">
+                                @forelse ($transactions as $transaction)
+                                    @php
+                                        $typeMap = [
+                                            'dépôt' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Dépôt'],
+                                            'retrait' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Retrait'],
+                                            'transfert_entrant' => ['icon' => 'bx bx-left-top-arrow-circle', 'color' => 'info', 'label' => 'Reçu'],
+                                            'transfert_sortant' => ['icon' => 'bx bx-send', 'color' => 'warning', 'label' => 'Envoyé'],
+                                            'retrait_carte_adhesion' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Retrait'],
+                                            'mise_quotidienne' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Mise quotidienne'],
+                                            'octroi_de_credit' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Octroi de crédit'],
+                                            'frais_mutuelle' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Frais mutuelle'],
+                                            'commission_credit' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Commission crédit'],
+                                            'paie_entrant' => ['icon' => 'bx bx-down-arrow-alt', 'color' => 'success', 'label' => 'Salaire reçu'],
+                                            'remboursement_de_credit' => ['icon' => 'bx bx-up-arrow-alt', 'color' => 'danger', 'label' => 'Remboursement de crédit'],
+                                        ];
+
+                                        $t = $typeMap[$transaction->type] ?? ['icon' => 'bx bx-dots-horizontal-rounded', 'color' => 'secondary', 'label' => $transaction->type];
+                                        $isDebit = in_array($transaction->type, ['retrait', 'transfert_sortant', 'retrait_carte_adhesion', 'frais_mutuelle', 'commission_credit', 'remboursement_de_credit',]);
+                                    @endphp
                                     <tr>
-                                        <th class="p-3 text-left font-medium w-[120px]">Date</th>
-                                        <th class="p-3 text-left font-medium">Description</th>
-                                        <th class="p-3 text-left font-medium w-[120px]">Type</th>
-                                        <th class="p-3 text-right font-medium w-[120px]">Montant</th>
+                                        <td class="p-2.5 text-muted style-text-xs">
+                                            {{ $transaction->created_at->format('d/m/Y H:i') }}
+                                        </td>
+                                        <td class="p-2.5">{{ $transaction->description }}</td>
+                                        <td class="p-2.5 text-capitalize">
+                                            <div class="d-flex align-items-center gap-1">
+                                                <i class="{{ $t['icon'] }} text-{{ $t['color'] }} fs-5"></i>
+                                                {{ $transaction->type }}
+                                            </div>
+                                        </td>
+                                        <td class="p-2.5 {{ $isDebit ? 'text-danger' : 'text-success' }} text-end fw-semibold">
+                                            {{ $isDebit ? '-' : '+' }} {{ number_format($transaction->amount, 2) }} {{ $transaction->currency }}
+                                        </td>
                                         @if ($member->visible_account)
-                                            <th class="p-3 text-right font-medium w-[120px]">Solde</th>
+                                            <td class="p-2.5 text-end text-muted">
+                                                {{ number_format($transaction->balance_after, 2) }} {{ $transaction->currency }}
+                                            </td>
                                         @endif
-                                        <th class="p-3 text-center font-medium w-[100px]">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    @forelse ($transactions as $transaction)
-                                        <tr class="hover:bg-muted/30 transition-colors">
-                                            <td class="p-3 text-xs">
-                                                {{ $transaction->created_at->format('d/m/Y H:i') }}
-                                            </td>
-                                            <td class="p-3">{{ $transaction->description }}</td>
-                                            <td class="p-3 text-xs">
-                                                <div class="flex items-center gap-1 capitalize">
-                                                    @if ($transaction->type === 'dépôt') <span
-                                                        class="text-green-500">⬇️</span>
-                                                    @elseif ($transaction->type === 'retrait') <span
-                                                        class="text-red-500">⬆️</span>
-                                                    @else <span class="text-blue-500">🔄</span> @endif
-                                                    {{ $transaction->type }}
+                                        <td class="p-2.5">
+                                            <div class="d-flex flex-column gap-1">
+                                                <div class="d-flex gap-1">
+                                                    <button type="button"
+                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate_pos', ['id' => $transaction->id]) }}' })"
+                                                        class="btn btn-outline-secondary btn-xs py-0 flex-grow-1" title="POS">POS</button>
+                                                    <button type="button"
+                                                        wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
+                                                        class="btn btn-outline-secondary btn-xs py-0 flex-grow-1" title="PC">PC</button>
                                                 </div>
-                                            </td>
-                                            <td class="p-3 text-right font-semibold">
-                                                @if($transaction->type === 'retrait')
-                                                -@endif{{ number_format($transaction->amount, 2) }}
-                                                {{ $transaction->currency }}
-                                            </td>
-                                            @if ($member->visible_account)
-                                                <td class="p-3 text-right font-medium text-muted-foreground">
-                                                    {{ number_format($transaction->balance_after, 2) }}
-                                                    {{ $transaction->currency }}
-                                                </td>
-                                            @endif
-                                            <td class="p-3">
-                                                <div class="flex flex-col gap-1">
-                                                    <div class="flex gap-1">
-                                                        <button type="button"
-                                                            wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate_pos', ['id' => $transaction->id]) }}' })"
-                                                            class="flex-1 btn btn-outline-secondary btn-xs py-0"
-                                                            title="POS">POS</button>
-                                                        <button type="button"
-                                                            wire:click="$dispatch('facture-validee', { url: '{{ route('receipt.generate', ['id' => $transaction->id]) }}' })"
-                                                            class="flex-1 btn btn-outline-secondary btn-xs py-0"
-                                                            title="PC">PC</button>
+                                                @can('modifier-transaction-compte')
+                                                    <div class="d-flex gap-1">
+                                                        <button type="button" wire:click="confirmEditTransaction({{ $transaction->id }})"
+                                                            class="btn btn-outline-primary btn-xs py-0 flex-grow-1" title="Modifier">
+                                                            <i class="bx bx-edit-alt"></i>
+                                                        </button>
+                                                        <button type="button" wire:click="confirmDeleteTransaction({{ $transaction->id }})"
+                                                            class="btn btn-outline-danger btn-xs py-0 flex-grow-1" title="Supprimer">
+                                                            <i class="bx bx-trash"></i>
+                                                        </button>
                                                     </div>
-                                                    @can('modifier-transaction-compte')
-                                                        <div class="flex gap-1">
-                                                            <button type="button"
-                                                                wire:click="confirmEditTransaction({{ $transaction->id }})"
-                                                                class="flex-1 btn btn-outline-primary btn-xs py-0"
-                                                                title="Modifier">✏️</button>
-                                                            <button type="button"
-                                                                wire:click="confirmDeleteTransaction({{ $transaction->id }})"
-                                                                class="flex-1 btn btn-outline-danger btn-xs py-0"
-                                                                title="Supprimer">🗑️</button>
-                                                        </div>
-                                                    @endcan
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    @empty
-                                        <tr>
-                                            <td colspan="6" class="p-8 text-center text-muted-foreground italic">
-                                                Aucune transaction trouvée pour cette période.
-                                            </td>
-                                        </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr>
+                                        <td colspan="{{ $member->visible_account ? 6 : 5 }}" class="p-4 text-center text-muted fst-italic">
+                                            Aucune transaction trouvée pour cette période.
+                                        </td>
+                                    </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
 
-                    <div
-                        class="mt-4 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-muted-foreground">
+                    <!-- Pagination -->
+                    <div class="mt-2 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-3 small text-muted">
                         <div>
-                            {{ $transactions->firstItem() }}-{{ $transactions->lastItem() }} sur
-                            {{ $transactions->total() }}
+                            {{ $transactions->firstItem() }}-{{ $transactions->lastItem() }} sur {{ $transactions->total() }}
                         </div>
                         <div>
                             {{ $transactions->links() }}
@@ -429,46 +480,102 @@
                     </div>
                 </div>
 
-                <div class="rounded-lg border bg-card shadow-lg overflow-hidden">
-                    <div class="p-4 border-b">
-                        <h5 class="font-semibold m-0">Cartes de membre associées</h5>
+                <!-- Cartes de membre -->
+                <div class="card shadow-sm border-0 overflow-hidden">
+                    <div class="card-header bg-white pt-3 pb-0 border-bottom-0">
+                        <h5 class="card-title h6 fw-semibold mb-2">Cartes de membre associées</h5>
+                        <ul class="nav nav-tabs card-header-tabs" id="carnetTabs" role="tablist">
+                            <li class="nav-item">
+                                <button class="nav-link active" id="encours-tab" data-bs-toggle="tab"
+                                    data-bs-target="#encours" type="button" role="tab">Encours</button>
+                            </li>
+                            <li class="nav-item">
+                                <button class="nav-link" id="clotures-tab" data-bs-toggle="tab"
+                                    data-bs-target="#clotures" type="button" role="tab">Clôturés</button>
+                            </li>
+                        </ul>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-sm table-hover m-0">
-                            <thead class="bg-muted/50">
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Mise</th>
-                                    <th>Total Déposé</th>
-                                    <th>Statut</th>
-                                    <th class="text-center">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($allCards as $card)
-                                    <tr>
-                                        <td>{{ $card->code }}</td>
-                                        <td>{{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}</td>
-                                        <td>{{ number_format($card->contributions->where('is_paid', true)->sum('amount'), 2) }}
-                                            {{ $card->currency }}</td>
-                                        <td>
-                                            @if($card->is_active) <span class="badge bg-success">Active</span>
-                                            @else <span class="badge bg-secondary">Inactive</span> @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <button wire:click="openCardViewModal({{ $card->id }})"
-                                                class="btn btn-info btn-xs">Voir</button>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center py-4">Aucune carte trouvée.</td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
+                        <div class="tab-content" id="carnetTabContent">
+                            <!-- Onglet Encours -->
+                            <div class="tab-pane fade show active" id="encours" role="tabpanel" aria-labelledby="encours-tab">
+                                <table class="table table-sm table-hover align-middle m-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="p-2.5">Code</th>
+                                            <th class="p-2.5">Mise</th>
+                                            <th class="p-2.5">Total Déposé</th>
+                                            <th class="p-2.5">Statut</th>
+                                            <th class="p-2.5 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($activeCards as $card)
+                                            <tr>
+                                                <td class="p-2.5 fw-medium">{{ $card->code }}</td>
+                                                <td class="p-2.5">{{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}</td>
+                                                <td class="p-2.5">{{ number_format($card->contributions->where('is_paid', true)->sum('amount'), 2) }} {{ $card->currency }}</td>
+                                                <td class="p-2.5">
+                                                    <span class="badge {{ $card->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                        {{ $card->is_active ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td class="p-2.5 text-center">
+                                                    <button wire:click="openCardViewModal({{ $card->id }})" class="btn btn-info btn-xs text-white">Voir</button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="5" class="text-center py-3 text-muted">Aucune carte trouvée.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Onglet Clôturés -->
+                            <div class="tab-pane fade" id="clotures" role="tabpanel" aria-labelledby="clotures-tab">
+                                <table class="table table-sm table-hover align-middle m-0 small">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th class="p-2.5">Code</th>
+                                            <th class="p-2.5">Mise</th>
+                                            <th class="p-2.5">Total Déposé</th>
+                                            <th class="p-2.5">Statut</th>
+                                            <th class="p-2.5">Date Clôture</th>
+                                            <th class="p-2.5 text-center">Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($allCards as $card)
+                                            <tr>
+                                                <td class="p-2.5 fw-medium">{{ $card->code }}</td>
+                                                <td class="p-2.5">{{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}</td>
+                                                <td class="p-2.5">{{ number_format($card->contributions->where('is_paid', true)->sum('amount'), 2) }} {{ $card->currency }}</td>
+                                                <td class="p-2.5">
+                                                    <span class="badge {{ $card->is_active ? 'bg-success' : 'bg-secondary' }}">
+                                                        {{ $card->is_active ? 'Active' : 'Inactive' }}
+                                                    </span>
+                                                </td>
+                                                <td class="p-2.5 text-danger fw-medium">
+                                                    {{ $card->updated_at ? \Carbon\Carbon::parse($card->updated_at)->format('d/m/Y à H:i') : 'N/A' }}
+                                                </td>
+                                                <td class="p-2.5 text-center">
+                                                    <button wire:click="openCardViewModal({{ $card->id }})" class="btn btn-info btn-xs text-white">Voir</button>
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="6" class="text-center py-3 text-muted">Aucune carte trouvée.</td>
+                                            </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
 

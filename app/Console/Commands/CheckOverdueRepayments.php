@@ -43,6 +43,10 @@ class CheckOverdueRepayments extends Command
                 ['balance' => 0]
             );
 
+            if ($account->status === 'Inactif') {
+                continue;
+            }
+
             // ---------------------------------------------------------------
             // 1. CALCUL DE LA PÉNALITÉ SUR LE SOLDE RESTANT
             // ---------------------------------------------------------------
@@ -92,6 +96,52 @@ class CheckOverdueRepayments extends Command
             // ---------------------------------------------------------------
             // 2. TENTATIVE DE PRÉLÈVEMENT AUTOMATIQUE
             // ---------------------------------------------------------------
+            //Calcul du montant dû + pénalité
+            $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
+            $dailyPenaltyRate = 0.003; //0.3% par jour
+            $expectedAmount = round((float) $repayment->expected_amount, 3);
+            $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 3);
+            $totalDue = round($expectedAmount + $penaltyAmount, 3);
+            //$interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
+            //$interestAfter = $interestPart+$penaltyAmount;
+
+            if ($credit->credit_type === 'degressif') {
+
+                // Capital restant avant cette échéance
+                $remainingCapital = floatval($credit->amount);
+
+                foreach ($credit->repayments->sortBy('due_date') as $schedule) {
+
+                    $currentInterest = round(
+                        $remainingCapital * (floatval($credit->interest_rate) / 100),
+                        2
+                    );
+
+                    $capitalPart = round(
+                        floatval($schedule->expected_amount) - $currentInterest,
+                        2
+                    );
+
+                    // Si c'est l'échéance actuelle → on récupère son intérêt
+                    if ($schedule->id == $repayment->id) {
+                        $interestPart = $currentInterest;
+                        break;
+                    }
+
+                    // Déduire le capital pour passer à l’échéance suivante
+                    $remainingCapital -= $capitalPart;
+                }
+            } else {
+
+                // Crédit constant
+                $interestPart = round(
+                    floatval($credit->amount) *
+                        (floatval($credit->interest_rate) / 100),
+                    2
+                );
+            }
+
+            //Vérifier si le membre a assez de fonds (en respectant le solde minimum sauf si autorisé à tout retirer)
             $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
             if ($account->can_withdraw_all) {
                 $minBalance = 0;
@@ -194,6 +244,11 @@ class CheckOverdueRepayments extends Command
                     if (!$repayment->credit->repayments->where('is_paid', false)->count()) {
                         $repayment->credit->is_paid = true;
                         $repayment->credit->save();
+                    // si tout est remboursé
+                    if (!$credit->repayments()->where('is_paid', false)->exists()) {
+                        $credit->update([
+                            'is_paid' => true,
+                        ]);
                     }
 
                     // Notification membre
@@ -230,6 +285,11 @@ class CheckOverdueRepayments extends Command
                             . number_format($newPenalty, 2) . " {$credit->currency} a été appliquée sur le solde restant dû.",
                         'read'    => false,
                     ]);
+                // insuffisant → appliquer pénalité sans virement
+                if ($repayment->penalty != $penaltyAmount) {
+                    $repayment->penalty = $penaltyAmount;
+                    $repayment->total_due = $totalDue;
+                    $repayment->save();
                 }
             }
         }

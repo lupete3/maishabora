@@ -123,6 +123,11 @@ class MemberTransfer extends Component
         $senderAccount = Account::find($this->selectedAccountId);
         $receiver = User::where('code', $this->receiverCode)->firstOrFail();
 
+        if ($senderAccount->status === 'Inactif') {
+            notyf()->error("Opération refusée. Votre compte courant {$senderAccount->currency} est Inactif.");
+            return;
+        }
+
         // Find receiver account with same currency
         $receiverAccount = Account::where('user_id', $receiver->id)
             ->where('currency', $senderAccount->currency)
@@ -133,6 +138,11 @@ class MemberTransfer extends Component
             // Create account if not exists (optional, or error?) 
             // Usually we expect account to exist. for now let's assume it exists or error.
             notyf()->error('Le compte du bénéficiaire pour la devise ' . $senderAccount->currency . ' est introuvable.');
+            return;
+        }
+
+        if ($receiverAccount->status === 'Inactif') {
+            notyf()->error("Opération refusée. Le compte courant {$senderAccount->currency} du bénéficiaire est Inactif.");
             return;
         }
 

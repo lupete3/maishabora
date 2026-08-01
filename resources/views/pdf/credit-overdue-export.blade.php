@@ -108,12 +108,18 @@
     @include('partials.pdf-header', ['reportTitle' => 'SUIVI DES ÉCHÉANCES EN RETARD (PAIEMENTS DÉPASSÉS)'])
 
     @if($overdueTotals->isNotEmpty())
-        <div class="totals-box">
-            <span class="fw-bold">Total Général en Retard :</span>
-            @foreach($overdueTotals as $currency => $total)
-                <span class="totals-badge">
-                    {{ number_format($total, 2, '.', ' ') }} {{ $currency }}
-                </span>
+        <div class="totals-box" style="margin-top: 15px; padding: 10px; border: 1px solid #ddd; background-color: #f9f9f9;">
+            <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Détail des Totaux en Retard :</div>
+            @foreach($overdueTotals as $currency => $amounts)
+                <div style="margin-bottom: 8px; padding-bottom: 5px; border-bottom: 1px dashed #ccc;">
+                    <span style="font-weight: bold; color: #d9534f;">{{ $currency }} :</span>
+                    <span style="margin-left: 15px;">Principal : <strong>{{ number_format($amounts['capital'], 2, '.', ' ') }}</strong></span>
+                    <span style="margin-left: 15px;">Intérêt : <strong>{{ number_format($amounts['interest'], 2, '.', ' ') }}</strong></span>
+                    <span style="margin-left: 15px;">Pénalité : <strong>{{ number_format($amounts['penalty'], 2, '.', ' ') }}</strong></span>
+                    <span style="margin-left: 15px; background-color: #d9534f; color: #fff; padding: 2px 6px; font-weight: bold;">
+                        Total Dû : {{ number_format($amounts['total'], 2, '.', ' ') }}
+                    </span>
+                </div>
             @endforeach
         </div>
     @endif

@@ -57,7 +57,9 @@ class User extends Authenticatable
         'email',
         'password',
         'role',
-        'status'
+        'status',
+        'agent_id',
+        'last_transaction_at'
     ];
 
     /**
@@ -80,6 +82,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_transaction_at' => 'datetime',
         ];
     }
 
@@ -148,6 +151,11 @@ class User extends Authenticatable
         return $this->hasMany(Credit::class);
     }
 
+    public function managedCredits()
+    {
+        return $this->hasMany(Credit::class, 'agent_id');
+    }
+
     public function repayments()
     {
         return $this->hasMany(Repayment::class);
@@ -193,5 +201,25 @@ class User extends Authenticatable
                 notyf()->error("Un autre membre possède déjà ces informations (nom, post-nom, téléphone).");
             }
         });
+    }
+
+    public function agent()
+    {
+        return $this->belongsTo(User::class, 'agent_id');
+    }
+
+    /**
+     * Clients gérés par cet agent
+     */
+    public function clients()
+    {
+        return $this->hasMany(User::class, 'agent_id');
+    }
+
+    public function updateLastTransactionDate()
+    {
+        $this->update([
+            'last_transaction_at' => now()
+        ]);
     }
 }

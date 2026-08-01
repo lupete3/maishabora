@@ -39,7 +39,7 @@
         .table th {
             border: 1px solid #000;
             padding: 2px;
-            font-size: 8px;
+            font-size: 7px;
         }
 
         .signature {
@@ -94,7 +94,6 @@
                 <th>Date</th>
                 <th>Type</th>
                 <th>Montant</th>
-                <th>Devise</th>
                 <th>Description</th>
             </tr>
         </thead>
@@ -103,8 +102,7 @@
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($t->created_at)->format('d/m/Y H:i') }}</td>
                     <td>{{ ucfirst($t->type) }}</td>
-                    <td>{{ number_format($t->amount, 2) }}</td>
-                    <td>{{ $t->currency }}</td>
+                    <td>{{ number_format($t->amount, 2) }} {{ $t->currency }}</td>
                     <td>{{ $t->description }}</td>
                 </tr>
             @endforeach

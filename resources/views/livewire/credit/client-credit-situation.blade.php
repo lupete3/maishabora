@@ -1,9 +1,25 @@
 <div>
+    @if (!$credits->isEmpty())
     <div class="card mb-4">
         <div class="card-header fw-bold">
             Situation des crédits - {{ $user->name }}
+            <ul class="nav nav-tabs card-header-tabs" id="creditTabs" role="tablist">
+                <li class="nav-item">
+                    <button class="nav-link active" id="encourscredit-tab" data-bs-toggle="tab"
+                        data-bs-target="#encourscredit" type="button" role="tab">
+                        Encours
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button class="nav-link" id="clotures-tab" data-bs-toggle="tab"
+                        data-bs-target="#cloturescredit" type="button" role="tab">
+                        Remboursés
+                    </button>
+                </li>
+            </ul>
         </div>
         <div class="card-body">
+<<<<<<< HEAD
             @if ($credits->isEmpty())
                 <p>Aucun crédit trouvé pour ce client.</p>
             @else
@@ -55,15 +71,108 @@
                                             <button class="btn btn-sm btn-outline-primary"
                                                 wire:click="showRepayments({{ $credit['id'] }})">
                                                 Détails
+=======
+            <div class="tab-content" id="creditTabsContent">
+                <div class="tab-pane fade show active" id="encourscredit" role="tabpanel" aria-labelledby="encourscredit-tab">
+                    <div class="row">
+                        @foreach ($credits->where('is_paid', false) as $credit)
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            Crédit #{{ $credit['id'] }} ({{ $credit['currency'] }})
+                                        </h5>
+                                        <p><strong>Montant initial : </strong>
+                                            {{ number_format($credit['amount'], 2) }} {{ $credit['currency'] }}
+                                        </p>
+                                        <p><strong>Taux intérêt : </strong>{{ $credit['interest_rate'] }}%</p>
+                                        <p><strong>Date début :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['start_date'])->format('d/m/Y') }}</p>
+                                        <p><strong>Date échéance :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['due_date'])->format('d/m/Y') }}</p>
+                                        <hr>
+                                        <p><strong>Total payé : </strong>
+                                            <span class="text-success">{{ number_format($credit['total_paid'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Montant restant : </strong>
+                                            <span class="text-danger">{{ number_format($credit['remaining'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Pénalités cumulées : </strong>
+                                            <span class="text-warning">{{ number_format($credit['penalties'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Nombre de retards : </strong>
+                                            <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
+                                        </p>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="badge bg-warning">Encours</span>
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                wire:click="showRepayments({{ $credit['id'] }})">
+                                                Voir remboursements
+>>>>>>> online
                                             </button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    @endforeach
+                        @endforeach
+                    </div>
                 </div>
-            @endif
+                <div class="tab-pane fade" id="cloturescredit" role="tabpanel" aria-labelledby="clotures-tab">
+                    <div class="row">
+                        @foreach ($credits->where('is_paid', true) as $credit)
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100 shadow-sm">
+                                    <div class="card-body">
+                                        <h5 class="card-title">
+                                            Crédit #{{ $credit['id'] }} ({{ $credit['currency'] }})
+                                        </h5>
+                                        <p><strong>Montant initial : </strong>
+                                            {{ number_format($credit['amount'], 2) }} {{ $credit['currency'] }}
+                                        </p>
+                                        <p><strong>Taux intérêt : </strong>{{ $credit['interest_rate'] }}%</p>
+                                        <p><strong>Date début :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['start_date'])->format('d/m/Y') }}</p>
+                                        <p><strong>Date échéance :
+                                            </strong>{{ \Carbon\Carbon::parse($credit['due_date'])->format('d/m/Y') }}</p>
+                                        <hr>
+                                        <p><strong>Total payé : </strong>
+                                            <span class="text-success">{{ number_format($credit['total_paid'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Montant restant : </strong>
+                                            <span class="text-danger">{{ number_format($credit['remaining'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Pénalités cumulées : </strong>
+                                            <span class="text-warning">{{ number_format($credit['penalties'], 2) }}
+                                                {{ $credit['currency'] }}</span>
+                                        </p>
+                                        <p><strong>Nombre de retards : </strong>
+                                            <span class="badge bg-danger">{{ $credit['late_count'] }}</span>
+                                        </p>
+
+                                        <div class="d-flex justify-content-between">
+                                            @if ($credit['is_paid'])
+                                                <span class="badge bg-success">Payé</span>
+                                            @else
+                                                <span class="badge bg-warning">Encours</span>
+                                            @endif
+
+                                            <button class="btn btn-sm btn-outline-primary"
+                                                wire:click="showRepayments({{ $credit['id'] }})">
+                                                Voir remboursements
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -90,6 +199,7 @@
                         <p>Aucune échéance trouvée.</p>
                     @else
                         <div class="table-responsive">
+<<<<<<< HEAD
                             <table class="table table-bordered table-striped align-middle table-sm">
                                 <thead class="table-light">
                                     <tr>
@@ -100,10 +210,24 @@
                                         <th>Déjà payé (Ventilation)</th>
                                         <th class="text-danger">Reste à payer</th>
                                         <th>Statut</th>
+=======
+                            <table class="table table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Date d'échéance</th>
+                                        <th>Principal</th>
+                                        <th>Intérêt</th>
+                                        <th>Montant dû</th>
+                                        <th>Pénalité</th>
+                                        <th>Total</th>
+                                        <th>Status</th>
+>>>>>>> online
                                         <th>Retard (jours)</th>
+                                        @can('modifier-transaction-compte')<th>Action</th>@endcan
                                     </tr>
                                 </thead>
                                 <tbody>
+<<<<<<< HEAD
                                     @foreach ($selectedRepayments as $rep)
                                         @php
                                             $principal = floatval($rep['principal_amount']);
@@ -151,24 +275,80 @@
                                             <td class="{{ $remaining > 0 ? 'fw-bold text-danger' : 'text-muted' }}">
                                                 {{ number_format($remaining, 2) }}
                                             </td>
+=======
+                                    @php
+                                        $remainingCapital = floatval($selectedCredit->amount);
+                                    @endphp
+                                    @forelse($selectedCredit->repayments->sortBy('due_date') as $r)
+                                        @php
+                                            if ($selectedCredit->credit_type === 'degressif') {
+                                                $interest = round(
+                                                    $remainingCapital *
+                                                        (floatval($selectedCredit->interest_rate) / 100),
+                                                    2,
+                                                );
+                                            } else {
+                                                $interest = round(
+                                                    floatval($selectedCredit->amount) *
+                                                        (floatval($selectedCredit->interest_rate) / 100),
+                                                    2,
+                                                );
+                                            }
+                                            $capital = round(floatval($r->expected_amount) - $interest, 2);
+                                            $remainingCapital = round($remainingCapital - $capital, 2);
+                                        @endphp
+                                        <tr>
+                                            <td>{{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}</td>
+                                            <td>{{ number_format($capital, 2) }}</td>
+                                            <td>{{ number_format($interest, 2) }}</td>
+                                            <td>{{ number_format($r->expected_amount, 2) }}</td>
+                                            <td>{{ number_format($r->penalty, 2) }}</td>
+                                            <td>{{ number_format($r->total_due, 2) }}</td>
+>>>>>>> online
                                             <td>
-                                                @if ($rep['is_paid'])
+                                                @if ($r->is_paid)
                                                     <span class="badge bg-success">Payé</span>
                                                 @elseif ($paidTotal > 0 && $remaining > 0)
                                                     <span class="badge bg-warning text-dark">Partiel</span>
                                                 @else
-                                                    <span class="badge bg-danger">Non payé</span>
+                                                    <span class="badge bg-warning">En attente</span>
                                                 @endif
                                             </td>
                                             <td>
+<<<<<<< HEAD
                                                 @if ($rep['days_late'] > 0)
                                                     <span class="text-danger fw-semibold">{{ number_format($rep['days_late'], 0) }} jours</span>
+=======
+                                                @php
+                                                    $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(
+                                                        $r->paid_date,
+                                                    );
+                                                @endphp
+                                                @if ($daysLate > 0)
+                                                    <span class="text-danger">{{ number_format($daysLate, 0) }}
+                                                        jours</span>
+>>>>>>> online
                                                 @else
                                                     <span class="text-muted">0</span>
                                                 @endif
                                             </td>
+                                            <td>
+                                                @if (!$r->is_paid)
+                                                    @can('modifier-transaction-compte')
+                                                        <button class="btn btn-sm btn-outline-success"
+                                                            wire:click="showEditRepaymentMaodal({{ $r->id }})">
+                                                            Modifier
+                                                        </button>
+                                                    @endcan
+                                                @else
+                                                    <span class="text-muted">Aucune action</span>
+                                                @endif
+                                            </td>
+                                        @empty
+                                        <tr>
+                                            <td colspan="9" class="text-center">Aucune échéance trouvée.</td>
                                         </tr>
-                                    @endforeach
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
@@ -177,4 +357,60 @@
             </div>
         </div>
     </div>
+
+    <div wire:ignore.self class="modal fade" id="editRepaymentModal" tabindex="-1"
+        aria-labelledby="editRepaymentModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editRepaymentModalLabel">Modifier le remboursement</h5>
+                    <button type="button" class="btn-close" wire:click="closeRepaymentsEditModal()"
+                        aria-label="Fermer"></button>
+                </div>
+                <div class="modal-body">
+                    @if (!empty($selectedRepaymentEdit))
+                        <form wire:submit.prevent="updateRepayment({{ $selectedRepaymentEdit->id }})">
+                            <div class="mb-3">
+                                
+                                <label for="due_date" class="form-label">Date d'échéance</label>
+                                <input type="date" id="due_date"
+                                    wire:model="edit_due_date"
+                                    class="form-control">
+                                @error('edit_due_date')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="expected_amount" class="form-label">Montant à payer</label>
+                                <input type="number" step="0.01" id="expected_amount"
+                                    wire:model.defer="edit_expected_amount" class="form-control">
+                                @error('edit_expected_amount')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="penalty" class="form-label">Pénalité</label>
+                                <input type="number" step="0.01" id="penalty"
+                                    wire:model.defer="edit_penalty" class="form-control">
+                                @error('edit_penalty')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-3">
+                                <label for="total_due" class="form-label">Total dû</label>
+                                <input type="number" step="0.01" id="total_due"
+                                    wire:model.defer="edit_total_due" class="form-control">
+                                @error('edit_total_due')
+                                    <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                        </form>
+                    @else
+                        <p>Aucune échéance sélectionnée.</p>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
 </div>

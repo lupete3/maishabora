@@ -219,11 +219,37 @@
                                 <small>{{ $credit->agent ? $credit->agent->name : 'N/A' }}</small>
                             </td>
                             <td class="text-center">
-                                @if ($credit->is_paid)
-                                    <span class="badge bg-label-success" style="font-size: 0.65rem;">PAYÉ</span>
+
+                                @can('modifier-credit')
+                                <div class="form-check form-switch d-flex justify-content-center">
+                                    <input
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        wire:click="toggleCreditStatus({{ $credit->id }})"
+                                        @checked($credit->is_paid)
+
+                                        @if(
+                                            !auth()->user()->hasAnyRole([
+                                                'Admin',
+                                                'SUPER IT'
+                                            ])
+                                        )
+                                            disabled
+                                        @endif
+                                    >
+                                </div>
+                                @endcan
+
+                                @if($credit->is_paid)
+                                    <small class="text-success fw-bold">
+                                        SOLDÉ
+                                    </small>
                                 @else
-                                    <span class="badge bg-label-warning" style="font-size: 0.65rem;">EN COURS</span>
+                                    <small class="text-warning fw-bold">
+                                        EN COURS
+                                    </small>
                                 @endif
+
                             </td>
                         </tr>
                         @empty
