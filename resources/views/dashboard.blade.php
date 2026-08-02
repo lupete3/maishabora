@@ -9,7 +9,7 @@
 @endcan
 
 @can('afficher-tableaudebord-admin', App\Models\User::class)
-    <livewire:admin.global-credit-dashboard />
+    {{-- <livewire:admin.global-credit-dashboard /> --}}
 
 @endcan
 
