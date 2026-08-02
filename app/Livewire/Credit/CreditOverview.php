@@ -62,7 +62,7 @@ class CreditOverview extends Component
                     $totalsPerCurrency[$currency]['capital'] += $capital;
                     $totalsPerCurrency[$currency]['interest'] += $interest;
                     $totalsPerCurrency[$currency]['penalty'] += floatval($r->penalty);
-                    $totalsPerCurrency[$currency]['total'] += floatval($r->total_due);
+                    $totalsPerCurrency[$currency]['total'] += floatval($r->total_due - $r->paid_amount);
                 }
             }
         }

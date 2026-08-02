@@ -173,9 +173,6 @@ class ManageRepayments extends Component
                     ['balance' => 0]
                 );
 
-<<<<<<< HEAD
-                // Vérification du solde minimum
-=======
                 if ($account->status === 'Inactif') {
                     notyf()->error("Opération refusée. Le compte courant {$credit->currency} de ce membre est Inactif.");
                     return;
@@ -189,10 +186,10 @@ class ManageRepayments extends Component
                 } else {
                     $capitalRestant = floatval($repayment->credit->amount) / max(floatval($repayment->credit->installments), 1);
                     $amountToPay = round($capitalRestant, 3);
+                    $this->paymentAmount = $amountToPay; // Mettre à jour le montant saisi pour refléter le capital restant
                 }
 
                 // Vérification du solde minimum (sauf si autorisé à tout retirer)
->>>>>>> online
                 $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
                 if ($account->can_withdraw_all) {
                     $minBalance = 0;
@@ -251,26 +248,6 @@ class ManageRepayments extends Component
                 $account->balance = floatval($account->balance) - $totalPaid;
                 $account->save();
 
-                // ----- Transactions agent -----
-                if ($withInterest && $paidInt > 0) {
-                    $agentAccount = AgentAccount::firstOrCreate(
-                        ['user_id' => 95, 'currency' => $credit->currency],
-                        ['balance' => 0]
-                    );
-                    $agentAccount->balance = floatval($agentAccount->balance) + $paidInt;
-                    $agentAccount->save();
-
-                    Transaction::create([
-                        'agent_account_id' => $agentAccount->id,
-                        'user_id'          => 95,
-                        'type'             => 'encaissement_agent',
-                        'currency'         => $credit->currency,
-                        'amount'           => $paidInt,
-                        'balance_after'    => $agentAccount->balance,
-                        'description'      => "Intérêt échéance #{$repayment->id} — client {$member->code} {$member->name} {$member->postnom}",
-                    ]);
-                }
-
                 if ($withInterest && $paidPen > 0) {
                     $penalityAccount = AgentAccount::firstOrCreate(
                         ['user_id' => 472, 'currency' => $credit->currency],
@@ -322,104 +299,35 @@ class ManageRepayments extends Component
                     $credit->save();
                 }
 
-<<<<<<< HEAD
-=======
                 // Gestion de l'encaissement agent si paiement avec intérêt
+                // Le montant crédité aux comptes agents doit correspondre aux montants réellement payés,
+                // pas au montant théorique total de l'échéance.
                 if ($withInterest) {
                     $agentAccount = AgentAccount::firstOrCreate(
                         ['user_id' => 95, 'currency' => $credit->currency],
                         ['balance' => 0]
                     );
 
-                    //Crediter la caisse centrale
-                    $penalityAccount = AgentAccount::firstOrCreate(
-                        ['user_id' => 472, 'currency' => $credit->currency],
-                        ['balance' => 0]
-                    );
+                    // Agence d'intérêts : on ne crédite que l'intérêt effectivement payé
+                    if ($paidInt > 0) {
+                        $agentAccount->balance = floatval($agentAccount->balance) + $paidInt;
+                        $agentAccount->save();
 
-                    //$interestPart = floatval($repayment->credit->amount) * (floatval($credit->interest_rate) / 100);
-                    if ($credit->credit_type === 'degressif') {
-
-                        // Capital restant avant cette échéance
-                        $remainingCapital = floatval($credit->amount);
-
-                        foreach ($credit->repayments->sortBy('due_date') as $schedule) {
-
-                            $currentInterest = round(
-                                $remainingCapital * (floatval($credit->interest_rate) / 100),
-                                2
-                            );
-
-                            $capitalPart = round(
-                                floatval($schedule->expected_amount) - $currentInterest,
-                                2
-                            );
-
-                            // Si c'est l'échéance actuelle → on récupère son intérêt
-                            if ($schedule->id == $repayment->id) {
-                                $interestPart = $currentInterest;
-                                break;
-                            }
-
-                            // Déduire le capital pour passer à l’échéance suivante
-                            $remainingCapital -= $capitalPart;
-                        }
-
-                    } else {
-
-                        // Crédit constant
-                        $interestPart = round(
-                            floatval($credit->amount) *
-                            (floatval($credit->interest_rate) / 100),
-                            2
-                        );
-                    }
-
-                    $penality = floatval($repayment->penalty);
-
-                    $agentAccount->balance = floatval($agentAccount->balance) + ($interestPart);
-                    $penalityAccount->balance = floatval($penalityAccount->balance) + ($penality);
-
-                    $agentAccount->save();
-                    $penalityAccount->save();
-
-                    // Transaction agent
-                    Transaction::create([
-                        'agent_account_id' => $agentAccount->id,
-                        'user_id' => 95,
-                        'type' => 'encaissement_agent',
-                        'currency' => $credit->currency,
-                        'amount' => ($interestPart),
-                        'balance_after' => $agentAccount->balance,
-                        'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
-                    ]);
-
-                    // Transaction agent
-                    if ($penality > 0) {
                         Transaction::create([
-                            'agent_account_id' => $penalityAccount->id,
-                            'user_id' => 472,
+                            'agent_account_id' => $agentAccount->id,
+                            'user_id' => 95,
                             'type' => 'encaissement_agent',
                             'currency' => $credit->currency,
-                            'amount' => $penality,
-                            'balance_after' => $penalityAccount->balance,
-                            'description' => "Encaissement pénalité pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
+                            'amount' => $paidInt,
+                            'balance_after' => $agentAccount->balance,
+                            'description' => "Encaissement agent pour l’échéance #{$repayment->id} du client {$member->code} {$member->name} {$member->postnom}",
                         ]);
                     }
+
+                    // Pas de nouvelle écriture de pénalité ici : la pénalité payée a déjà
+                    // été enregistrée juste au-dessus avec $paidPen.
                 }
 
-                // Transaction client (débit)
-                Transaction::create([
-                    'account_id' => $account->id,
-                    'user_id' => $member->id,
-                    'type' => 'remboursement_de_credit',
-                    'currency' => $credit->currency,
-                    'amount' => $amountToPay,
-                    'balance_after' => $account->balance,
-                    'description' => "Remboursement manuel de l'échéance #{$repayment->id} pour le crédit #{$credit->id}",
-                ]);
-
->>>>>>> online
                 // Journalisation
                 UserLogHelper::log_user_activity(
                     action: 'remboursement_credit',

@@ -149,7 +149,7 @@
                     <td>{{ $r->credit->user->name }} {{ $r->credit->user->postnom }}</td>
                     <td class="text-center">{{ $r->due_date->format('d/m/Y') }}</td>
                     <td class="text-center text-danger fw-bold">{{ number_format($daysLate, 0) }} j</td>
-                    <td class="text-end text-danger fw-bold">{{ number_format($r->total_due, 2, '.', ' ') }}</td>
+                    <td class="text-end text-danger fw-bold">{{ number_format(($r->total_due - $r->paid_amount), 2, '.', ' ') }}</td>
                     <td class="text-center currency-badge">{{ $r->credit->currency }}</td>
                     
                     <!-- Soldes USD -->

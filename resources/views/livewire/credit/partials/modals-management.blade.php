@@ -13,7 +13,6 @@
             </div>
 
             <div class="modal-body">
-<<<<<<< HEAD
 
                 {{-- Tableau de ventilation des soldes restants --}}
                 @if (!empty($repaymentDetails))
@@ -58,15 +57,13 @@
                         </table>
                     </div>
 
-                    {{-- Ordre de priorité d'allocation --}}
                     <div class="alert alert-info py-2 small mb-3">
                         <i class="bx bx-info-circle me-1"></i>
                         Ordre d'allocation : <strong>Pénalité → Intérêt → Capital</strong>
                     </div>
                 @endif
 
-                {{-- Saisie du montant de remboursement --}}
-                <div class="mb-0">
+                <div class="mb-3">
                     <label class="form-label fw-semibold">
                         Montant à rembourser
                         @if(!empty($repaymentDetails))
@@ -84,20 +81,32 @@
                     @enderror
                 </div>
 
-=======
                 <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
-                <div class="mb-4 mx-auto" style="max-width: 400px;">
-                    <label>Penalités à payer : </label>
-                    <input type="number" class="form-control" value="{{ number_format((float) $penality, 2, '.', '') }}"
-                        wire:model="penality">
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Pénalités à payer</label>
+                    <input type="number"
+                           class="form-control @error('penality') is-invalid @enderror"
+                           wire:model.defer="penality"
+                           step="0.01"
+                           min="0"
+                           placeholder="Pénalité">
+                    @error('penality')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
-                <div class="mb-4 mx-auto" style="max-width: 400px;">
-                    <label for="password" class="form-label fw-bold">Entrez votre mot de passe pour confirmer</label>
-                    <input type="password" class="form-control @error('password') is-invalid @enderror text-center"
-                        id="password" wire:model="password" placeholder="••••••••">
-                    @error('password') <div class="invalid-feedback">{{ $message }}</div> @enderror
+
+                <div class="mb-3">
+                    <label for="password" class="form-label fw-semibold">Entrez votre mot de passe pour confirmer</label>
+                    <input type="password"
+                           class="form-control @error('password') is-invalid @enderror"
+                           id="password"
+                           wire:model.defer="password"
+                           placeholder="••••••••">
+                    @error('password')
+                        <div class="invalid-feedback">{{ $message }}</div>
+                    @enderror
                 </div>
->>>>>>> online
             </div>
 
             <div class="modal-footer gap-2">

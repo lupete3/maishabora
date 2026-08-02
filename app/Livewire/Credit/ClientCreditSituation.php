@@ -14,6 +14,8 @@ class ClientCreditSituation extends Component
     public $selectedRepayments = [];
     public $selectedCreditId;
     public $selectedCredit;
+    public $paidTotal = 0;
+    public $remaining = 0;
     public $selectedRepaymentEdit = [];
     public $edit_due_date;
     public $edit_paid_date;
@@ -42,6 +44,8 @@ class ClientCreditSituation extends Component
 
         $this->selectedCreditId = $creditId;
         $this->selectedCredit = $credit;
+        $this->paidTotal = $credit->repayments->sum('paid_amount');
+        $this->remaining = max(0.0, $credit->repayments->sum(fn ($repayment) => floatval($repayment->total_due) - floatval($repayment->paid_amount)));
 
         $this->selectedRepayments = $credit->repayments->map(function ($repayment) {
             $daysLate = 0;

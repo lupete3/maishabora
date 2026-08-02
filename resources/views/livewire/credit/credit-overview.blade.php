@@ -71,7 +71,7 @@
                                     </div>
                                     <div class="col-md-5">
                                         <div class="text-muted small mb-1">Montant Dû :</div>
-                                        <div class="h6 mb-0 text-danger fw-bold">{{ number_format($r->total_due, 2, '.', ' ') }}
+                                        <div class="h6 mb-0 text-danger fw-bold">{{ number_format(($r->total_due - $r->paid_amount), 2, '.', ' ') }}
                                             {{ $r->credit->currency }}
                                         </div>
                                         <small class="text-danger">

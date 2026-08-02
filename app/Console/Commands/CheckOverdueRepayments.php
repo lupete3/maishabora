@@ -239,11 +239,6 @@ class CheckOverdueRepayments extends Command
                         $repayment->paid_date = $today;
                     }
                     $repayment->save();
-
-                    // Vérifier si tout le crédit est remboursé
-                    if (!$repayment->credit->repayments->where('is_paid', false)->count()) {
-                        $repayment->credit->is_paid = true;
-                        $repayment->credit->save();
                     // si tout est remboursé
                     if (!$credit->repayments()->where('is_paid', false)->exists()) {
                         $credit->update([
@@ -275,16 +270,6 @@ class CheckOverdueRepayments extends Command
                 });
 
             } else {
-                // Solde insuffisant : la pénalité a déjà été mise à jour ci-dessus.
-                // Envoyer une notification seulement si une nouvelle pénalité vient d'être calculée.
-                if ($daysLate > 0 && $newPenalty > 0) {
-                    Notification::create([
-                        'user_id' => $member->id,
-                        'title'   => 'Retard de remboursement',
-                        'message' => "Votre échéance du {$repayment->due_date->format('d/m/Y')} est en retard. Une pénalité de "
-                            . number_format($newPenalty, 2) . " {$credit->currency} a été appliquée sur le solde restant dû.",
-                        'read'    => false,
-                    ]);
                 // insuffisant → appliquer pénalité sans virement
                 if ($repayment->penalty != $penaltyAmount) {
                     $repayment->penalty = $penaltyAmount;
