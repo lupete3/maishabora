@@ -93,18 +93,6 @@ class CheckOverdueRepayments extends Command
                 continue;
             }
 
-            // ---------------------------------------------------------------
-            // 2. TENTATIVE DE PRÉLÈVEMENT AUTOMATIQUE
-            // ---------------------------------------------------------------
-            //Calcul du montant dû + pénalité
-            $daysLate = max(0, Carbon::parse($repayment->due_date)->diffInDays($today));
-            $dailyPenaltyRate = 0.003; //0.3% par jour
-            $expectedAmount = round((float) $repayment->expected_amount, 3);
-            $penaltyAmount = round($expectedAmount * $dailyPenaltyRate * $daysLate, 3);
-            $totalDue = round($expectedAmount + $penaltyAmount, 3);
-            //$interestPart = round($credit->amount * ($credit->interest_rate / 100), 3);
-            //$interestAfter = $interestPart+$penaltyAmount;
-
             if ($credit->credit_type === 'degressif') {
 
                 // Capital restant avant cette échéance
@@ -270,12 +258,9 @@ class CheckOverdueRepayments extends Command
                 });
 
             } else {
-                // insuffisant → appliquer pénalité sans virement
-                if ($repayment->penalty != $penaltyAmount) {
-                    $repayment->penalty = $penaltyAmount;
-                    $repayment->total_due = $totalDue;
-                    $repayment->save();
-                }
+                // Rien à recalculer.
+                // La pénalité et total_due ont déjà été mis à jour
+                // au début du traitement.
             }
         }
 
