@@ -259,9 +259,9 @@
         </div>
     </div>
 
-    <div class="mb-4" wire:ignore>
+    {{-- <div class="mb-4" wire:ignore>
         <livewire:credit.credit-overview wire:key="credit-overview" />
-    </div>
+    </div> --}}
 
     <!-- Liste des crédits -->
     <div class="card">
