@@ -245,7 +245,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-7">
+                {{-- <div class="col-md-7">
                     <div class="card h-100">
                         <div class="card-header bg-label-secondary fw-bold">
                             Statistiques des Cartes de Membre
@@ -254,7 +254,7 @@
                             <livewire:membership-card-stats wire:key="card-stats" />
                         </div>
                     </div>
-                </div>
+                </div> --}}
             </div>
         </div>
     </div>
