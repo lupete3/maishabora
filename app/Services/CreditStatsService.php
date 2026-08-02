@@ -19,25 +19,24 @@ class CreditStatsService
             $baseQuery = Credit::where('currency', $curr);
             $this->applyFilters($baseQuery, $filters);
 
-            $totalCreditsCount = $baseQuery->count();
-            $totalCreditsValue = (float) $baseQuery->sum('amount');
+            $totalCreditsCount = (clone $baseQuery)->count();
+            $totalCreditsValue = (float) (clone $baseQuery)->sum('amount');
 
             $inProgressQuery = Credit::where('currency', $curr)->where('is_paid', false);
             $this->applyFilters($inProgressQuery, $filters);
-            $creditsInProgressCount = $inProgressQuery->count();
-            $creditsInProgressValue = (float) $inProgressQuery->sum('amount');
+            $creditsInProgressCount = (clone $inProgressQuery)->count();
+            $creditsInProgressValue = (float) (clone $inProgressQuery)->sum('amount');
 
-            $overdueCreditIds = Repayment::where('due_date', '<', Carbon::now())
+            $overdueCreditsQuery = Credit::where('currency', $curr)
                 ->where('is_paid', false)
-                ->whereHas('credit', function ($q) use ($curr, $filters) {
-                    $q->where('currency', $curr);
-                    $this->applyFilters($q, $filters);
-                })
-                ->distinct()
-                ->pluck('credit_id');
+                ->whereHas('repayments', function ($q) {
+                    $q->where('due_date', '<', Carbon::now())
+                        ->where('is_paid', false);
+                });
+            $this->applyFilters($overdueCreditsQuery, $filters);
 
-            $overdueCreditsCount = $overdueCreditIds->count();
-            $overdueCreditsValue = (float) Credit::whereIn('id', $overdueCreditIds)->sum('amount');
+            $overdueCreditsCount = (clone $overdueCreditsQuery)->count();
+            $overdueCreditsValue = (float) (clone $overdueCreditsQuery)->sum('amount');
 
             $penaltyQuery = Repayment::whereHas('credit', function ($q) use ($curr, $filters) {
                 $q->where('currency', $curr);
@@ -51,9 +50,15 @@ class CreditStatsService
                 $this->applyFilters($q, $filters);
             });
 
-            $totalToRepayValue = (float) (clone $repaymentBaseQuery)->sum('expected_amount');
-            $totalRepaidValue = (float) (clone $repaymentBaseQuery)->sum('paid_amount');
-            $remainingBalanceValue = $totalToRepayValue - $totalRepaidValue;
+            $totalToRepayValue = (float) (clone $repaymentBaseQuery)->selectRaw(
+                'SUM(COALESCE(principal_amount, expected_amount) + COALESCE(interest_amount, 0) + COALESCE(penalty, 0)) as total'
+            )->value('total');
+
+            $totalRepaidValue = (float) (clone $repaymentBaseQuery)->selectRaw(
+                'SUM(CASE WHEN (COALESCE(paid_principal, 0) + COALESCE(paid_interest, 0) + COALESCE(paid_penalty, 0)) > 0 THEN (COALESCE(paid_principal, 0) + COALESCE(paid_interest, 0) + COALESCE(paid_penalty, 0)) ELSE COALESCE(paid_amount, 0) END) as total'
+            )->value('total');
+
+            $remainingBalanceValue = max(0, $totalToRepayValue - $totalRepaidValue);
 
             $recoveryRate = $totalToRepayValue > 0 ? ($totalRepaidValue / $totalToRepayValue) * 100 : 0;
             $overdueRate = $creditsInProgressCount > 0 ? ($overdueCreditsCount / $creditsInProgressCount) * 100 : 0;
