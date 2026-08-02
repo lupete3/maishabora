@@ -494,7 +494,7 @@
                                                         <td class="text-danger fw-medium">
                                                             {{ \Carbon\Carbon::parse($r->due_date)->format('d/m/Y') }}
                                                         </td>
-                                                        <td class="text-end fw-bold">{{ number_format($r->total_due, 2) }} {{ $r->credit->currency }}</td>
+                                                        <td class="text-end fw-bold">{{ number_format(($r->total_due - $r->paid_amount), 2) }} {{ $r->credit->currency }}</td>
                                                     </tr>
                                                 @endforeach
                                             </tbody>
