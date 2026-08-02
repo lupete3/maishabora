@@ -174,11 +174,6 @@ class CreditOverview extends Component
 
     public function render()
     {
-        return view('livewire.credit.credit-overview', [
-            'overdueCredits' => $this->overdueCredits,
-            'upcomingCredits' => $this->upcomingCredits,
-            'overdueTotals' => $this->overdueTotals,
-            'upcomingTotals' => $this->upcomingTotals,
-        ]);
+        return view('livewire.credit.credit-overview');
     }
 }
