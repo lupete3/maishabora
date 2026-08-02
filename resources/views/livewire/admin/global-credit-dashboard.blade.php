@@ -2,7 +2,7 @@
 
 <div class="container mt-4">
     <!-- Statistiques des crédits -->
-    <div class="row g-2 mb-4">
+    {{-- <div class="row g-2 mb-4">
         <!-- Crédits Totaux -->
         <div class="col-md-4">
             <div class="card card-border-shadow border-start-primary h-100">
@@ -150,10 +150,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Nouveaux Détails Financiers -->
-    <div class="row g-2 mb-4">
+    {{-- <div class="row g-2 mb-4">
         <!-- Total à Rembourser -->
         <div class="col-md-6">
             <div class="card bg-label-primary border-0 shadow-none h-100">
@@ -213,10 +213,10 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div> --}}
 
     <!-- Section Caisse Centrale & Échéances en retard -->
-    <div class="row">
+    {{-- <div class="row">
         <div class="col-md-12 mb-4">
             <div class="row">
                 <div class="col-md-5">
@@ -257,11 +257,11 @@
                 </div>
             </div>
         </div>
-    </div>
-
-    {{-- <div class="mb-4" wire:ignore>
-        <livewire:credit.credit-overview wire:key="credit-overview" />
     </div> --}}
+
+    <div class="mb-4" wire:ignore>
+        <livewire:credit.credit-overview wire:key="credit-overview" />
+    </div>
 
     <!-- Liste des crédits -->
     {{-- <div class="card">
