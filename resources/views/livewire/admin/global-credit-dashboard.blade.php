@@ -2,7 +2,7 @@
 
 <div class="container mt-4">
     <!-- Statistiques des crédits -->
-    {{-- <div class="row g-2 mb-4">
+    <div class="row g-2 mb-4">
         <!-- Crédits Totaux -->
         <div class="col-md-4">
             <div class="card card-border-shadow border-start-primary h-100">
@@ -150,7 +150,7 @@
                 </div>
             </div>
         </div>
-    </div> --}}
+    </div>
 
     <!-- Nouveaux Détails Financiers -->
     {{-- <div class="row g-2 mb-4">
