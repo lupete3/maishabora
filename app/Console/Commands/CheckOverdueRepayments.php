@@ -67,7 +67,7 @@ class CheckOverdueRepayments extends Command
             if ($daysLate > 0) {
                 $newPenalty = round($remainingExpected * 0.003 * $daysLate, 3); // 0.3 % / jour
                 $repayment->penalty += $newPenalty;
-                $repayment->last_penalty_calculation_date = $today;
+                $repayment->last_penalty_calculation_date = $today->toDateString();
             }
 
             // Pénalité encore impayée
