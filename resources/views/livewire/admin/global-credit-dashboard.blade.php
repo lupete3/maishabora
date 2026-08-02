@@ -153,7 +153,7 @@
     </div>
 
     <!-- Nouveaux Détails Financiers -->
-    {{-- <div class="row g-2 mb-4">
+    <div class="row g-2 mb-4">
         <!-- Total à Rembourser -->
         <div class="col-md-6">
             <div class="card bg-label-primary border-0 shadow-none h-100">
@@ -213,7 +213,7 @@
                 </div>
             </div>
         </div>
-    </div> --}}
+    </div>
 
     <!-- Section Caisse Centrale & Échéances en retard -->
     <div class="row">
