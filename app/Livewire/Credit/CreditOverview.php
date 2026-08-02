@@ -15,6 +15,33 @@ class CreditOverview extends Component
     use WithPagination;
     protected $paginationTheme = 'bootstrap';
 
+    private function aggregateDetailedTotals($query)
+    {
+        $principalRemaining = 'GREATEST(COALESCE(repayments.principal_amount, repayments.expected_amount) - COALESCE(repayments.paid_principal, 0), 0)';
+        $interestRemaining = 'GREATEST(COALESCE(repayments.interest_amount, 0) - COALESCE(repayments.paid_interest, 0), 0)';
+        $penaltyRemaining = 'GREATEST(COALESCE(repayments.penalty, 0) - COALESCE(repayments.paid_penalty, 0), 0)';
+
+        return (clone $query)
+            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
+            ->select('credits.currency')
+            ->selectRaw("SUM({$principalRemaining}) as capital")
+            ->selectRaw("SUM({$interestRemaining}) as interest")
+            ->selectRaw("SUM({$penaltyRemaining}) as penalty")
+            ->selectRaw("SUM({$principalRemaining} + {$interestRemaining} + {$penaltyRemaining}) as total")
+            ->groupBy('credits.currency')
+            ->get()
+            ->mapWithKeys(function ($row) {
+                return [
+                    $row->currency => [
+                        'capital' => (float) $row->capital,
+                        'interest' => (float) $row->interest,
+                        'penalty' => (float) $row->penalty,
+                        'total' => (float) $row->total,
+                    ],
+                ];
+            });
+    }
+
     /**
      * Centralise le calcul détaillé des totaux (Principal, Intérêt, Pénalité) par devise
      * pour éviter la duplication de code entre l'export PDF et les propriétés de la page.
@@ -153,23 +180,21 @@ class CreditOverview extends Component
     // Propriété calculée pour la vue Web (Retard)
     public function getOverdueTotalsProperty()
     {
-        $overdueCredits = Repayment::with('credit')
-            ->where('due_date', '<', now())
-            ->where('is_paid', false)
-            ->get();
+        $overdueCredits = Repayment::query()
+            ->where('repayments.due_date', '<', now())
+            ->where('repayments.is_paid', false);
 
-        return $this->calculateDetailedTotals($overdueCredits);
+        return $this->aggregateDetailedTotals($overdueCredits);
     }
 
     // Propriété calculée pour la vue Web (À venir)
     public function getUpcomingTotalsProperty()
     {
-        $upcomingCredits = Repayment::with('credit')
-            ->whereBetween('due_date', [now(), now()->addDays(7)])
-            ->where('is_paid', false)
-            ->get();
+        $upcomingCredits = Repayment::query()
+            ->whereBetween('repayments.due_date', [now(), now()->addDays(7)])
+            ->where('repayments.is_paid', false);
 
-        return $this->calculateDetailedTotals($upcomingCredits);
+        return $this->aggregateDetailedTotals($upcomingCredits);
     }
 
     public function render()
