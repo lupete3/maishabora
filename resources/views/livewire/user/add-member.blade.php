@@ -80,18 +80,19 @@
                         </div>
                         @error('adresse_physique') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
-                    <!-- Suspendu -->
-                    <div class="col-md-2 mb-1">
-                        <label for="is_suspended" class="form-label">Suspendu</label>
-                        <div class="form-check form-switch">
-                            <input class="form-check-input" type="checkbox" id="is_suspended" wire:model.defer="is_suspended">
-                            <label class="form-check-label" for="is_suspended">Oui</label>
-                        </div>
-                        @error('is_suspended') <span class="text-danger">{{ $message }}</span> @enderror
-                    </div>
-
+                    
                     <!-- Mot de passe (pour la mise à jour uniquement) -->
                     @if ($editModal)
+                        <!-- Suspendu -->
+                        <div class="col-md-2 mb-1">
+                            <label for="is_suspended" class="form-label">Suspendu</label>
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="is_suspended" wire:model.defer="is_suspended">
+                                <label class="form-check-label" for="is_suspended">Oui</label>
+                            </div>
+                            @error('is_suspended') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+                        
                         <div class="col-md-6 mb-1">
                             <label for="password" class="form-label">Nouveau mot de passe (optionnel)</label>
                             <input type="password" wire:model.defer="password" id="password" class="form-control"
