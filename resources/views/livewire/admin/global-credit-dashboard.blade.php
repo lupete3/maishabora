@@ -264,7 +264,7 @@
     </div>
 
     <!-- Liste des crédits -->
-    {{-- <div class="card">
+    <div class="card">
         <div class="card-header bg-label-secondary fw-bold">
             Liste des crédits en cours
         </div>
@@ -361,5 +361,5 @@
                 {{ $credits->links() }}
             </div>
         </div>
-    </div> --}}
+    </div>
 </div>
