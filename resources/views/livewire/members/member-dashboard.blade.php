@@ -366,7 +366,7 @@
 
                                 @foreach(['USD', 'CDF'] as $curr)
                                     @php
-                                        $acc     = $member->accounts->where('currency', $curr)->where('type', 'savings')->where('status', 'Actif')->first();
+                                        $acc = $member->accounts->where('currency', $curr)->where('type', 'savings')->where('status', 'Actif')->first();
                                     @endphp
                                     @if($acc)
                                         @php
