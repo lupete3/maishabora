@@ -211,7 +211,10 @@ class ManageRepayments extends Component
                 $interestAmount     = floatval($repayment->interest_amount  ?? 0);
                 $remainingPrincipal = max(0.0, $principalAmount - floatval($repayment->paid_principal));
                 $remainingInterest  = max(0.0, $interestAmount  - floatval($repayment->paid_interest));
-                $remainingPenalty   = max(0.0, floatval($repayment->penalty) - floatval($repayment->paid_penalty));
+                // $remainingPenalty   = max(0.0, floatval($repayment->penalty) - floatval($repayment->paid_penalty));
+                
+                $penaltyToApply = floatval($this->penality);
+                $remainingPenalty = max(0, $penaltyToApply - floatval($repayment->paid_penalty));
 
                 // ----- Allocation -----
                 $paidPen = 0.0;
@@ -285,7 +288,8 @@ class ManageRepayments extends Component
                 $repayment->paid_amount   = floatval($repayment->paid_amount)   + $totalPaid;
 
                 // Recalculer le total_due si pénalité a changé (sécurité)
-                $repayment->total_due = round($principalAmount + $interestAmount + floatval($repayment->penalty), 3);
+                // $repayment->total_due = round($principalAmount + $interestAmount + floatval($repayment->penalty), 3);
+                $repayment->total_due = round($principalAmount + $interestAmount + $penaltyToApply, 3);
 
                 $repayment->is_paid = ($repayment->paid_amount >= $repayment->total_due);
                 if ($repayment->is_paid) {
