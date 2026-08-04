@@ -34,6 +34,7 @@ class UserManagement extends Component
     public string $search = '';
     public int $perPage = 10;
     public bool $editModal = false;
+    public bool $is_suspended = false;
 
     public $roleAgent;
     public $rolesAgents = ['admin', 'caissier', 'recouvreur', 'receptionniste', 'membre', 'comptable'];
@@ -58,6 +59,7 @@ class UserManagement extends Component
             'email' => ['required', 'email', 'max:255', $uniqueEmail],
             'role' => ['nullable', 'in:admin,caissier,recouvreur,membre'],
             'status' => ['required', 'boolean'],
+            'is_suspended' => ['required', 'boolean'],
         ];
     }
 
@@ -72,6 +74,7 @@ class UserManagement extends Component
         'email.email' => 'L’adresse e-mail doit être valide.',
         'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
         'status.required' => 'Choisir le statut du membre.',
+        'is_suspended.required' => 'Choisir le statut de suspension du membre.',
     ];
 
     // ✅ Réinitialise le formulaire
@@ -80,7 +83,7 @@ class UserManagement extends Component
         $this->reset([
             'userId', 'name', 'postnom', 'prenom', 'date_naissance',
             'telephone', 'adresse_physique', 'profession',
-            'email', 'password', 'role', 'status', 'roles'
+            'email', 'password', 'role', 'status', 'roles', 'is_suspended'
         ]);
     }
 
@@ -91,6 +94,7 @@ class UserManagement extends Component
             $validated = $this->validate();
             $validated['password'] = Hash::make('1234');
             $validated['status'] = (int) $this->status;
+            $validated['is_suspended'] = (bool) $this->is_suspended;
             $validated['role'] = $this->roleAgent ?? 'membre';
             $validated['code'] = $this->generateUniqueAccountCode();
 
@@ -132,7 +136,7 @@ class UserManagement extends Component
             $this->fill($user->only([
                 'name', 'postnom', 'prenom', 'date_naissance',
                 'telephone', 'adresse_physique', 'profession',
-                'email', 'status'
+                'email', 'status', 'is_suspended'
             ]));
             $this->roleAgent = $user->role;
             $this->roles = $user->roles()->pluck('name')->toArray();
@@ -156,6 +160,7 @@ class UserManagement extends Component
                 $validated['password'] = Hash::make($this->password);
             }
             $validated['role'] = $this->roleAgent;
+            $validated['is_suspended'] = (bool) $this->is_suspended;
 
             $user = User::findOrFail($this->userId);
             $user->update($validated);

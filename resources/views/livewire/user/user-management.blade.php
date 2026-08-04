@@ -47,12 +47,15 @@
                                 <th>Téléphone</th>
                                 <th>Rôles</th>
                                 <th>Status</th>
+                                <th>Suspendu</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($members as $member)
-                                <tr>
+                                <tr @if ($member->is_suspended)
+                                    class="table-danger"
+                                @endif>
                                     <td>{{ $member->code }}</td>
                                     <td>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</td>
                                     <td>{{ $member->email }}</td>
@@ -70,6 +73,13 @@
                                         @endif
                                     </td>
                                     <td>
+                                        @if ($member->is_suspended)
+                                            <span class="badge bg-warning">Suspendu</span>
+                                        @else
+                                            <span class="badge bg-info">Non suspendu</span>
+                                        @endif
+                                    </td>
+                                    <td>
                                         <div class="d-flex align-items-center gap-1">
                                             @can ('modifier-utilisateur')
                                                 <button wire:click='edit({{ $member->id }})'
@@ -84,7 +94,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7" class="text-center">
+                                    <td colspan="8" class="text-center">
                                         <div class="alert alert-danger" role="alert">
                                             Rechercher un client dans le système.
                                         </div>

@@ -59,7 +59,8 @@ class User extends Authenticatable
         'role',
         'status',
         'agent_id',
-        'last_transaction_at'
+        'last_transaction_at',
+        'is_suspended',
     ];
 
     /**

@@ -63,6 +63,7 @@ class ClientsNonCollectes extends Component
         $baseQuery = User::query()
             ->where('role', 'membre')
             ->where('status', 1)
+            ->where('is_suspended', false)
 
             ->when($agentId, function ($query) use ($agentId) {
                 $query->where('agent_id', $agentId);
