@@ -72,13 +72,22 @@
                     </div>
 
                     <!-- Status physique -->
-                    <div class="col-md-4 mb-1">
+                    <div class="col-md-2 mb-1">
                         <label for="adresse_physique" class="form-label">Status</label>
                         <div class="form-check form-switch">
                             <input class="form-check-input" type="checkbox" id="status" wire:model.defer="status">
                             <label class="form-check-label" for="status">Actif</label>
                         </div>
                         @error('adresse_physique') <span class="text-danger">{{ $message }}</span> @enderror
+                    </div>
+                    <!-- Suspendu -->
+                    <div class="col-md-2 mb-1">
+                        <label for="is_suspended" class="form-label">Suspendu</label>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="is_suspended" wire:model.defer="is_suspended">
+                            <label class="form-check-label" for="is_suspended">Oui</label>
+                        </div>
+                        @error('is_suspended') <span class="text-danger">{{ $message }}</span> @enderror
                     </div>
 
                     <!-- Mot de passe (pour la mise à jour uniquement) -->
