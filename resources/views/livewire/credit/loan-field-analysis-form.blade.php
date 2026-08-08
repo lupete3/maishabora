@@ -1,4 +1,17 @@
 <div>
+    {{-- Style CSS dédié pour empêcher l'écrasement des inputs dans les tableaux HTML --}}
+    <style>
+        .table-responsive .form-control-sm,
+        .table-responsive .form-select-sm {
+            min-width: 120px;
+        }
+        .table-responsive th, 
+        .table-responsive td {
+            white-space: nowrap;
+            vertical-align: middle;
+        }
+    </style>
+    
     @if (session()->has('message'))
         <div class="alert alert-success">{{ session('message') }}</div>
     @endif
@@ -169,7 +182,7 @@
                         <label class="form-label">Marge %</label>
                         <input type="number" step="0.01" class="form-control" wire:model="businessProfile.business_margin_percent">
                     </div>
-                    <div class="col-md-6">
+                    {{-- <div class="col-md-6">
                         <label class="form-label">Historique entreprise</label>
                         <textarea class="form-control" rows="2" wire:model="businessProfile.business_history"></textarea>
                     </div>
@@ -180,10 +193,10 @@
                     <div class="col-12">
                         <label class="form-label">Commentaires achat, vente a credit, concurrence</label>
                         <textarea class="form-control" rows="2" wire:model="businessProfile.purchase_sales_competition_comments"></textarea>
-                    </div>
+                    </div> --}}
                 </div>
 
-                <h6 class="mt-4">Destination du credit</h6>
+                {{-- <h6 class="mt-4">Destination du credit</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
                         <thead><tr><th>Destination</th><th>Montant</th><th>Debut</th><th>Fin</th><th>Part client</th><th>Part MAISHA BORA</th><th>Part tiers</th><th style="width: 50px;">Action</th></tr></thead>
@@ -209,7 +222,7 @@
                     <button type="button" class="btn btn-xs btn-outline-primary mt-1" wire:click="addInvestmentPlanItem">
                         <i class="bx bx-plus"></i> Ajouter un plan
                     </button>
-                </div>
+                </div> --}}
             </div>
         </div>
 
@@ -219,7 +232,7 @@
                 <h6>Bilan</h6>
                 <div class="row g-3">
                     @foreach([
-                        'cash' => 'Cash *', 'bank' => 'Banque', 'savings' => 'Epargne', 'receivables' => 'Creances',
+                        'cash' => 'Cash *', 'bank' => 'Banque', 'savings' => 'Epargne Maisha Bora', 'receivables' => 'Creances',
                         'supplier_advances' => 'Avance fournisseurs', 'stock' => 'Stock *', 'machines_tools' => 'Machines et outils',
                         'transport_assets' => 'Transport', 'buildings_land' => 'Batiments et terrain', 'supplier_debts' => 'Dettes fournisseurs',
                         'current_customer_credit' => 'Credit client en cours', 'short_term_debt' => 'Dette court terme',
@@ -234,10 +247,10 @@
                     <div class="col-md-4"><div class="alert alert-secondary mb-0">Total actif: {{ number_format($balanceTotals['total_assets'], 2) }}</div></div>
                     <div class="col-md-4"><div class="alert alert-secondary mb-0">Total dettes: {{ number_format($balanceTotals['total_debts'], 2) }}</div></div>
                     <div class="col-md-4"><div class="alert alert-secondary mb-0">Passif total: {{ number_format($balanceTotals['total_liabilities_equity'], 2) }}</div></div>
-                    <div class="col-12">
+                    {{-- <div class="col-12">
                         <label class="form-label">Commentaires bilan</label>
                         <textarea class="form-control" rows="2" wire:model="balance.comments"></textarea>
-                    </div>
+                    </div> --}}
                 </div>
 
                 <h6 class="mt-4">TFR et charges</h6>
@@ -247,7 +260,7 @@
                         <input type="number" step="0.01" class="form-control" wire:model="cashflow.cash_sales">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label">Ventes credit</label>
+                        <label class="form-label">Ventes credit (créances)</label>
                         <input type="number" step="0.01" class="form-control" wire:model="cashflow.credit_sales">
                     </div>
                     <div class="col-md-3">
@@ -281,10 +294,10 @@
                     <div class="col-md-4"><div class="alert alert-info mb-0">Marge brute: {{ number_format($cashflowTotals['gross_margin'], 2) }}</div></div>
                     <div class="col-md-4"><div class="alert alert-info mb-0">Revenu disponible: {{ number_format($cashflowTotals['available_income'], 2) }}</div></div>
                     <div class="col-md-4"><div class="alert alert-success mb-0">Capacite remboursement: {{ number_format($cashflowTotals['repayment_capacity'], 2) }}</div></div>
-                    <div class="col-12">
+                    {{-- <div class="col-12">
                         <label class="form-label">Commentaires TFR</label>
                         <textarea class="form-control" rows="2" wire:model="cashflow.comments"></textarea>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
@@ -319,7 +332,9 @@
                 <h6 class="mt-4">Stock, immobilises, CAMV ou production</h6>
                 <div class="table-responsive">
                     <table class="table table-sm table-bordered">
-                        <thead><tr><th>Section</th><th>Description</th><th>PA</th><th>PV</th><th>Qte</th><th>Montant</th><th>Observations</th><th style="width: 50px;">Action</th></tr></thead>
+                        <thead><tr><th>Section</th><th>Description</th><th>PA</th><th>PV</th><th>Qte</th><th>Montant</th>
+                            {{-- <th>Observations</th> --}}
+                            <th style="width: 50px;">Action</th></tr></thead>
                         <tbody>
                             @foreach($inventoryItems as $i => $row)
                                 <tr>
@@ -337,7 +352,7 @@
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.sale_price"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.quantity"></td>
                                     <td><input type="number" step="0.01" class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.amount"></td>
-                                    <td><input class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.observations"></td>
+                                    {{-- <td><input class="form-control form-control-sm" wire:model="inventoryItems.{{ $i }}.observations"></td> --}}
                                     <td class="text-center">
                                         <button type="button" class="btn btn-sm btn-outline-danger" wire:click="removeInventoryItem({{ $i }})">
                                             <i class="bx bx-trash"></i>

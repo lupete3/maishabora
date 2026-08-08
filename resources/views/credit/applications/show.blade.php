@@ -161,10 +161,10 @@
                             <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#navs-top-home"
                                 role="tab">Fiche terrain</button>
                         </li>
-                        <li class="nav-item">
+                        {{-- <li class="nav-item">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#navs-top-analyse"
                                 role="tab">Analyse</button>
-                        </li>
+                        </li> --}}
                         <li class="nav-item">
                             <button class="nav-link" data-bs-toggle="tab" data-bs-target="#navs-top-decision"
                                 role="tab">Décision</button>

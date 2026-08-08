@@ -160,7 +160,7 @@
             </div>
         </div>
 
-        <div class="subsection-title">C. Destination du credit et plan d'investissement</div>
+        {{-- <div class="subsection-title">C. Destination du credit et plan d'investissement</div>
         <table class="table-custom">
             <thead><tr><th>Destination precise</th><th>Montant</th><th>Debut prevu</th><th>Fin prevue</th><th>Part client</th><th>Part Maisha B.</th><th>Part tiers</th></tr></thead>
             <tbody>
@@ -168,9 +168,9 @@
                     <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
                 @endfor
             </tbody>
-        </table>
+        </table> --}}
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
 
         <div class="section-title">II. Informations sur le menage</div>
         <div class="row-grid">
@@ -190,7 +190,7 @@
                 <col style="width:40%">
             </colgroup>
             <tbody>
-                @for($i = 0; $i < 5; $i++)
+                @for($i = 0; $i < 3; $i++)
                     <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
                 @endfor
             </tbody>
@@ -204,7 +204,7 @@
             <div class="col-4"><div class="field-box"><div class="field-label">Montant loyer mensuel</div><div class="field-value-blank"></div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label">Loyer paye d'avance</div><div class="field-value-blank"></div></div></div>
             <div class="col-12"><div class="field-box"><div class="field-label">Explications pour trouver le domicile</div><div class="field-value-blank tall"></div></div></div>
-            <div class="col-12"><div class="field-box"><div class="field-label">Impressions generales sur le menage</div><div class="field-value-blank notes"></div></div></div>
+            {{-- <div class="col-12"><div class="field-box"><div class="field-label">Impressions generales sur le menage</div><div class="field-value-blank notes"></div></div></div> --}}
         </div>
 
         <div class="section-title">III. References du menage</div>
@@ -226,9 +226,9 @@
                 <tr><td>Date ou periode de debut</td><td class="blank-cell"></td></tr>
                 <tr><td>Nombre d'employes</td><td class="blank-cell"></td></tr>
                 <tr><td>Marge estimee (%)</td><td class="blank-cell"></td></tr>
-                <tr><td>Historique de l'entreprise</td><td class="blank-cell" style="height: 22px;"></td></tr>
+                {{-- <tr><td>Historique de l'entreprise</td><td class="blank-cell" style="height: 22px;"></td></tr>
                 <tr><td>Observations qualitatives</td><td class="blank-cell" style="height: 22px;"></td></tr>
-                <tr><td>Commentaires achat, vente a credit, concurrence</td><td class="blank-cell" style="height: 22px;"></td></tr>
+                <tr><td>Commentaires achat, vente a credit, concurrence</td><td class="blank-cell" style="height: 22px;"></td></tr> --}}
             </tbody>
         </table>
 
@@ -245,25 +245,33 @@
         <div class="section-title">V. Details du bilan a encoder</div>
         <div class="subsection-title">A. Details sur le stock</div>
         <table class="table-custom">
-            <thead><tr><th>Description article</th><th>Prix achat</th><th>Prix vente</th><th>Quantite</th><th>Montant / valeur</th><th>Observations</th></tr></thead>
+            <thead><tr><th>Description article</th><th>Prix achat</th><th>Prix vente</th><th>Quantite</th><th>Montant / valeur</th>
+                {{-- <th>Observations</th> --}}
+            </tr></thead>
             <tbody>
-                @for($i = 0; $i < 6; $i++)
-                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
+                @for($i = 0; $i < 5; $i++)
+                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td>
+                        {{-- <td class="blank-cell"></td> --}}
+                    </tr>
                 @endfor
             </tbody>
         </table>
 
         <div class="subsection-title">B. Details sur les immobilises</div>
         <table class="table-custom">
-            <thead><tr><th>Description bien</th><th>Prix achat</th><th>Prix vente / valeur</th><th>Quantite</th><th>Montant</th><th>Observations</th></tr></thead>
+            <thead><tr><th>Description bien</th><th>Prix achat</th><th>Prix vente / valeur</th><th>Quantite</th><th>Montant</th>
+                {{-- <th>Observations</th> --}}
+            </tr></thead>
             <tbody>
                 @for($i = 0; $i < 5; $i++)
-                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
+                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td>
+                        {{-- <td class="blank-cell"></td> --}}
+                    </tr>
                 @endfor
             </tbody>
         </table>
 
-        <div class="subsection-title">C. Investissement non inclus dans le bilan</div>
+        {{-- <div class="subsection-title">C. Investissement non inclus dans le bilan</div>
         <table class="table-custom">
             <thead><tr><th>Description</th><th>Montant / valeur</th><th>Observations</th></tr></thead>
             <tbody>
@@ -272,20 +280,25 @@
                 @endfor
             </tbody>
         </table>
-        <div class="field-box"><div class="field-label">Commentaires bilan</div><div class="field-value-blank tall"></div></div>
+        <div class="field-box"><div class="field-label">Commentaires bilan</div><div class="field-value-blank tall"></div></div> --}}
 
+        <div class="page-break"></div>
         <div class="section-title">VI. TFR detaille et charges</div>
         <div class="subsection-title">A. Calcul CAMV / achats retenus</div>
         <table class="table-custom">
-            <thead><tr><th>Article</th><th>Prix achat</th><th>Prix vente</th><th>Quantite vendue</th><th>Montant</th><th>Observations</th></tr></thead>
+            <thead><tr><th>Article</th><th>Prix achat</th><th>Prix vente</th><th>Quantite vendue</th><th>Montant</th>
+                {{-- <th>Observations</th> --}}
+            </tr></thead>
             <tbody>
-                @for($i = 0; $i < 8; $i++)
-                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
+                @for($i = 0; $i < 7; $i++)
+                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td>
+                        {{-- <td class="blank-cell"></td> --}}
+                    </tr>
                 @endfor
             </tbody>
         </table>
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
 
         <div class="two-columns">
             <div>
@@ -297,7 +310,7 @@
                     </colgroup>
 
                     <tbody>
-                        @foreach(['Loyer', 'Personnel', 'Transport', 'Eau et electricite', 'Communication', 'Autres charges'] as $label)
+                        @foreach(['Loyer', 'Personnel', 'Transport', 'Communication', 'Autres charges'] as $label)
                             <tr>
                                 <td>{{ $label }}</td>
                                 <td class="blank-cell"></td>
@@ -315,7 +328,7 @@
                 <div class="subsection-title">C. Depenses menage</div>
                 <table class="table-custom">
                     <tbody>
-                        @foreach(['Loyer', 'Nourriture', 'Education', 'Eau et electricite', 'Transport', 'Partage'] as $label)
+                        @foreach(['Loyer', 'Nourriture', 'Education', 'Transport'] as $label)
                             <tr><td>{{ $label }}</td><td class="blank-cell"></td></tr>
                         @endforeach
                         <tr class="total-row"><td>Total depenses menage <span class="required">*</span></td><td class="blank-cell"></td></tr>
@@ -329,15 +342,19 @@
             <div class="col-4"><div class="field-box"><div class="field-label">Source du revenu menage</div><div class="field-value-blank"></div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label">Montant revenu menage</div><div class="field-value-blank"></div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label">Periodicite</div><div class="field-value-blank"></div></div></div>
-            <div class="col-12"><div class="field-box"><div class="field-label">Commentaires TFR</div><div class="field-value-blank tall"></div></div></div>
+            {{-- <div class="col-12"><div class="field-box"><div class="field-label">Commentaires TFR</div><div class="field-value-blank tall"></div></div></div> --}}
         </div>
 
         <div class="subsection-title">D. Cout de production si activite de production</div>
         <table class="table-custom">
-            <thead><tr><th>Produit</th><th>Cout / prix achat</th><th>Prix vente</th><th>Quantite</th><th>Montant</th><th>Observations</th></tr></thead>
+            <thead><tr><th>Produit</th><th>Cout / prix achat</th><th>Prix vente</th><th>Quantite</th><th>Montant</th>
+                {{-- <th>Observations</th> --}}
+            </tr></thead>
             <tbody>
-                @for($i = 0; $i < 6; $i++)
-                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td></tr>
+                @for($i = 0; $i < 5; $i++)
+                    <tr><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td><td class="blank-cell"></td>
+                        {{-- <td class="blank-cell"></td> --}}
+                    </tr>
                 @endfor
             </tbody>
         </table>
@@ -361,6 +378,7 @@
             <div class="col-12"><div class="field-box"><div class="field-label">References / adresse</div><div class="field-value-blank tall"></div></div></div>
         </div>
 
+        <div class="page-break"></div>
         <div class="subsection-title">C. Informations sur le codebiteur</div>
         <div class="row-grid">
             <div class="col-4"><div class="field-box"><div class="field-label">Nom</div><div class="field-value-blank"></div></div></div>
@@ -373,7 +391,7 @@
             <div class="col-6"><div class="field-box"><div class="field-label">Relation avec emprunteur</div><div class="field-value-blank"></div></div></div>
         </div>
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
 
         <div class="section-title">VIII. Proposition de l'agent de credit</div>
         <div class="field-box"><div class="field-label">Conclusions finales : impressions, risques, perspectives <span class="required">*</span></div><div class="field-value-blank notes"></div></div>

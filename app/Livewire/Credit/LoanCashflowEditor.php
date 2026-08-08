@@ -79,8 +79,8 @@ class LoanCashflowEditor extends Component
             - ($this->charges_menage_mensuelles ?? 0)
             - ($this->owner_withdrawals_monthly ?? 0);
 
-        // Capacité de remboursement (50% conservatif)
-        $capacity = max(0, $available * 0.5);
+        // Capacité de remboursement (65% conservatif)
+        $capacity = max(0, $available * 0.65);
 
         // Stocker localement pour affichage
         $this->revenu_disponible_mensuel = $available;
@@ -111,14 +111,14 @@ class LoanCashflowEditor extends Component
             'capacite_remboursement_mensuelle' => $res['capacity'],
             'date_calcul' => now(),
         ];
-        
+
         // Enregistrer ou mettre à jour
         LoanCashflow::updateOrCreate(
             ['loan_application_id' => $this->loan_application_id],
             $data
         );
 
-        session()->flash('message', 'TFR enregistré');
+        notyf()->success('TFR enregistré');
         $this->dispatch('tfrSaved', $this->loan_application_id);
     }
 

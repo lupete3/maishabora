@@ -387,7 +387,7 @@ class LoanFieldAnalysisForm extends Component
 
     protected function rows($collection, array $defaults, int $minimum): array
     {
-        $rows = $collection->map(fn ($row) => array_merge($defaults, Arr::except($row->toArray(), ['created_at', 'updated_at'])))->values()->toArray();
+        $rows = $collection->map(fn ($row) => array_merge($defaults, $this->normalizeModelDates(Arr::except($row->attributesToArray(), ['created_at', 'updated_at']))))->values()->toArray();
 
         while (count($rows) < $minimum) {
             $rows[] = $defaults;
@@ -402,14 +402,29 @@ class LoanFieldAnalysisForm extends Component
             return $defaults;
         }
 
-        return array_merge($defaults, Arr::only($model->toArray(), array_keys($defaults)));
+        return array_merge($defaults, $this->normalizeModelDates(Arr::only($model->attributesToArray(), array_keys($defaults))));
+    }
+
+    protected function normalizeModelDates(array $data): array
+    {
+        return collect($data)->map(function ($value) {
+            if ($value instanceof \DateTimeInterface) {
+                return $value->format('Y-m-d');
+            }
+
+            if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)?$/', $value)) {
+                return \Carbon\Carbon::parse($value)->format('Y-m-d');
+            }
+
+            return $value;
+        })->toArray();
     }
 
     protected function expenseRows(string $section): array
     {
         $defaults = $section === 'business'
-            ? ['Loyer', 'Personnel', 'Transport', 'Eau et electricite', 'Communication', 'Autres charges']
-            : ['Loyer', 'Nourriture', 'Education', 'Eau et electricite', 'Transport', 'Partage'];
+            ? ['Loyer', 'Personnel', 'Transport', 'Communication', 'Autres charges']
+            : ['Loyer', 'Nourriture', 'Education', 'Transport'];
 
         $existing = $this->loan->expenseLines->where('section', $section)->map(fn ($row) => [
             'label' => $row->label,
