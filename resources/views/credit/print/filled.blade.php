@@ -190,7 +190,7 @@
             </div>
         </div>
 
-        <div class="subsection-title">C. Destination du credit et plan d'investissement</div>
+        {{-- <div class="subsection-title">C. Destination du credit et plan d'investissement</div>
         <table class="table-custom">
             <thead><tr><th>Destination</th><th>Montant</th><th>Debut</th><th>Fin</th><th>Part client</th><th>Part MAISHA BORA</th><th>Part tiers</th></tr></thead>
             <tbody>
@@ -208,9 +208,9 @@
                     <tr><td colspan="7">Aucun plan d'investissement renseigne.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </table> --}}
 
-        <div class="subsection-title">D. Ratios financiers (calculés par le système)</div>
+        {{-- <div class="subsection-title">D. Ratios financiers (calculés par le système)</div>
         <table class="table-custom" style="width: 100%;">
             <thead>
                 <tr>
@@ -230,9 +230,9 @@
                     <td>{{ $ratios?->profitabilite_nette ? number_format($ratios->profitabilite_nette, 2) . ' %' : 'N/A' }}</td>
                 </tr>
             </tbody>
-        </table>
+        </table> --}}
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
 
         <div class="section-title">II. Informations sur le menage</div>
         <div class="row-grid">
@@ -257,6 +257,7 @@
             </tbody>
         </table>
 
+        <div class="page-break"></div>
         <div class="subsection-title">Habitation</div>
         <div class="row-grid">
             <div class="col-3"><div class="field-box"><div class="field-label">Type habitation</div><div class="field-value">{{ $visit?->housing_type ?? 'N/A' }}</div></div></div>
@@ -304,7 +305,7 @@
             </tbody>
         </table>
 
-        <div class="page-break"></div>
+        {{-- <div class="page-break"></div> --}}
 
         <div class="section-title">V. Details du bilan</div>
         <div class="two-columns">
@@ -335,7 +336,7 @@
                 </table>
             </div>
         </div>
-        <div class="subsection-title">Investissement non inclus dans le bilan</div>
+        {{-- <div class="subsection-title">Investissement non inclus dans le bilan</div>
         <table class="table-custom">
             <thead><tr><th>Description</th><th>Montant</th><th>Observations</th></tr></thead>
             <tbody>
@@ -345,7 +346,7 @@
                     <tr><td colspan="3">Aucun investissement hors bilan.</td></tr>
                 @endforelse
             </tbody>
-        </table>
+        </table> --}}
 
         <div class="section-title">VI. TFR detaille</div>
         <div class="subsection-title">Calcul CAMV</div>
@@ -397,6 +398,7 @@
             <div class="col-12"><div class="field-box"><div class="field-label">Commentaires</div><div class="field-value tall">{{ $cashflow?->comments ?? 'N/A' }}</div></div></div>
         </div>
 
+        @if ($productionItems ->isNotEmpty())
         <div class="subsection-title">Calcul du cout de production</div>
         <table class="table-custom">
             <thead><tr><th>Produit</th><th>PA / cout</th><th>PV</th><th>Qte</th><th>Montant</th><th>Observations</th></tr></thead>
@@ -408,6 +410,7 @@
                 @endforelse
             </tbody>
         </table>
+        @endif
 
         <div class="section-title">VIII. Detail des garanties</div>
         <table class="table-custom">
@@ -479,12 +482,12 @@
                 $coverageRatio = ($totalSecurities / $proposal->proposed_amount) * 100;
             }
         @endphp
-        <div class="subsection-title" style="color: #14532d; margin-top: 10px;">Indicateurs d'aide à la décision</div>
+        {{-- <div class="subsection-title" style="color: #14532d; margin-top: 10px;">Indicateurs d'aide à la décision</div>
         <div class="row-grid" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 8px; border-radius: 4px;">
             <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Mensualité simulée (EMI)</div><div class="field-value" style="font-weight: bold; background: #fff;">{{ $fmt($proposedEmi) }}</div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Taux d'effort (Mensualité / Capacité)</div><div class="field-value" style="font-weight: bold; background: #fff; color: {{ $tauxEffort > 80 ? '#b91c1c' : '#14532d' }};">{{ $tauxEffort ? number_format($tauxEffort, 2) . ' %' : 'N/A' }}</div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label" style="color: #14532d;">Couverture des garanties</div><div class="field-value" style="font-weight: bold; background: #fff;">{{ $coverageRatio ? number_format($coverageRatio, 2) . ' %' : 'N/A' }}</div></div></div>
-        </div>
+        </div> --}}
 
         <p style="font-size: 9px; margin-top: 18px;">
             Le soussigne certifie avoir verifie les documents, evaluations et garanties associes au dossier.
