@@ -61,6 +61,8 @@ class User extends Authenticatable
         'agent_id',
         'last_transaction_at',
         'is_suspended',
+        'google_id',
+        'provider',
     ];
 
     /**

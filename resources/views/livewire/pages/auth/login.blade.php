@@ -178,6 +178,12 @@ new #[Layout('layouts.guest')] class extends Component
                         </button>
                     </div>
 
+                    <div class="mb-3">
+                        <a href="{{ route('auth.google') }}" class="btn btn-outline-danger d-grid w-100">
+                            Connexion avec Google
+                        </a>
+                    </div>
+
                 </form>
 
                 {{-- <p class="text-center">

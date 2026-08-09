@@ -274,6 +274,14 @@ Route::get('/cron/executer-retards/{token}', function ($token) {
     return 'Vérification des retards exécutée avec succès à ' . now();
 });
 
+// Google OAuth Routes
+Route::middleware('guest')->group(function () {
+    Route::get('auth/google', [\App\Http\Controllers\Auth\GoogleController::class, 'redirectToGoogle'])
+        ->name('auth.google');
+    Route::get('auth/google/callback', [\App\Http\Controllers\Auth\GoogleController::class, 'handleGoogleCallback'])
+        ->name('auth.google.callback');
+});
+
 //Route to 404 page not found
 Route::fallback(function () {
     return view('not-found');
