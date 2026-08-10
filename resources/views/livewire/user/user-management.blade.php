@@ -7,18 +7,54 @@
     <div class="table-wrapper">
         <div class="card has-actions has-filter">
 
-            <div class="card-header border-bottom">
-                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3">
-                    <div class="d-flex flex-wrap align-items-center gap-2 w-100 w-md-auto">
-                        <div class="input-group input-group-merge w-100 w-md-auto" style="min-width: 250px;">
+            <div class="card-header border-bottom py-3">
+                <div class="row g-3 align-items-center">
+                    <!-- Barre de recherche : Pleine largeur sur mobile, s'adapte sur grand écran -->
+                    <div class="col-12 col-xl-3 col-lg-4 col-md-6">
+                        <div class="input-group input-group-merge">
                             <span class="input-group-text"><i class="bx bx-search"></i></span>
                             <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
                                 placeholder="Rechercher un utilisateur...">
                         </div>
                     </div>
 
-                    <div class="d-flex align-items-center gap-2 ms-auto ms-md-0">
-                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm ">
+                    <!-- Filtres : 2 filtres par ligne sur mobile/tablette, alignés en ligne sur écran large -->
+                    <div class="col-6 col-lg-2 col-md-3">
+                        <select wire:model.live.debounce.300ms="statusFilter" class="form-select form-select-sm">
+                            <option value="all">Tous statuts</option>
+                            <option value="active">Actifs</option>
+                            <option value="inactive">Inactifs</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-lg-2 col-md-3">
+                        <select wire:model.live.debounce.300ms="suspendedFilter" class="form-select form-select-sm">
+                            <option value="all">Tous suspension</option>
+                            <option value="yes">Suspendus</option>
+                            <option value="no">Non suspendus</option>
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-lg-2 col-md-3">
+                        <select wire:model.live.debounce.300ms="roleFilter" class="form-select form-select-sm">
+                            <option value="all">Tous rôles</option>
+                            @foreach ($roles_user as $role)
+                                <option value="{{ $role->name }}">{{ ucfirst($role->name) }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    <div class="col-6 col-lg-2 col-md-3">
+                        <select wire:model.live.debounce.300ms="googleAccessFilter" class="form-select form-select-sm">
+                            <option value="all">Tous utilisateurs</option>
+                            <option value="yes">Accès Google</option>
+                            <option value="no">Sans accès Google</option>
+                        </select>
+                    </div>
+
+                    <!-- Actions (Pagination & Bouton d'ajout) -->
+                    <div class="col-12 col-xl-1 ms-auto d-flex align-items-center justify-content-between justify-content-md-end gap-2">
+                        <select wire:model.live.debounce.300ms="perPage" class="form-select form-select-sm w-auto">
                             <option value="10">10</option>
                             <option value="30">30</option>
                             <option value="50">50</option>
@@ -27,7 +63,7 @@
                         </select>
 
                         @can('ajouter-utilisateur')
-                            <button class="btn btn-primary btn-sm" wire:click='openModal'>
+                            <button class="btn btn-primary btn-sm text-nowrap" wire:click='openModal'>
                                 <i class="bx bx-plus me-1"></i> Ajouter
                             </button>
                         @endcan

@@ -14,12 +14,13 @@ class ClientStatReportComponent extends Component
 
     public $sexe = '';
     public $status = '';
+    public $suspended = '';
     public $startDate;
     public $endDate;
 
     public $periodFilter = '';
 
-    protected $queryString = ['sexe', 'status', 'startDate', 'endDate', 'periodFilter'];
+    protected $queryString = ['sexe', 'status', 'suspended', 'startDate', 'endDate', 'periodFilter'];
 
     public function exportPdf()
     {
@@ -31,6 +32,10 @@ class ClientStatReportComponent extends Component
 
         if ($this->status !== '') {
             $description[] = "Statut: " . ($this->status ? 'Actif' : 'Inactif');
+        }
+
+        if ($this->suspended !== '') {
+            $description[] = "Suspension: " . ($this->suspended ? 'Suspendu' : 'Non suspendu');
         }
 
         if ($this->startDate && $this->endDate) {
@@ -74,6 +79,10 @@ class ClientStatReportComponent extends Component
 
         if ($this->status !== '') {
             $clientsQuery->where('status', $this->status);
+        }
+
+        if ($this->suspended !== '') {
+            $clientsQuery->where('is_suspended', $this->suspended);
         }
 
         if ($this->startDate && $this->endDate && $this->startDate === $this->endDate) {
@@ -123,6 +132,8 @@ class ClientStatReportComponent extends Component
                 'Adresse',
                 'Telephone',
                 'Statut',
+                'Suspension',
+                'Membre',
                 'Date Inscription'
             ];
 
@@ -144,6 +155,8 @@ class ClientStatReportComponent extends Component
                         $member->adresse_physique,
                         $member->telephone,
                         $member->status ? 'Actif' : 'Inactif',
+                        $member->is_suspended ? 'Suspendu' : 'Non suspendu',
+                        $member->role === 'membre' ? 'Oui' : 'Non',
                         $member->created_at ? $member->created_at->format('d/m/Y H:i') : ''
                     ];
 
@@ -175,6 +188,10 @@ class ClientStatReportComponent extends Component
 
         if ($this->status !== '') {
             $query->where('status', $this->status);
+        }
+
+        if ($this->suspended !== '') {
+            $query->where('is_suspended', $this->suspended);
         }
 
         if ($this->startDate && $this->endDate && $this->startDate === $this->endDate) {

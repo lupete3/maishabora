@@ -35,6 +35,10 @@ class UserManagement extends Component
     public int $perPage = 10;
     public bool $editModal = false;
     public bool $is_suspended = false;
+    public string $statusFilter = 'all';
+    public string $suspendedFilter = 'all';
+    public string $roleFilter = 'all';
+    public string $googleAccessFilter = 'all';
 
     public $roleAgent;
     public $rolesAgents = ['admin', 'caissier', 'recouvreur', 'receptionniste', 'membre', 'comptable'];
@@ -218,10 +222,33 @@ class UserManagement extends Component
                       ->orWhere('name', 'like', "%{$this->search}%")
                       ->orWhere('postnom', 'like', "%{$this->search}%")
                       ->orWhere('prenom', 'like', "%{$this->search}%")
-                      ->orWhere('telephone', 'like', "%{$this->search}%");
+                      ->orWhere('telephone', 'like', "%{$this->search}%")
+                      ->orWhere('email', 'like', "%{$this->search}%");
                 });
-            } else {
+            }
+
+            if ($this->roleFilter !== 'all') {
+                $query->whereHas('roles', fn($r) => $r->where('name', $this->roleFilter));
+            } elseif (! $this->search) {
                 $query->whereHas('roles', fn($r) => $r->where('name', 'membre'));
+            }
+
+            if ($this->statusFilter === 'active') {
+                $query->where('status', true);
+            } elseif ($this->statusFilter === 'inactive') {
+                $query->where('status', false);
+            }
+
+            if ($this->suspendedFilter === 'yes') {
+                $query->where('is_suspended', true);
+            } elseif ($this->suspendedFilter === 'no') {
+                $query->where('is_suspended', false);
+            }
+
+            if ($this->googleAccessFilter === 'yes') {
+                $query->whereNotNull('google_id');
+            } elseif ($this->googleAccessFilter === 'no') {
+                $query->whereNull('google_id');
             }
 
             $members = $query->paginate($this->perPage);

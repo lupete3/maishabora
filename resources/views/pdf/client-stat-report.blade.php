@@ -83,6 +83,11 @@
                     <th>Nom</th>
                     <th>Sexe</th>
                     <th>Téléphone</th>
+                    <th>Profession</th>
+                    <th>Collecteur</th>
+                    <th>Statut</th>
+                    <th>Suspension</th>
+                    <th>Membre</th>
                     <th>Date Adhésion</th>
                 </tr>
             </thead>
@@ -93,6 +98,11 @@
                         <td>{{ $client->name }} {{ $client->postnom }} {{ $client->prenom }}</td>
                         <td>{{ $client->sexe }}</td>
                         <td>{{ $client->telephone }}</td>
+                        <td>{{ $client->profession }}</td>
+                        <td>{{ $client->agent ? $client->agent->name . ' ' . $client->agent->postnom : 'N/A' }}</td>
+                        <td>{{ $client->status ? 'Actif' : 'Inactif' }}</td>
+                        <td>{{ $client->is_suspended ? 'Suspendu' : 'Non suspendu' }}</td>
+                        <td>{{ $client->role === 'membre' ? 'Oui' : 'Non' }}</td>
                         <td>{{ \Carbon\Carbon::parse($client->created_at)->format('d/m/Y') }}</td>
                     </tr>
                 @endforeach

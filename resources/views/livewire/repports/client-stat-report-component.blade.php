@@ -113,6 +113,14 @@
             </div>
 
             <div class="col-md-2 mb-3">
+                <select wire:model.lazy="suspended" class="form-select">
+                    <option value="">Suspension</option>
+                    <option value="0">Non suspendu</option>
+                    <option value="1">Suspendu</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 mb-3">
                 <input type="date" wire:model.lazy="startDate" class="form-control" placeholder="Depuis le" />
             </div>
 
@@ -154,7 +162,9 @@
                     <th>Téléphone</th>
                     <th>Profession</th>
                     <th>Date Adhésion</th>
+                    <th>Collecteur</th>
                     <th>Statut</th>
+                    <th>Suspension</th>
                 </tr>
             </thead>
             <tbody>
@@ -166,15 +176,23 @@
                         <td>{{ $client->telephone }}</td>
                         <td>{{ $client->profession }}</td>
                         <td>{{ \Carbon\Carbon::parse($client->created_at)->format('d/m/Y') }}</td>
+                        <td>{{ $client->agent ? $client->agent->name : 'N/A' }}
+                            {{ $client->agent ? $client->agent->postnom : 'N/A' }}
+                        </td>
                         <td>
                             <span class="badge {{ $client->status ? 'bg-success' : 'bg-secondary' }}">
                                 {{ $client->status ? 'Actif' : 'Inactif' }}
                             </span>
                         </td>
+                        <td>
+                            <span class="badge {{ $client->is_suspended ? 'bg-warning' : 'bg-primary' }}">
+                                {{ $client->is_suspended ? 'Suspendu' : 'Non suspendu' }}
+                            </span>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="7" class="text-center">Aucun membre trouvé.</td>
+                        <td colspan="8" class="text-center">Aucun membre trouvé.</td>
                     </tr>
                 @endforelse
             </tbody>
@@ -216,9 +234,9 @@
         renderChart();
 
         // Hook spécifique à Livewire 3 appelé après chaque mise à jour du DOM
-        Livewire.hook('morph.updated', ({ el, component }) => {
-            renderChart();
-        });
+        // Livewire.hook('morph.updated', ({ el, component }) => {
+        //     renderChart();
+        // });
     });
     </script>
 </div>
