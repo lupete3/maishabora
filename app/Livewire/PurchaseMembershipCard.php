@@ -124,6 +124,26 @@ class PurchaseMembershipCard extends Component
         }
     }
 
+    public function updatedPrice($value)
+    {
+        if (! is_numeric($value)) {
+            $this->price = 0;
+            return;
+        }
+
+        $this->price = (float) $value;
+    }
+
+    public function updatedSubscriptionAmount($value)
+    {
+        if (! is_numeric($value)) {
+            $this->subscription_amount = 0;
+            return;
+        }
+
+        $this->subscription_amount = (float) $value;
+    }
+
     public function submit()
     {
         Gate::authorize('ajouter-carnet', User::class);
@@ -145,10 +165,11 @@ class PurchaseMembershipCard extends Component
                     ->exists();
 
                 if (!$hasActiveSavingsAccount) {
-                    notyf()->error(
-                        "Ce membre ne possède aucun compte épargne actif en {$this->currency}."
-                    );
-
+                    notyf()->error("Ce membre ne possède aucun compte épargne actif en {$this->currency}.");
+                    return;
+                }
+                if($this->subscription_amount <= 0) {
+                    notyf()->error("Le montant quotidien à épargner doit être supérieur à zéro pour un carnet d'épargne.");
                     return;
                 }
             }

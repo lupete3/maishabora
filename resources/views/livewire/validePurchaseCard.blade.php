@@ -26,11 +26,11 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Prix de la carte :</span>
-                        <span class="fw-bold text-primary">{{ number_format($price, 2) }} {{ $currency }}</span>
+                        <span class="fw-bold text-primary">{{ number_format((float) $price, 2) }} {{ $currency }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Montant quotidien à épargner :</span>
-                        <span class="fw-bold text-success">{{ number_format($subscription_amount, 2) }} {{ $currency }}</span>
+                        <span class="fw-bold text-success">{{ number_format((float) $subscription_amount, 2) }} {{ $currency }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Agent :</span>

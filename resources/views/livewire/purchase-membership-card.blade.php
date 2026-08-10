@@ -59,14 +59,14 @@
 
                         <div class="col-md-3 mb-3">
                             <label>Prix de la carte</label>
-                            <input type="number" step="0.01" wire:model="price" class="form-control" />
+                            <input type="number" min="0" step="0.01" wire:model="price" class="form-control" />
                             @error('price') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
 
                         @if($card_type === 'epargne')
                             <div class="col-md-3 mb-3">
                                 <label>Montant quotidien à épargner</label>
-                                <input type="number" step="0.01" wire:model="subscription_amount" class="form-control" />
+                                <input type="number" min="0" step="0.01" wire:model="subscription_amount" class="form-control" />
                                 @error('subscription_amount') <span class="text-danger">{{ $message }}</span> @enderror
                             </div>
                         @endif
