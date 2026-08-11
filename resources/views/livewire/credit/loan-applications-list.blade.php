@@ -153,21 +153,24 @@
                                             <i class="bx bx-dots-vertical-rounded"></i>
                                         </button>
                                         <div class="dropdown-menu">
-                                            <a class="dropdown-item"
-                                                href="{{ route('credit.applications.show', $loan->id) }}"><i
-                                                    class="bx bx-edit-alt me-1"></i> Éditer</a>
+                                            
                                             <a class="dropdown-item"
                                                 href="{{ route('credit.applications.show', $loan->id) }}"><i
                                                     class="bx bx-show me-1"></i> Voir Détails</a>
                                             <a class="dropdown-item" target="_blank"
                                                 href="{{ route('credit.applications.print-filled', $loan->id) }}"><i
                                                     class="bx bx-printer me-1"></i> Imprimer Dossier</a>
-                                            <div class="dropdown-divider"></div>
-                                            <button class="dropdown-item text-danger"
-                                                onclick="confirm('Êtes-vous sûr de vouloir supprimer cette demande ?') || event.stopImmediatePropagation()"
-                                                wire:click="delete({{ $loan->id }})">
-                                                <i class="bx bx-trash me-1"></i> Supprimer
-                                            </button>
+                                            @if ($loan->statut == 'en_analyse' || $loan->statut == 'rejete')
+                                                <div class="dropdown-divider"></div>
+                                                <a class="dropdown-item"
+                                                    href="{{ route('credit.applications.show', $loan->id) }}"><i
+                                                        class="bx bx-edit-alt me-1"></i> Éditer</a>
+                                                <button class="dropdown-item text-danger"
+                                                    onclick="confirm('Êtes-vous sûr de vouloir supprimer cette demande ?') || event.stopImmediatePropagation()"
+                                                    wire:click="delete({{ $loan->id }})">
+                                                    <i class="bx bx-trash me-1"></i> Supprimer
+                                                </button>
+                                            @endif
                                         </div>
                                     </div>
                                 </td>
