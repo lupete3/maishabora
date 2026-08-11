@@ -291,9 +291,24 @@
                         <label class="form-label">Source revenu menage</label>
                         <input class="form-control" wire:model="cashflow.household_income_source">
                     </div>
-                    <div class="col-md-4"><div class="alert alert-info mb-0">Marge brute: {{ number_format($cashflowTotals['gross_margin'], 2) }}</div></div>
-                    <div class="col-md-4"><div class="alert alert-info mb-0">Revenu disponible: {{ number_format($cashflowTotals['available_income'], 2) }}</div></div>
-                    <div class="col-md-4"><div class="alert alert-success mb-0">Capacite remboursement: {{ number_format($cashflowTotals['repayment_capacity'], 2) }}</div></div>
+                    <div class="col-md-4">
+                        <div class="alert alert-info mb-0">
+                            Marge brute: {{ number_format($cashflowTotals['gross_margin'], 2) }}
+                            <div class="small text-muted mt-1">Formule: Ventes retenues − Achats retenues</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="alert alert-info mb-0">
+                            Revenu disponible: {{ number_format($cashflowTotals['available_income'], 2) }}
+                            <div class="small text-muted mt-1">Formule: Marge brute − Charges d'activité + Revenu ménage − Dépenses ménage</div>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="alert alert-success mb-0">
+                            Capacité remboursement: {{ number_format($cashflowTotals['repayment_capacity'], 2) }}
+                            <div class="small text-muted mt-1">Formule: Revenu disponible × 65%</div>
+                        </div>
+                    </div>
                     {{-- <div class="col-12">
                         <label class="form-label">Commentaires TFR</label>
                         <textarea class="form-control" rows="2" wire:model="cashflow.comments"></textarea>

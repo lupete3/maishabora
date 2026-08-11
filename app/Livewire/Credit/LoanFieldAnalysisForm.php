@@ -291,15 +291,15 @@ class LoanFieldAnalysisForm extends Component
     protected function calculatedCashflow(): array
     {
         $grossMargin = $this->number('cashflow.retained_sales') - $this->number('cashflow.retained_purchases');
-        $safetyMargin = $this->number('cashflow.household_expenses_total') * 0.1;
+        //$safetyMargin = $this->number('cashflow.household_expenses_total') * 0.1;
         $availableIncome = $grossMargin - $this->number('cashflow.business_expenses_total')
-            + $this->number('cashflow.household_income') - $this->number('cashflow.household_expenses_total') - $safetyMargin;
+            + $this->number('cashflow.household_income') - $this->number('cashflow.household_expenses_total'); // - $safetyMargin;
 
         return [
             'gross_margin' => $grossMargin,
-            'household_safety_margin' => $safetyMargin,
+            //'household_safety_margin' => $safetyMargin,
             'available_income' => $availableIncome,
-            'repayment_capacity' => max(0, $availableIncome * 0.5),
+            'repayment_capacity' => max(0, $availableIncome * 0.65),
         ];
     }
 
@@ -313,7 +313,7 @@ class LoanFieldAnalysisForm extends Component
                 'camv_ou_achats_mensuels' => $this->cashflow['retained_purchases'],
                 'charges_activite_mensuelles' => $this->cashflow['business_expenses_total'],
                 'autres_revenus_mensuels' => $this->cashflow['household_income'] ?? 0,
-                'charges_menage_mensuelles' => ($this->cashflow['household_expenses_total'] ?? 0) + $cashflow['household_safety_margin'],
+                'charges_menage_mensuelles' => ($this->cashflow['household_expenses_total'] ?? 0) + ($cashflow['household_safety_margin'] ?? 0),
                 'revenu_disponible_mensuel' => $cashflow['available_income'],
                 'capacite_remboursement_mensuelle' => $cashflow['repayment_capacity'],
                 'date_calcul' => now(),
