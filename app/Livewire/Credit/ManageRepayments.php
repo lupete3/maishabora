@@ -347,7 +347,7 @@ class ManageRepayments extends Component
                 ]);
 
                 // Notifier les utilisateurs concernés
-                $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+                $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable', 'Receptionniste'])->get();
                 $notificationMessage = "Un remboursement de " . number_format($amountToPay, 2) . " {$credit->currency} a été effectué pour le membre {$member->name} {$member->postnom} ({$member->code}) par " . (Auth::user() ? Auth::user()->name . "." . Auth::user()->postnom : "Système") . ".";
 
                 foreach ($usersToNotify as $notifyUser) {

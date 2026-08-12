@@ -243,7 +243,7 @@ class CheckOverdueRepayments extends Command
                     ]);
 
                     // Notification équipe
-                    $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable'])->get();
+                    $usersToNotify = User::role(['Admin', 'Caissier', 'SUPER IT', 'Comptable', 'Receptionniste'])->get();
                     $msg = "Remboursement automatique de " . number_format($totalPaidThisTime, 2)
                         . " {$credit->currency} effectué pour {$member->name} {$member->postnom} ({$member->code}) — échéance n°{$repayment->id}.";
 
