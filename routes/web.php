@@ -81,6 +81,8 @@ Route::middleware(['auth', 'check.status', 'auth.session'])->group(function () {
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:depot-compte-membre'])->group(function () {
     Route::get('/depot-membre', [DepositForMemberController::class, 'index'])->name('deposit.member');
+    Route::get('/credit/situation-pdf/{creditId}', [RepaymentScheduleController::class, 'exportSituationPdf'])
+        ->name('credit.situation.pdf');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-transfert-caisse'])->group(function () {
@@ -106,8 +108,6 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
     Route::get('/gestion-des-remboursements', [ManageRepaymentsController::class, 'index'])->name('repayments.manage');
     Route::get('/plan-de-remboursement/{creditId}', [RepaymentScheduleController::class, 'generate'])
         ->name('schedule.generate');
-    Route::get('/credit/situation-pdf/{creditId}', [RepaymentScheduleController::class, 'exportSituationPdf'])
-        ->name('credit.situation.pdf');
     Route::get('/rapport-global-crédits', [CreditOverviewReportController::class, 'index'])->name('report.credit.overview');
     Route::get('/export/credits-retard', [CreditReportPdfController::class, 'export'])->name('credits-retard.pdf');
     Route::get('/export/credits-retard-csv', [CreditOverviewReportController::class, 'exportCsv'])->name('credits-retard.csv');
