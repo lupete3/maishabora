@@ -53,7 +53,7 @@ class LoanDecisionForm extends Component
             $loan->update(['statut' => $newStatus]);
         }
 
-        session()->flash('message', 'Décision enregistrée et statut mis à jour');
+        notyf()->success('Décision enregistrée et statut mis à jour');
         $this->dispatch('decisionSaved', $this->loan_application_id);
         $this->dispatch('loanSaved', $this->loan_application_id); // This will refresh the list if needed
     }

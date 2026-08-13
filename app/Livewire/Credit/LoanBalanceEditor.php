@@ -70,7 +70,7 @@ class LoanBalanceEditor extends Component
         $data['date_calcul'] = now();
 
         LoanBalance::updateOrCreate(['loan_application_id' => $this->loan_application_id], $data);
-        session()->flash('message', 'Bilan enregistré');
+        notyf()->success('Bilan enregistré');
         $this->dispatch('balanceSaved', $this->loan_application_id);
     }
 

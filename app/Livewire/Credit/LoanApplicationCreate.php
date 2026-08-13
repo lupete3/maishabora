@@ -128,7 +128,7 @@ class LoanApplicationCreate extends Component
         $this->is_creating_business = false;
         $this->reset(['new_business_type', 'new_business_sector', 'new_business_location']);
 
-        session()->flash('business_message', 'Business créé et sélectionné.');
+        notyf()->success('Business créé et sélectionné.');
     }
 
     public function save()
@@ -150,7 +150,7 @@ class LoanApplicationCreate extends Component
         $loan = LoanApplication::updateOrCreate(['id' => $this->loanApplicationId], $data);
 
         $this->dispatch('loanSaved', $loan->id);
-        session()->flash('message', 'Demande enregistrée.');
+        notyf()->success('Demande enregistrée.');
         return redirect()->route('credit.applications.show', $loan->id);
     }
 
