@@ -121,7 +121,7 @@ class LoanFieldAnalysisForm extends Component
         });
 
         $this->loan->refresh();
-        session()->flash('message', 'Fiche d analyse terrain enregistree.');
+        notyf()->success('Fiche d analyse terrain enregistree.');
         $this->dispatch('refreshAnalysis');
     }
 
