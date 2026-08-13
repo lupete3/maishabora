@@ -12,10 +12,14 @@
                 <p>Vous êtes sur le point de faire un dépôt de <strong>{{ $amount }} {{ $currency }}</strong>.</p>
                 <p>Pour le membre <strong>{{ $member->name.' '.$member->postnom.' '.$member->prenom }}</strong>, avec le compte <strong>{{ $member->code }}</strong>.</p>
                 <p>Du type d'opération <strong>{{ ucfirst($operation_type) }}</strong>.</p>
+                <p class="mb-0 d-flex justify-content-between text-success fw-bold">
+                    <span>Montant Net :</span>
+                    <span style="font-size:20px">{{ number_format($amount, 2) }} {{ $currency }}</span>
+                </p>
                 <p>Voulez-vous vraiment continuer ?</p>
             </div>
-            <div class="flex justify-end mt-6 space-x-4">
-                <button wire:click="closeDepositConfirmationModal" class="px-4 py-2 font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
+            <div class="flex justify-end mt-6 gap-2">
+                <button wire:click="closeDepositConfirmationModal" class="px-4 py-2 font-semibold btn btn-secondary rounded-lg hover:bg-gray-700" wire:loading.attr="disabled">
                     Annuler
                 </button>
                 <button wire:click="makeDeposit" class="px-4 py-2 font-semibold btn btn-success rounded-lg hover:bg-green-600" wire:loading.attr="disabled">
