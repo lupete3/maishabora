@@ -5,50 +5,117 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dossier Credit #{{ $loan->id }} - Fiche d'analyse remplie</title>
     <style>
-        body { font-family: Helvetica, Arial, sans-serif; color: #333; font-size: 9px; line-height: 1.3; margin: 0; padding: 20px; background: #f9f9f9; }
-        .container { max-width: 820px; margin: 0 auto; background: #fff; padding: 28px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,.05); }
-        .no-print-bar { max-width: 820px; margin: 0 auto 20px; padding: 10px 20px; border-radius: 6px; background: #1e293b; color: #fff; display: flex; justify-content: space-between; align-items: center; }
-        .btn-back { color: #cbd5e1; text-decoration: none; font-size: 11px; }
-        .btn-print { background: #eab308; color: #1e293b; border: 0; padding: 6px 15px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 10px; text-transform: uppercase; }
-        .header-table, .table-custom { width: 100%; border-collapse: collapse; }
-        .header-table td { border: 0 !important; padding: 0 !important; }
-        .header-logo { width: 80px; height: auto; }
-        .header-title { text-align: center; }
-        .header-title h2 { margin: 0; font-size: 16px; color: #bd8a12; letter-spacing: .5px; }
-        .header-title p { margin: 3px 0 0; font-size: 9px; color: #666; }
-        .header-meta { text-align: right; font-size: 9px; color: #555; }
-        .divider { border: 0; border-bottom: 2px solid #eab308; margin: 10px 0 15px; }
-        .document-title-container { background: #bd8a12; color: #fff; text-align: center; padding: 8px 15px; border-radius: 4px; margin-bottom: 15px; }
-        .document-title { margin: 0; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
-        .section-title { font-size: 10px; font-weight: bold; color: #bd8a12; text-transform: uppercase; border-bottom: 1px solid #bd8a12; padding-bottom: 3px; margin: 16px 0 8px; letter-spacing: .5px; }
-        .subsection-title { font-size: 9px; font-weight: bold; color: #333; text-transform: uppercase; margin: 10px 0 5px; }
-        .row-grid { display: flex; flex-wrap: wrap; margin-bottom: 8px; }
-        .col-3 { width: 25%; box-sizing: border-box; padding-right: 10px; }
-        .col-4 { width: 33.33%; box-sizing: border-box; padding-right: 10px; }
-        .col-6 { width: 50%; box-sizing: border-box; padding-right: 10px; }
-        .col-12 { width: 100%; box-sizing: border-box; }
-        .field-box { margin-bottom: 7px; }
-        .field-label { font-weight: bold; color: #555; margin-bottom: 3px; font-size: 8px; text-transform: uppercase; }
-        .field-value { border: 1px solid #bbb; min-height: 20px; border-radius: 2px; background: #fafafa; padding: 3px 6px; font-size: 9px; }
-        .field-value.tall { min-height: 42px; }
-        .table-custom { margin-bottom: 11px; }
-        .table-custom th, .table-custom td { border: 1px solid #aaa; padding: 4px 6px; text-align: left; vertical-align: top; }
-        .table-custom th { background: #f3f4f6; color: #0a802e; font-size: 8px; font-weight: bold; text-transform: uppercase; }
-        .total-row td { background: #f3f4f6; font-weight: bold; }
-        .two-columns { display: flex; gap: 12px; align-items: flex-start; }
-        .two-columns > div { width: 50%; }
-        .warning { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 8px; border-radius: 4px; margin-bottom: 12px; }
-        .signatures-container { display: flex; margin-top: 22px; justify-content: space-between; }
-        .signature-box { width: 30%; border: 1px dashed #999; border-radius: 4px; padding: 10px; text-align: center; min-height: 75px; box-sizing: border-box; }
-        .signature-title { font-weight: bold; font-size: 9px; color: #555; text-transform: uppercase; margin-bottom: 38px; }
-        .page-break { page-break-before: always; }
-        @media print {
-            body { background: #fff; padding: 0; }
-            .container { box-shadow: none; padding: 0; max-width: 100%; }
-            .no-print-bar { display: none !important; }
-            .document-title-container, .table-custom th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-        }
-    </style>
+    /* 1. Configuration Générale & Print pour 2 pages */
+    @page {
+        size: A4 portrait;
+        margin: 8mm 10mm; /* Réduction des marges de page */
+    }
+
+    body { 
+        font-family: Helvetica, Arial, sans-serif; 
+        color: #222; 
+        font-size: 8px; /* Taille légèrement réduite */
+        line-height: 1.15; 
+        margin: 0; 
+        padding: 0; 
+        background: #fff; 
+    }
+
+    .container { 
+        width: 100%; 
+        max-width: 100%; 
+        margin: 0 auto; 
+        background: #fff; 
+        padding: 0; 
+        box-shadow: none; 
+    }
+
+    /* Barre d'action UI */
+    .no-print-bar { 
+        max-width: 100%; 
+        margin: 0 0 10px; 
+        padding: 6px 15px; 
+        border-radius: 4px; 
+        background: #1e293b; 
+        color: #fff; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+    }
+    .btn-back { color: #cbd5e1; text-decoration: none; font-size: 10px; }
+    .btn-print { background: #eab308; color: #1e293b; border: 0; padding: 4px 10px; font-weight: bold; border-radius: 4px; cursor: pointer; font-size: 9px; text-transform: uppercase; }
+
+    /* En-tête */
+    .header-table { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    .header-table td { border: 0 !important; padding: 0 !important; vertical-align: middle; }
+    .header-logo { width: 65px; height: auto; }
+    .header-title { text-align: center; }
+    .header-title h2 { margin: 0; font-size: 13px; color: #bd8a12; letter-spacing: .3px; }
+    .header-title p { margin: 1px 0 0; font-size: 8px; color: #555; }
+    .header-meta { text-align: right; font-size: 8px; color: #444; }
+
+    .divider { border: 0; border-bottom: 1.5px solid #eab308; margin: 4px 0 6px; }
+
+    .document-title-container { background: #bd8a12; color: #fff; text-align: center; padding: 4px 10px; border-radius: 3px; margin-bottom: 6px; }
+    .document-title { margin: 0; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: .5px; }
+
+    .section-title { font-size: 9px; font-weight: bold; color: #bd8a12; text-transform: uppercase; border-bottom: 1px solid #bd8a12; padding-bottom: 1px; margin: 6px 0 4px; letter-spacing: .3px; }
+    .subsection-title { font-size: 8px; font-weight: bold; color: #333; text-transform: uppercase; margin: 4px 0 2px; }
+
+    /* Système Grid réaligné et compacté */
+    .row-grid { display: flex; flex-wrap: wrap; margin-left: -2px; margin-right: -2px; margin-bottom: 2px; }
+    .col-3 { width: 25%; box-sizing: border-box; padding: 0 2px; }
+    .col-4 { width: 33.33%; box-sizing: border-box; padding: 0 2px; }
+    .col-6 { width: 50%; box-sizing: border-box; padding: 0 2px; }
+    .col-12 { width: 100%; box-sizing: border-box; padding: 0 2px; }
+
+    /* Champs d'information compacts sans empilement */
+    .field-box { margin-bottom: 3px; }
+    .field-label { font-weight: bold; color: #555; margin-bottom: 1px; font-size: 7.5px; text-transform: uppercase; line-height: 1; }
+    .field-value { 
+        border: 1px solid #ccc; 
+        height: 16px; /* Alignement strict des cases fixes */
+        line-height: 16px;
+        border-radius: 2px; 
+        background: #fafafa; 
+        padding: 0 4px; 
+        font-size: 8px; 
+        overflow: hidden; 
+        text-overflow: ellipsis; 
+        white-space: nowrap; 
+    }
+    .field-value.tall { 
+        height: 28px; 
+        line-height: 1.2;
+        white-space: normal; 
+        padding: 2px 4px; 
+    }
+
+    /* Tables compactes */
+    .table-custom { width: 100%; border-collapse: collapse; margin-bottom: 4px; }
+    .table-custom th, .table-custom td { border: 1px solid #bbb; padding: 2px 4px; text-align: left; vertical-align: middle; font-size: 7.5px; }
+    .table-custom th { background: #f3f4f6; color: #0a802e; font-weight: bold; text-transform: uppercase; }
+    .total-row td { background: #f3f4f6; font-weight: bold; }
+
+    .two-columns { display: flex; gap: 8px; align-items: flex-start; }
+    .two-columns > div { width: 50%; }
+
+    .warning { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; padding: 4px 8px; border-radius: 3px; margin-bottom: 6px; font-size: 8px; }
+
+    /* Signatures */
+    .signatures-container { display: flex; margin-top: 10px; justify-content: space-between; page-break-inside: avoid; }
+    .signature-box { width: 30%; border: 1px dashed #999; border-radius: 4px; padding: 4px; text-align: center; height: 50px; box-sizing: border-box; }
+    .signature-title { font-weight: bold; font-size: 8px; color: #555; text-transform: uppercase; margin-bottom: 25px; }
+
+    /* Gestion stricte de l'impression */
+    @media print {
+        body { background: #fff; padding: 0; }
+        .no-print-bar { display: none !important; }
+        .document-title-container, .table-custom th { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        /* Empêcher les ruptures maladroites au milieu d'un bloc */
+        .row-grid, .table-custom, .section-title { page-break-inside: avoid; }
+    }
+</style>
 </head>
 <body>
     @php
@@ -143,6 +210,10 @@
             <div class="col-6"><div class="field-box"><div class="field-label">Nom du client</div><div class="field-value">{{ $loan->user->name ?? '' }} {{ $loan->user->postnom ?? '' }} {{ $loan->user->prenom ?? '' }}</div></div></div>
             <div class="col-3"><div class="field-box"><div class="field-label">Monnaie analyse</div><div class="field-value">{{ $loan->currency }}</div></div></div>
             <div class="col-3"><div class="field-box"><div class="field-label">Montant sollicite</div><div class="field-value">{{ $fmt($loan->montant_demande) }}</div></div></div>
+            <div class="col-4"><div class="field-box"><div class="field-label">Province origine</div><div class="field-value">{{ $visit?->origin_province ?? 'N/A' }}</div></div></div>
+            <div class="col-4"><div class="field-box"><div class="field-label">Niveau education</div><div class="field-value">{{ $visit?->education_level ?? 'N/A' }}</div></div></div>
+            <div class="col-4"><div class="field-box"><div class="field-label">Religion</div><div class="field-value">{{ $visit?->religion ?? 'N/A' }}</div></div></div>
+            <div class="col-12"><div class="field-box"><div class="field-label">Biographie rapide</div><div class="field-value tall">{{ $visit?->quick_biography ?? 'N/A' }}</div></div></div>
         </div>
 
         <div class="section-title">I. Resume de l'analyse</div>
@@ -234,17 +305,6 @@
 
         {{-- <div class="page-break"></div> --}}
 
-        <div class="section-title">II. Informations sur le menage</div>
-        <div class="row-grid">
-            <div class="col-4"><div class="field-box"><div class="field-label">Nom</div><div class="field-value">{{ $loan->user->name ?? '' }}</div></div></div>
-            <div class="col-4"><div class="field-box"><div class="field-label">Post-nom</div><div class="field-value">{{ $loan->user->postnom ?? '' }}</div></div></div>
-            <div class="col-4"><div class="field-box"><div class="field-label">Prenom</div><div class="field-value">{{ $loan->user->prenom ?? '' }}</div></div></div>
-            <div class="col-4"><div class="field-box"><div class="field-label">Province origine</div><div class="field-value">{{ $visit?->origin_province ?? 'N/A' }}</div></div></div>
-            <div class="col-4"><div class="field-box"><div class="field-label">Niveau education</div><div class="field-value">{{ $visit?->education_level ?? 'N/A' }}</div></div></div>
-            <div class="col-4"><div class="field-box"><div class="field-label">Religion</div><div class="field-value">{{ $visit?->religion ?? 'N/A' }}</div></div></div>
-            <div class="col-12"><div class="field-box"><div class="field-label">Biographie rapide</div><div class="field-value tall">{{ $visit?->quick_biography ?? 'N/A' }}</div></div></div>
-        </div>
-
         <div class="subsection-title">Structure familiale</div>
         <table class="table-custom">
             <thead><tr><th>Nom</th><th>Lien</th><th>Occupation</th><th>Observations</th></tr></thead>
@@ -268,17 +328,23 @@
             <div class="col-6"><div class="field-box"><div class="field-label">Impressions menage</div><div class="field-value tall">{{ $visit?->household_impressions ?? 'N/A' }}</div></div></div>
         </div>
 
-        <div class="section-title">III. References du menage</div>
-        <table class="table-custom">
-            <thead><tr><th>Nom</th><th>Adresse</th><th>Type</th><th>Telephone</th></tr></thead>
-            <tbody>
-                @forelse($loan->householdReferences as $reference)
-                    <tr><td>{{ $reference->name }}</td><td>{{ $reference->address }}</td><td>{{ ucfirst($reference->reference_type) }}</td><td>{{ $reference->phone }}</td></tr>
-                @empty
-                    <tr><td colspan="4">Aucune reference menage renseignee.</td></tr>
-                @endforelse
-            </tbody>
-        </table>
+        <div class="section-title">III. Références du ménage</div>
+
+        <div class="references-list" style="margin-bottom: 6px;">
+            @forelse($loan->householdReferences as $index => $reference)
+                <div style="font-size: 8px; margin-bottom: 3px; line-height: 1.2;">
+                    <strong>Réf. {{ $loop->iteration }} :</strong> 
+                    <strong>{{ $reference->name }}</strong> 
+                    ({{ ucfirst($reference->reference_type) }}), 
+                    demeurant à <em>{{ $reference->address }}</em> 
+                    — Tél : <strong>{{ $reference->phone }}</strong>
+                </div>
+            @empty
+                <div style="font-size: 8px; color: #777; font-style: italic;">
+                    Aucune référence ménage renseignée.
+                </div>
+            @endforelse
+        </div>
 
         <div class="section-title">IV. Informations sur l'activite</div>
         <table class="table-custom">
@@ -395,7 +461,7 @@
             <div class="col-4"><div class="field-box"><div class="field-label">Source revenu menage</div><div class="field-value">{{ $cashflow?->household_income_source ?? 'N/A' }}</div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label">Montant</div><div class="field-value">{{ $fmt($cashflow?->household_income) }}</div></div></div>
             <div class="col-4"><div class="field-box"><div class="field-label">Periodicite</div><div class="field-value">{{ $cashflow?->household_income_periodicity ?? 'N/A' }}</div></div></div>
-            <div class="col-12"><div class="field-box"><div class="field-label">Commentaires</div><div class="field-value tall">{{ $cashflow?->comments ?? 'N/A' }}</div></div></div>
+            {{-- <div class="col-12"><div class="field-box"><div class="field-label">Commentaires</div><div class="field-value tall">{{ $cashflow?->comments ?? 'N/A' }}</div></div></div> --}}
         </div>
 
         @if ($productionItems ->isNotEmpty())
