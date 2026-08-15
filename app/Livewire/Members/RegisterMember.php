@@ -233,11 +233,13 @@ class RegisterMember extends Component
                 'required',
                 'string',
                 'max:20',
-                'regex:/^\+243\d{9}$/',
-                Rule::unique('users')->where(fn($query) => $query
-                    ->where('name', $this->name)
-                    ->where('postnom', $this->postnom)
-                    ->where('telephone', $this->telephone)),
+                'regex:/^(?:\+243|243|0)(?:8|9)\d{8}$/',
+                Rule::unique('users')
+                    ->ignore($this->userId)
+                    ->where(fn($query) => $query
+                        ->where('name', $this->name)
+                        ->where('postnom', $this->postnom)
+                        ->where('telephone', $this->telephone)),
             ],
             'adresse_physique' => ['nullable', 'string'],
             'province' => ['nullable', 'string', 'max:255'],
@@ -490,7 +492,7 @@ class RegisterMember extends Component
                     'required',
                     'string',
                     'max:20',
-                    'regex:/^\+243\d{9}$/',
+                    'regex:/^(?:\+243|243|0)(?:8|9)\d{8}$/',
                     Rule::unique('users')
                         ->ignore($this->userId)
                         ->where(fn($query) => $query
@@ -724,7 +726,7 @@ class RegisterMember extends Component
                 $query->where('created_at', '>=', now()->subDays(30));
             }
 
-            $members = $query->paginate($this->perPage);
+            $members = $query->orderByDesc('created_at')->paginate($this->perPage);
             $agents = User::where('role', '!=', 'membre')->get();
 
             return view('livewire.members.register-member', [
