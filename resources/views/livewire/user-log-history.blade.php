@@ -5,7 +5,22 @@
     </div>
 
     <div class="card-body">
-        
+        <div class="mb-3 d-flex flex-wrap align-items-center gap-2">
+            <label class="mb-0 me-2 fw-semibold">Période :</label>
+            <select wire:model.lazy="period" class="form-select form-select-sm" style="width:140px;">
+                <option value="day">Aujourd'hui</option>
+                <option value="week">Cette semaine</option>
+                <option value="interval">Intervalle</option>
+            </select>
+
+            @if($period === 'interval')
+                <input type="date" wire:model.lazy="startDate" class="form-control form-control-sm ms-2" style="width:150px;" />
+                <input type="date" wire:model.lazy="endDate" class="form-control form-control-sm ms-2" style="width:150px;" />
+            @endif
+
+            <button class="btn btn-sm btn-outline-secondary ms-auto" wire:click="$refresh">Actualiser</button>
+        </div>
+
         <!-- Tableau des cartes -->
         <div class="table-responsive">
             <table class="table table-bordered table-striped">
