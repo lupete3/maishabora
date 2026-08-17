@@ -268,7 +268,8 @@
                             </td>
                             <td>{{ \Carbon\Carbon::parse($credit->start_date)->format('d/m/Y') }}</td>
                             <td class="fw-bold text-dark">{{ number_format($credit->amount, 2) }}
-                                <small>{{ $credit->currency }}</small></td>
+                                <small>{{ $credit->currency }}</small>
+                            </td>
                             <td>
                                 @php
                                     $remPrincipal = $credit->repayments->sum(function ($r) {
