@@ -112,7 +112,12 @@
                 <tr>
                     <td>{{ $curr }}</td>
                     <td>{{ number_format($totals['totalByCurrency'][$curr] ?? 0, 2) }}</td>
-                    <td>{{ number_format($totals['totalPaidByCurrency'][$curr] ?? 0, 2) }}</td>
+                    <td>
+                        {{ number_format($totals['totalPaidByCurrency'][$curr] ?? 0, 2) }}
+                        <div class="small text-muted">
+                            C: {{ number_format($totals['collectedPrincipalByCurrency'][$curr] ?? 0, 2) }} • I: {{ number_format($totals['interestByCurrency'][$curr] ?? 0, 2) }} • P: {{ number_format($totals['penaltyByCurrency'][$curr] ?? 0, 2) }}
+                        </div>
+                    </td>
                     <td>{{ number_format($totals['totalUnpaidByCurrency'][$curr] ?? 0, 2) }}</td>
                     <td>{{ number_format($totals['interestByCurrency'][$curr] ?? 0, 2) }}</td>
                     <td>{{ number_format($totals['penaltyByCurrency'][$curr] ?? 0, 2) }}</td>

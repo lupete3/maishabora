@@ -115,8 +115,14 @@ class CreditFollowUpReport extends Component
         $totalByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalPaidByCurrency = ['USD' => 0, 'CDF' => 0];
         $totalUnpaidByCurrency = ['USD' => 0, 'CDF' => 0];
-        $penaltyByCurrency = ['USD' => 0, 'CDF' => 0];
-        $interestByCurrency = ['USD' => 0, 'CDF' => 0];
+        // Separate remaining parts
+        $remainingPrincipalByCurrency = ['USD' => 0, 'CDF' => 0];
+        $remainingInterestByCurrency = ['USD' => 0, 'CDF' => 0];
+        $remainingPenaltyByCurrency = ['USD' => 0, 'CDF' => 0];
+        // Collected amounts
+        $penaltyByCurrency = ['USD' => 0, 'CDF' => 0]; // collected penalties
+        $interestByCurrency = ['USD' => 0, 'CDF' => 0]; // collected interests
+        $collectedPrincipalByCurrency = ['USD' => 0, 'CDF' => 0];
         $recoveryRateByCurrency = ['USD' => 0, 'CDF' => 0];
         $interestMarginByCurrency = ['USD' => 0, 'CDF' => 0];
         $debtRatioByCurrency = ['USD' => 0, 'CDF' => 0];
@@ -142,44 +148,73 @@ class CreditFollowUpReport extends Component
                 $totalByCurrency[$curr] = 0;
                 $totalPaidByCurrency[$curr] = 0;
                 $totalUnpaidByCurrency[$curr] = 0;
+                $remainingPrincipalByCurrency[$curr] = 0;
+                $remainingInterestByCurrency[$curr] = 0;
+                $remainingPenaltyByCurrency[$curr] = 0;
                 $penaltyByCurrency[$curr] = 0;
                 $interestByCurrency[$curr] = 0;
             }
 
-            $totalByCurrency[$curr] += $credit->amount;
+            $totalByCurrency[$curr] += (float) $credit->amount;
 
-            $paid = $credit->repayments->sum('paid_amount');
-            $expected = $credit->repayments->sum('expected_amount');
+            // Collected totals (as before)
+            $paidTotal = (float) $credit->repayments->sum('paid_amount');
+            $totalPaidByCurrency[$curr] += $paidTotal;
 
-            $totalPaidByCurrency[$curr] += $paid;
+            // For each repayment we compute remaining principal/interest/penalty using explicit columns
+            $repRemainingPrincipal = 0.0;
+            $repRemainingInterest = 0.0;
+            $repRemainingPenalty = 0.0;
+            $collectedInterest = 0.0;
+            $collectedPenalty = 0.0;
 
-            // Le "Reste à Payer" ici est basé sur le total attendu (Principal + Intérêt)
-            $remaining = max(0, $expected - $paid);
-            $totalUnpaidByCurrency[$curr] += $remaining;
+            foreach ($credit->repayments as $r) {
+                $principalAmount = floatval($r->principal_amount ?? $r->expected_amount);
+                $interestAmount = floatval($r->interest_amount ?? max(0, $r->expected_amount - ($r->principal_amount ?? 0)));
+                $penaltyAmount = floatval($r->penalty ?? 0);
 
-            $penaltyByCurrency[$curr] += $credit->repayments->sum('penalty');
-        }
+                $paidPrincipal = floatval($r->paid_principal ?? 0);
+                $paidInterest = floatval($r->paid_interest ?? 0);
+                $paidPenalty = floatval($r->paid_penalty ?? 0);
 
-        // 💰 Calcul des intérêts totaux (selon crédits filtrés)
-        $interests = DB::table('repayments')
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->whereIn('credits.id', $creditIds)
-            ->where('repayments.is_paid', true)
-            ->select('credits.currency', DB::raw('SUM(GREATEST((repayments.paid_amount - (credits.amount / credits.installments)), 0)) as total_interest'))
-            ->groupBy('credits.currency')
-            ->get();
+                $remainingP = max(0.0, $principalAmount - $paidPrincipal);
+                $remainingI = max(0.0, $interestAmount - $paidInterest);
+                $remainingPen = max(0.0, $penaltyAmount - $paidPenalty);
 
-        foreach ($interests as $interest) {
-            $interestByCurrency[$interest->currency] = $interest->total_interest;
+                $repRemainingPrincipal += $remainingP;
+                $repRemainingInterest += $remainingI;
+                $repRemainingPenalty += $remainingPen;
+
+                $collectedInterest += $paidInterest;
+                $collectedPenalty += $paidPenalty;
+                $collectedPrincipalByCurrency[$curr] += $paidPrincipal;
+            }
+
+            $remainingPrincipalByCurrency[$curr] += $repRemainingPrincipal;
+            $remainingInterestByCurrency[$curr] += $repRemainingInterest;
+            $remainingPenaltyByCurrency[$curr] += $repRemainingPenalty;
+
+            // total unpaid is sum of remaining parts
+            $totalUnpaidByCurrency[$curr] += ($repRemainingPrincipal + $repRemainingInterest + $repRemainingPenalty);
+
+            // Collected parts
+            $interestByCurrency[$curr] += $collectedInterest;
+            $penaltyByCurrency[$curr] += $collectedPenalty;
+            $totalPaidByCurrency[$curr] = ($totalPaidByCurrency[$curr] ?? 0) ;
+            $collectedPrincipalByCurrency[$curr] = $collectedPrincipalByCurrency[$curr] ?? 0;
         }
 
         // 📊 Calcul des ratios finaux
         foreach ($totalByCurrency as $curr => $principal) {
+            // Compute total expected (principal + interest + penalty) for filtered credits and currency
             $totalExpected = DB::table('repayments')
                 ->join('credits', 'repayments.credit_id', '=', 'credits.id')
                 ->whereIn('credits.id', $creditIds)
                 ->where('credits.currency', $curr)
-                ->sum('expected_amount');
+                ->selectRaw('SUM(COALESCE(repayments.principal_amount, repayments.expected_amount) + COALESCE(repayments.interest_amount, 0) + COALESCE(repayments.penalty, 0)) as total')
+                ->value('total');
+
+            $totalExpected = floatval($totalExpected ?: 0);
 
             if ($totalExpected > 0) {
                 $recoveryRateByCurrency[$curr] = ($totalPaidByCurrency[$curr] / $totalExpected) * 100;
@@ -197,6 +232,7 @@ class CreditFollowUpReport extends Component
             'totalUnpaidByCurrency' => $totalUnpaidByCurrency,
             'penaltyByCurrency' => $penaltyByCurrency,
             'interestByCurrency' => $interestByCurrency,
+            'collectedPrincipalByCurrency' => $collectedPrincipalByCurrency,
             'recoveryRateByCurrency' => $recoveryRateByCurrency,
             'interestMarginByCurrency' => $interestMarginByCurrency,
             'debtRatioByCurrency' => $debtRatioByCurrency,
