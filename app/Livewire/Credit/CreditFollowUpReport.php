@@ -136,7 +136,11 @@ class CreditFollowUpReport extends Component
                 'interestByCurrency',
                 'recoveryRateByCurrency',
                 'interestMarginByCurrency',
-                'debtRatioByCurrency'
+                'debtRatioByCurrency',
+                'collectedPrincipalByCurrency',
+                'remainingPrincipalByCurrency',
+                'remainingInterestByCurrency',
+                'remainingPenaltyByCurrency'
             );
         }
 
@@ -233,6 +237,9 @@ class CreditFollowUpReport extends Component
             'penaltyByCurrency' => $penaltyByCurrency,
             'interestByCurrency' => $interestByCurrency,
             'collectedPrincipalByCurrency' => $collectedPrincipalByCurrency,
+            'remainingPrincipalByCurrency' => $remainingPrincipalByCurrency,
+            'remainingInterestByCurrency' => $remainingInterestByCurrency,
+            'remainingPenaltyByCurrency' => $remainingPenaltyByCurrency,
             'recoveryRateByCurrency' => $recoveryRateByCurrency,
             'interestMarginByCurrency' => $interestMarginByCurrency,
             'debtRatioByCurrency' => $debtRatioByCurrency,
