@@ -13,7 +13,7 @@
     <!-- Récapitulatif Moderne -->
     <div class="row g-3 mb-4">
         <!-- Crédits Totaux (Principal) -->
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6">
             <div class="card card-border-shadow border-start-primary h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
@@ -33,7 +33,7 @@
         </div>
 
         <!-- Récupéré (Remboursé) -->
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6">
             <div class="card card-border-shadow border-start-success h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
@@ -47,6 +47,9 @@
                             <div class="d-flex justify-content-between align-items-center">
                                 <span class="text-muted small">{{ $curr }}</span>
                                 <span class="fw-bold text-success fs-6">{{ number_format($total, 2) }}</span>
+                            </div>
+                            <div class="small text-muted mt-1">
+                                Capital: {{ number_format($totals['collectedPrincipalByCurrency'][$curr] ?? 0, 2) }} • Intérêt: {{ number_format($totals['interestByCurrency'][$curr] ?? 0, 2) }} • Pénalité: {{ number_format($totals['penaltyByCurrency'][$curr] ?? 0, 2) }}
                             </div>
                             <div class="progress mt-1" style="height: 4px;">
                                 <div class="progress-bar bg-success" role="progressbar"
@@ -66,7 +69,7 @@
         </div>
 
         <!-- Reste à Payer -->
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6">
             <div class="card card-border-shadow border-start-danger h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
@@ -93,7 +96,7 @@
         </div>
 
         <!-- Gains (Intérêts & Pénalités) -->
-        <div class="col-md-6 col-lg-3">
+        <div class="col-md-6">
             <div class="card card-border-shadow border-start-warning h-100">
                 <div class="card-body">
                     <div class="d-flex align-items-center mb-2">
@@ -204,10 +207,32 @@
                             <td class="fw-bold text-dark">{{ number_format($credit->amount, 2) }} <small>{{ $credit->currency }}</small></td>
                             <td>
                                 @php
-                                    $remaining = $credit->repayments->sum('expected_amount') - $credit->repayments->sum('paid_amount');
+                                    $remPrincipal = $credit->repayments->sum(function($r) {
+                                        $principalAmount = floatval($r->principal_amount ?? $r->expected_amount);
+                                        $paidPrincipal = floatval($r->paid_principal ?? 0);
+                                        return max(0.0, $principalAmount - $paidPrincipal);
+                                    });
+
+                                    $remInterest = $credit->repayments->sum(function($r) {
+                                        $interestAmount = floatval($r->interest_amount ?? max(0, $r->expected_amount - ($r->principal_amount ?? 0)));
+                                        $paidInterest = floatval($r->paid_interest ?? 0);
+                                        return max(0.0, $interestAmount - $paidInterest);
+                                    });
+
+                                    $remPenalty = $credit->repayments->sum(function($r) {
+                                        $penalty = floatval($r->penalty ?? 0);
+                                        $paidPenalty = floatval($r->paid_penalty ?? 0);
+                                        return max(0.0, $penalty - $paidPenalty);
+                                    });
+
+                                    $remaining = $remPrincipal + $remInterest + $remPenalty;
                                 @endphp
+
                                 @if ($remaining > 0)
-                                    <span class="text-danger fw-bold">{{ number_format($remaining, 2) }}</span>
+                                    <div class="text-danger fw-bold">{{ number_format($remaining, 2) }}</div>
+                                    <div class="small text-muted">
+                                        C: {{ number_format($remPrincipal, 2) }} • I: {{ number_format($remInterest, 2) }} • P: {{ number_format($remPenalty, 2) }}
+                                    </div>
                                 @else
                                     <span class="text-success fw-bold">SOLDE</span>
                                 @endif
