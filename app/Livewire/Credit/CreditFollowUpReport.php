@@ -55,6 +55,16 @@ class CreditFollowUpReport extends Component
         // 🧮 Calcul des totaux incluant intérêts et pénalités
         $totals = $this->calculateTotals($credits);
 
+        // If dataset is large, export XLSX to avoid PDF memory issues
+        if ($credits->count() > 150) {
+            // Use Excel export
+            try {
+                return \Maatwebsite\Excel\Facades\Excel::download(new \App\Exports\CreditsReportExport($credits), "rapport_credit_" . now()->format("Ymd_His") . ".xlsx");
+            } catch (\Exception $e) {
+                // Fallback to PDF if Excel export fails
+            }
+        }
+
         $pdf = Pdf::loadView('pdf.credits-report', compact('credits', 'totals'))
             ->setPaper('A4', 'landscape');
 
