@@ -137,10 +137,13 @@ class AgentDashboard extends Component
         $user = Auth::user();
 
         if ($user->can('afficher-caisse-agent')) {
-            $agentAccounts = User::whereHas('agentAccounts')
+            $agentAccounts = User::whereHas('agentAccounts', function ($query) {
+                    $query->where('is_visible_dashboard', true);
+                })
                 ->with([
                     'agentAccounts' => function ($query) {
-                        $query->orderBy('currency');
+                        $query->where('is_visible_dashboard', true)
+                            ->orderBy('currency');
                     }
                 ])
                 ->get();
@@ -148,7 +151,8 @@ class AgentDashboard extends Component
             $agentAccounts = User::where('id', $user->id)
                 ->with([
                     'agentAccounts' => function ($query) {
-                        $query->orderBy('currency');
+                        $query->where('is_visible_dashboard', true)
+                            ->orderBy('currency');
                     }
                 ])
                 ->get();
@@ -290,7 +294,7 @@ class AgentDashboard extends Component
         ]);
 
         $transaction = Transaction::findOrFail($this->transactionToDeleteId);
-        
+
         DB::beginTransaction();
         try {
             \App\Helpers\UserLogHelper::log_user_activity(
@@ -341,7 +345,7 @@ class AgentDashboard extends Component
         ]);
 
         $transaction = Transaction::findOrFail($this->editingTransactionId);
-        
+
         DB::beginTransaction();
         try {
             $oldAmount = (float) $transaction->amount;
