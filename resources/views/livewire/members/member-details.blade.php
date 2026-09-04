@@ -480,6 +480,8 @@
                     </div>
                 </div>
 
+                @if (!$activeCards->empty())
+
                 <!-- Cartes de membre -->
                 <div class="card shadow-sm border-0 overflow-hidden">
                     <div class="card-header bg-white pt-3 pb-0 border-bottom-0">
@@ -575,6 +577,8 @@
                         </div>
                     </div>
                 </div>
+
+                @endif
 
             </div>
         </div>
