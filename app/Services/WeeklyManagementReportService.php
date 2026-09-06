@@ -17,7 +17,7 @@ class WeeklyManagementReportService
     private const ACCOUNT_ADHESION_MEMBER = 951;
     private const ACCOUNT_CHARGES = 452;
 
-    private const DEPOSIT_TYPES = ['dépôt', 'depot', 'mise_quotidienne'];
+    private const DEPOSIT_TYPES = ['dépôt', 'mise_quotidienne'];
     private const WITHDRAWAL_TYPES = ['retrait', 'retrait_carte_adhesion'];
     private const CURRENCIES = ['CDF', 'USD'];
 
