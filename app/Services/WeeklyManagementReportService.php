@@ -14,7 +14,7 @@ class WeeklyManagementReportService
 {
     private const ACCOUNT_COMMISSION_CARNET = 97;
     private const ACCOUNT_RETENU_MISE = 195;
-    private const ACCOUNT_ADHESION_MEMBER = 734;
+    private const ACCOUNT_ADHESION_MEMBER = 951;
     private const ACCOUNT_CHARGES = 452;
 
     private const DEPOSIT_TYPES = ['dépôt', 'depot', 'mise_quotidienne'];
