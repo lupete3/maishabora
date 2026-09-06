@@ -37,6 +37,7 @@ use App\Http\Controllers\RepaymentReportController;
 use App\Http\Controllers\ReportAIController;
 use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WeeklyManagementReportController;
 use App\Http\Controllers\CollectorIndcatorController;
 use App\Http\Livewire\Credit\LoanApplicationCreate;
 use Illuminate\Support\Facades\Auth;
@@ -212,6 +213,11 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
     Route::get('/membres/overview-carnets/export-pdf', [ClientStatReportController::class, 'carnetOverviewPdf'])->name('members.overview-carnets.pdf');
     Route::get('/rapport-transactions', [AgentTransactionsReportController::class, 'rapportTransactions'])->name('rapports.transactions');
     Route::get('/rapport-depot-retrait', [AgentTransactionsReportController::class, 'rapportDepotRetrait'])->name('rapports.depot_retrait');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-rapport-credit'])->group(function () {
+    Route::get('/rapport-hebdomadaire', [WeeklyManagementReportController::class, 'index'])->name('reports.weekly-management');
+    Route::get('/rapport-hebdomadaire/export-pdf', [WeeklyManagementReportController::class, 'exportPdf'])->name('reports.weekly-management.export-pdf');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-logs'])->group(function () {

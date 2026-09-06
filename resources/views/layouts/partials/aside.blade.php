@@ -291,6 +291,7 @@
                     'report.credit.followup',
                     'report.repayments',
                     'rapports.depot_retrait',
+                    'reports.weekly-management*',
                     'member.accounts',
                     'members.carnet-overview')) active @endif" wire:ignore.self>
                 <a class="menu-link menu-toggle">
@@ -302,6 +303,13 @@
                         <a href="{{ route('rapports.clients') }}" class="menu-link">
                             <i class="menu-icon tf-icons bx bx-user"></i> <!-- Utilisateurs -->
                             <div data-i18n="Analytics">Rapports Clients</div>
+                        </a>
+                    </li>
+
+                    <li class="menu-item @if (request()->routeIs('reports.weekly-management*')) active @endif">
+                        <a href="{{ route('reports.weekly-management') }}" class="menu-link">
+                            <i class="menu-icon tf-icons bx bx-calendar-week"></i>
+                            <div data-i18n="Analytics">Rapport Hebdomadaire</div>
                         </a>
                     </li>
 

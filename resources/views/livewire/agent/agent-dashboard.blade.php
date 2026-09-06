@@ -10,7 +10,7 @@
                 <div class="card">
                     <div class="card-header d-flex align-items-center justify-content-between">
                         <h6 class="card-title m-0 me-2">
-                            Agent : {{ $agent->name . ' ' . $agent->postnom }}
+                            Agent ({{ $agent->id }}) : {{ $agent->name . ' ' . $agent->postnom }}
                         </h6>
 
                         <div class="dropdown">
