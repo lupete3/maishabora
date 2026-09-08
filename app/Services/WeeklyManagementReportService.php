@@ -51,7 +51,7 @@ class WeeklyManagementReportService
 
     private function periodData(Carbon $start, Carbon $end): array
     {
-        return [
+        $data = [
             'new_clients' => $this->newClients($start, $end),
             'membership_cards' => $this->membershipCards($start, $end),
             'retenu_mise' => $this->agentAccountTotals(self::ACCOUNT_RETENU_MISE, $start, $end),
@@ -62,6 +62,10 @@ class WeeklyManagementReportService
             'adhesion_member' => $this->agentAccountTotals(self::ACCOUNT_ADHESION_MEMBER, $start, $end),
             'charges' => $this->agentAccountTotals(self::ACCOUNT_CHARGES, $start, $end),
         ];
+
+        $data['profitability'] = $this->profitability($data);
+
+        return $data;
     }
 
     private function resolvePeriod(?string $startDate, ?string $endDate): array
@@ -309,6 +313,39 @@ class WeeklyManagementReportService
         ];
     }
 
+    private function addMoney(array ...$items): array
+    {
+        $totals = ['CDF' => 0.0, 'USD' => 0.0];
+
+        foreach ($items as $item) {
+            foreach (self::CURRENCIES as $currency) {
+                $totals[$currency] += (float) ($item[$currency] ?? 0);
+            }
+        }
+
+        return $totals;
+    }
+
+    private function profitability(array $data): array
+    {
+        $products = [
+            'membership_cards' => $data['membership_cards']['price_total'],
+            'retenu_mise' => $data['retenu_mise'],
+            'mutuelle_credit' => $data['granted_credits']['mutuelle_total'],
+            'credit_fees' => $data['granted_credits']['fees_total'],
+            'adhesion_member' => $data['adhesion_member'],
+        ];
+
+        $productTotals = $this->addMoney(...array_values($products));
+
+        return [
+            'products' => $products,
+            'products_total' => $productTotals,
+            'charges_total' => $data['charges'],
+            'net_profit' => $this->subtractMoney($productTotals, $data['charges']),
+        ];
+    }
+
     private function withCurrencies(array $totals): array
     {
         return [
@@ -333,6 +370,9 @@ class WeeklyManagementReportService
             'repayments' => $this->currencyPercentChange($current['repayments']['paid_total'], $previous['repayments']['paid_total']),
             'adhesion_member' => $this->currencyPercentChange($current['adhesion_member'], $previous['adhesion_member']),
             'charges' => $this->currencyPercentChange($current['charges'], $previous['charges']),
+            'profitability_products' => $this->currencyPercentChange($current['profitability']['products_total'], $previous['profitability']['products_total']),
+            'profitability_charges' => $this->currencyPercentChange($current['profitability']['charges_total'], $previous['profitability']['charges_total']),
+            'profitability_net_profit' => $this->currencyPercentChange($current['profitability']['net_profit'], $previous['profitability']['net_profit']),
         ];
     }
 

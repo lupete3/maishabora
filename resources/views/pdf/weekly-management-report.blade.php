@@ -244,5 +244,25 @@
     </tbody>
 </table>
 
+<h4>8. Situation du bénéfice</h4>
+<table>
+    <thead>
+        <tr><th>Indicateur</th><th>CDF</th><th>USD</th></tr>
+    </thead>
+    <tbody>
+        <tr><td>Montant des carnets vendus - compte 97</td><td class="number">{{ $money($current['profitability']['products']['membership_cards']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products']['membership_cards']['USD'], 'USD') }}</td></tr>
+        <tr><td>Retenu mise - compte 195</td><td class="number">{{ $money($current['profitability']['products']['retenu_mise']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products']['retenu_mise']['USD'], 'USD') }}</td></tr>
+        <tr><td>Mutuelle crédit</td><td class="number">{{ $money($current['profitability']['products']['mutuelle_credit']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products']['mutuelle_credit']['USD'], 'USD') }}</td></tr>
+        <tr><td>Frais dossiers crédits</td><td class="number">{{ $money($current['profitability']['products']['credit_fees']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products']['credit_fees']['USD'], 'USD') }}</td></tr>
+        <tr><td>Commission adhésion membre - compte 951</td><td class="number">{{ $money($current['profitability']['products']['adhesion_member']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products']['adhesion_member']['USD'], 'USD') }}</td></tr>
+        <tr class="total-row"><td>Total produits</td><td class="number">{{ $money($current['profitability']['products_total']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['products_total']['USD'], 'USD') }}</td></tr>
+        <tr><td>Charges - compte 452</td><td class="number">{{ $money($current['profitability']['charges_total']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['charges_total']['USD'], 'USD') }}</td></tr>
+        <tr class="total-row"><td>Bénéfice net</td><td class="number">{{ $money($current['profitability']['net_profit']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['profitability']['net_profit']['USD'], 'USD') }}</td></tr>
+    </tbody>
+</table>
+<div class="comment">
+    Le bénéfice est calculé séparément par devise : total des produits moins les charges. Aucun taux de change n'est appliqué entre CDF et USD.
+</div>
+
 </body>
 </html>
