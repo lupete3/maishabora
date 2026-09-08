@@ -306,12 +306,14 @@
                         </a>
                     </li>
 
-                    <li class="menu-item @if (request()->routeIs('reports.weekly-management*')) active @endif">
-                        <a href="{{ route('reports.weekly-management') }}" class="menu-link">
-                            <i class="menu-icon tf-icons bx bx-calendar-week"></i>
+                    @can('afficher-rapport-hebdomadaire')
+                        <li class="menu-item @if (request()->routeIs('reports.weekly-management*')) active @endif">
+                            <a href="{{ route('reports.weekly-management') }}" class="menu-link">
+                                <i class="menu-icon tf-icons bx bx-calendar-week"></i>
                             <div data-i18n="Analytics">Rapport Hebdomadaire</div>
                         </a>
                     </li>
+                    @endcan
 
                     <li class="menu-item @if (request()->routeIs('member.accounts')) active @endif">
                         <a href="{{ route('member.accounts') }}" class="menu-link">

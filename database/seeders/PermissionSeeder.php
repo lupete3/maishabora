@@ -105,7 +105,8 @@ class PermissionSeeder extends Seeder
 
             "afficher-informations-entreprise",
             "modifier-informations-entreprise",
-            "adherer-membre"
+            "adherer-membre",
+            "afficher-rapport-hebdomadaire",
 
 
         ];
