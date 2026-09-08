@@ -34,7 +34,7 @@ class WeeklyManagementReportController extends Controller
         $pdf = Pdf::loadView('pdf.weekly-management-report', [
             'report' => $report,
             'company' => CompanyInformation::first(),
-        ])->setPaper('A4', 'portrait');
+        ])->setPaper('A4', 'landscape');
 
         $filename = 'rapport-hebdomadaire-' .
             $report['period']['start']->format('Ymd') . '-' .

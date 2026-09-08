@@ -367,6 +367,8 @@ class WeeklyManagementReportService
             'withdrawals' => $this->currencyPercentChange($current['deposits_withdrawals']['withdrawals'], $previous['deposits_withdrawals']['withdrawals']),
             'net' => $this->currencyPercentChange($current['deposits_withdrawals']['net'], $previous['deposits_withdrawals']['net']),
             'granted_credits' => $this->currencyPercentChange($current['granted_credits']['amount_total'], $previous['granted_credits']['amount_total']),
+            'credit_fees' => $this->currencyPercentChange($current['granted_credits']['fees_total'], $previous['granted_credits']['fees_total']),
+            'mutuelle_credit' => $this->currencyPercentChange($current['granted_credits']['mutuelle_total'], $previous['granted_credits']['mutuelle_total']),
             'repayments' => $this->currencyPercentChange($current['repayments']['paid_total'], $previous['repayments']['paid_total']),
             'adhesion_member' => $this->currencyPercentChange($current['adhesion_member'], $previous['adhesion_member']),
             'charges' => $this->currencyPercentChange($current['charges'], $previous['charges']),
