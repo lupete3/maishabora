@@ -157,7 +157,7 @@ class WeeklyManagementReportService
             'items' => $credits,
             'count' => $this->countsByCurrency($credits, 'currency'),
             'amount_total' => $this->sumByCurrency($credits, 'amount'),
-            'fees_total' => $this->sumByCurrency($credits, 'frais_credit'),
+            'fees_total' => $this->creditFeesByCurrency($credits),
             'mutuelle_total' => $this->sumByCurrency($credits, 'mutuelle'),
         ];
     }
@@ -238,6 +238,18 @@ class WeeklyManagementReportService
             $totals[$currency] = (float) $rows
                 ->where('currency', $currency)
                 ->sum(fn ($row) => (float) ($row->{$field} ?? 0));
+        }
+
+        return $totals;
+    }
+
+    private function creditFeesByCurrency(Collection $credits): array
+    {
+        $totals = [];
+        foreach (self::CURRENCIES as $currency) {
+            $totals[$currency] = (float) $credits
+                ->where('currency', $currency)
+                ->sum(fn (Credit $credit) => ((float) ($credit->amount ?? 0) * (float) ($credit->frais_credit ?? 0)) / 100);
         }
 
         return $totals;
