@@ -28,7 +28,7 @@ class WeeklyManagementReportServiceTest extends TestCase
             $table->integer('user_id')->default(1);
             $table->string('currency');
             $table->double('amount');
-            $table->double('frais_credit')->default(10);
+            $table->double('frais_credit')->default(3);
             $table->double('mutuelle')->default(1);
             $table->date('start_date');
             $table->boolean('is_paid')->default(false);
@@ -54,7 +54,7 @@ class WeeklyManagementReportServiceTest extends TestCase
         });
     }
 
-    public function test_grants_use_creation_date_and_sum_principal_and_fixed_fees(): void
+    public function test_grants_use_creation_date_and_value_fees_as_a_percentage_of_principal(): void
     {
         foreach ([['CDF', 600000], ['USD', 700], ['USD', 700], ['CDF', 1000000], ['CDF', 700000], ['USD', 1000]] as [$currency, $amount]) {
             DB::table('credits')->insert([
@@ -71,7 +71,8 @@ class WeeklyManagementReportServiceTest extends TestCase
         $credits = $report['current']['granted_credits'];
         $this->assertSame(['CDF' => 3, 'USD' => 3], $credits['count']);
         $this->assertSame(['CDF' => 2300000.0, 'USD' => 2400.0], $credits['amount_total']);
-        $this->assertSame(['CDF' => 30.0, 'USD' => 30.0], $credits['fees_total']);
+        $this->assertSame(['CDF' => 69000.0, 'USD' => 72.0], $credits['fees_total']);
+        $this->assertSame($credits['fees_total'], $report['current']['profitability']['products']['credit_fees']);
         $this->assertSame(['CDF' => 3.0, 'USD' => 3.0], $credits['mutuelle_total']);
         $this->assertSame('2026-09-05', $report['comparison_period']['start']->toDateString());
         $this->assertSame('2026-09-11', $report['comparison_period']['end']->toDateString());
