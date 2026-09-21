@@ -87,7 +87,8 @@ class WeeklyManagementReportService
     {
         $clients = User::query()
             ->where('role', 'membre')
-            ->whereBetween('created_at', [$start, $end])
+            ->where('created_at', '>=', $start->toDateString())
+            ->where('created_at', '<', $end->copy()->addDay()->toDateString())
             ->get(['id', 'name', 'postnom', 'prenom', 'sexe', 'created_at']);
 
         $men = $clients->filter(fn (User $user) => $this->isMale($user->sexe))->count();
@@ -107,7 +108,8 @@ class WeeklyManagementReportService
     {
         $cardSales = Transaction::query()
             ->where('user_id', self::ACCOUNT_COMMISSION_CARNET)
-            ->whereBetween('created_at', [$start, $end])
+            ->where('created_at', '>=', $start->toDateString())
+            ->where('created_at', '<', $end->copy()->addDay()->toDateString())
             ->get(['id', 'currency', 'amount', 'created_at']);
 
         return [
@@ -121,7 +123,8 @@ class WeeklyManagementReportService
         return $this->moneyTotals(
             Transaction::query()
                 ->where('user_id', $accountId)
-                ->whereBetween('created_at', [$start, $end])
+                ->where('created_at', '>=', $start->toDateString())
+                ->where('created_at', '<', $end->copy()->addDay()->toDateString())
         );
     }
 
@@ -129,7 +132,8 @@ class WeeklyManagementReportService
     {
         $memberTransactions = Transaction::query()
             ->whereHas('user', fn (Builder $query) => $query->where('role', 'membre'))
-            ->whereBetween('created_at', [$start, $end]);
+            ->where('created_at', '>=', $start->toDateString())
+            ->where('created_at', '<', $end->copy()->addDay()->toDateString());
 
         $deposits = $this->moneyTotals(
             (clone $memberTransactions)->whereIn('type', self::DEPOSIT_TYPES)
@@ -149,15 +153,17 @@ class WeeklyManagementReportService
     {
         $credits = Credit::query()
             ->with('user:id,code,name,postnom,prenom')
-            ->whereBetween('start_date', [$start->toDateString(), $end->toDateString()])
-            ->orderBy('start_date')
+            // start_date is the first repayment date; created_at records the grant.
+            ->where('created_at', '>=', $start->toDateString())
+            ->where('created_at', '<', $end->copy()->addDay()->toDateString())
+            ->orderBy('created_at')
             ->get();
 
         return [
             'items' => $credits,
             'count' => $this->countsByCurrency($credits, 'currency'),
             'amount_total' => $this->sumByCurrency($credits, 'amount'),
-            'fees_total' => $this->creditFeesByCurrency($credits),
+            'fees_total' => $this->sumByCurrency($credits, 'frais_credit'),
             'mutuelle_total' => $this->sumByCurrency($credits, 'mutuelle'),
         ];
     }
@@ -207,7 +213,8 @@ class WeeklyManagementReportService
         $repayments = Repayment::query()
             ->with('credit:id,currency,user_id')
             ->where('is_paid', true)
-            ->whereBetween('paid_date', [$start->toDateString(), $end->toDateString()])
+            ->where('paid_date', '>=', $start->toDateString())
+            ->where('paid_date', '<', $end->copy()->addDay()->toDateString())
             ->get();
 
         return [
@@ -238,18 +245,6 @@ class WeeklyManagementReportService
             $totals[$currency] = (float) $rows
                 ->where('currency', $currency)
                 ->sum(fn ($row) => (float) ($row->{$field} ?? 0));
-        }
-
-        return $totals;
-    }
-
-    private function creditFeesByCurrency(Collection $credits): array
-    {
-        $totals = [];
-        foreach (self::CURRENCIES as $currency) {
-            $totals[$currency] = (float) $credits
-                ->where('currency', $currency)
-                ->sum(fn (Credit $credit) => ((float) ($credit->amount ?? 0) * (float) ($credit->frais_credit ?? 0)) / 100);
         }
 
         return $totals;
