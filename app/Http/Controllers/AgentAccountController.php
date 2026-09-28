@@ -3,64 +3,65 @@
 namespace App\Http\Controllers;
 
 use App\Models\AgentAccount;
-use App\Http\Requests\StoreAgentAccountRequest;
-use App\Http\Requests\UpdateAgentAccountRequest;
+use App\Models\User;
+use Illuminate\Http\Request;
 
 class AgentAccountController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(Request $request)
     {
-        //
+        $filter = $request->query('status', 'all');
+        if (!in_array($filter, ['all', 'active', 'inactive'], true)) {
+            $filter = 'all';
+        }
+
+        $search = trim((string) $request->query('search', ''));
+        $agents = User::query()
+            ->whereHas('agentAccounts')
+            ->with('agentAccounts:id,user_id,currency,balance,is_visible_dashboard')
+            ->when($filter === 'active', fn ($query) => $query->where('status', true))
+            ->when($filter === 'inactive', fn ($query) => $query->where('status', false))
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('postnom', 'like', "%{$search}%")
+                        ->orWhere('prenom', 'like', "%{$search}%")
+                        ->orWhere('telephone', 'like', "%{$search}%")
+                        ->orWhere('email', 'like', "%{$search}%");
+                });
+            })
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
+
+        $agentUsers = User::query()->whereHas('agentAccounts');
+        $counts = [
+            'all' => (clone $agentUsers)->count(),
+            'active' => (clone $agentUsers)->where('status', true)->count(),
+            'inactive' => (clone $agentUsers)->where('status', false)->count(),
+        ];
+
+        return view('agent-accounts.index', compact('agents', 'counts', 'filter', 'search'));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function updateStatus(Request $request, User $user)
     {
-        //
-    }
+        $validated = $request->validate([
+            'status' => ['required', 'boolean'],
+        ]);
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(StoreAgentAccountRequest $request)
-    {
-        //
-    }
+        abort_unless($user->agentAccounts()->exists(), 404);
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(AgentAccount $agentAccount)
-    {
-        //
-    }
+        $active = (bool) $validated['status'];
+        if (!$active && $user->is(auth()->user())) {
+            notyf()->error('Vous ne pouvez pas désactiver votre propre compte.');
+            return back();
+        }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(AgentAccount $agentAccount)
-    {
-        //
-    }
+        $user->status = $active;
+        $user->save();
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(UpdateAgentAccountRequest $request, AgentAccount $agentAccount)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(AgentAccount $agentAccount)
-    {
-        //
+        notyf()->success($active ? 'Le compte agent a été activé.' : 'Le compte agent a été désactivé.');
+        return back();
     }
 }

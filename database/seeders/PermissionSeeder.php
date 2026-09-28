@@ -107,6 +107,7 @@ class PermissionSeeder extends Seeder
             "modifier-informations-entreprise",
             "adherer-membre",
             "afficher-rapport-hebdomadaire",
+            "gerer-comptes-agents",
 
 
         ];

@@ -3,6 +3,7 @@
 use App\Exports\MemberFinancialHistoryExport;
 use App\Helpers\UserLogHelper;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\AgentAccountController;
 use App\Http\Controllers\AgentDashboardController;
 use App\Http\Controllers\AgentTransactionsReportController;
 use App\Http\Controllers\ClientsNonCollectes;
@@ -93,6 +94,12 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-caisse-agent'])->group(function () {
     Route::get('/tableau-de-bord-agent', [AgentDashboardController::class, 'index'])->name('agent.dashboard');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-comptes-agents'])->group(function () {
+    Route::get('/gestion-comptes-agents', [AgentAccountController::class, 'index'])->name('agent-accounts.index');
+    Route::patch('/gestion-comptes-agents/{user}/statut', [AgentAccountController::class, 'updateStatus'])
+        ->name('agent-accounts.status.update');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session'])->group(function () {
