@@ -137,7 +137,8 @@ class AgentDashboard extends Component
         $user = Auth::user();
 
         if ($user->can('afficher-caisse-agent')) {
-            $agentAccounts = User::whereHas('agentAccounts', function ($query) {
+            $agentAccounts = User::where('status', true)
+                ->whereHas('agentAccounts', function ($query) {
                     $query->where('is_visible_dashboard', true);
                 })
                 ->with([
@@ -149,6 +150,7 @@ class AgentDashboard extends Component
                 ->get();
         } else {
             $agentAccounts = User::where('id', $user->id)
+                ->where('status', true)
                 ->with([
                     'agentAccounts' => function ($query) {
                         $query->where('is_visible_dashboard', true)

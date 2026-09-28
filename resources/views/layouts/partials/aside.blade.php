@@ -84,6 +84,15 @@
             </li>
         @endcan
 
+        @can('gerer-comptes-agents')
+            <li class="menu-item @if (request()->routeIs('agent-accounts.*')) active @endif">
+                <a href="{{ route('agent-accounts.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-user-check"></i>
+                    <div data-i18n="Analytics">Gestion Comptes Agents</div>
+                </a>
+            </li>
+        @endcan
+
         @can('decaissement')
             <li class="menu-item @if (request()->routeIs('disbursement.index')) active @endif">
                 <a href="{{ route('disbursement.index') }}" class="menu-link">
