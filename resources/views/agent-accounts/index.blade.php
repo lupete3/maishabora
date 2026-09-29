@@ -88,6 +88,14 @@
                                             <span class="badge {{ $account->is_visible_dashboard ? 'bg-label-success' : 'bg-label-secondary' }}">
                                                 {{ $account->is_visible_dashboard ? 'Visible au tableau de bord' : 'Masqué du tableau de bord' }}
                                             </span>
+                                            <form method="POST" action="{{ route('agent-accounts.visibility.update', $account) }}">
+                                                @csrf
+                                                @method('PATCH')
+                                                <input type="hidden" name="is_visible_dashboard" value="{{ $account->is_visible_dashboard ? 0 : 1 }}">
+                                                <button type="submit" class="btn btn-sm {{ $account->is_visible_dashboard ? 'btn-outline-secondary' : 'btn-outline-primary' }}">
+                                                    {{ $account->is_visible_dashboard ? 'Masquer' : 'Afficher' }}
+                                                </button>
+                                            </form>
                                         </div>
                                     @endforeach
                                 </td>

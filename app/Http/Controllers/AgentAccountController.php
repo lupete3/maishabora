@@ -64,4 +64,23 @@ class AgentAccountController extends Controller
         notyf()->success($active ? 'Le compte agent a été activé.' : 'Le compte agent a été désactivé.');
         return back();
     }
+
+    public function updateVisibility(Request $request, AgentAccount $agentAccount)
+    {
+        $validated = $request->validate([
+            'is_visible_dashboard' => ['required', 'boolean'],
+        ]);
+
+        abort_unless($agentAccount->user()->exists(), 404);
+
+        $visible = (bool) $validated['is_visible_dashboard'];
+        $agentAccount->is_visible_dashboard = $visible;
+        $agentAccount->save();
+
+        notyf()->success($visible
+            ? 'Le compte agent est visible au tableau de bord.'
+            : 'Le compte agent est masqué du tableau de bord.');
+
+        return back();
+    }
 }

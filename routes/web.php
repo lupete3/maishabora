@@ -100,6 +100,8 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-com
     Route::get('/gestion-comptes-agents', [AgentAccountController::class, 'index'])->name('agent-accounts.index');
     Route::patch('/gestion-comptes-agents/{user}/statut', [AgentAccountController::class, 'updateStatus'])
         ->name('agent-accounts.status.update');
+    Route::patch('/gestion-comptes-agents/comptes/{agentAccount}/visibilite', [AgentAccountController::class, 'updateVisibility'])
+        ->name('agent-accounts.visibility.update');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session'])->group(function () {
