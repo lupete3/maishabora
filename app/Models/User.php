@@ -139,6 +139,11 @@ class User extends Authenticatable
         return $this->hasMany(Account::class);
     }
 
+    public function termDeposits()
+    {
+        return $this->hasMany(TermDeposit::class);
+    }
+
     public function agentAccounts()
     {
         return $this->hasMany(AgentAccount::class);

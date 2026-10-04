@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('check:overdue-repayments')->dailyAt('19:00')->withoutOverlapping();
+Schedule::command('term-deposits:accrue-monthly-interest')->dailyAt('00:05')->withoutOverlapping();

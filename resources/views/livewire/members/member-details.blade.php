@@ -320,6 +320,35 @@
             </div>
 
             <div class="lg:col-span-2 space-y-6">
+                @if ($termDeposits->isNotEmpty())
+                    <section class="card p-3 p-sm-4 shadow-sm border-0 mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h4 class="card-title h5 mb-0 d-flex align-items-center gap-2">
+                                <i class="bx bx-lock-alt fs-4 text-primary"></i>
+                                Dépôts à terme
+                            </h4>
+                            <span class="badge bg-secondary">{{ $termDeposits->count() }} contrat(s)</span>
+                        </div>
+                        <div class="table-responsive border rounded">
+                            <table class="table table-sm table-hover align-middle mb-0">
+                                <thead class="table-light"><tr><th>Produit</th><th>Ouverture</th><th>Échéance</th><th>Capital</th><th>État</th><th class="text-end">Historique</th></tr></thead>
+                                <tbody>
+                                    @foreach ($termDeposits as $termDeposit)
+                                        <tr>
+                                            <td>{{ $termDeposit->product->name }}</td>
+                                            <td>{{ $termDeposit->opened_at->format('d/m/Y') }}</td>
+                                            <td>{{ $termDeposit->matures_at->format('d/m/Y') }}</td>
+                                            <td>{{ number_format((float) $termDeposit->principal_amount, 2, ',', ' ') }} {{ $termDeposit->currency }}</td>
+                                            <td><span class="badge bg-label-{{ $termDeposit->status === 'active' ? 'success' : ($termDeposit->status === 'closed' ? 'primary' : 'secondary') }}">{{ ucfirst(str_replace('_', ' ', $termDeposit->status)) }}</span></td>
+                                            <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ route('term-deposits.member-history', [$member, $termDeposit]) }}"><i class="bx bx-history me-1"></i>Voir les opérations</a></td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                @endif
+
                 <div class="card p-3 p-sm-4 shadow-sm border-0 mb-4">
                     <div class="d-flex flex-column flex-sm-row align-items-sm-center justify-content-between mb-3 gap-2">
                         <h4 class="card-title h5 mb-0 d-flex align-items-center gap-2">
