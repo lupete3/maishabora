@@ -65,6 +65,7 @@
                 <tr>
                     <th>#</th>
                     <th>Code Carnet</th>
+                    <th>Dernière opération</th>
                     <th>Code Membre</th>
                     <th>Nom complet</th>
                     <th>Devise</th>
@@ -83,6 +84,7 @@
                     <tr>
                         <td>{{ $index + 1 }}</td>
                         <td>{{ $carnet->code }}</td>
+                        <td>{{ $carnet->updated_at?->format('d/m/Y H:i') ?? '—' }}</td>
                         <td>{{ $carnet->member->code ?? '' }}</td>
                         <td>{{ $carnet->member->name ?? '' }} {{ $carnet->member->postnom ?? '' }}
                             {{ $carnet->member->prenom ?? '' }}</td>

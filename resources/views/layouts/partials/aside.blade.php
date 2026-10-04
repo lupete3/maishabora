@@ -93,6 +93,15 @@
             </li>
         @endcan
 
+        @can('afficher-depots-terme')
+            <li class="menu-item @if (request()->routeIs('term-deposits.*', 'term-deposit-products.*')) active @endif">
+                <a href="{{ route('term-deposits.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-lock-alt"></i>
+                    <div data-i18n="Analytics">Dépôts à terme</div>
+                </a>
+            </li>
+        @endcan
+
         @can('decaissement')
             <li class="menu-item @if (request()->routeIs('disbursement.index')) active @endif">
                 <a href="{{ route('disbursement.index') }}" class="menu-link">
@@ -166,6 +175,12 @@
             </li>
         @endcan
 
+        @can('afficher-stock-carnets')
+            <li class="menu-item"><a href="{{ route('card-stock.index') }}" class="menu-link"><i class="menu-icon tf-icons bx bx-package"></i><div>Stock des carnets</div></a></li>
+        @endcan
+        @can('afficher-rapport-stock-carnets')
+            <li class="menu-item"><a href="{{ route('card-stock.report') }}" class="menu-link"><i class="menu-icon tf-icons bx bx-bar-chart"></i><div>Rapport du stock des carnets</div></a></li>
+        @endcan
         @can('afficher-carnet', App\Models\User::class)
             <!-- Vente de cartes membres -->
             <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">

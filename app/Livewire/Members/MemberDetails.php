@@ -930,6 +930,7 @@ class MemberDetails extends Component
     {
         $member = User::findOrFail($this->memberId);
         $accountIds = $member->accounts->pluck('id')->toArray();
+        $termDeposits = $member->termDeposits()->with('product')->latest('id')->get();
 
         // Obtenir la plage de dates selon le filtre actif
         [$dateFrom, $dateTo] = $this->getDateRange();
@@ -950,7 +951,8 @@ class MemberDetails extends Component
         return view('livewire.members.member-details', [
             'member' => $member,
             'transactions' => $transactions,
-            'cards' => $this->cards
+            'cards' => $this->cards,
+            'termDeposits' => $termDeposits,
         ]);
     }
 

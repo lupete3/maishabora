@@ -13,6 +13,7 @@ class PermissionSeeder extends Seeder
      */
     public function run(): void
     {
+        app(\Spatie\Permission\PermissionRegistrar::class)->forgetCachedPermissions();
         $permissions = [
             "afficher-role",
             "ajouter-role",
@@ -38,6 +39,15 @@ class PermissionSeeder extends Seeder
             "modifier-credit",
             "supprimer-credit",
 
+            // Stock physique : droits distincts de la vente et des cotisations.
+            "afficher-stock-carnets",
+            "recevoir-stock-carnets",
+            "modifier-lot-carnets",
+            "modifier-numero-carnet",
+            "distribuer-stock-carnets",
+            "corriger-stock-carnets",
+            "annuler-vente-carnet",
+            "afficher-rapport-stock-carnets",
             "afficher-carnet",
             "ajouter-carnet",
             "modifier-carnet",
@@ -108,6 +118,10 @@ class PermissionSeeder extends Seeder
             "adherer-membre",
             "afficher-rapport-hebdomadaire",
             "gerer-comptes-agents",
+            "afficher-depots-terme",
+            "gerer-produits-depot-terme",
+            "ouvrir-depot-terme",
+            "cloturer-depot-terme",
 
 
         ];

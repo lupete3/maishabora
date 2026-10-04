@@ -13,6 +13,8 @@ class RapportCarnetsComponent extends Component
     protected $paginationTheme = 'bootstrap';
 
     public $currency = '';
+    public $inactivityPeriod = '';
+    public $cardType = ''; // Vide : tous les types ; simple correspond au compte courant.
     public $periodFilter = '';
     public $minDaysFilled = null;
     public $maxDaysFilled = null;
@@ -36,7 +38,7 @@ class RapportCarnetsComponent extends Component
 
     public function updated($field)
     {
-        if (in_array($field, ['currency', 'periodFilter', 'minDaysFilled', 'maxDaysFilled', 'exactDaysFilled', 'search', 'status'])) {
+        if (in_array($field, ['inactivityPeriod', 'cardType', 'currency', 'periodFilter', 'minDaysFilled', 'maxDaysFilled', 'exactDaysFilled', 'search', 'status'])) {
             $this->resetPage();
         }
         $this->updateStats();
@@ -50,6 +52,12 @@ class RapportCarnetsComponent extends Component
             $query->where('is_active', true);
         } elseif ($this->status === 'closed') {
             $query->where('is_active', false);
+        }
+
+        $this->applyInactivityFilter($query);
+
+        if ($this->cardType !== '') {
+            $query->where('card_type', $this->cardType);
         }
 
         if ($this->currency) {
@@ -120,6 +128,12 @@ class RapportCarnetsComponent extends Component
             $query->where('is_active', false);
         }
 
+        $this->applyInactivityFilter($query);
+
+        if ($this->cardType !== '') {
+            $query->where('card_type', $this->cardType);
+        }
+
         if ($this->currency) {
             $query->where('currency', $this->currency);
         }
@@ -180,6 +194,12 @@ class RapportCarnetsComponent extends Component
             $carnets->where('is_active', false);
         }
 
+        $this->applyInactivityFilter($carnets);
+
+        if ($this->cardType !== '') {
+            $carnets->where('card_type', $this->cardType);
+        }
+
         if ($this->currency) {
             $carnets->where('currency', $this->currency);
         }
@@ -229,6 +249,8 @@ class RapportCarnetsComponent extends Component
             'titre' => 'Liste des carnets filtrés',
             'carnets' => $carnets,
             'filters' => [
+                'card_type' => $this->cardType,
+                'inactivity' => $this->inactivityPeriod,
                 'currency' => $this->currency,
                 'period' => $this->periodFilter,
                 'min' => $this->minDaysFilled,
@@ -254,6 +276,12 @@ class RapportCarnetsComponent extends Component
             $carnetsQuery->where('is_active', true);
         } elseif ($this->status === 'closed') {
             $carnetsQuery->where('is_active', false);
+        }
+
+        $this->applyInactivityFilter($carnetsQuery);
+
+        if ($this->cardType !== '') {
+            $carnetsQuery->where('card_type', $this->cardType);
         }
 
         if ($this->currency) {
@@ -317,7 +345,8 @@ class RapportCarnetsComponent extends Component
                 'Jours Cotises',
                 'Total Cotise',
                 'Statut',
-                'Date Creation'
+                'Date Creation',
+                'Derniere Operation'
             ];
 
             $headers = array_map(function($val) {
@@ -341,7 +370,8 @@ class RapportCarnetsComponent extends Component
                         $card->contributed_days_count,
                         number_format($totalCotise, 2, ',', ''),
                         $card->is_active ? 'Actif' : 'Ferme',
-                        $card->created_at ? $card->created_at->format('d/m/Y H:i') : ''
+                        $card->created_at ? $card->created_at->format('d/m/Y H:i') : '',
+                        $card->updated_at ? $card->updated_at->format('d/m/Y H:i') : ''
                     ];
 
                     // Convert to Windows-1252 for French Excel compatibility
@@ -362,6 +392,23 @@ class RapportCarnetsComponent extends Component
         ]);
     }
 
+
+    private function applyInactivityFilter(\Illuminate\Database\Eloquent\Builder $query): void
+    {
+        if ($this->inactivityPeriod === '') {
+            return;
+        }
+        $this->validateOnly('inactivityPeriod', [
+            'inactivityPeriod' => 'in:week,month,three_months,over_three_months',
+        ]);
+        // Seuils cumulatifs bases sur updated_at, avec des mois calendaires sans debordement.
+        $cutoff = match ($this->inactivityPeriod) {
+            'week' => now()->subWeek(),
+            'month' => now()->subMonthNoOverflow(),
+            default => now()->subMonthsNoOverflow(3),
+        };
+        $query->where('updated_at', $this->inactivityPeriod === 'over_three_months' ? '<' : '<=', $cutoff);
+    }
 
     public function render()
     {

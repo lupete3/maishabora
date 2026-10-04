@@ -5,6 +5,7 @@ use App\Helpers\UserLogHelper;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AgentAccountController;
 use App\Http\Controllers\AgentDashboardController;
+use App\Http\Controllers\TermDepositController;
 use App\Http\Controllers\AgentTransactionsReportController;
 use App\Http\Controllers\ClientsNonCollectes;
 use App\Http\Controllers\ClientStatReportController;
@@ -102,6 +103,32 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-com
         ->name('agent-accounts.status.update');
     Route::patch('/gestion-comptes-agents/comptes/{agentAccount}/visibilite', [AgentAccountController::class, 'updateVisibility'])
         ->name('agent-accounts.visibility.update');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-depots-terme'])->group(function () {
+    Route::get('/depots-a-terme', [TermDepositController::class, 'index'])->name('term-deposits.index');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-produits-depot-terme'])->group(function () {
+    Route::post('/depots-a-terme/produits', [TermDepositController::class, 'storeProduct'])->name('term-deposit-products.store');
+    Route::patch('/depots-a-terme/produits/{product}/statut', [TermDepositController::class, 'toggleProduct'])->name('term-deposit-products.toggle');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:ouvrir-depot-terme'])->group(function () {
+    Route::get('/depots-a-terme/ouvrir', [TermDepositController::class, 'create'])->name('term-deposits.create');
+    Route::post('/depots-a-terme', [TermDepositController::class, 'store'])->name('term-deposits.store');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:cloturer-depot-terme'])->group(function () {
+    Route::patch('/depots-a-terme/{termDeposit}/retrait-anticipe', [TermDepositController::class, 'withdrawEarly'])
+        ->name('term-deposits.withdraw-early');
+    Route::patch('/depots-a-terme/{termDeposit}/regler-echeance', [TermDepositController::class, 'settleAtMaturity'])
+        ->name('term-deposits.settle-maturity');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-client'])->group(function () {
+    Route::get('/membre/{user}/depots-a-terme/{termDeposit}', [TermDepositController::class, 'memberHistory'])
+        ->name('term-deposits.member-history');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session'])->group(function () {
@@ -303,3 +330,19 @@ Route::fallback(function () {
 });
 
 require __DIR__ . '/auth.php';
+
+// Stock des carnets : chaque écriture possède également un contrôle d'autorisation métier.
+Route::middleware(['auth', 'check.status', 'auth.session'])->prefix('carnets-stock')->name('card-stock.')->group(function () {
+    Route::get('/', [\App\Http\Controllers\CardStockController::class, 'index'])->name('index')->middleware('permission:afficher-stock-carnets');
+    Route::get('/rapport', [\App\Http\Controllers\CardStockController::class, 'index'])->name('report')->middleware('permission:afficher-rapport-stock-carnets');
+    Route::get('/export', [\App\Http\Controllers\CardStockController::class, 'export'])->name('export')->middleware('permission:afficher-rapport-stock-carnets');
+    Route::post('/receptions', [\App\Http\Controllers\CardStockController::class, 'receive'])->name('receive')->middleware('permission:recevoir-stock-carnets');
+    Route::post('/attributions-lot', [\App\Http\Controllers\CardStockController::class, 'assignBatch'])->name('assign-batch')->middleware('permission:distribuer-stock-carnets');
+    Route::post('/mouvements', [\App\Http\Controllers\CardStockController::class, 'move'])->name('move')->middleware('permission:distribuer-stock-carnets|corriger-stock-carnets');
+    Route::get('/lots/{batch}/modifier', [\App\Http\Controllers\CardStockController::class, 'editBatch'])->name('edit-batch')->middleware('permission:modifier-lot-carnets');
+    Route::put('/lots/{batch}', [\App\Http\Controllers\CardStockController::class, 'updateBatch'])->name('update-batch')->middleware('permission:modifier-lot-carnets');
+    Route::get('/{item}/numero', [\App\Http\Controllers\CardStockController::class, 'editNumber'])->name('edit-number')->middleware('permission:modifier-numero-carnet');
+    Route::put('/{item}/numero', [\App\Http\Controllers\CardStockController::class, 'updateNumber'])->name('update-number')->middleware('permission:modifier-numero-carnet');
+    Route::get('/{item}', [\App\Http\Controllers\CardStockController::class, 'show'])->name('show')->middleware('permission:afficher-stock-carnets|afficher-rapport-stock-carnets');
+    Route::post('/{item}/annulation', [\App\Http\Controllers\CardStockController::class, 'cancel'])->name('cancel')->middleware('permission:annuler-vente-carnet');
+});

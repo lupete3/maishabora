@@ -435,4 +435,5 @@ class AccountingService
         $journalType = JournalType::firstOrCreate(['libelle' => $libelle]);
         return $journalType->id;
     }
+
 }

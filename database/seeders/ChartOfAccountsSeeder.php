@@ -114,11 +114,6 @@ class ChartOfAccountsSeeder extends Seeder
         $this->createOrUpdate('401', 'Fournisseurs', 'Passif', 3, $sc40->id, '40');
         $this->createOrUpdate('408', 'Fournisseurs - Factures non parvenues', 'Passif', 3, $sc40->id, '40');
 
-        // 42 - Personnel
-        $sc42 = $this->createOrUpdate('42', 'Personnel', 'Passif', 2, $classe4->id, '42');
-        $this->createOrUpdate('421', 'Personnel - Rémunérations dues', 'Passif', 3, $sc42->id, '42');
-        $this->createOrUpdate('422', 'Personnel - Avances et acomptes', 'Actif', 3, $sc42->id, '42');
-
         // 43 - État
         $sc43 = $this->createOrUpdate('43', 'État et collectivités publiques', 'Passif', 2, $classe4->id, '43');
         $this->createOrUpdate('431', 'État - Impôts sur les bénéfices', 'Passif', 3, $sc43->id, '43');
