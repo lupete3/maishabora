@@ -49,12 +49,21 @@
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <label>Devise</label>
+                            <label>Devise des mises</label>
                             <select wire:model="currency" class="form-select">
                                 <option value="USD">USD</option>
                                 <option value="CDF">CDF</option>
                             </select>
                             @error('currency') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="col-md-3 mb-3">
+                            <label>Devise du prix de la carte</label>
+                            <select wire:model="price_currency" class="form-select">
+                                <option value="CDF">CDF</option>
+                                <option value="USD">USD</option>
+                            </select>
+                            @error('price_currency') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="col-md-3 mb-3">
@@ -196,8 +205,8 @@
                                             <span class="badge bg-primary">Epargne</span>
                                         @endif
                                     </td>
-                                    @php $curency_update = $card->card_type == 'epargne' ? 'CDF' : 'USD'; @endphp
-                                    <td>{{ number_format($card->price, 2) }} {{ $curency_update }}</td>
+                                    @php $priceCurrency = $card->price_currency ?? ($card->card_type == 'epargne' ? 'CDF' : 'USD'); @endphp
+                                    <td>{{ number_format($card->price, 2) }} {{ $priceCurrency }}</td>
                                     <td>
                                         @if($card->card_type == 'epargne')
                                             {{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}

@@ -14,6 +14,7 @@ class MembershipCard extends Model
         'member_id',
         'user_id',
         'currency',
+        'price_currency',
         'price',
         'subscription_amount',
         'start_date',
