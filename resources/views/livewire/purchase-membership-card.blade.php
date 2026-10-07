@@ -43,8 +43,8 @@
                         </div>
 
                         <div class="col-md-3 mb-3">
-                            <label>Code de la carte</label>
-                            <input type="text" wire:model="code" class="form-control" />
+                            <label>Complément manuel du code (facultatif)</label>
+                            <input type="text" wire:model.live="code" class="form-control" />
                             @error('code') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
 
@@ -61,7 +61,7 @@
                             <label>Devise du prix de la carte</label>
                             <select wire:model="price_currency" class="form-select">
                                 <option value="CDF">CDF</option>
-                                <option value="USD">USD</option>
+                                {{-- <option value="USD">USD</option> --}}
                             </select>
                             @error('price_currency') <span class="text-danger">{{ $message }}</span> @enderror
                         </div>
@@ -80,15 +80,29 @@
                             </div>
                         @endif
 
-                        <div class="col-md-3 mb-3">
-                            <label for="agent_id">Agent</label>
-                            <select wire:model="agent_id" id="agent_id" class="form-select">
+                        <div class="col-md-6 mb-3">
+                            <label for="agent_id">Agent détenteur (collecteur ou admin)</label>
+                            <select wire:model.live="agent_id" id="agent_id" class="form-select">
                                 <option value="">-- Sélectionner un agent --</option>
                                 @foreach($agents as $agent)
-                                    <option value="{{ $agent->id }}">{{ $agent->name }} ({{ $agent->email }})</option>
+                                    <option value="{{ $agent->id }}">{{ $agent->name }} {{ $agent->postnom }} ({{ $agent->role === 'admin' ? 'Admin' : 'Collecteur' }})</option>
                                 @endforeach
                             </select>
                             @error('agent_id') <span class="text-danger">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label>Carnet disponible chez l'agent</label>
+                            <select wire:model.live="stock_item_id" class="form-select">
+                                <option value="">-- Sélectionner un carnet --</option>
+                                @foreach($availableStock as $item)
+                                    <option value="{{ $item->id }}">{{ $item->reference }}</option>
+                                @endforeach
+                            </select>
+                            @error('stock_item_id') <span class="text-danger">{{ $message }}</span> @enderror
+                            @if($selectedStock = $availableStock->firstWhere('id', $stock_item_id))
+                                <div class="mt-2">Code final : <strong>{{ $selectedStock->reference }}{{ trim((string) $code, ' /') !== '' ? '/'.trim((string) $code, ' /') : '' }}</strong></div>
+                            @endif
                         </div>
 
                     </div>
@@ -205,8 +219,8 @@
                                             <span class="badge bg-primary">Epargne</span>
                                         @endif
                                     </td>
-                                    @php $priceCurrency = $card->price_currency ?? ($card->card_type == 'epargne' ? 'CDF' : 'USD'); @endphp
-                                    <td>{{ number_format($card->price, 2) }} {{ $priceCurrency }}</td>
+                                    @php $curency_update = $card->card_type == 'epargne' ? 'CDF' : 'USD'; @endphp
+                                    <td>{{ number_format($card->price, 2) }} {{ $curency_update }}</td>
                                     <td>
                                         @if($card->card_type == 'epargne')
                                             {{ number_format($card->subscription_amount, 2) }} {{ $card->currency }}
@@ -228,10 +242,16 @@
 
                                     @can('modifier-carnet', App\Models\User::class)
                                         <td>
+                                            @if(!$card->card_stock_item_id)
                                             <button wire:click="editCard({{ $card->id }})" class="btn btn-primary btn-sm"
                                                 title="Modifier cette carte">
                                                 Modifier
                                             </button>
+                                            @else
+                                                @canany(['afficher-stock-carnets','afficher-rapport-stock-carnets'])
+                                                <a class="btn btn-outline-primary btn-sm" href="{{ route('card-stock.show', $card->card_stock_item_id) }}">Traçabilité</a>
+                                                @endcanany
+                                            @endif
                                         </td>
                                     @endcan
 
@@ -255,7 +275,7 @@
                                             @endif
 
                                             {{-- Bouton Supprimer --}}
-                                            @if ($card->contributions->where('is_paid', true)->count() == 0)
+                                            @if (!$card->card_stock_item_id && $card->contributions->where('is_paid', true)->count() == 0)
                                                 <button class="btn btn-dark btn-sm" wire:click="deleteCard({{ $card->id }})"
                                                     wire:confirm="Êtes-vous sûr de vouloir supprimer ce carnet ? Les montants seront soustraits des comptes agent et profit."
                                                     title="Supprimer définitivement ce carnet">

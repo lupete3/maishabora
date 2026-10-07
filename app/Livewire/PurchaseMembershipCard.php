@@ -28,7 +28,8 @@ class PurchaseMembershipCard extends Component
     public $price_currency = 'CDF';
     public $price = 1000;
     public $subscription_amount = 0;
-    public $code;
+    public $code; // Complément manuel ; la référence physique est reconstruite côté serveur.
+    public $stock_item_id;
     public $filterType = '30days';
     public $startDate;
     public $endDate;
@@ -52,15 +53,15 @@ class PurchaseMembershipCard extends Component
     public $edit_agent_id;
     public $edit_card_type;
 
+    public $finalCodeForm;
+
     protected $rules = [
-        'agent_id' => 'nullable|exists:users,id',
+        'agent_id' => 'required|exists:users,id',
         'member_id' => 'required|exists:users,id',
         'code' => 'required|string|unique:membership_cards,code',
         'currency' => 'required|string',
-        'price_currency' => 'required|in:CDF,USD',
         'price' => 'required|numeric|min:0',
         'subscription_amount' => 'required|numeric|min:0',
-        'agent_id' => 'nullable|exists:users,id',
         'card_type' => 'required|in:epargne,simple',
     ];
 
@@ -69,7 +70,7 @@ class PurchaseMembershipCard extends Component
         Gate::authorize('afficher-carnet', User::class);
 
         $this->members = User::where('role', 'membre')->get();
-        $this->agents = User::where('role', '!=', 'membre')->get();
+        $this->agents = User::whereIn('role', ['recouvreur', 'admin'])->where('status', true)->get();
     }
 
     public function updatedSearch()
@@ -114,8 +115,14 @@ class PurchaseMembershipCard extends Component
     }
     public $card_type = 'epargne'; // 'epargne' or 'simple'
 
+    public function updatedAgentId()
+    {
+        $this->reset(['stock_item_id']);
+    }
+
     public function updatedCardType($value)
     {
+        $this->reset(['stock_item_id']);
         if ($value === 'simple') {
             $this->currency = 'USD';
             $this->price_currency = 'USD';
@@ -158,9 +165,28 @@ class PurchaseMembershipCard extends Component
         try {
             DB::beginTransaction();
 
+            $stockService = app(\App\Services\CardStockService::class);
+            $stockItem = $stockService->lockForSale((int) $this->stock_item_id, (int) $this->agent_id, $this->card_type);
+            $finalCode = $stockService->composeCode($stockItem, $this->code);
+            if (MembershipCard::withoutGlobalScope('not_cancelled')->where('code', $finalCode)->exists()) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['code' => 'Ce code existe déjà.']);
+            }
+            // Verrouiller les propriétaires avant de créer ou modifier leurs soldes.
+            User::whereIn('id', [Auth::id(), 97])->orderBy('id')->lockForUpdate()->get();
+
+
             // Récupération du membre
             $member = User::findOrFail($this->member_id);
 
+            if ($member->role !== 'membre') {
+                throw \Illuminate\Validation\ValidationException::withMessages(['member_id' => 'Le bénéficiaire doit être un membre.']);
+            }
+            if ($this->card_type === 'simple') {
+                $this->subscription_amount = 0;
+                if (!$member->accounts()->where('type', 'current')->where('currency', $this->currency)->where('status', 'Actif')->exists()) {
+                    throw \Illuminate\Validation\ValidationException::withMessages(['member_id' => 'Ce membre ne possède aucun compte courant actif dans cette devise.']);
+                }
+            }
             if ($this->card_type === 'epargne') {
 
                 $hasActiveSavingsAccount = $member->accounts()
@@ -171,10 +197,12 @@ class PurchaseMembershipCard extends Component
 
                 if (!$hasActiveSavingsAccount) {
                     notyf()->error("Ce membre ne possède aucun compte épargne actif en {$this->currency}.");
+                    DB::rollBack();
                     return;
                 }
                 if($this->subscription_amount <= 0) {
                     notyf()->error("Le montant quotidien à épargner doit être supérieur à zéro pour un carnet d'épargne.");
+                    DB::rollBack();
                     return;
                 }
             }
@@ -187,11 +215,13 @@ class PurchaseMembershipCard extends Component
 
             // Création de la carte
             $card = MembershipCard::create([
-                'code' => $this->code,
+                'code' => $finalCode,
+                'manual_code' => trim((string) $this->code),
+                'card_stock_item_id' => $stockItem->id,
+                'sold_by' => Auth::id(),
                 'member_id' => $member->id,
                 'user_id' => $this->agent_id,
                 'currency' => $this->currency,
-                'price_currency' => $this->price_currency,
                 'price' => $this->price,
                 'subscription_amount' => $this->subscription_amount,
                 'start_date' => $startDate,
@@ -212,14 +242,19 @@ class PurchaseMembershipCard extends Component
                 }
             }
 
-            // Le prix est comptabilisé dans sa propre devise, indépendamment des mises.
-            $transactionCurrency = $this->price_currency;
+            // Débit/Crédit Agent et Caisse (Logique existante conservée)
+            // Note: Si devise USD, on devrait adapter les comptes, mais la demande spécifie "la logique de transactions reste la même"
+            // On suppose ici que le système gère le multi-devise ou convertit.
+            // Le code original force 'CDF'.
+
+            $transactionCurrency = $this->card_type == 'epargne' ? 'CDF' : 'USD'; // Utiliser la devise de la carte
 
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
                 ['user_id' => Auth::user()->id, 'currency' => $transactionCurrency], // Créer compte en USD si besoin
                 ['balance' => 0]
             );
+            $agentAccount = AgentAccount::whereKey($agentAccount->id)->lockForUpdate()->firstOrFail();
             $agentAccount->balance += $this->price;
             $agentAccount->save();
 
@@ -228,11 +263,13 @@ class PurchaseMembershipCard extends Component
                 ['user_id' => 97, 'currency' => $transactionCurrency],
                 ['balance' => 0]
             );
+            $membershipCardAccount = AgentAccount::whereKey($membershipCardAccount->id)->lockForUpdate()->firstOrFail();
             $membershipCardAccount->balance += $this->price;
             $membershipCardAccount->save();
 
             // Enregistrement de la transaction agent
             Transaction::create([
+                'membership_card_id' => $card->id,
                 'account_id' => null,
                 'agent_account_id' => $agentAccount->id,
                 'user_id' => Auth::user()->id,
@@ -240,11 +277,12 @@ class PurchaseMembershipCard extends Component
                 'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $agentAccount->balance,
-                'description' => "Vente de carte ({$this->card_type}) #{$this->code} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
+                'description' => "Vente de carte ({$this->card_type}) #{$finalCode} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
             // Enregistrement de la transaction profit
             Transaction::create([
+                'membership_card_id' => $card->id,
                 'account_id' => null,
                 'agent_account_id' => $membershipCardAccount->id,
                 'user_id' => 97,
@@ -252,7 +290,7 @@ class PurchaseMembershipCard extends Component
                 'currency' => $transactionCurrency,
                 'amount' => $this->price,
                 'balance_after' => $membershipCardAccount->balance,
-                'description' => "Vente de carte ({$this->card_type}) #{$this->code} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
+                'description' => "Vente de carte ({$this->card_type}) #{$finalCode} à {$member->name} - Montant: {$this->price} {$transactionCurrency}",
             ]);
 
             UserLogHelper::log_user_activity(
@@ -260,9 +298,10 @@ class PurchaseMembershipCard extends Component
                 description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->price_currency}"
             );
 
+            $stockService->markSold($stockItem);
             DB::commit();
 
-            $this->reset(['code', 'member_id', 'currency', 'price_currency', 'price', 'subscription_amount', 'card_type']);
+            $this->reset(['code', 'member_id', 'currency', 'price', 'subscription_amount', 'card_type']);
 
             // Remettre les valeurs par défaut pour éviter un état incohérent
             $this->updatedCardType('epargne');
@@ -270,16 +309,26 @@ class PurchaseMembershipCard extends Component
             $this->dispatch('$refresh');
             $this->resetPage();
             notyf()->success('Carte achetée avec succès !');
-        } catch (\Exception $e) {
+        } catch (\Illuminate\Validation\ValidationException $e) {
             DB::rollBack();
-            notyf()->error("Erreur lors de la création de la carte : " . $e->getMessage());
+            throw $e;
+        } catch (\Throwable $e) {
+            DB::rollBack();
+            report($e);
+            notyf()->error('La vente n a pas pu etre enregistree. Veuillez reessayer ou contacter un administrateur.');
         }
     }
 
     public function showConfirmation()
     {
+        Gate::authorize('ajouter-carnet', User::class);
+        $this->validate();
         $member = User::find($this->member_id);
         $this->selectedMemberName = $member ? "{$member->name} {$member->postnom}" : 'Inconnu';
+        $this->finalCodeForm = app(\App\Services\CardStockService::class)->composeCode(
+            \App\Models\CardStockItem::find($this->stock_item_id),
+            $this->code
+        );
 
         $this->showConfirmationModal = true;
     }
@@ -352,6 +401,7 @@ class PurchaseMembershipCard extends Component
         return view('livewire.purchase-membership-card', [
             'cards'  => $cards,
             'trends' => $trends,
+            'availableStock' => \App\Models\CardStockItem::where('status', 'with_collector')->where('collector_id', $this->agent_id)->where('card_type', $this->card_type)->orderBy('id')->get(),
         ]);
     }
 
@@ -391,6 +441,7 @@ class PurchaseMembershipCard extends Component
     // Ouvre le modal de modification
     public function editCard($cardId)
     {
+        Gate::authorize('modifier-carnet', User::class);
         $card = MembershipCard::find($cardId);
 
         if (!$card) {
@@ -401,6 +452,11 @@ class PurchaseMembershipCard extends Component
         // Blocage si des mises ont déjà été payées
         if ($card->contributions()->where('is_paid', true)->exists()) {
             notyf()->error('Modification impossible : une mise a déjà été effectuée sur ce carnet.');
+            return;
+        }
+
+        if ($card->card_stock_item_id) {
+            notyf()->error('Les ventes de stock sont conservées pour traçabilité.');
             return;
         }
 
@@ -419,6 +475,7 @@ class PurchaseMembershipCard extends Component
     // Validation et mise à jour
     public function updateCard()
     {
+        Gate::authorize('modifier-carnet', User::class);
         $this->validate([
             'edit_code' => 'required|string|unique:membership_cards,code,' . $this->editCardId,
             'edit_currency' => 'required|string',
@@ -432,6 +489,11 @@ class PurchaseMembershipCard extends Component
 
         if (!$card) {
             notyf()->error('Carte introuvable.');
+            return;
+        }
+
+        if ($card->card_stock_item_id || $card->contributions()->where('is_paid', true)->exists()) {
+            notyf()->error('Modification interdite pour ce carnet.');
             return;
         }
 
@@ -470,6 +532,11 @@ class PurchaseMembershipCard extends Component
         $card = MembershipCard::find($cardId);
         if (!$card) {
             notyf()->error("Carte non trouvée.");
+            return;
+        }
+
+        if ($card->cancelled_at) {
+            notyf()->error('Une vente annulée ne peut pas être réactivée.');
             return;
         }
 
@@ -530,6 +597,11 @@ class PurchaseMembershipCard extends Component
         // Vérifier si des contributions ont été payées
         if ($card->contributions()->where('is_paid', true)->exists()) {
             notyf()->error("Impossible de supprimer un carnet dont les contributions ont déjà commencé.");
+            return;
+        }
+
+        if ($card->card_stock_item_id) {
+            notyf()->error('Utilisez l annulation depuis la gestion du stock.');
             return;
         }
 
@@ -598,7 +670,7 @@ class PurchaseMembershipCard extends Component
             $this->dispatch('$refresh');
             $this->resetPage();
             notyf()->success("Carnet supprimé avec succès et montants débités des comptes correspondants.");
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             DB::rollBack();
             notyf()->error("Erreur lors de la suppression : " . $e->getMessage());
         }

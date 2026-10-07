@@ -10,11 +10,15 @@ class MembershipCard extends Model
     use HasFactory;
 
     protected $fillable = [
+        'card_stock_item_id',
+        'archived_card_stock_item_id',
+        'manual_code',
+        'cancelled_at',
+        'sold_by',
         'code',
         'member_id',
         'user_id',
         'currency',
-        'price_currency',
         'price',
         'subscription_amount',
         'start_date',
@@ -23,6 +27,22 @@ class MembershipCard extends Model
         'first_mise_retained',
         'card_type'
     ];
+
+    protected static function booted(): void
+    {
+        // Les annulations restent dans l'archive de stock, hors des cotisations et statistiques commerciales.
+        static::addGlobalScope('not_cancelled', fn ($query) => $query->whereNull('membership_cards.cancelled_at'));
+    }
+
+    public function archivedStockItem()
+    {
+        return $this->belongsTo(CardStockItem::class, 'archived_card_stock_item_id');
+    }
+
+    public function stockItem()
+    {
+        return $this->belongsTo(CardStockItem::class, 'card_stock_item_id');
+    }
 
     // Membre propriétaire du carnet
     public function member()

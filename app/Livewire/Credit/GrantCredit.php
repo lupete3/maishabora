@@ -24,7 +24,7 @@ class GrantCredit extends Component
     public $currency = 'USD';
     public $amount = 0;
     public $interest_rate = 5.0; // %
-    public $installments = 3;
+    public $installments;
     public $start_date;
     public $frequency = 'monthly'; // 'daily', 'monthly', 'weekly'
     public $repayment_type = 'degressif'; // 'constant', 'degressif'

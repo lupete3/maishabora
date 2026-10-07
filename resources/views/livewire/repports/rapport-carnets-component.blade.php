@@ -28,11 +28,23 @@
         </div>
 
         <div class="col-md-2 mb-3">
-            <select wire:model.lazy="status" class="form-control">
-                <option value="">Touts les status</option>
-                <option value="open">Actif</option>
-                <option value="closed">Inactif</option>
+            <select wire:model.live="cardType" class="form-control" aria-label="Type de carnet">
+                <option value="">Tous les types de carnets</option>
+                <option value="epargne">Carnets d'épargne</option>
+                <option value="simple">Carnets de comptes courants</option>
             </select>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label for="carnet-inactivity" class="form-label">Sans opération depuis</label>
+            <select wire:model.live="inactivityPeriod" id="carnet-inactivity" class="form-control">
+                <option value="">Toutes les durées</option>
+                <option value="week">Au moins une semaine</option>
+                <option value="month">Au moins un mois</option>
+                <option value="three_months">Au moins trois mois</option>
+                <option value="over_three_months">Plus de trois mois</option>
+            </select>
+            @error('inactivityPeriod') <span class="text-danger">{{ $message }}</span> @enderror
         </div>
 
         <div class="col-md-2 mb-3">
@@ -121,6 +133,7 @@
                     <thead>
                             <tr>
                                 <td>Code Carnet</td>
+                                <td>Dernière opération</td>
                                 <td>Nom du membre</td>
                                 <td>Montant/Jour</td>
                                 <td>Jours payés</td>
@@ -138,6 +151,7 @@
                                 @endphp
                                 <tr>
                                     <td>{{ $carnet->code }}</td>
+                                    <td>{{ $carnet->updated_at?->format('d/m/Y H:i') ?? '—' }}</td>
                                     <td>{{ $carnet->member->name . ' ' . $carnet->member->postnom . ' ' . $carnet->member->prenom ?? 'N/A' }}
                                     </td>
                                     <td>{{ number_format($carnet->subscription_amount, 2) }} {{ $carnet->currency }}</td>
@@ -157,7 +171,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="7">Aucun carnet trouvé.</td>
+                                <td colspan="8">Aucun carnet trouvé.</td>
                             </tr>
                         @endforelse
                     </tbody>

@@ -22,6 +22,16 @@ class Account extends Model
         return $this->hasMany(Transaction::class);
     }
 
+    public function fundedTermDeposits()
+    {
+        return $this->hasMany(TermDeposit::class, 'source_account_id');
+    }
+
+    public function settledTermDeposits()
+    {
+        return $this->hasMany(TermDeposit::class, 'settlement_account_id');
+    }
+
     public function credits()
     {
         return $this->hasMany(Credit::class);
