@@ -18,15 +18,11 @@
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Code carte :</span>
-                        <span class="fw-bold">{{ $code }}</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        <span>Devise :</span>
-                        <span class="fw-bold">{{ $currency }}</span>
+                        <span class="fw-bold">{{ $finalCodeForm }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Prix de la carte :</span>
-                        <span class="fw-bold text-primary">{{ number_format((float) $price, 2) }} {{ $currency }}</span>
+                        <span class="fw-bold text-primary">{{ number_format((float) $price, 2) }} {{ $price_currency }}</span>
                     </li>
                     <li class="list-group-item d-flex justify-content-between">
                         <span>Montant quotidien à épargner :</span>
@@ -36,6 +32,7 @@
                         <span>Agent :</span>
                         <span class="fw-bold">
                             {{ optional(\App\Models\User::find($agent_id))->name ?? 'Aucun' }}
+                            {{ optional(\App\Models\User::find($agent_id))->postnom ?? 'Aucun' }}
                         </span>
                     </li>
                 </ul>

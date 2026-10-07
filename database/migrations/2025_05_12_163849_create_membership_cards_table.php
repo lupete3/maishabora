@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->foreignId('member_id')->constrained('users');
             $table->string('currency')->default('CDF'); // USD ou CDF
+            $table->string('price_currency')->default('CDF');
             $table->decimal('price', 15, 2); // prix de la carte
             $table->decimal('subscription_amount', 15, 2); // montant quotidien à verser
             $table->date('start_date')->default(now());

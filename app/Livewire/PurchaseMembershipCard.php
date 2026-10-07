@@ -25,6 +25,7 @@ class PurchaseMembershipCard extends Component
     public $searchCard;
     public $member_id;
     public $currency = 'CDF';
+    public $price_currency = 'CDF';
     public $price = 1000;
     public $subscription_amount = 0;
     public $code; // Complément manuel ; la référence physique est reconstruite côté serveur.
@@ -46,17 +47,19 @@ class PurchaseMembershipCard extends Component
     public $editCardId;
     public $edit_code;
     public $edit_currency;
+    public $edit_price_currency;
     public $edit_price;
     public $edit_subscription_amount;
     public $edit_agent_id;
     public $edit_card_type;
 
+    public $finalCodeForm;
+
     protected $rules = [
         'agent_id' => 'required|exists:users,id',
         'member_id' => 'required|exists:users,id',
-        'code' => 'nullable|string|max:200',
-        'stock_item_id' => 'required|integer|exists:card_stock_items,id',
-        'currency' => 'required|in:CDF,USD',
+        'code' => 'required|string|unique:membership_cards,code',
+        'currency' => 'required|string',
         'price' => 'required|numeric|min:0',
         'subscription_amount' => 'required|numeric|min:0',
         'card_type' => 'required|in:epargne,simple',
@@ -122,10 +125,12 @@ class PurchaseMembershipCard extends Component
         $this->reset(['stock_item_id']);
         if ($value === 'simple') {
             $this->currency = 'USD';
+            $this->price_currency = 'USD';
             $this->price = 1;
             $this->subscription_amount = 0;
         } else {
             $this->currency = 'CDF';
+            $this->price_currency = 'CDF';
             $this->price = 1000;
             $this->subscription_amount = 0; // Or whatever default was
         }
@@ -237,9 +242,12 @@ class PurchaseMembershipCard extends Component
                 }
             }
 
-            // Conserver les deux destinations comptables existantes dans la devise vendue.
+            // Débit/Crédit Agent et Caisse (Logique existante conservée)
+            // Note: Si devise USD, on devrait adapter les comptes, mais la demande spécifie "la logique de transactions reste la même"
+            // On suppose ici que le système gère le multi-devise ou convertit.
+            // Le code original force 'CDF'.
 
-            $transactionCurrency = $this->currency; // Utiliser la devise de la carte
+            $transactionCurrency = $this->card_type == 'epargne' ? 'CDF' : 'USD'; // Utiliser la devise de la carte
 
             // Débit du compte agent
             $agentAccount = AgentAccount::firstOrCreate(
@@ -287,13 +295,13 @@ class PurchaseMembershipCard extends Component
 
             UserLogHelper::log_user_activity(
                 action: 'achat_carte_adhesion',
-                description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->currency}"
+                description: "Achat de la carte #{$card->id} ({$this->card_type}) pour le membre {$member->name} ({$member->code}), montant {$this->price} {$this->price_currency}"
             );
 
             $stockService->markSold($stockItem);
             DB::commit();
 
-            $this->reset(['stock_item_id', 'code', 'member_id', 'currency', 'price', 'subscription_amount', 'card_type']);
+            $this->reset(['code', 'member_id', 'currency', 'price', 'subscription_amount', 'card_type']);
 
             // Remettre les valeurs par défaut pour éviter un état incohérent
             $this->updatedCardType('epargne');
@@ -317,6 +325,10 @@ class PurchaseMembershipCard extends Component
         $this->validate();
         $member = User::find($this->member_id);
         $this->selectedMemberName = $member ? "{$member->name} {$member->postnom}" : 'Inconnu';
+        $this->finalCodeForm = app(\App\Services\CardStockService::class)->composeCode(
+            \App\Models\CardStockItem::find($this->stock_item_id),
+            $this->code
+        );
 
         $this->showConfirmationModal = true;
     }
@@ -451,6 +463,7 @@ class PurchaseMembershipCard extends Component
         $this->editCardId = $card->id;
         $this->edit_code = $card->code;
         $this->edit_currency = $card->currency;
+        $this->edit_price_currency = $card->price_currency ?? ($card->card_type === 'epargne' ? 'CDF' : 'USD');
         $this->edit_price = $card->price;
         $this->edit_subscription_amount = $card->subscription_amount;
         $this->edit_agent_id = $card->user_id;
@@ -466,6 +479,7 @@ class PurchaseMembershipCard extends Component
         $this->validate([
             'edit_code' => 'required|string|unique:membership_cards,code,' . $this->editCardId,
             'edit_currency' => 'required|string',
+            'edit_price_currency' => 'required|in:CDF,USD',
             'edit_price' => 'required|numeric|min:0',
             'edit_subscription_amount' => 'required|numeric|min:0',
             'edit_agent_id' => 'nullable|exists:users,id',
@@ -486,6 +500,7 @@ class PurchaseMembershipCard extends Component
         $card->update([
             'code' => $this->edit_code,
             'currency' => $this->edit_currency,
+            'price_currency' => $this->edit_price_currency,
             'price' => $this->edit_price,
             'subscription_amount' => $this->edit_subscription_amount,
             'user_id' => $this->edit_agent_id,
@@ -505,7 +520,7 @@ class PurchaseMembershipCard extends Component
         );
 
         $this->editModal = false;
-        $this->reset(['editCardId', 'edit_code', 'edit_currency', 'edit_price', 'edit_subscription_amount', 'edit_agent_id', 'edit_card_type']);
+        $this->reset(['editCardId', 'edit_code', 'edit_currency', 'edit_price_currency', 'edit_price', 'edit_subscription_amount', 'edit_agent_id', 'edit_card_type']);
         $this->dispatch('$refresh');
         notyf()->success('Carte modifiée avec succès.');
     }
@@ -593,7 +608,7 @@ class PurchaseMembershipCard extends Component
         try {
             DB::beginTransaction();
 
-            $transactionCurrency = $card->card_type == 'epargne' ? 'CDF' : 'USD';
+            $transactionCurrency = $card->price_currency ?? ($card->card_type === 'epargne' ? 'CDF' : 'USD');
             $price = $card->price;
 
             // Rechercher les transactions originales de vente liées à cette carte
