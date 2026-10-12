@@ -463,6 +463,8 @@ class MemberDetails extends Component
 
             $account->refresh();
             $agentAccount->refresh();
+            $card->updated_at = now();
+            $card->save();
 
             // Créer les transactions
             $this->createTransaction(
@@ -511,6 +513,7 @@ class MemberDetails extends Component
                 $commissionAccount->refresh();
 
                 $card->first_mise_retained = true;
+                $card->updated_at = now();
                 $card->save();
 
                 $this->createTransaction(
