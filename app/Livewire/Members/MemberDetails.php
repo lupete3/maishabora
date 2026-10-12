@@ -431,7 +431,7 @@ class MemberDetails extends Component
             }
 
             // Marquer les contributions comme payées
-            $contributionsToPay->each->update(['is_paid' => true]);
+            $contributionsToPay->each->update(['is_paid' => true, 'contribution_date' => now()]);
 
             $totalPaid = $contributionsToPay->count() * $dailyAmount;
 
@@ -1036,7 +1036,7 @@ class MemberDetails extends Component
     {
         $authUser = Auth::user();
         $clientInfo = "{$card->member->name} {$card->member->postnom}";
-        $action = $isAgent ? "Paiement groupé de {$count} mises sur la carte #{$card->id} pour le client: {$clientInfo} par" : "Paiement groupé de {$count} mises sur la carte #{$card->id} pour le client: {$clientInfo} par";
+        $action = $isAgent ? "Paiement groupé de {$count} mises sur la carte #{$card->id}, Code {$card->code} pour le client: {$clientInfo} par" : "Paiement groupé de {$count} mises sur la carte #{$card->id}, Code {$card->code} pour le client: {$clientInfo} par";
         return "{$action} {$authUser->name} {$authUser->postnom}";
     }
 
