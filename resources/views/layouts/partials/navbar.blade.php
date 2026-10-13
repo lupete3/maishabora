@@ -8,14 +8,14 @@
     <div class="navbar-nav-right d-flex align-items-center" id="navbar-collapse">
         <!-- Search -->
         <div class="navbar-nav align-items-center">
-            <div class="nav-item d-flex align-items-center">
+            {{-- <div class="nav-item d-flex align-items-center">
                 @php
                     $rate = \App\Models\ExchangeRate::first();
                 @endphp
                 @if($rate)
                     1 USD = {{ number_format($rate->rate, 2) }} CDF
                 @endif
-            </div>
+            </div> --}}
         </div>
         <!-- /Search -->
 
