@@ -80,6 +80,7 @@ class MemberDetails extends Component
 
     const MIN_BALANCE_USD = 5;
     const MIN_BALANCE_CDF = 5000;
+    const ACCOUNT_OPERATION_COOLDOWN_MINUTES = 2;
 
     public function mount($id)
     {
@@ -244,6 +245,11 @@ class MemberDetails extends Component
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if (!$this->canPerformAccountOperation($account)) {
+                DB::rollBack();
+                return;
+            }
 
             if ($account->status === 'Inactif') {
                 DB::rollBack();
@@ -445,6 +451,11 @@ class MemberDetails extends Component
             // Mettre à jour les comptes
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
 
+            if (!$this->canPerformAccountOperation($account)) {
+                DB::rollBack();
+                return;
+            }
+
             if ($account->status === 'Inactif') {
                 DB::rollBack();
                 notyf()->error("Opération refusée. Le compte {$accountType} {$card->currency} de ce membre est Inactif.");
@@ -571,6 +582,11 @@ class MemberDetails extends Component
         try {
             $user = User::findOrFail($this->memberId);
             $account = $this->getOrCreateAccount($user->id, $this->currency, 'current');
+
+            if (!$this->canPerformAccountOperation($account)) {
+                DB::rollBack();
+                return;
+            }
 
             if ($account->status === 'Inactif') {
                 DB::rollBack();
@@ -729,6 +745,11 @@ class MemberDetails extends Component
             $accountType = $useCurrentAccount ? 'current' : 'savings';
 
             $account = $this->getOrCreateAccount($card->member_id, $card->currency, $accountType);
+
+            if (!$this->canPerformAccountOperation($account)) {
+                DB::rollBack();
+                return;
+            }
 
             if ($account->status === 'Inactif') {
                 DB::rollBack();
@@ -987,6 +1008,27 @@ class MemberDetails extends Component
     }
 
     /**
+     * Empêche plusieurs opérations rapprochées sur le même compte.
+     */
+    private function canPerformAccountOperation(Account $account): bool
+    {
+        $hasRecentOperation = Transaction::where('account_id', $account->id)
+            ->where('created_at', '>=', now()->subMinutes(self::ACCOUNT_OPERATION_COOLDOWN_MINUTES))
+            ->exists();
+
+        if ($hasRecentOperation) {
+            notyf()->error(
+                'Une opération a déjà été effectuée sur ce compte. Réessayez après '
+                . self::ACCOUNT_OPERATION_COOLDOWN_MINUTES
+                . ' minutes.'
+            );
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
      * Obtient ou crée un compte agent
      */
     private function getOrCreateAgentAccount($currency, $userId = null)
@@ -1151,6 +1193,12 @@ class MemberDetails extends Component
         $amount = $account->currency === 'USD' ? 5 : 5000;
 
         DB::transaction(function () use ($account, $amount) {
+            $account = Account::whereKey($account->id)->lockForUpdate()->firstOrFail();
+
+            if (!$this->canPerformAccountOperation($account)) {
+                return;
+            }
+
             // Débiter uniquement CE compte
             $account->balance -= $amount;
             $account->subscribed = true;
@@ -1215,7 +1263,13 @@ class MemberDetails extends Component
 
         DB::beginTransaction();
         try {
-            $account = Account::findOrFail($this->editingAccountId);
+            $account = Account::whereKey($this->editingAccountId)->lockForUpdate()->firstOrFail();
+
+            if (!$this->canPerformAccountOperation($account)) {
+                DB::rollBack();
+                return;
+            }
+
             $oldBalance = $account->balance;
             $account->balance = $this->newBalance;
             $account->save();
