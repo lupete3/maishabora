@@ -17,10 +17,8 @@
                                     <span class="input-group-text" id="basic-addon-search31">
                                         <i class="icon-base bx bx-search"></i>
                                     </span>
-                                    <input type="search" wire:model.live.debounce.300ms="search"
-                                        class="form-control"
-                                        placeholder="Rechercher Membre....."
-                                        aria-label="Rechercher Membre....."
+                                    <input type="search" wire:model.live.debounce.300ms="search" class="form-control"
+                                        placeholder="Rechercher Membre....." aria-label="Rechercher Membre....."
                                         aria-describedby="basic-addon-search31">
                                 </div>
                             </div>
@@ -45,7 +43,8 @@
                                 <option value="">Sélectionner un crédit</option>
                                 @foreach ($credits as $credit)
                                     <option value="{{ $credit->id }}">
-                                        #{{ $credit->id }} | {{ $credit->currency }} - {{ number_format($credit->amount, 2) }}
+                                        #{{ $credit->id }} | {{ $credit->currency }} -
+                                        {{ number_format($credit->amount, 2) }}
                                         ({{ $credit->installments }} échéances)
                                     </option>
                                 @endforeach
@@ -61,13 +60,23 @@
                         Solde :
                         @foreach (['USD', 'CDF'] as $curr)
                             @php
-                                $currentBal = (float) ($selectedCredit->user->accounts->where('currency', $curr)->where('type', 'current')->first()?->balance ?? 0);
-                                $savingsBal = (float) ($selectedCredit->user->accounts->where('currency', $curr)->where('type', 'savings')->first()?->balance ?? 0);
+                                $currentBal =
+                                    (float) ($selectedCredit->user->accounts
+                                        ->where('currency', $curr)
+                                        ->where('type', 'current')
+                                        ->first()?->balance ?? 0);
+                                $savingsBal =
+                                    (float) ($selectedCredit->user->accounts
+                                        ->where('currency', $curr)
+                                        ->where('type', 'savings')
+                                        ->first()?->balance ?? 0);
                             @endphp
                             <span class="badge border text-dark me-1">
                                 {{ $curr }} |
-                                <span class="text-primary" title="Courant">C: {{ number_format($currentBal, 2, '.', ' ') }}</span> |
-                                <span class="text-success" title="Epargne">E: {{ number_format($savingsBal, 2, '.', ' ') }}</span>
+                                <span class="text-primary" title="Courant">C:
+                                    {{ number_format($currentBal, 2, '.', ' ') }}</span> |
+                                <span class="text-success" title="Epargne">E:
+                                    {{ number_format($savingsBal, 2, '.', ' ') }}</span>
                             </span>
                         @endforeach
                     </div>
@@ -95,12 +104,32 @@
                             </tr>
                         </thead>
                         <tbody>
+                            @php
+                                $remainingCapital = floatval($selectedCredit->amount);
+                            @endphp
                             @forelse($selectedCredit->repayments->sortBy('due_date') as $r)
                                 @php
+                                    if ($selectedCredit->credit_type === 'degressif') {
+                                        $interestCredit = round(
+                                            $remainingCapital * (floatval($selectedCredit->interest_rate) / 100),
+                                            2,
+                                        );
+                                    } else {
+                                        $interestCredit = round(
+                                            floatval($selectedCredit->amount) *
+                                                (floatval($selectedCredit->interest_rate) / 100),
+                                            2,
+                                        );
+                                    }
+                                    $capital = round(floatval($r->expected_amount) - $interestCredit, 2);
+                                    $remainingCapital = round($remainingCapital - $capital, 2);
+                                @endphp
+
+                                @php
                                     // Utiliser les colonnes ventilées stockées en DB
-                                    $principal = floatval($r->principal_amount ?? $r->expected_amount);
-                                    $interest  = floatval($r->interest_amount  ?? 0);
-                                    $penalty   = floatval($r->penalty);
+                                    $principal = $capital;
+                                    $interest = $interestCredit;
+                                    $penalty = floatval($r->penalty);
 
                                     // Montants déjà réglés
                                     $paidPri = floatval($r->paid_principal);
@@ -110,8 +139,8 @@
 
                                     // Soldes restants
                                     $remPri = max(0, $principal - $paidPri);
-                                    $remInt = max(0, $interest  - $paidInt);
-                                    $remPen = max(0, $penalty   - $paidPen);
+                                    $remInt = max(0, $interest - $paidInt);
+                                    $remPen = max(0, $penalty - $paidPen);
                                     $remaining = round($remPri + $remInt + $remPen, 2);
 
                                     $totalDue = round($principal + $interest + $penalty, 2);
@@ -149,14 +178,15 @@
                                     <td>
                                         @if (!$r->is_paid)
                                             <button wire:click="confirmRepayment({{ $r->id }})"
-                                                class="btn btn-sm btn-success"
-                                                wire:loading.attr="disabled"
+                                                class="btn btn-sm btn-success" wire:loading.attr="disabled"
                                                 wire:target="confirmRepayment({{ $r->id }})">
-                                                <span wire:loading.remove wire:target="confirmRepayment({{ $r->id }})">
+                                                <span wire:loading.remove
+                                                    wire:target="confirmRepayment({{ $r->id }})">
                                                     <i class="bx bx-check me-1"></i>Payer
                                                 </span>
                                                 <span wire:loading wire:target="confirmRepayment({{ $r->id }})">
-                                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                                    <span class="spinner-border spinner-border-sm"
+                                                        role="status"></span>
                                                 </span>
                                             </button>
                                         @else
@@ -187,8 +217,8 @@
                     <p>Voulez-vous appliquer les intérêts futurs sur ce remboursement ?</p>
                     <div>
                         <label>Penalités à payer : </label>
-                        <input type="number" class="form-control" value="{{ number_format((float) $penality, 2, '.', '') }}"
-                            wire:model="penality">
+                        <input type="number" class="form-control"
+                            value="{{ number_format((float) $penality, 2, '.', '') }}" wire:model="penality">
                     </div>
                 </div>
                 <div class="modal-footer">
