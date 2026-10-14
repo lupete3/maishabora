@@ -80,7 +80,7 @@ class MemberDetails extends Component
 
     const MIN_BALANCE_USD = 5;
     const MIN_BALANCE_CDF = 5000;
-    const ACCOUNT_OPERATION_COOLDOWN_MINUTES = 2;
+    const ACCOUNT_OPERATION_COOLDOWN_MINUTES = 1;
 
     public function mount($id)
     {
