@@ -178,16 +178,8 @@ class ManageRepayments extends Component
                     return;
                 }
 
-                // Calcul du montant à payer
-                if ($withInterest) {
-                    $expectedAmount = floatval($repayment->expected_amount);
-                    $penalityAmount = floatval($this->penality);
-                    $amountToPay = round($expectedAmount + $penalityAmount, 3);
-                } else {
-                    $capitalRestant = floatval($repayment->credit->amount) / max(floatval($repayment->credit->installments), 1);
-                    $amountToPay = round($capitalRestant, 3);
-                    $this->paymentAmount = $amountToPay; // Mettre à jour le montant saisi pour refléter le capital restant
-                }
+                $principalAmount = floatval($repayment->principal_amount ?? $repayment->expected_amount);
+                $remainingPrincipal = max(0.0, $principalAmount - floatval($repayment->paid_principal));
 
                 // Vérification du solde minimum (sauf si autorisé à tout retirer)
                 $minBalance = ($credit->currency === 'USD') ? self::MIN_BALANCE_USD : self::MIN_BALANCE_CDF;
@@ -195,7 +187,9 @@ class ManageRepayments extends Component
                     $minBalance = 0;
                 }
 
-                $requestedAmount = round(floatval($this->paymentAmount), 3);
+                $requestedAmount = $withInterest
+                    ? round(floatval($this->paymentAmount), 3)
+                    : $remainingPrincipal;
                 $availableBalance = floatval($account->balance) - $minBalance;
 
                 if ($availableBalance <= 0) {
@@ -207,14 +201,9 @@ class ManageRepayments extends Component
                 $amountToPay = min($requestedAmount, $availableBalance);
 
                 // ----- Soldes restants -----
-                $principalAmount    = floatval($repayment->principal_amount ?? $repayment->expected_amount);
                 $interestAmount     = floatval($repayment->interest_amount  ?? 0);
-                $remainingPrincipal = max(0.0, $principalAmount - floatval($repayment->paid_principal));
                 $remainingInterest  = max(0.0, $interestAmount  - floatval($repayment->paid_interest));
-                // $remainingPenalty   = max(0.0, floatval($repayment->penalty) - floatval($repayment->paid_penalty));
-                
-                $penaltyToApply = floatval($this->penality);
-                $remainingPenalty = max(0, $penaltyToApply - floatval($repayment->paid_penalty));
+                $remainingPenalty   = max(0.0, floatval($repayment->penalty) - floatval($repayment->paid_penalty));
 
                 // ----- Allocation -----
                 $paidPen = 0.0;
@@ -230,13 +219,10 @@ class ManageRepayments extends Component
                 } else {
                     // Solder sans intérêt : allocation directe au capital restant
                     $paidPri = min($amountToPay, $remainingPrincipal);
-
                     // Si le capital restant est entièrement soldé, on annule (waive) l'intérêt et la pénalité restants
-                    if ($paidPri >= $remainingPrincipal) {
+                    if (round(floatval($repayment->paid_principal) + $paidPri, 3) >= round($principalAmount, 3)) {
                         $repayment->interest_amount = $repayment->paid_interest;
                         $repayment->penalty = $repayment->paid_penalty;
-                        // On met à jour les variables locales pour le calcul de total_due ci-dessous
-                        $interestAmount = floatval($repayment->interest_amount);
                     }
                 }
 
@@ -287,11 +273,19 @@ class ManageRepayments extends Component
                 $repayment->paid_principal = floatval($repayment->paid_principal) + $paidPri;
                 $repayment->paid_amount   = floatval($repayment->paid_amount)   + $totalPaid;
 
-                // Recalculer le total_due si pénalité a changé (sécurité)
-                // $repayment->total_due = round($principalAmount + $interestAmount + floatval($repayment->penalty), 3);
-                $repayment->total_due = round($principalAmount + $interestAmount + $penaltyToApply, 3);
+                $repayment->total_due = round(
+                    $principalAmount
+                    + floatval($repayment->interest_amount)
+                    + floatval($repayment->penalty),
+                    3
+                );
 
-                $repayment->is_paid = ($repayment->paid_amount >= $repayment->total_due);
+                $repayment->is_paid = $withInterest
+                    ? ($repayment->paid_amount >= $repayment->total_due)
+                    : (round(floatval($repayment->paid_principal), 3) >= round($principalAmount, 3));
+                if (!$withInterest && $repayment->is_paid) {
+                    $repayment->total_due = $repayment->paid_amount;
+                }
                 if ($repayment->is_paid) {
                     $repayment->paid_date = now()->format('Y-m-d');
                 }
