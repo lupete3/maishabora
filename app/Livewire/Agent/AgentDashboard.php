@@ -94,7 +94,7 @@ class AgentDashboard extends Component
 
             case 'month':
                 $this->periodLabel = "Mois";
-                return $query->whereMonth('created_at', $now->month);
+                return $query->whereBetween('created_at', [$now->copy()->startOfMonth(), $now->copy()->endOfMonth()]);
 
             case 'year':
                 $this->periodLabel = "Année";
