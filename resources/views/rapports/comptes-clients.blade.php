@@ -6,7 +6,8 @@
 
 <div class="container-xxl flex-grow-1 container-p-y">
 
-    <livewire:repports.rapport-compte-clients />
+    {{-- lazy : la page s'affiche tout de suite, les soldes se chargent ensuite --}}
+    <livewire:repports.rapport-compte-clients lazy />
 
 </div>
 

@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Models\ExchangeRate;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Classement des membres selon le solde de leurs comptes (page /comptes-membres et ses exports).
@@ -86,6 +87,65 @@ class ClientBalanceRanking
         return $query->orderBy('name')->orderBy('postnom')->orderBy('users.id');
     }
 
+    /** Tailles de lot proposées pour le PDF (le maximum protège le serveur). */
+    public const LOT_SIZES = [50, 100, 200];
+
+    public const DEFAULT_LOT_SIZE = 100;
+
+    public static function normalizeLotSize($size): int
+    {
+        return in_array((int) $size, self::LOT_SIZES, true) ? (int) $size : self::DEFAULT_LOT_SIZE;
+    }
+
+    /**
+     * Totaux des comptes des membres filtrés, calculés en une passe SQL
+     * (au lieu de relire tous les membres en PHP).
+     *
+     * @param Builder $members requête des membres filtrés (sans tri)
+     * @return array{current_usd: float, current_cdf: float, savings_usd: float, savings_cdf: float, positive: array}
+     */
+    public static function totals(Builder $members, Closure $accountFilter, ?float $rate): array
+    {
+        $memberIds = (clone $members)->toBase()->select('users.id');
+
+        $accounts = DB::table('accounts')->whereIn('user_id', $memberIds);
+        $accountFilter($accounts);
+
+        // Totaux par type et devise (cartes en haut de page)
+        $rows = (clone $accounts)
+            ->selectRaw('type, currency, COALESCE(SUM(balance), 0) AS total')
+            ->groupBy('type', 'currency')
+            ->get();
+
+        $totals = ['current_usd' => 0.0, 'current_cdf' => 0.0, 'savings_usd' => 0.0, 'savings_cdf' => 0.0];
+        foreach ($rows as $row) {
+            $key = "{$row->type}_" . strtolower($row->currency);
+            if (array_key_exists($key, $totals)) {
+                $totals[$key] = (float) $row->total;
+            }
+        }
+
+        // Encours créditeur : somme des soldes positifs par membre (USD, CDF, total converti)
+        $parMembre = (clone $accounts)
+            ->selectRaw("user_id,
+                SUM(CASE WHEN currency = 'USD' THEN balance ELSE 0 END) AS usd,
+                SUM(CASE WHEN currency = 'CDF' THEN balance ELSE 0 END) AS cdf")
+            ->groupBy('user_id');
+
+        $positive = DB::query()->fromSub($parMembre, 'm')
+            ->selectRaw('COALESCE(SUM(GREATEST(usd, 0)), 0) AS usd, COALESCE(SUM(GREATEST(cdf, 0)), 0) AS cdf, COALESCE(SUM(GREATEST(usd + cdf / ?, 0)), 0) AS total', [$rate ?: 1])
+            ->first();
+
+        $totals['positive'] = [
+            'usd'   => (float) $positive->usd,
+            'cdf'   => (float) $positive->cdf,
+            // Sans taux, le "total" se replie sur l'USD (même règle que le tri)
+            'total' => $rate ? (float) $positive->total : (float) $positive->usd,
+        ];
+
+        return $totals;
+    }
+
     /**
      * Soldes USD / CDF d'un membre, sur ses comptes chargés (déjà filtrés).
      * Même base que le tri SQL (solde_usd / solde_cdf), tous types de comptes confondus.
@@ -98,22 +158,8 @@ class ClientBalanceRanking
         ];
     }
 
-    /** Accumulateur des soldes positifs, base de calcul de la part de l'encours. */
-    public static function emptyPositiveTotals(): array
-    {
-        return ['usd' => 0.0, 'cdf' => 0.0, 'total' => 0.0];
-    }
-
-    /** Ajoute un membre ($amounts = usd, cdf) aux totaux positifs (les soldes négatifs sont ignorés). */
-    public static function addPositive(array &$positiveTotals, array $amounts, ?float $rate): void
-    {
-        foreach (['usd', 'cdf', 'total'] as $critere) {
-            $positiveTotals[$critere] += max(0, (float) self::value($critere, $amounts, $rate));
-        }
-    }
-
     /**
-     * Part d'un membre dans l'encours créditeur (somme des soldes positifs), en %.
+     * Part d'un membre dans l'encours créditeur (somme des soldes positifs, voir totals()), en %.
      * Null pour un tri alphabétique ou un solde nul / négatif.
      */
     public static function share(string $sortBy, array $amounts, array $positiveTotals, ?float $rate): ?float
