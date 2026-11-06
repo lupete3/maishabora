@@ -2,7 +2,12 @@
 <div class="mt-4">
     @include('livewire.agent.partials.modals-management')
 
-    <h3>Caisse des agents</h3>
+    <div class="d-flex align-items-center justify-content-between">
+        <h3 class="m-0">Caisse des agents</h3>
+        @can('afficher-caisse-agent')
+            <livewire:agent.agent-performance wire:key="agent-performance" />
+        @endcan
+    </div>
     <div class="row g-4 mt-2">
         <!-- Soldes -->
         @foreach ($agentAccounts as $agent)
