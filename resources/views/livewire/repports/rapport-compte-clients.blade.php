@@ -96,16 +96,48 @@
                     <input type="number" wire:model.live.debounce.500ms="minBalance" class="form-control"
                         placeholder="0.00">
                 </div>
-                <div class="col-md-2 d-flex gap-2 align-items-end">
-                    <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange, 'sortBy' => $sortBy]) }}"
-                        target="_blank" class="btn btn-danger flex-grow-1 p-2" title="Télécharger PDF">
-                        <i class="bx bx-file"></i> PDF
-                    </a>
-                    <a href="{{ route('rapports.compte-clients.excel', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange, 'sortBy' => $sortBy]) }}"
-                        target="_blank" class="btn btn-success flex-grow-1 p-2" title="Exporter Excel">
-                        <i class="bx bx-spreadsheet"></i> Excel
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Lignes par page</label>
+                    <select wire:model.live="perPage" class="form-control">
+                        @foreach ($perPageOptions as $option)
+                            <option value="{{ $option }}">{{ $option }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Taille d'un lot PDF</label>
+                    <select wire:model.live="lotSize" class="form-control">
+                        @foreach ($lotSizes as $size)
+                            <option value="{{ $size }}">{{ $size }} membres</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-md-4 d-flex gap-2 align-items-end">
+                    {{-- PDF par lots : un PDF de tous les membres dépasse les ressources du serveur --}}
+                    <div class="dropdown flex-grow-1">
+                        <button class="btn btn-danger w-100 p-2 dropdown-toggle" type="button" data-bs-toggle="dropdown"
+                            aria-expanded="false" @disabled(empty($lots))>
+                            <i class="bx bx-file"></i> PDF ({{ count($lots) }} lot{{ count($lots) > 1 ? 's' : '' }})
+                        </button>
+                        <ul class="dropdown-menu" style="max-height: 320px; overflow-y: auto;">
+                            @foreach ($lots as $item)
+                                <li>
+                                    <a class="dropdown-item" target="_blank"
+                                        href="{{ route('rapports.compte-clients.pdf', $exportParams + ['lotSize' => $lotSize, 'lot' => $item['number']]) }}">
+                                        Lot {{ $item['number'] }} : {{ $isBalanceSort ? 'rangs' : 'membres' }} {{ $item['from'] }} à {{ $item['to'] }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    <a href="{{ route('rapports.compte-clients.excel', $exportParams) }}"
+                        target="_blank" class="btn btn-success flex-grow-1 p-2" title="Exporter tous les membres en Excel">
+                        <i class="bx bx-spreadsheet"></i> Excel (tout)
                     </a>
                 </div>
+            </div>
+            <div wire:loading.delay class="small text-muted mt-2">
+                <span class="spinner-border spinner-border-sm"></span> Mise à jour…
             </div>
         </div>
         <div class="card-body">

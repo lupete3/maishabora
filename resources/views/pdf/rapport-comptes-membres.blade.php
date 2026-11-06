@@ -107,7 +107,15 @@
             </td>
         </tr>
     </table>
-    <h4 style="margin: 0 0 10px 0;">Total Membres listés : {{ $balances->count() }}</h4>
+    @if (isset($lot))
+        <h4 style="margin: 0 0 4px 0;">
+            Lot {{ $lot['number'] }} / {{ $lot['count'] }} : membres {{ $lot['from'] }} à {{ $lot['to'] }}
+            sur {{ $lot['total'] }}
+        </h4>
+        <p style="margin: 0 0 10px 0; font-size: 8px;">Les totaux ci-dessus portent sur l'ensemble des {{ $lot['total'] }} membres filtrés.</p>
+    @else
+        <h4 style="margin: 0 0 10px 0;">Total Membres listés : {{ $balances->count() }}</h4>
+    @endif
     @if (!empty($isBalanceSort))
         <p style="margin: 0 0 8px 0;">
             Classement : {{ $sortLabel }}

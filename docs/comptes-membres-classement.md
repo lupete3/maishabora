@@ -24,11 +24,42 @@ Le tri est fait **en base de données, sur tous les membres**. Le n°1 de la pag
   - Les soldes négatifs sont exclus du calcul, sinon un total négatif donnerait des parts absurdes.
 
 ### Exports PDF et Excel
-Les deux boutons reprennent le classement choisi :
+Les deux exports reprennent le classement choisi. Le PDF se génère par lots, voir plus bas.
 - le PDF indique le critère de classement et le taux utilisé ;
 - le PDF et l'Excel ajoutent les colonnes Rang, Total équiv. USD et Part.
 
 En ordre alphabétique, les exports gardent leur format d'origine.
+
+## Génération par lots et performances (06/11/2026)
+
+Avec plus de 1 200 clients, générer le PDF de tous les membres d'un coup provoquait une **erreur 500**, car les ressources du serveur sont dépassées. Mesure en local pour 701 clients : 14 à 17 s et jusqu'à 268 Mo de mémoire.
+
+### PDF par lots
+- Choix **« Taille d'un lot PDF »** : 50, 100 (par défaut) ou 200 membres. Le maximum de 200 est imposé côté serveur.
+- Le bouton **PDF** ouvre la liste des lots selon les filtres en cours, par exemple « Lot 1 : membres 1 à 100 », « Lot 2 : membres 101 à 200 »…
+- Chaque PDF ne contient que son lot :
+  - le **rang reste global** (le lot 2 commence au rang 101) ;
+  - les **totaux en tête du PDF portent sur tous les membres filtrés** ;
+  - l'en-tête indique « Lot X / N : membres a à b sur total ».
+- Avec un classement par solde, le **lot 1 correspond au Top 50, 100 ou 200 des grands clients**.
+- Paramètres d'URL : `lotSize` (50, 100 ou 200) et `lot` (n° du lot). Sans eux, l'URL donne le lot 1 de 100 membres.
+
+### Excel
+L'export Excel contient toujours **tous les membres** dans un seul fichier, car il est écrit au fil de l'eau sans saturer la mémoire. Sa limite de temps est portée à 300 s.
+
+### Totaux calculés en base
+Les totaux (cartes en haut de page, encours créditeur pour la « part ») sont calculés **en une seule requête SQL** (`ClientBalanceRanking::totals()`), au lieu de relire tous les membres en PHP. J'ai vérifié qu'ils donnent exactement les mêmes résultats sur plusieurs combinaisons de filtres.
+
+### Chargement différé et lignes par page
+- La page s'ouvre immédiatement avec « Chargement des soldes des membres… », puis le tableau s'affiche (`lazy`).
+- Choix **« Lignes par page »** : 10, 25 ou 50.
+
+### Gains mesurés (base locale, 701 clients)
+| | Avant | Après |
+|---|---|---|
+| PDF | 14 à 17 s, jusqu'à 268 Mo (tout) | 1 à 3 s par lot, +38 Mo au maximum |
+| Affichage de la page | 3,5 s par changement | environ 0,65 s |
+| Excel (tout) | 7,8 s | 1,6 s |
 
 ## Règles de calcul
 - Solde USD / CDF d'un membre = somme de ses comptes dans la devise, **après filtres**. Tous types de comptes sont comptés, sauf si un type est filtré.

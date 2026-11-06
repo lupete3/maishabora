@@ -21,7 +21,8 @@ class ClientStatReportController extends Controller
 
     /**
      * Membres filtrés et classés comme sur la page /comptes-membres.
-     * @return array{0: \Illuminate\Database\Eloquent\Builder, 1: array} requête, paramètres
+     * @return array{0: \Illuminate\Database\Eloquent\Builder, 1: array, 2: array} requête classée,
+     *         paramètres, totaux (calculés en SQL sur tous les membres filtrés)
      */
     private function compteClientsQuery(Request $request): array
     {
@@ -38,7 +39,6 @@ class ClientStatReportController extends Controller
         $accountFilter = ClientBalanceRanking::accountFilter($params['accountType'], $params['currencyFilter'], $params['minBalance']);
 
         $query = User::where('role', 'membre')
-            ->with(['accounts' => $accountFilter])
             ->whereHas('accounts', $accountFilter);
 
         if ($params['search']) {
@@ -56,9 +56,13 @@ class ClientStatReportController extends Controller
             $query->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
         }
 
+        $totals = ClientBalanceRanking::totals($query, $accountFilter, $params['rate']);
+        $params['count'] = (clone $query)->count();
+
+        $query->with(['accounts' => $accountFilter]);
         ClientBalanceRanking::apply($query, $params['sortBy'], $accountFilter, $params['rate']);
 
-        return [$query, $params];
+        return [$query, $params, $totals];
     }
 
     /** Soldes d'un membre ventilés par type de compte et devise. */
@@ -83,37 +87,47 @@ class ClientStatReportController extends Controller
         return ClientBalanceRanking::amountsOf($row['member']);
     }
 
+    /**
+     * PDF par lot (50 / 100 / 200 membres) : un PDF de tous les membres dépasse les
+     * ressources du serveur. Le rang reste global et les totaux portent sur tous les
+     * membres filtrés.
+     */
     public function compteClientsPdf(Request $request)
     {
-        [$query, $params] = $this->compteClientsQuery($request);
+        @set_time_limit(120);
 
-        $balances = $query->get()->map(fn ($member) => $this->memberBalances($member));
+        [$query, $params, $totals] = $this->compteClientsQuery($request);
 
-        $globalCurrentUsd = $balances->sum('current_usd');
-        $globalCurrentCdf = $balances->sum('current_cdf');
-        $globalSavingsUsd = $balances->sum('savings_usd');
-        $globalSavingsCdf = $balances->sum('savings_cdf');
+        $lotSize = ClientBalanceRanking::normalizeLotSize($request->query('lotSize'));
+        $lotCount = max(1, (int) ceil($params['count'] / $lotSize));
+        $lot = min($lotCount, max(1, (int) $request->query('lot', 1)));
+        $offset = ($lot - 1) * $lotSize;
 
-        // Rang et part de l'encours créditeur (soldes positifs)
-        $positiveTotals = ClientBalanceRanking::emptyPositiveTotals();
-        foreach ($balances as $row) {
-            ClientBalanceRanking::addPositive($positiveTotals, $this->amounts($row), $params['rate']);
-        }
-        $balances = $balances->values()->map(function ($row, $index) use ($params, $positiveTotals) {
-            $amounts = $this->amounts($row);
-            $row['rank'] = $index + 1;
-            $row['total_usd_equiv'] = ClientBalanceRanking::value('total', $amounts, $params['rate']);
-            $row['share'] = ClientBalanceRanking::share($params['sortBy'], $amounts, $positiveTotals, $params['rate']);
+        $balances = $query->skip($offset)->take($lotSize)->get()
+            ->values()
+            ->map(function ($member, $index) use ($params, $totals, $offset) {
+                $row = $this->memberBalances($member);
+                $amounts = $this->amounts($row);
+                $row['rank'] = $offset + $index + 1;
+                $row['total_usd_equiv'] = ClientBalanceRanking::value('total', $amounts, $params['rate']);
+                $row['share'] = ClientBalanceRanking::share($params['sortBy'], $amounts, $totals['positive'], $params['rate']);
 
-            return $row;
-        });
+                return $row;
+            });
 
         $pdf = Pdf::loadView('pdf.rapport-comptes-membres', [
             'balances' => $balances,
-            'globalCurrentUsd' => $globalCurrentUsd,
-            'globalCurrentCdf' => $globalCurrentCdf,
-            'globalSavingsUsd' => $globalSavingsUsd,
-            'globalSavingsCdf' => $globalSavingsCdf,
+            'lot' => [
+                'number' => $lot,
+                'count'  => $lotCount,
+                'from'   => $balances->isEmpty() ? 0 : $offset + 1,
+                'to'     => $offset + $balances->count(),
+                'total'  => $params['count'],
+            ],
+            'globalCurrentUsd' => $totals['current_usd'],
+            'globalCurrentCdf' => $totals['current_cdf'],
+            'globalSavingsUsd' => $totals['savings_usd'],
+            'globalSavingsCdf' => $totals['savings_cdf'],
             'accountType' => $params['accountType'],
             'currencyFilter' => $params['currencyFilter'],
             'minBalance' => $params['minBalance'],
@@ -124,24 +138,19 @@ class ClientStatReportController extends Controller
             'rate' => $params['rate'],
         ])->setPaper('a4', 'portrait');
 
-        return $pdf->stream('rapport_comptes_membres.pdf');
+        return $pdf->stream("rapport_comptes_membres_lot{$lot}_sur_{$lotCount}.pdf");
     }
 
     public function compteClientsExcel(Request $request)
     {
-        [$query, $params] = $this->compteClientsQuery($request);
+        @set_time_limit(300);
+
+        [$query, $params, $allTotals] = $this->compteClientsQuery($request);
         $isBalanceSort = ClientBalanceRanking::isBalanceSort($params['sortBy']);
         $withTotal = $params['sortBy'] === 'total';
 
-        // Totaux positifs nécessaires au calcul de la part de l'encours
-        $totals = ClientBalanceRanking::emptyPositiveTotals();
-        if ($isBalanceSort) {
-            (clone $query)->chunk(200, function ($members) use (&$totals, $params) {
-                foreach ($members as $member) {
-                    ClientBalanceRanking::addPositive($totals, $this->amounts($this->memberBalances($member)), $params['rate']);
-                }
-            });
-        }
+        // Totaux positifs (calculés en SQL) pour la part de l'encours
+        $totals = $allTotals['positive'];
 
         $fileName = 'rapport_comptes_membres_' . now()->format('Ymd_His') . '.csv';
 
