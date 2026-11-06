@@ -84,6 +84,15 @@
             </li>
         @endcan
 
+        @can('afficher-objectifs')
+            <li class="menu-item @if (request()->routeIs('objectifs.*')) active @endif">
+                <a href="{{ route('objectifs.suivi') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-target-lock"></i>
+                    <div data-i18n="Analytics">Objectifs & Performances</div>
+                </a>
+            </li>
+        @endcan
+
         @can('gerer-comptes-agents')
             <li class="menu-item @if (request()->routeIs('agent-accounts.*')) active @endif">
                 <a href="{{ route('agent-accounts.index') }}" class="menu-link">
