@@ -15,6 +15,7 @@ class WeeklyManagementReportService
     private const ACCOUNT_COMMISSION_CARNET = 97;
     private const ACCOUNT_RETENU_MISE = 195;
     private const ACCOUNT_ADHESION_MEMBER = 951;
+    private const ACCOUNT_INTERET_CREDIT = 95;
     private const ACCOUNT_CHARGES = 452;
 
     private const DEPOSIT_TYPES = ['dépôt', 'mise_quotidienne'];
@@ -61,6 +62,7 @@ class WeeklyManagementReportService
             'repayments' => $this->repayments($start, $end),
             'adhesion_member' => $this->agentAccountTotals(self::ACCOUNT_ADHESION_MEMBER, $start, $end),
             'charges' => $this->agentAccountTotals(self::ACCOUNT_CHARGES, $start, $end),
+            'interet_credit' => $this->agentAccountTotals(self::ACCOUNT_INTERET_CREDIT, $start, $end),
         ];
 
         $data['profitability'] = $this->profitability($data);
@@ -354,6 +356,7 @@ class WeeklyManagementReportService
             'mutuelle_credit' => $data['granted_credits']['mutuelle_total'],
             'credit_fees' => $data['granted_credits']['fees_total'],
             'adhesion_member' => $data['adhesion_member'],
+            'interet_credit' => $data['interet_credit'],
         ];
 
         $productTotals = $this->addMoney(...array_values($products));
@@ -391,6 +394,7 @@ class WeeklyManagementReportService
             'mutuelle_credit' => $this->currencyPercentChange($current['granted_credits']['mutuelle_total'], $previous['granted_credits']['mutuelle_total']),
             'repayments' => $this->currencyPercentChange($current['repayments']['paid_total'], $previous['repayments']['paid_total']),
             'adhesion_member' => $this->currencyPercentChange($current['adhesion_member'], $previous['adhesion_member']),
+            'interet_credit' => $this->currencyPercentChange($current['interet_credit'], $previous['interet_credit']),
             'charges' => $this->currencyPercentChange($current['charges'], $previous['charges']),
             'profitability_products' => $this->currencyPercentChange($current['profitability']['products_total'], $previous['profitability']['products_total']),
             'profitability_charges' => $this->currencyPercentChange($current['profitability']['charges_total'], $previous['profitability']['charges_total']),
