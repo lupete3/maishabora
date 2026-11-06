@@ -63,7 +63,7 @@
                 <div class="card-body">
                     <div class="text-muted small">Carnets vendus</div>
                     <h3 class="mb-1">{{ $current['membership_cards']['count']['CDF'] + $current['membership_cards']['count']['USD'] }}</h3>
-                    <div class="small">CDF : {{ $current['membership_cards']['count']['CDF'] }} | USD : {{ $current['membership_cards']['count']['USD'] }}</div>
+                    <div class="small">CDF : {{ $current['membership_cards']['price_total']['CDF'] }} | USD : {{ $current['membership_cards']['price_total']['USD'] }}</div>
                 </div>
             </div>
         </div>
@@ -170,6 +170,7 @@
                     <tr><td>Mutuelle crédit</td><td>{{ $money($current['profitability']['products']['mutuelle_credit']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['products']['mutuelle_credit']['USD'], 'USD') }}</td><td>{{ $variation($vars['granted_credits']['CDF']) }}</td><td>{{ $variation($vars['granted_credits']['USD']) }}</td></tr>
                     <tr><td>Frais dossiers crédits</td><td>{{ $money($current['profitability']['products']['credit_fees']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['products']['credit_fees']['USD'], 'USD') }}</td><td>{{ $variation($vars['granted_credits']['CDF']) }}</td><td>{{ $variation($vars['granted_credits']['USD']) }}</td></tr>
                     <tr><td>Commission adhésion membre - compte 951</td><td>{{ $money($current['profitability']['products']['adhesion_member']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['products']['adhesion_member']['USD'], 'USD') }}</td><td>{{ $variation($vars['adhesion_member']['CDF']) }}</td><td>{{ $variation($vars['adhesion_member']['USD']) }}</td></tr>
+                    <tr><td>Intérêts crédits - compte 95</td><td>{{ $money($current['profitability']['products']['interet_credit']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['products']['interet_credit']['USD'], 'USD') }}</td><td>{{ $variation($vars['interet_credit']['CDF']) }}</td><td>{{ $variation($vars['interet_credit']['USD']) }}</td></tr>
                     <tr class="table-light fw-bold"><td>Total produits</td><td>{{ $money($current['profitability']['products_total']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['products_total']['USD'], 'USD') }}</td><td>{{ $variation($vars['profitability_products']['CDF']) }}</td><td>{{ $variation($vars['profitability_products']['USD']) }}</td></tr>
                     <tr><td>Charges - compte 452</td><td>{{ $money($current['profitability']['charges_total']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['charges_total']['USD'], 'USD') }}</td><td>{{ $variation($vars['profitability_charges']['CDF']) }}</td><td>{{ $variation($vars['profitability_charges']['USD']) }}</td></tr>
                     <tr class="table-primary fw-bold"><td>Bénéfice net</td><td>{{ $money($current['profitability']['net_profit']['CDF'], 'CDF') }}</td><td>{{ $money($current['profitability']['net_profit']['USD'], 'USD') }}</td><td>{{ $variation($vars['profitability_net_profit']['CDF']) }}</td><td>{{ $variation($vars['profitability_net_profit']['USD']) }}</td></tr>

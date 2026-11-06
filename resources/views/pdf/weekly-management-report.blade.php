@@ -248,6 +248,7 @@
         'Mutuelle crédit' => $profit['products']['mutuelle_credit'],
         'Frais dossiers crédits' => $profit['products']['credit_fees'],
         'Commission adhésion - compte 951' => $profit['products']['adhesion_member'],
+        'Intérêts crédit - compte 95' => $profit['products']['interet_credit'],
     ];
 
     $topProduct = function ($currency) use ($products) {
@@ -325,8 +326,8 @@
         </td>
         <td class="kpi">
             <div class="label">Carnets vendus</div>
-            <div class="value">{{ $current['membership_cards']['count']['CDF'] + $current['membership_cards']['count']['USD'] }}</div>
-            <div class="sub">CDF {{ $current['membership_cards']['count']['CDF'] }} | USD {{ $current['membership_cards']['count']['USD'] }}</div>
+            <div class="value">{{ $current['membership_cards']['price_total']['CDF'] + $current['membership_cards']['count']['USD'] }}</div>
+            <div class="sub">CDF {{ $current['membership_cards']['price_total']['CDF'] }} | USD {{ $current['membership_cards']['count']['USD'] }}</div>
         </td>
         <td class="kpi">
             <div class="label">Crédits octroyés</div>
@@ -520,6 +521,8 @@
                     <tr><td>Carnets vendus USD</td><td class="number">{{ $previous['membership_cards']['count']['USD'] }}</td><td class="number">{{ $current['membership_cards']['count']['USD'] }}</td><td class="number {{ $trendClass($vars['membership_cards_count']['USD']) }}">{{ $variation($vars['membership_cards_count']['USD']) }}</td></tr>
                     <tr><td>Commission adhésion CDF - compte 951</td><td class="number">{{ $money($previous['adhesion_member']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['adhesion_member']['CDF'], 'CDF') }}</td><td class="number {{ $trendClass($vars['adhesion_member']['CDF']) }}">{{ $variation($vars['adhesion_member']['CDF']) }}</td></tr>
                     <tr><td>Commission adhésion USD - compte 951</td><td class="number">{{ $money($previous['adhesion_member']['USD'], 'USD') }}</td><td class="number">{{ $money($current['adhesion_member']['USD'], 'USD') }}</td><td class="number {{ $trendClass($vars['adhesion_member']['USD']) }}">{{ $variation($vars['adhesion_member']['USD']) }}</td></tr>
+                    <tr><td>Intérêts crédit - compte 95</td><td class="number">{{ $money($previous['interet_credit']['CDF'], 'CDF') }}</td><td class="number">{{ $money($current['interet_credit']['CDF'], 'CDF') }}</td><td class="number {{ $trendClass($vars['interet_credit']['CDF']) }}">{{ $variation($vars['interet_credit']['CDF']) }}</td></tr>
+                    <tr><td>Intérêts crédit - compte 95</td><td class="number">{{ $money($previous['interet_credit']['USD'], 'USD') }}</td><td class="number">{{ $money($current['interet_credit']['USD'], 'USD') }}</td><td class="number {{ $trendClass($vars['interet_credit']['USD']) }}">{{ $variation($vars['interet_credit']['USD']) }}</td></tr>
                 </tbody>
             </table>
 
