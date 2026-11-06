@@ -326,7 +326,7 @@
         </td>
         <td class="kpi">
             <div class="label">Carnets vendus</div>
-            <div class="value">{{ $current['membership_cards']['price_total']['CDF'] + $current['membership_cards']['count']['USD'] }}</div>
+            <div class="value">{{ $current['membership_cards']['count']['CDF'] + $current['membership_cards']['count']['USD'] }}</div>
             <div class="sub">CDF {{ $current['membership_cards']['price_total']['CDF'] }} | USD {{ $current['membership_cards']['count']['USD'] }}</div>
         </td>
         <td class="kpi">
