@@ -3,9 +3,9 @@
 namespace App\Livewire\Repports;
 
 use App\Models\User;
+use App\Support\ClientBalanceRanking;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class RapportCompteClients extends Component
 {
@@ -18,34 +18,25 @@ class RapportCompteClients extends Component
     public $accountType = 'all';    // all, current, savings
     public $minBalance = 0;         // Filtrer par solde minimum
     public $alphabetRange = 'all';  // all, A-D, E-H, etc.
-    public $sortByBalance = false;  // true = classer par solde le plus élevé
+    public $sortBy = 'name';        // name, total, usd, cdf (voir ClientBalanceRanking::SORTS)
 
     public function updatingSearch()
     {
         $this->resetPage();
     }
 
-
-    public function render()
+    public function updated($property)
     {
-        // Filtre commun des comptes
-        $accountFilter = function ($q) {
-            if ($this->accountType !== 'all') {
-                $q->where('type', $this->accountType);
-            }
+        // Tout changement de filtre ou de tri repart de la page 1 (le rang reste cohérent)
+        if (in_array($property, ['currencyFilter', 'accountType', 'minBalance', 'alphabetRange', 'sortBy'], true)) {
+            $this->resetPage();
+        }
+    }
 
-            if ($this->currencyFilter !== 'all') {
-                $q->where('currency', $this->currencyFilter);
-            }
-
-            if ($this->minBalance > 0) {
-                $q->where('balance', '>=', $this->minBalance);
-            }
-        };
-
-        // Requête principale
+    /** Membres correspondant aux filtres (recherche, comptes, tranche alphabétique). */
+    protected function baseQuery($accountFilter)
+    {
         $query = User::where('role', 'membre')
-            ->with(['accounts' => $accountFilter])
             ->whereHas('accounts', $accountFilter)
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
@@ -54,14 +45,27 @@ class RapportCompteClients extends Component
                     ->orWhere('code', 'like', "%{$this->search}%");
             });
 
-        // Filtre alphabétique
         if ($this->alphabetRange !== 'all') {
             [$start, $end] = explode('-', $this->alphabetRange);
-
-            $query->where(function ($q) use ($start, $end) {
-                $q->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
-            });
+            $query->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
         }
+
+        return $query;
+    }
+
+    public function render()
+    {
+        $this->sortBy = ClientBalanceRanking::normalize($this->sortBy);
+        $accountFilter = ClientBalanceRanking::accountFilter($this->accountType, $this->currencyFilter, $this->minBalance);
+        $rate = ClientBalanceRanking::usdToCdfRate();
+
+        // Requête principale, classée selon le critère choisi
+        $query = ClientBalanceRanking::apply(
+            $this->baseQuery($accountFilter)->with(['accounts' => $accountFilter]),
+            $this->sortBy,
+            $accountFilter,
+            $rate
+        );
 
         // Pagination
         $members = $query->paginate($this->perPage);
@@ -112,33 +116,20 @@ class RapportCompteClients extends Component
         $globalCurrentCdf = 0;
         $globalSavingsUsd = 0;
         $globalSavingsCdf = 0;
+        $positiveTotals = ClientBalanceRanking::emptyPositiveTotals();
 
-        $totalQuery = User::where('role', 'membre')
-            ->with(['accounts' => $accountFilter])
-            ->whereHas('accounts', $accountFilter)
-            ->where(function ($q) {
-                $q->where('name', 'like', "%{$this->search}%")
-                    ->orWhere('postnom', 'like', "%{$this->search}%")
-                    ->orWhere('prenom', 'like', "%{$this->search}%")
-                    ->orWhere('code', 'like', "%{$this->search}%");
-            });
-
-        if ($this->alphabetRange !== 'all') {
-            [$start, $end] = explode('-', $this->alphabetRange);
-
-            $totalQuery->where(function ($q) use ($start, $end) {
-                $q->whereRaw("LEFT(name, 1) BETWEEN ? AND ?", [$start, $end]);
-            });
-        }
-
-        $totalQuery->chunk(200, function ($chunk) use (
+        $this->baseQuery($accountFilter)->with(['accounts' => $accountFilter])->chunk(200, function ($chunk) use (
             &$globalCurrentUsd,
             &$globalCurrentCdf,
             &$globalSavingsUsd,
-            &$globalSavingsCdf
+            &$globalSavingsCdf,
+            &$positiveTotals,
+            $rate
         ) {
 
             foreach ($chunk as $member) {
+
+                ClientBalanceRanking::addPositive($positiveTotals, ClientBalanceRanking::amountsOf($member), $rate);
 
                 foreach ($member->accounts as $account) {
 
@@ -166,6 +157,16 @@ class RapportCompteClients extends Component
             }
         });
 
+        // Rang et part de l'encours créditeur, quand le classement porte sur les soldes
+        $balances = $balances->values()->map(function ($row, $index) use ($members, $positiveTotals, $rate) {
+            $amounts = ClientBalanceRanking::amountsOf($row['member']);
+            $row['rank'] = $members->firstItem() + $index;
+            $row['total_usd_equiv'] = ClientBalanceRanking::value('total', $amounts, $rate);
+            $row['share'] = ClientBalanceRanking::share($this->sortBy, $amounts, $positiveTotals, $rate);
+
+            return $row;
+        });
+
         return view('livewire.repports.rapport-compte-clients', [
             'balances' => $balances,
             'members' => $members,
@@ -173,6 +174,9 @@ class RapportCompteClients extends Component
             'globalCurrentCdf' => $globalCurrentCdf,
             'globalSavingsUsd' => $globalSavingsUsd,
             'globalSavingsCdf' => $globalSavingsCdf,
+            'sorts' => ClientBalanceRanking::SORTS,
+            'isBalanceSort' => ClientBalanceRanking::isBalanceSort($this->sortBy),
+            'rate' => $rate,
         ]);
     }
 

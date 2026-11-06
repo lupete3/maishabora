@@ -108,14 +108,31 @@
         </tr>
     </table>
     <h4 style="margin: 0 0 10px 0;">Total Membres listés : {{ $balances->count() }}</h4>
+    @if (!empty($isBalanceSort))
+        <p style="margin: 0 0 8px 0;">
+            Classement : {{ $sortLabel }}
+            @if ($sortBy === 'total' && $rate)
+                (CDF converti au taux de {{ number_format($rate, 0, ',', ' ') }} CDF = 1 USD)
+            @endif
+        </p>
+    @endif
 
     <table class="table" border="1" cellspacing="0" cellpadding="0">
         <thead>
             <tr>
+                @if (!empty($isBalanceSort))
+                    <th rowspan="2" style="width: 5%;">Rang</th>
+                @endif
                 <th rowspan="2" style="width: 10%;">Code</th>
                 <th rowspan="2" style="width: 30%;">Membre</th>
                 <th colspan="2" style="width: 30%;">Solde USD</th>
                 <th colspan="2" style="width: 30%;">Solde CDF</th>
+                @if (($sortBy ?? 'name') === 'total')
+                    <th rowspan="2">Total équiv. USD</th>
+                @endif
+                @if (!empty($isBalanceSort))
+                    <th rowspan="2">Part</th>
+                @endif
             </tr>
             <tr>
                 <th style="font-size: 7px;">Courant</th>
@@ -127,6 +144,9 @@
         <tbody>
             @foreach ($balances as $balance)
                 <tr>
+                    @if (!empty($isBalanceSort))
+                        <td class="text-center">{{ $balance['rank'] }}</td>
+                    @endif
                     <td class="text-center">{{ $balance['member']->code }}</td>
                     <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
                     </td>
@@ -136,6 +156,12 @@
 
                     <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
                     <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
+                    @if (($sortBy ?? 'name') === 'total')
+                        <td class="text-end">{{ number_format($balance['total_usd_equiv'], 2) }}</td>
+                    @endif
+                    @if (!empty($isBalanceSort))
+                        <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2) . ' %' : '-' }}</td>
+                    @endif
                 </tr>
             @endforeach
         </tbody>
