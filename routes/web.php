@@ -41,6 +41,7 @@ use App\Http\Controllers\TransferToCentralCashController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\WeeklyManagementReportController;
 use App\Http\Controllers\CollectorIndcatorController;
+use App\Http\Controllers\ObjectifController;
 use App\Http\Livewire\Credit\LoanApplicationCreate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -95,6 +96,15 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-caisse-agent'])->group(function () {
     Route::get('/tableau-de-bord-agent', [AgentDashboardController::class, 'index'])->name('agent.dashboard');
+});
+
+// Module Objectifs (interface dédiée, séparée de la caisse agents)
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-objectifs'])->group(function () {
+    Route::get('/objectifs', [ObjectifController::class, 'suivi'])->name('objectifs.suivi');
+});
+
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-objectifs'])->group(function () {
+    Route::get('/objectifs/configuration', [ObjectifController::class, 'configuration'])->name('objectifs.configuration');
 });
 
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-comptes-agents'])->group(function () {
