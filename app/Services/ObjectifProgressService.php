@@ -363,6 +363,13 @@ class ObjectifProgressService
 
     // ---- Carnets ----
 
+    /**
+     * Devise dans laquelle le prix d'un carnet est encaissé : CDF pour un carnet épargne,
+     * USD pour un carnet simple (règle de PurchaseMembershipCard). Elle peut différer
+     * de membership_cards.currency, qui est la devise de l'épargne.
+     */
+    public const CARNET_PRICE_CURRENCY_SQL = "CASE WHEN card_type = 'epargne' THEN 'CDF' ELSE 'USD' END";
+
     private function carnets(Carbon $start, Carbon $end, ?string $currency): Builder
     {
         $query = DB::table('membership_cards')
@@ -370,7 +377,7 @@ class ObjectifProgressService
             ->whereBetween('created_at', [$start, $end]);
 
         if ($currency) {
-            $query->where('currency', $currency);
+            $query->whereRaw(self::CARNET_PRICE_CURRENCY_SQL . ' = ?', [$currency]);
         }
 
         return $query;

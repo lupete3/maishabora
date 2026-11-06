@@ -109,6 +109,8 @@ Les objectifs de crédit sont prévus au niveau de l'entreprise. Ils peuvent aus
 - **Clientèle** : membres (`role = membre`) rattachés à l'agent par `users.agent_id`.
   - Clients actifs : membres ayant fait au moins une mise ou un dépôt sur la période.
 - **Carnets** : `membership_cards.user_id` (agent responsable), hors carnets annulés.
+  - Le prix d'un carnet est encaissé **en CDF pour un carnet épargne** et **en USD pour un carnet simple**, quelle que soit la devise de l'épargne (`membership_cards.currency`). Le montant des ventes est donc ventilé selon cette règle (`ObjectifProgressService::CARNET_PRICE_CURRENCY_SQL`).
+  - Le **rapport hebdomadaire** (`/rapport-hebdomadaire`) utilise la même règle depuis le 06/11/2026. Avant, il lisait les écritures du compte 97 et ne déduisait pas les ventes annulées, car l'écriture d'annulation est enregistrée au nom de la personne qui annule. Exemple pour octobre 2026 : il affichait 12 carnets et 9 000 CDF, au lieu de 10 carnets et 7 000 CDF.
 - **Crédits** : date d'octroi = `credits.created_at`. Les remboursements se basent sur `repayments.paid_date` (capital, intérêts et pénalités séparés).
 - **Encours de crédit** : capital restant dû des crédits non soldés.
 - **PAR 30** : encours des crédits ayant une échéance impayée depuis plus de 30 jours, divisé par l'encours total.
