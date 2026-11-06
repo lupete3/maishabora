@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Credit;
+use App\Models\MembershipCard;
 use App\Models\Repayment;
 use App\Models\Transaction;
 use App\Models\User;
@@ -12,7 +13,6 @@ use Illuminate\Support\Collection;
 
 class WeeklyManagementReportService
 {
-    private const ACCOUNT_COMMISSION_CARNET = 97;
     private const ACCOUNT_RETENU_MISE = 195;
     private const ACCOUNT_ADHESION_MEMBER = 951;
     private const ACCOUNT_INTERET_CREDIT = 95;
@@ -108,11 +108,16 @@ class WeeklyManagementReportService
 
     private function membershipCards(Carbon $start, Carbon $end): array
     {
-        $cardSales = Transaction::query()
-            ->where('user_id', self::ACCOUNT_COMMISSION_CARNET)
+        // Carnets vendus sur la période, hors ventes annulées (scope global de MembershipCard).
+        // On ne lit plus les écritures du compte 97 : les annulations y sont enregistrées
+        // au nom de la personne qui annule, elles n'étaient donc pas déduites.
+        // Le prix est encaissé en CDF (carnet épargne) ou en USD (carnet simple),
+        // même règle que ObjectifProgressService.
+        $cardSales = MembershipCard::query()
             ->where('created_at', '>=', $start->toDateString())
             ->where('created_at', '<', $end->copy()->addDay()->toDateString())
-            ->get(['id', 'currency', 'amount', 'created_at']);
+            ->selectRaw(ObjectifProgressService::CARNET_PRICE_CURRENCY_SQL . ' AS currency, price AS amount')
+            ->get();
 
         return [
             'count' => $this->countsByCurrency($cardSales, 'currency'),
