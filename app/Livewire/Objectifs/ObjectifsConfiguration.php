@@ -276,9 +276,15 @@ class ObjectifsConfiguration extends Component
                 // Pas de base de répartition : parts égales
                 $valeurs[$id] = $total / count($agentIds);
             }
-            if ($def['unit'] === 'count') {
-                $valeurs[$id] = round($valeurs[$id]);
-            }
+        }
+
+        if ($def['unit'] === 'count') {
+            $valeurs = $this->arrondirEnEntiers($valeurs, $this->bulkMode === 'identique' ? null : (int) round($total));
+        }
+
+        // En répartition, un agent sans part n'a pas d'objectif (plutôt qu'un objectif à 0)
+        if ($this->bulkMode !== 'identique') {
+            $valeurs = array_map(fn ($v) => $v > 0 ? $v : null, $valeurs);
         }
 
         DB::transaction(function () use ($valeurs, $currency, $start, $end) {
@@ -287,8 +293,39 @@ class ObjectifsConfiguration extends Component
             }
         });
 
-        notyf()->success('Objectif « ' . $def['label'] . ' » attribué à ' . count($valeurs) . ' agent(s).');
+        $attribues = count(array_filter($valeurs, fn ($v) => $v !== null));
+        notyf()->success('Objectif « ' . $def['label'] . ' » attribué à ' . $attribues . ' agent(s).');
         $this->chargerObjectifs();
+    }
+
+    /**
+     * Arrondit des parts en entiers. Si un total est donné, la somme des parts lui est
+     * exactement égale (méthode du plus fort reste).
+     */
+    private function arrondirEnEntiers(array $valeurs, ?int $total): array
+    {
+        $entiers = array_map(fn ($v) => (int) floor($v), $valeurs);
+
+        if ($total === null) {
+            return array_map(fn ($v) => (int) round($v), $valeurs);
+        }
+
+        $restes = [];
+        foreach ($valeurs as $id => $v) {
+            $restes[$id] = $v - floor($v);
+        }
+        arsort($restes);
+
+        $manque = $total - array_sum($entiers);
+        foreach (array_keys($restes) as $id) {
+            if ($manque <= 0) {
+                break;
+            }
+            $entiers[$id]++;
+            $manque--;
+        }
+
+        return $entiers;
     }
 
     /** Recopie tous les objectifs de la période précédente (agents + global), avec un coefficient. */

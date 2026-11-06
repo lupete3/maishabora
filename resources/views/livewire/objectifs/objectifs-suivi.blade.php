@@ -1,4 +1,10 @@
 <div>
+    <style>
+        /* Cartes empilées en 2 colonnes, sans vide sous les cartes courtes */
+        .objectifs-grille { column-count: 1; column-gap: 1.5rem; }
+        @media (min-width: 992px) { .objectifs-grille { column-count: 2; } }
+        .objectifs-bloc { break-inside: avoid; margin-bottom: 1.5rem; }
+    </style>
     {{-- En-tête : période --}}
     <div class="card mb-4">
         <div class="card-body d-flex flex-wrap justify-content-between align-items-center gap-3">
@@ -58,12 +64,12 @@
         @else
             <div class="alert alert-light border d-flex justify-content-between align-items-center">
                 <span>Score global de l'entreprise (moyenne des objectifs, plafonnée à 100 % chacun)</span>
-                <span class="fs-4 fw-bold">{{ $scoreGlobal }} %</span>
+                <span class="fs-4 fw-bold text-nowrap ms-2">{{ $scoreGlobal }} %</span>
             </div>
-            <div class="row">
+            <div class="objectifs-grille">
                 @foreach ($globalGroupes as $groupe => $lignes)
-                    <div class="col-lg-6 mb-4">
-                        <div class="card h-100">
+                    <div class="objectifs-bloc">
+                        <div class="card">
                             <div class="card-header fw-bold">
                                 <i class="bx {{ $groupesDef[$groupe]['icon'] ?? 'bx-bar-chart' }} me-1"></i>
                                 {{ $groupesDef[$groupe]['label'] ?? $groupe }}
@@ -95,10 +101,10 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <div class="objectifs-grille">
                 @foreach ($agentDetail['groupes'] as $groupe => $lignes)
-                    <div class="col-lg-6 mb-4">
-                        <div class="card h-100">
+                    <div class="objectifs-bloc">
+                        <div class="card">
                             <div class="card-header fw-bold">
                                 <i class="bx {{ $groupesDef[$groupe]['icon'] ?? 'bx-bar-chart' }} me-1"></i>
                                 {{ $groupesDef[$groupe]['label'] ?? $groupe }}

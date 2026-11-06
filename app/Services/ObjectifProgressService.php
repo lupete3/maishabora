@@ -69,11 +69,15 @@ class ObjectifProgressService
         return $list;
     }
 
-    /** Agents collecteurs : comptes actifs, non membres, avec une caisse visible au tableau de bord. */
+    /**
+     * Agents collecteurs : comptes actifs, non membres, ayant un rôle métier
+     * (config objectifs.roles_agents) et une caisse visible au tableau de bord.
+     */
     public function agents(): Collection
     {
         return User::where('status', true)
             ->where('role', '!=', 'membre')
+            ->role(config('objectifs.roles_agents'))
             ->whereHas('agentAccounts', fn ($q) => $q->where('is_visible_dashboard', true))
             ->orderBy('name')
             ->get(['id', 'name', 'postnom', 'prenom']);

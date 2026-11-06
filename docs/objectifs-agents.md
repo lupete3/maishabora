@@ -15,6 +15,15 @@ Les deux permissions sont créées par migration et données aux rôles **Admin*
 
 Dans le menu, l'entrée s'appelle **Objectifs & Performances**.
 
+## Agents suivis
+
+Seuls les comptes qui remplissent toutes ces conditions sont considérés comme des agents collecteurs :
+- compte actif, et non membre ;
+- caisse visible au tableau de bord ;
+- rôle **Recouvreur, Réceptionniste, Caissier ou Comptable**.
+
+Les comptes techniques (commissions, charges, intérêts, retenues, IT…) n'ont pas ces rôles et sont donc exclus. Pour modifier la liste des rôles, voir `config/objectifs.php` › `roles_agents`.
+
 ## Fonctionnement
 
 ### 1. Fixer les objectifs (Configuration › Saisie)
@@ -30,6 +39,8 @@ Les montants se fixent **séparément en CDF et en USD**.
   - *Même objectif pour chaque agent* ;
   - *Répartir un total selon le nombre de clients* : chaque agent reçoit une part proportionnelle à son portefeuille. Cela tient compte du fait que les agents n'ont pas tous le même volume de clients ;
   - *Répartir un total selon le réalisé de la période précédente*.
+
+  Pour les indicateurs en nombre, les parts sont arrondies de façon à ce que leur somme corresponde exactement au total saisi. En mode répartition, un agent dont la part est nulle (aucun client, aucun historique) ne reçoit pas d'objectif.
 - **Reprendre la période précédente** : recopie tous les objectifs (entreprise et agents), avec une évolution en % si besoin (ex. +10 %). Par défaut, les objectifs déjà fixés ne sont pas remplacés.
 
 ### 3. Paramétrer les indicateurs (Configuration › Indicateurs)
@@ -113,7 +124,7 @@ Les objectifs de crédit sont prévus au niveau de l'entreprise. Ils peuvent aus
 | Rôle | Fichier |
 |---|---|
 | Catalogue, périodes, seuils | `config/objectifs.php` |
-| Migrations (additives) | `database/migrations/2026_11_06_100000_create_objectifs_tables.php`, `..._100001_add_objectifs_permissions.php` |
+| Migrations (additives) | `database/migrations/2026_11_06_100000_create_objectifs_tables.php`, `..._100001_add_objectifs_permissions.php`, `..._100002_add_reporting_index_to_transactions_table.php` (index `type` + `created_at` qui accélère les calculs) |
 | Modèles | `app/Models/Objectif.php`, `app/Models/ObjectifIndicateur.php` |
 | Calculs | `app/Services/ObjectifProgressService.php` |
 | Contrôleur | `app/Http/Controllers/ObjectifController.php` |
@@ -132,7 +143,7 @@ Les objectifs de crédit sont prévus au niveau de l'entreprise. Ils peuvent aus
 php artisan migrate
 ```
 
-Ces migrations ne font qu'ajouter des éléments (2 nouvelles tables et 2 permissions) : aucune donnée existante n'est modifiée. **Ne jamais utiliser** `migrate:fresh`, `migrate:refresh` ni `db:seed`.
+Ces migrations ne font qu'ajouter des éléments (2 nouvelles tables, 2 permissions et un index sur `transactions`) : aucune donnée existante n'est modifiée. Sur une grosse table, la création de l'index peut prendre quelques secondes. Mieux vaut la lancer en dehors des heures de forte activité. **Ne jamais utiliser** `migrate:fresh`, `migrate:refresh` ni `db:seed`.
 
 Ensuite, vider les caches :
 

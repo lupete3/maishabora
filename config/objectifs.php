@@ -24,6 +24,10 @@ return [
 
     'devises' => ['CDF', 'USD'],
 
+    // Rôles (spatie) des agents suivis. Les comptes techniques (commissions, charges,
+    // retenues...) n'ont pas ces rôles et sont donc exclus.
+    'roles_agents' => ['Recouvreur', 'Receptionniste', 'Caissier', 'Comptable'],
+
     // Types de périodes proposés
     'periodes' => [
         'week'     => 'Semaine',
