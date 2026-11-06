@@ -45,6 +45,23 @@
                     <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
                         placeholder="Nom, code, prénom...">
                 </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Classer par</label>
+                    <select wire:model.live="sortBy" class="form-control">
+                        @foreach ($sorts as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @if ($sortBy === 'total')
+                        <small class="text-muted">
+                            @if ($rate)
+                                CDF converti au taux de {{ number_format($rate, 0, ',', ' ') }} CDF = 1 USD
+                            @else
+                                Aucun taux de change : classement sur le solde USD
+                            @endif
+                        </small>
+                    @endif
+                </div>
                 <div class="col-md-2">
                     <label class="form-label small fw-bold">Type Compte (Vue)</label>
                     <select wire:model.live="accountType" class="form-control">
@@ -53,7 +70,7 @@
                         <option value="savings">Épargne Uniquement</option>
                     </select>
                 </div>
-                <div class="col-md-1">
+                <div class="col-md-2">
                     <label class="form-label small fw-bold">Devise</label>
                     <select wire:model.live="currencyFilter" class="form-control">
                         <option value="all">Toutes</option>
@@ -80,11 +97,11 @@
                         placeholder="0.00">
                 </div>
                 <div class="col-md-2 d-flex gap-2 align-items-end">
-                    <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
+                    <a href="{{ route('rapports.compte-clients.pdf', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange, 'sortBy' => $sortBy]) }}"
                         target="_blank" class="btn btn-danger flex-grow-1 p-2" title="Télécharger PDF">
                         <i class="bx bx-file"></i> PDF
                     </a>
-                    <a href="{{ route('rapports.compte-clients.excel', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange]) }}"
+                    <a href="{{ route('rapports.compte-clients.excel', ['search' => $search, 'accountType' => $accountType, 'currencyFilter' => $currencyFilter, 'minBalance' => $minBalance, 'alphabetRange' => $alphabetRange, 'sortBy' => $sortBy]) }}"
                         target="_blank" class="btn btn-success flex-grow-1 p-2" title="Exporter Excel">
                         <i class="bx bx-spreadsheet"></i> Excel
                     </a>
@@ -96,6 +113,9 @@
                 <table class="table table-bordered table-sm">
                     <thead class="table-light">
                         <tr>
+                            @if ($isBalanceSort)
+                                <th rowspan="2" class="align-middle text-center">Rang</th>
+                            @endif
                             <th rowspan="2" class="align-middle">Code</th>
                             <th rowspan="2" class="align-middle">Membre</th>
                             @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
@@ -103,6 +123,12 @@
                             @endif
                             @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
                                 <th colspan="2" class="text-center">Solde CDF</th>
+                            @endif
+                            @if ($sortBy === 'total')
+                                <th rowspan="2" class="align-middle text-center">Total équiv. USD</th>
+                            @endif
+                            @if ($isBalanceSort)
+                                <th rowspan="2" class="align-middle text-center">Part de l'encours</th>
                             @endif
                         </tr>
                         <tr>
@@ -119,6 +145,15 @@
                     <tbody>
                         @foreach ($balances as $balance)
                             <tr>
+                                @if ($isBalanceSort)
+                                    <td class="text-center fw-bold">
+                                        @if ($balance['rank'] <= 3)
+                                            <span class="badge bg-label-warning">{{ $balance['rank'] }}</span>
+                                        @else
+                                            {{ $balance['rank'] }}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td><small class="fw-bold">{{ $balance['member']->code }}</small></td>
                                 <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
                                 </td>
@@ -131,6 +166,13 @@
                                 @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
                                     <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
                                     <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
+                                @endif
+
+                                @if ($sortBy === 'total')
+                                    <td class="text-end fw-semibold">{{ number_format($balance['total_usd_equiv'], 2) }}</td>
+                                @endif
+                                @if ($isBalanceSort)
+                                    <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2) . ' %' : '—' }}</td>
                                 @endif
                             </tr>
                         @endforeach
