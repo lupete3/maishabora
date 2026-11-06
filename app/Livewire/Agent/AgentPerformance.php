@@ -4,16 +4,19 @@ namespace App\Livewire\Agent;
 
 use App\Models\Transaction;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 class AgentPerformance extends Component
 {
     /**
-     * Types de transaction comparables.
-     * ⚠ Les clés doivent correspondre EXACTEMENT aux valeurs de la colonne `transactions.type`.
+     * Types de transaction comparables (clé normalisée => libellé).
+     * Les valeurs en base sont ramenées à ces clés par normalizeType()
+     * (ex : "dépôt", "Dépôt", "depot" => "depot").
      */
     public const TYPES = [
         'vente_carte_adhesion'   => "Vente carte d'adhésion",
@@ -23,7 +26,6 @@ class AgentPerformance extends Component
         'retrait_carte_adhesion' => "Retrait carte d'adhésion",
     ];
 
-    /** Critères de classement */
     public const CRITERIA = [
         'count' => "Nombre d'opérations",
         'cdf'   => 'Montant total CDF',
@@ -51,6 +53,8 @@ class AgentPerformance extends Component
     // Résultats
     public array $results = [];
     public array $totals = ['count' => 0, 'cdf' => 0, 'usd' => 0];
+    public array $typeSummary = [];
+    public array $evaluatedTypes = [];
     public ?string $periodLabel = null;
     public bool $hasResults = false;
 
@@ -72,11 +76,11 @@ class AgentPerformance extends Component
         $this->showModal = false;
     }
 
-    /** Agents éligibles : actifs et possédant au moins un compte agent */
+    /** Mêmes agents que les cartes du dashboard (comptes visibles uniquement) */
     protected function agentsQuery()
     {
         return User::where('status', true)
-            ->whereHas('agentAccounts')
+            ->whereHas('agentAccounts', fn ($q) => $q->where('is_visible_dashboard', true))
             ->orderBy('name')
             ->get(['id', 'name', 'postnom']);
     }
@@ -95,7 +99,6 @@ class AgentPerformance extends Component
         $this->selectedTypes = count($this->selectedTypes) === count($all) ? [] : $all;
     }
 
-    /** Re-tri instantané quand on change le critère, sans refaire la requête */
     public function updatedSortBy(): void
     {
         if ($this->hasResults) {
@@ -125,19 +128,17 @@ class AgentPerformance extends Component
     protected function messages(): array
     {
         return [
-            'selectedAgents.required'  => 'Sélectionnez au moins un agent.',
-            'selectedAgents.min'       => 'Sélectionnez au moins un agent.',
-            'selectedTypes.required'   => 'Sélectionnez au moins un type de transaction.',
-            'selectedTypes.min'        => 'Sélectionnez au moins un type de transaction.',
-            'startDate.required_if'    => 'La date de début est obligatoire.',
-            'endDate.required_if'      => 'La date de fin est obligatoire.',
-            'endDate.after_or_equal'   => 'La date de fin doit être postérieure ou égale à la date de début.',
+            'selectedAgents.required' => 'Sélectionnez au moins un agent.',
+            'selectedAgents.min'      => 'Sélectionnez au moins un agent.',
+            'selectedTypes.required'  => 'Sélectionnez au moins un type de transaction.',
+            'selectedTypes.min'       => 'Sélectionnez au moins un type de transaction.',
+            'startDate.required_if'   => 'La date de début est obligatoire.',
+            'endDate.required_if'     => 'La date de fin est obligatoire.',
+            'endDate.after_or_equal'  => 'La date de fin doit être postérieure ou égale à la date de début.',
         ];
     }
 
-    /**
-     * Retourne toujours des bornes [début, fin] utilisées dans un whereBetween.
-     */
+    /** Retourne toujours des bornes [début, fin] pour un whereBetween. */
     protected function resolvePeriod(): array
     {
         $now = now();
@@ -178,6 +179,18 @@ class AgentPerformance extends Component
         return [$start, $end, $label];
     }
 
+    /**
+     * Ramène une valeur de la base à la clé de TYPES.
+     * Nécessaire car la collation MySQL *_ci ignore les accents dans le WHERE
+     * ("depot" = "dépôt"), mais PHP, lui, les distingue.
+     */
+    protected function normalizeType(?string $type): string
+    {
+        $slug = Str::slug((string) $type, '_');
+
+        return array_key_exists($slug, self::TYPES) ? $slug : (string) $type;
+    }
+
     public function evaluate(): void
     {
         Gate::authorize('afficher-caisse-agent');
@@ -188,46 +201,58 @@ class AgentPerformance extends Component
 
         $agentIds = array_map('intval', $this->selectedAgents);
 
-        $base = Transaction::query()
-            ->whereIn('user_id', $agentIds)
-            ->whereIn('type', $this->selectedTypes)
-            ->whereBetween('created_at', [$start, $end]);
+        // Types dans l'ordre de référence (affichage cohérent partout)
+        $this->evaluatedTypes = array_values(array_intersect(array_keys(self::TYPES), $this->selectedTypes));
 
-        // 1 seule requête agrégée : nb d'opérations + totaux par devise
-        $stats = (clone $base)
+        // UNE seule requête : agent × type => nb, CDF, USD
+        $rows = Transaction::query()
+            ->whereIn('user_id', $agentIds)
+            ->whereIn('type', $this->evaluatedTypes)
+            ->whereBetween('created_at', [$start, $end])
             ->selectRaw(
-                'user_id,
-                 COUNT(*) AS nb_operations,
+                'user_id, type,
+                 COUNT(*) AS nb,
                  COALESCE(SUM(CASE WHEN currency = ? THEN amount ELSE 0 END), 0) AS total_cdf,
                  COALESCE(SUM(CASE WHEN currency = ? THEN amount ELSE 0 END), 0) AS total_usd',
                 ['CDF', 'USD']
             )
-            ->groupBy('user_id')
-            ->get()
-            ->keyBy('user_id');
-
-        // Détail du nombre d'opérations par type
-        $byType = (clone $base)
-            ->selectRaw('user_id, type, COUNT(*) AS nb')
             ->groupBy('user_id', 'type')
-            ->get()
-            ->groupBy('user_id');
+            ->get();
 
-        // Les agents sans aucune opération apparaissent aussi (avec 0)
+        $empty = ['count' => 0, 'cdf' => 0.0, 'usd' => 0.0];
+        $perAgent = [];
+        $this->typeSummary = array_fill_keys($this->evaluatedTypes, $empty);
+
+        foreach ($rows as $r) {
+            $key = $this->normalizeType($r->type);
+            $uid = (int) $r->user_id;
+
+            $perAgent[$uid][$key] ??= $empty;
+            $this->typeSummary[$key] ??= $empty;
+
+            foreach ([&$perAgent[$uid][$key], &$this->typeSummary[$key]] as &$bucket) {
+                $bucket['count'] += (int) $r->nb;
+                $bucket['cdf']   += (float) $r->total_cdf;
+                $bucket['usd']   += (float) $r->total_usd;
+            }
+            unset($bucket);
+        }
+
         $this->results = User::whereIn('id', $agentIds)
             ->get(['id', 'name', 'postnom'])
-            ->map(function ($agent) use ($stats, $byType) {
-                $s = $stats->get($agent->id);
+            ->map(function ($agent) use ($perAgent, $empty) {
+                $byType = [];
+                foreach (array_keys($this->typeSummary) as $type) {
+                    $byType[$type] = $perAgent[$agent->id][$type] ?? $empty;
+                }
 
                 return [
                     'id'      => $agent->id,
                     'name'    => trim($agent->name . ' ' . $agent->postnom),
-                    'count'   => (int) ($s->nb_operations ?? 0),
-                    'cdf'     => (float) ($s->total_cdf ?? 0),
-                    'usd'     => (float) ($s->total_usd ?? 0),
-                    'by_type' => collect($byType->get($agent->id, []))
-                        ->mapWithKeys(fn ($row) => [$row->type => (int) $row->nb])
-                        ->all(),
+                    'count'   => array_sum(array_column($byType, 'count')),
+                    'cdf'     => array_sum(array_column($byType, 'cdf')),
+                    'usd'     => array_sum(array_column($byType, 'usd')),
+                    'by_type' => $byType,
                 ];
             })
             ->values()
@@ -243,11 +268,7 @@ class AgentPerformance extends Component
         $this->hasResults = true;
     }
 
-    /**
-     * Classement décroissant selon le critère choisi,
-     * départage : nb d'opérations, puis CDF, puis USD.
-     * Les ex æquo partagent le même rang.
-     */
+    /** Tri décroissant selon le critère, départage count > cdf > usd, ex æquo = même rang. */
     protected function sortResults(): void
     {
         $crit = $this->sortBy;
@@ -275,6 +296,31 @@ class AgentPerformance extends Component
             $row['share'] = $total > 0 ? round($row[$crit] / $total * 100, 1) : 0;
         }
         unset($row);
+    }
+
+    public function exportPDF()
+    {
+        Gate::authorize('afficher-caisse-agent');
+
+        $this->evaluate();
+
+        [$start, $end] = $this->resolvePeriod();
+
+        $pdf = Pdf::loadView('pdf.agent-performance-operations', [
+            'results'     => $this->results,
+            'totals'      => $this->totals,
+            'typeSummary' => $this->typeSummary,
+            'types'       => self::TYPES,
+            'criterion'   => self::CRITERIA[$this->sortBy],
+            'sortBy'      => $this->sortBy,
+            'periodLabel' => $this->periodLabel,
+            'startDate'   => $start,
+            'endDate'     => $end,
+        ])->setPaper('a4', 'landscape');
+
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, 'performance_agents_' . now()->format('Ymd_His') . '.pdf');
     }
 
     public function render()
