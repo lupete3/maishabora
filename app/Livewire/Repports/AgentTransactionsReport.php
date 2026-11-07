@@ -49,7 +49,7 @@ class AgentTransactionsReport extends Component
     {
         $now = now();
         return match ($this->period) {
-            'day' => $query->whereDate('created_at', $now),
+            'day' => $query->whereOnDate('created_at', $now),
             'week' => $query->whereBetween('created_at', [$now->copy()->startOfWeek(), $now->copy()->endOfWeek()]),
             'month' => $query->whereMonth('created_at', $now->month)->whereYear('created_at', $now->year),
             'year' => $query->whereYear('created_at', $now->year),

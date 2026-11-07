@@ -67,7 +67,7 @@ class RapportCarnetsComponent extends Component
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $query->whereDate('created_at', now()->toDateString());
+                    $query->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
@@ -141,7 +141,7 @@ class RapportCarnetsComponent extends Component
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $query->whereDate('created_at', now()->toDateString());
+                    $query->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
@@ -207,7 +207,7 @@ class RapportCarnetsComponent extends Component
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $carnets->whereDate('created_at', now()->toDateString());
+                    $carnets->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $carnets->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
@@ -291,7 +291,7 @@ class RapportCarnetsComponent extends Component
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $carnetsQuery->whereDate('created_at', now()->toDateString());
+                    $carnetsQuery->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $carnetsQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);

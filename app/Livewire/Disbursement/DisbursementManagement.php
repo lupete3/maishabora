@@ -294,7 +294,7 @@ class DisbursementManagement extends Component
                 });
             })
             ->when($this->filterType === 'day', function ($q) {
-                $q->whereDate('created_at', now()->today());
+                $q->whereOnDate('created_at', now()->today());
             })
             ->when($this->filterType === 'week', function ($q) {
                 $q->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);

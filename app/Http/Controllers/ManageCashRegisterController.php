@@ -32,10 +32,10 @@ class ManageCashRegisterController extends Controller
                 ->orWhere('type', 'like', '%paie_sortant%');
         })
             ->when($startDate, function ($query) use ($startDate) {
-                $query->whereDate('created_at', '>=', $startDate);
+                $query->whereFromDate('created_at', $startDate);
             })
             ->when($endDate, function ($query) use ($endDate) {
-                $query->whereDate('created_at', '<=', $endDate);
+                $query->whereToDate('created_at', $endDate);
             })
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {

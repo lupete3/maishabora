@@ -169,10 +169,10 @@ class ManageCashRegister extends Component
                 ->orWhere('type', 'like', '%annulation_paie_salaire%');
         })
             ->when($this->startDate, function ($query) {
-                $query->whereDate('created_at', '>=', $this->startDate);
+                $query->whereFromDate('created_at', $this->startDate);
             })
             ->when($this->endDate, function ($query) {
-                $query->whereDate('created_at', '<=', $this->endDate);
+                $query->whereToDate('created_at', $this->endDate);
             })
             ->where(function ($query) {
                 $query->where('description', 'like', '%' . $this->search . '%')

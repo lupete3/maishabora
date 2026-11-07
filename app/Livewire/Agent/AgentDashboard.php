@@ -84,7 +84,7 @@ class AgentDashboard extends Component
 
             case 'day':
                 $this->periodLabel = "Aujourd'hui";
-                return $query->whereDate('created_at', $now);
+                return $query->whereOnDate('created_at', $now);
 
             case 'week':
                 $start = $now->copy()->startOfWeek();

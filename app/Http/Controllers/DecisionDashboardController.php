@@ -47,23 +47,23 @@ class DecisionDashboardController extends Controller
             ['label' => 'Solde agents', 'value' => $this->moneyByCurrency(AgentAccount::query(), 'balance'), 'icon' => 'bx-briefcase-alt-2', 'url' => route('agent.dashboard'), 'is_money' => true, 'source' => 'Somme des soldes disponibles dans les caisses agents, regroupée par devise.'],
             ['label' => 'Encours crédits', 'value' => $this->moneyByCurrency(Credit::where('is_paid', false)), 'icon' => 'bx-credit-card', 'url' => route('report.credit.overview'), 'is_money' => true, 'source' => 'Somme des montants des crédits non soldés, regroupée par devise.'],
             ['label' => 'Crédits actifs', 'value' => Credit::where('is_paid', false)->count(), 'icon' => 'bx-list-check', 'url' => route('report.credit.overview'), 'source' => 'Nombre de crédits dont le champ soldé est encore non.'],
-            ['label' => 'Collecté aujourd’hui', 'value' => $this->moneyByCurrency(Transaction::whereIn('type', $depositTypes)->whereDate('created_at', $today)), 'icon' => 'bx-trending-up', 'url' => route('rapports.transactions'), 'is_money' => true, 'source' => 'Somme des transactions de dépôt et mise quotidienne créées aujourd’hui.'],
+            ['label' => 'Collecté aujourd’hui', 'value' => $this->moneyByCurrency(Transaction::whereIn('type', $depositTypes)->whereOnDate('created_at', $today)), 'icon' => 'bx-trending-up', 'url' => route('rapports.transactions'), 'is_money' => true, 'source' => 'Somme des transactions de dépôt et mise quotidienne créées aujourd’hui.'],
             ['label' => 'Remboursé aujourd’hui', 'value' => $this->repaymentMoneyByCurrency(Repayment::whereDate('paid_date', $today)), 'icon' => 'bx-refresh', 'url' => route('report.repayments'), 'is_money' => true, 'source' => 'Somme des échéances marquées payées aujourd’hui, regroupée par devise du crédit.'],
             ['label' => 'Agents actifs', 'value' => User::where('role', 'recouvreur')->where('status', true)->count(), 'icon' => 'bx-user-voice', 'url' => route('reports.agent-performance'), 'source' => 'Nombre d’utilisateurs recouvreurs avec le statut actif.'],
         ];
 
         $depositQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', $depositTypes)->whereDate('created_at', $today),
+            Transaction::whereIn('type', $depositTypes)->whereOnDate('created_at', $today),
             $selectedCurrency,
             $selectedAgentId
         );
         $withdrawalQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', $withdrawalTypes)->whereDate('created_at', $today),
+            Transaction::whereIn('type', $withdrawalTypes)->whereOnDate('created_at', $today),
             $selectedCurrency,
             $selectedAgentId
         );
         $transferQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', ['transfert', 'virement_caisse'])->whereDate('created_at', $today),
+            Transaction::whereIn('type', ['transfert', 'virement_caisse'])->whereOnDate('created_at', $today),
             $selectedCurrency,
             $selectedAgentId
         );
@@ -73,11 +73,11 @@ class DecisionDashboardController extends Controller
             $selectedAgentId
         );
         $creditGrantedQuery = $this->applyCreditFilters(
-            Credit::whereDate('created_at', $today),
+            Credit::whereOnDate('created_at', $today),
             $selectedCurrency,
             $selectedAgentId
         );
-        $newMembersQuery = (clone $members)->whereDate('created_at', $today);
+        $newMembersQuery = (clone $members)->whereOnDate('created_at', $today);
 
         if ($selectedAgentId) {
             $newMembersQuery->where('agent_id', $selectedAgentId);
@@ -266,7 +266,7 @@ class DecisionDashboardController extends Controller
             }
         }
 
-        $todayCollections = Transaction::whereIn('type', $depositTypes)->whereDate('created_at', today())->sum('amount');
+        $todayCollections = Transaction::whereIn('type', $depositTypes)->whereOnDate('created_at', today())->sum('amount');
         $previousCollections = Transaction::whereIn('type', $depositTypes)
             ->whereBetween('created_at', [now()->subDays(8), now()->subDay()])
             ->sum('amount') / 7;
@@ -275,7 +275,7 @@ class DecisionDashboardController extends Controller
             $alerts[] = 'Baisse inhabituelle des collectes par rapport aux 7 derniers jours.';
         }
 
-        $todayWithdrawals = Transaction::whereIn('type', $withdrawalTypes)->whereDate('created_at', today())->sum('amount');
+        $todayWithdrawals = Transaction::whereIn('type', $withdrawalTypes)->whereOnDate('created_at', today())->sum('amount');
         $previousWithdrawals = Transaction::whereIn('type', $withdrawalTypes)
             ->whereBetween('created_at', [now()->subDays(8), now()->subDay()])
             ->sum('amount') / 7;
@@ -295,7 +295,7 @@ class DecisionDashboardController extends Controller
                 'clients as active_clients_count' => fn ($q) => $q->where('status', true),
                 'clients as inactive_clients_count' => fn ($q) => $q->where('status', false),
             ])
-            ->withSum(['transactions as collection_today' => fn ($q) => $q->whereIn('type', $depositTypes)->whereDate('created_at', today())], 'amount')
+            ->withSum(['transactions as collection_today' => fn ($q) => $q->whereIn('type', $depositTypes)->whereOnDate('created_at', today())], 'amount')
             ->withSum(['transactions as collection_month' => fn ($q) => $q->whereIn('type', $depositTypes)->where('created_at', '>=', now()->startOfMonth())], 'amount')
             ->withCount([
                 'managedCredits as credits_followed_count' => fn ($q) => $q->where('is_paid', false),
