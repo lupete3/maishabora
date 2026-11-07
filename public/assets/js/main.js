@@ -10,20 +10,37 @@ let menu, animate;
   function initMain() {
     // Initialize menu
     //-----------------
+    // Une seule initialisation par élément : initMain peut être appelé plusieurs fois
+    // (chargement de la page + livewire:navigated). Une double initialisation créait
+    // deux barres de défilement et deux écouteurs de clic : un clic à côté du menu
+    // le fermait puis le rouvrait aussitôt.
     let layoutMenuEl = document.querySelectorAll('#layout-menu');
     layoutMenuEl.forEach(function (element) {
+      if (element.dataset.menuInit === '1') {
+        return;
+      }
+      element.dataset.menuInit = '1';
+
       menu = new Menu(element, {
         orientation: 'vertical',
         closeChildren: false
       });
+      // Sur téléphone : défilement natif (tactile) au lieu de PerfectScrollbar ;
+      // sur ordinateur : la barre de défilement créée par le menu est conservée.
+      menu.manageScroll();
       // Change parameter to true if you want scroll animation
       window.Helpers.scrollToActive((animate = false));
       window.Helpers.mainMenu = menu;
     });
 
-    // Initialize menu togglers and bind click on each
+    // Initialize menu togglers and bind click on each (une seule fois par bouton)
     let menuToggler = document.querySelectorAll('.layout-menu-toggle');
     menuToggler.forEach(item => {
+      if (item.dataset.toggleInit === '1') {
+        return;
+      }
+      item.dataset.toggleInit = '1';
+
       item.addEventListener('click', event => {
         event.preventDefault();
         window.Helpers.toggleCollapsed();
@@ -74,7 +91,7 @@ let menu, animate;
     // Init BS Tooltip
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(function (tooltipTriggerEl) {
-      return new bootstrap.Tooltip(tooltipTriggerEl);
+      return bootstrap.Tooltip.getOrCreateInstance(tooltipTriggerEl);
     });
 
     // Accordion active class
@@ -88,6 +105,10 @@ let menu, animate;
 
     const accordionTriggerList = [].slice.call(document.querySelectorAll('.accordion'));
     accordionTriggerList.map(function (accordionTriggerEl) {
+      if (accordionTriggerEl.dataset.accordionInit === '1') {
+        return;
+      }
+      accordionTriggerEl.dataset.accordionInit = '1';
       accordionTriggerEl.addEventListener('show.bs.collapse', accordionActiveFunction);
       accordionTriggerEl.addEventListener('hide.bs.collapse', accordionActiveFunction);
     });
@@ -111,10 +132,10 @@ let menu, animate;
   // ========== EXÉCUTION NORMALE ==========
   document.addEventListener("DOMContentLoaded", initMain);
 
-  // ========== ✅ COMPATIBILITÉ LIVEWIRE ==========
-  document.addEventListener("livewire:load", initMain);
-  document.addEventListener("livewire:update", initMain);
-  document.addEventListener("livewire:navigated", initMain); redit
+  // ========== COMPATIBILITÉ LIVEWIRE 3 ==========
+  // livewire:navigated est aussi émis au premier chargement : initMain ne réinstalle
+  // rien de ce qui l'est déjà (voir les marques data-menu-init / data-toggle-init).
+  document.addEventListener("livewire:navigated", initMain);
 
   // Réinitialiser les styles dynamiques Sneat (inputs, selects, etc.)
   if (typeof window.Helpers !== "undefined" && typeof window.Helpers.initFormElements === "function") {

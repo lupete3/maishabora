@@ -59,7 +59,7 @@
         <!-- endbuild -->
 
         <!-- Main JS -->
-        <script src="{{ asset('assets/js/main.js') }}"></script>
+        <script src="{{ asset('assets/js/main.js') }}?v={{ filemtime(public_path('assets/js/main.js')) }}"></script>
 
 
         <!-- Place this tag in your head or just before your close body tag. -->

@@ -108,7 +108,7 @@
     <script src="{{ asset('/') }}assets/vendor/libs/apex-charts/apexcharts.js"></script>
 
     <!-- Main JS -->
-    <script src="{{ asset('/') }}assets/js/main.js"></script>
+    <script src="{{ asset('assets/js/main.js') }}?v={{ filemtime(public_path('assets/js/main.js')) }}"></script>
 
     <!-- Page JS -->
     <script src="{{ asset('/') }}assets/js/dashboards-analytics.js"></script>
