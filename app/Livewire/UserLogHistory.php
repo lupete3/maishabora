@@ -44,7 +44,7 @@ class UserLogHistory extends Component
 
         // Apply period filters
         if ($this->period === 'day') {
-            $query->whereDate('created_at', Carbon::today());
+            $query->whereOnDate('created_at', Carbon::today());
         } elseif ($this->period === 'week') {
             $start = Carbon::now()->startOfWeek();
             $end = Carbon::now()->endOfWeek();

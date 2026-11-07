@@ -144,12 +144,12 @@ class CashClosingHistory extends Component
         foreach ($closings as $cl) {
             // Fetch daily transactions for deposits and withdrawals
             $cl->deposits = Transaction::where('user_id', $cl->user_id)
-                ->whereDate('created_at', $cl->closing_date)
+                ->whereOnDate('created_at', $cl->closing_date)
                 ->whereIn('type', ['mise_quotidienne', 'dépôt', 'vente_carte_adhesion'])
                 ->get();
 
             $cl->withdrawals = Transaction::where('user_id', $cl->user_id)
-                ->whereDate('created_at', $cl->closing_date)
+                ->whereOnDate('created_at', $cl->closing_date)
                 ->whereIn('type', ['retrait_carte_adhesion', 'retrait', 'décaissement'])
                 ->get();
 

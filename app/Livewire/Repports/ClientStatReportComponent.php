@@ -86,20 +86,20 @@ class ClientStatReportComponent extends Component
         }
 
         if ($this->startDate && $this->endDate && $this->startDate === $this->endDate) {
-            $clientsQuery->whereDate('created_at', $this->startDate);
+            $clientsQuery->whereOnDate('created_at', $this->startDate);
         }
         elseif ($this->startDate && $this->endDate) {
             $clientsQuery->whereBetween('created_at', [$this->startDate, $this->endDate]);
         } elseif ($this->startDate) {
-            $clientsQuery->whereDate('created_at', '>=', $this->startDate);
+            $clientsQuery->whereFromDate('created_at', $this->startDate);
         } elseif ($this->endDate) {
-            $clientsQuery->whereDate('created_at', '<=', $this->endDate);
+            $clientsQuery->whereToDate('created_at', $this->endDate);
         }
 
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $clientsQuery->whereDate('created_at', now()->toDateString());
+                    $clientsQuery->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $clientsQuery->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
@@ -195,21 +195,21 @@ class ClientStatReportComponent extends Component
         }
 
         if ($this->startDate && $this->endDate && $this->startDate === $this->endDate) {
-            $query->whereDate('created_at', $this->startDate);
+            $query->whereOnDate('created_at', $this->startDate);
         }
         // Sinon, on applique les filtres normaux
         elseif ($this->startDate && $this->endDate) {
             $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
         } elseif ($this->startDate) {
-            $query->whereDate('created_at', '>=', $this->startDate);
+            $query->whereFromDate('created_at', $this->startDate);
         } elseif ($this->endDate) {
-            $query->whereDate('created_at', '<=', $this->endDate);
+            $query->whereToDate('created_at', $this->endDate);
         }
 
         if ($this->periodFilter) {
             switch ($this->periodFilter) {
                 case 'today':
-                    $query->whereDate('created_at', now()->toDateString());
+                    $query->whereOnDate('created_at', now()->toDateString());
                     break;
                 case 'this_week':
                     $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);

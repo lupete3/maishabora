@@ -77,7 +77,7 @@ class AgentDashboardController extends Controller
         $now = now();
 
         return match ($filter) {
-            'day' => $query->whereDate('created_at', $now->toDateString()),
+            'day' => $query->whereOnDate('created_at', $now->toDateString()),
             'month' => $query->whereMonth('created_at', $now->month)
                 ->whereYear('created_at', $now->year),
             'year' => $query->whereYear('created_at', $now->year),

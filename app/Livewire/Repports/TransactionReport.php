@@ -48,7 +48,7 @@ class TransactionReport extends Component
         // Filtres temporels
         switch ($this->filterType) {
             case 'today':
-                $query->whereDate('created_at', Carbon::today());
+                $query->whereOnDate('created_at', Carbon::today());
                 break;
             case 'week':
                 $query->whereBetween('created_at', [Carbon::now()->startOfWeek(), Carbon::now()->endOfWeek()]);

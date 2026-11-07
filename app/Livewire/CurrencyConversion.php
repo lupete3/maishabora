@@ -258,10 +258,10 @@ class CurrencyConversion extends Component
         return Transaction::whereIn('type', ['conversion_sortie', 'conversion_sortie_client'])
             ->with('user')
             ->when($this->startDate, function ($query) {
-                $query->whereDate('created_at', '>=', $this->startDate);
+                $query->whereFromDate('created_at', $this->startDate);
             })
             ->when($this->endDate, function ($query) {
-                $query->whereDate('created_at', '<=', $this->endDate);
+                $query->whereToDate('created_at', $this->endDate);
             })
             ->orderByDesc('created_at');
     }
@@ -310,10 +310,10 @@ class CurrencyConversion extends Component
         $conversions = Transaction::whereIn('type', ['conversion_sortie', 'conversion_sortie_client'])
             ->with('user')
             ->when($this->startDate, function ($query) {
-                $query->whereDate('created_at', '>=', $this->startDate);
+                $query->whereFromDate('created_at', $this->startDate);
             })
             ->when($this->endDate, function ($query) {
-                $query->whereDate('created_at', '<=', $this->endDate);
+                $query->whereToDate('created_at', $this->endDate);
             })
             ->orderByDesc('created_at')
             ->paginate(10);

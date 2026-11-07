@@ -211,10 +211,10 @@ class EcartCaisseDashboard extends Component
             $query->where('type', $this->filterType);
         }
         if ($this->filterDateFrom) {
-            $query->whereDate('created_at', '>=', $this->filterDateFrom);
+            $query->whereFromDate('created_at', $this->filterDateFrom);
         }
         if ($this->filterDateTo) {
-            $query->whereDate('created_at', '<=', $this->filterDateTo);
+            $query->whereToDate('created_at', $this->filterDateTo);
         }
 
         // Non-admin users only see their own discrepancies

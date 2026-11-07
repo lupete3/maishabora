@@ -257,7 +257,7 @@ class FundTransferComponent extends Component
                 $query->where('description', 'like', '%' . $this->search . '%');
             })
             ->when($this->filterType === 'day', function ($query) {
-                $query->whereDate('created_at', now()->today());
+                $query->whereOnDate('created_at', now()->today());
             })
             ->when($this->filterType === 'week', function ($query) {
                 $query->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()]);
