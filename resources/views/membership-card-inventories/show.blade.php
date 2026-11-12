@@ -35,16 +35,34 @@
             </div>
         @endif
 
-        @php($totalsByCurrency = $inventory->items->groupBy('currency'))
+        <div class="card mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ route('card-inventories.show', $inventory) }}" class="row g-3 align-items-end">
+                    <div class="col-md-9">
+                        <label for="search" class="form-label">Rechercher dans cet inventaire</label>
+                        <input id="search" name="search" type="search" class="form-control" value="{{ $search }}"
+                            placeholder="Code du carnet, code membre ou nom du membre">
+                    </div>
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-outline-primary">Rechercher</button>
+                        @if ($search !== '')
+                            <a href="{{ route('card-inventories.show', $inventory) }}" class="btn btn-outline-secondary">Effacer</a>
+                        @endif
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        @php($totalsByCurrency = $allItems->groupBy('currency'))
         <div class="row g-3 mb-4">
-            @foreach ($totalsByCurrency as $currency => $items)
+            @foreach ($totalsByCurrency as $currency => $currencyItems)
                 <div class="col-md-4">
                     <div class="card h-100"><div class="card-body">
                         <div class="text-muted">{{ $currency }} — total théorique</div>
-                        <div class="fs-5 fw-semibold">{{ number_format($items->sum('theoretical_total'), 2, ',', ' ') }}</div>
-                        <div class="small text-muted mt-2">Total constaté : {{ number_format($items->sum('physical_total'), 2, ',', ' ') }} {{ $currency }}</div>
-                        <div class="small fw-semibold {{ $items->sum('difference') < 0 ? 'text-danger' : ($items->sum('difference') > 0 ? 'text-success' : 'text-muted') }}">
-                            Écart : {{ number_format($items->sum('difference'), 2, ',', ' ') }} {{ $currency }}
+                        <div class="fs-5 fw-semibold">{{ number_format($currencyItems->sum('theoretical_total'), 2, ',', ' ') }}</div>
+                        <div class="small text-muted mt-2">Total constaté : {{ number_format($currencyItems->sum('physical_total'), 2, ',', ' ') }} {{ $currency }}</div>
+                        <div class="small fw-semibold {{ $currencyItems->sum('difference') < 0 ? 'text-danger' : ($currencyItems->sum('difference') > 0 ? 'text-success' : 'text-muted') }}">
+                            Écart : {{ number_format($currencyItems->sum('difference'), 2, ',', ' ') }} {{ $currency }}
                         </div>
                     </div></div>
                 </div>
@@ -72,7 +90,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach ($inventory->items as $item)
+                        @forelse ($inventoryRows as $item)
                             <tr>
                                 <td>{{ $item->card_code }}</td>
                                 <td>{{ $item->member_code ?? '—' }}</td>
@@ -100,6 +118,9 @@
                                             class="d-flex flex-wrap gap-2 align-items-center">
                                             @csrf
                                             @method('PATCH')
+                                            @if ($search !== '')
+                                                <input type="hidden" name="search" value="{{ $search }}">
+                                            @endif
                                             <div class="input-group input-group-sm" style="min-width: 160px; max-width: 220px">
                                                 <input name="physical_total" type="number" min="0" step="0.01"
                                                     class="form-control" value="{{ $item->physical_total }}"
@@ -126,6 +147,13 @@
                                 </td>
                             </tr>
                         @endforeach
+                        @if ($inventoryRows->isEmpty())
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    Aucun carnet ne correspond à « {{ $search }} ».
+                                </td>
+                            </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -133,11 +161,17 @@
                 <div class="card-body text-end">
                     <form method="POST" action="{{ route('card-inventories.finalize', $inventory) }}">
                         @csrf
+                        @if ($search !== '')
+                            <input type="hidden" name="search" value="{{ $search }}">
+                        @endif
                         <button type="submit" class="btn btn-success" @disabled($pendingCount > 0)>
                             Finaliser et enregistrer l’inventaire
                         </button>
                     </form>
                 </div>
+            @endif
+            @if ($inventoryRows->hasPages())
+                <div class="card-body">{{ $inventoryRows->links() }}</div>
             @endif
         </div>
     </div>

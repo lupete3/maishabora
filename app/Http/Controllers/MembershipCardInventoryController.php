@@ -111,10 +111,13 @@ class MembershipCardInventoryController extends Controller
             ? 'Ligne enregistrée comme non inventoriée.'
             : 'Montant de la ligne enregistré.');
 
-        return redirect()->route('card-inventories.show', $inventory);
+        return redirect()->route('card-inventories.show', array_filter([
+            'inventory' => $inventory,
+            'search' => $request->input('search'),
+        ]));
     }
 
-    public function finalize(MembershipCardInventory $inventory, MembershipCardInventoryService $service)
+    public function finalize(Request $request, MembershipCardInventory $inventory, MembershipCardInventoryService $service)
     {
         Gate::authorize('gerer-inventaire-carnets');
 
@@ -122,17 +125,41 @@ class MembershipCardInventoryController extends Controller
 
         notyf()->success('Inventaire finalisé et enregistré.');
 
-        return redirect()->route('card-inventories.show', $inventory);
+        return redirect()->route('card-inventories.show', array_filter([
+            'inventory' => $inventory,
+            'search' => $request->input('search'),
+        ]));
     }
 
-    public function show(MembershipCardInventory $inventory)
+    public function show(Request $request, MembershipCardInventory $inventory)
     {
         Gate::authorize('gerer-inventaire-carnets');
 
-        $inventory->load(['items' => fn ($query) => $query->orderBy('card_code'), 'creator']);
-        $pendingCount = $inventory->items->where('status', 'pending')->count();
+        $validated = $request->validate([
+            'search' => 'nullable|string|max:100',
+            'page' => 'nullable|integer|min:1',
+        ]);
 
-        return view('membership-card-inventories.show', compact('inventory', 'pendingCount'));
+        $inventory->load('creator');
+        $allItems = $inventory->items()->orderBy('card_code')->get();
+        $itemsQuery = $inventory->items()->orderBy('card_code');
+        $search = trim($validated['search'] ?? '');
+
+        if ($search !== '') {
+            foreach (preg_split('/\s+/u', $search) as $term) {
+                $pattern = "%{$term}%";
+                $itemsQuery->where(function ($query) use ($pattern) {
+                    $query->where('card_code', 'like', $pattern)
+                        ->orWhere('member_code', 'like', $pattern)
+                        ->orWhere('member_name', 'like', $pattern);
+                });
+            }
+        }
+
+        $inventoryRows = $itemsQuery->paginate(50)->withQueryString();
+        $pendingCount = $inventory->items()->where('status', 'pending')->count();
+
+        return view('membership-card-inventories.show', compact('inventory', 'allItems', 'inventoryRows', 'pendingCount', 'search'));
     }
 
     public function export(MembershipCardInventory $inventory)

@@ -22,6 +22,7 @@ Les montants sont comparés en centimes et les devises ne sont jamais additionn�
 6. Dans le brouillon, saisir le total physique et cliquer **Enregistrer la ligne** pour chaque carnet. La ligne affiche alors **Montant enregistré**. Si le carnet n’est pas présent, laisser le champ vide et enregistrer la ligne : elle sera explicitement marquée **Non inventorié**, sans écart calculé.
 7. Finaliser l’inventaire une fois que toutes les lignes ont un statut. Le brouillon ne peut pas être finalisé tant qu’une ligne est encore « À traiter ». Après finalisation, le rapport PDF est disponible ; il reprend l’en-tête et la police utilisés par les autres rapports, les totaux par devise et une ligne de signature pour l’agent.
 8. Retrouver un contrôle antérieur grâce aux filtres de date et d’agent ; ouvrir **Continuer** pour reprendre un brouillon.
+9. Dans le détail d’un inventaire, rechercher un carnet par son code, le code membre ou les noms du membre. Les résultats sont filtrés dans l’inventaire courant, et la recherche reste affichée pendant la pagination ou l’enregistrement d’une ligne.
 
 Le système inscrit uniquement les carnets **actifs**, de type **épargne**, affectés à l’agent sélectionné. Les mises non payées ne sont pas incluses. Les montants, code membre et mise quotidienne sont conservés dans l’inventaire comme instantané. Un carnet absent est conservé avec le statut `not_inventoried`, et non avec un montant zéro.
 
