@@ -136,6 +136,20 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:cloturer-
         ->name('term-deposits.settle-maturity');
 });
 
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:gerer-inventaire-carnets'])
+    ->prefix('inventaires-carnets')
+    ->name('card-inventories.')
+    ->controller(\App\Http\Controllers\MembershipCardInventoryController::class)
+    ->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/nouveau', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::patch('/{inventory}/lignes/{item}', 'saveLine')->name('items.update');
+        Route::post('/{inventory}/finaliser', 'finalize')->name('finalize');
+        Route::get('/{inventory}/exporter', 'export')->name('export');
+        Route::get('/{inventory}', 'show')->name('show');
+    });
+
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-client'])->group(function () {
     Route::get('/membre/{user}/depots-a-terme/{termDeposit}', [TermDepositController::class, 'memberHistory'])
         ->name('term-deposits.member-history');
