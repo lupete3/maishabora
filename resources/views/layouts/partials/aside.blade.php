@@ -190,6 +190,14 @@
         @can('afficher-rapport-stock-carnets')
             <li class="menu-item"><a href="{{ route('card-stock.report') }}" class="menu-link"><i class="menu-icon tf-icons bx bx-bar-chart"></i><div>Rapport du stock des carnets</div></a></li>
         @endcan
+        @can('gerer-inventaire-carnets')
+            <li class="menu-item @if (request()->routeIs('card-inventories.*')) active @endif">
+                <a href="{{ route('card-inventories.index') }}" class="menu-link">
+                    <i class="menu-icon tf-icons bx bx-clipboard"></i>
+                    <div>Inventaire des carnets</div>
+                </a>
+            </li>
+        @endcan
         @can('afficher-carnet', App\Models\User::class)
             <!-- Vente de cartes membres -->
             <li class="menu-item @if (request()->routeIs('members.sell-card')) active @endif">

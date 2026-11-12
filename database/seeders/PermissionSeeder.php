@@ -52,6 +52,7 @@ class PermissionSeeder extends Seeder
             "ajouter-carnet",
             "modifier-carnet",
             "supprimer-carnet",
+            "gerer-inventaire-carnets",
 
             "afficher-transfert-caisse",
             "ajouter-transfert-caisse",
