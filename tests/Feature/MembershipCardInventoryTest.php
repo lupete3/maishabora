@@ -2,13 +2,16 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\MembershipCardInventoryController;
 use App\Models\CompanyInformation;
 use App\Models\MembershipCard;
 use App\Models\MembershipCardInventoryItem;
 use App\Models\User;
 use App\Services\MembershipCardInventoryService;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
@@ -226,6 +229,49 @@ class MembershipCardInventoryTest extends TestCase
         $this->assertStringContainsString('Code membre', $html);
         $this->assertStringContainsString('Mise du carnet', $html);
         $this->assertStringContainsString('Arial, sans-serif', $html);
+    }
+
+    public function test_inventory_detail_search_matches_card_code_member_code_and_member_name(): void
+    {
+        $actor = User::create(['name' => 'Admin', 'role' => 'admin', 'status' => true]);
+        $this->actingAs($actor);
+        Gate::define('gerer-inventaire-carnets', fn (User $user) => true);
+
+        $cardOne = $this->card('EP-101');
+        $memberTwo = User::create(['name' => 'Aline', 'postnom' => 'Bora', 'code' => 'CL-002', 'role' => 'membre', 'status' => true]);
+        $cardTwo = $this->card('EP-202', ['member_id' => $memberTwo->id]);
+        $memberThree = User::create(['name' => 'Jean', 'postnom' => 'Mbuyi', 'prenom' => 'Paul', 'code' => 'CL-003', 'role' => 'membre', 'status' => true]);
+        $cardThree = $this->card('EP-303', ['member_id' => $memberThree->id]);
+
+        $inventory = $this->service->createDraft(
+            $this->agent->id,
+            today()->toDateString(),
+            [$cardOne->id, $cardTwo->id, $cardThree->id],
+        );
+        $controller = app(MembershipCardInventoryController::class);
+        view()->share('errors', new \Illuminate\Support\ViewErrorBag);
+
+        foreach ([
+            'EP-101' => $cardOne->id,
+            'CL-002' => $cardTwo->id,
+            'Jean Mbuyi' => $cardThree->id,
+        ] as $search => $expectedCardId) {
+            $response = $controller->show(
+                Request::create('/inventaires-carnets/'.$inventory->id, 'GET', ['search' => $search]),
+                $inventory,
+            );
+
+            $this->assertSame(
+                [$expectedCardId],
+                $response->getData()['inventoryRows']->getCollection()->pluck('membership_card_id')->all(),
+            );
+        }
+
+        $emptyResponse = $controller->show(
+            Request::create('/inventaires-carnets/'.$inventory->id, 'GET', ['search' => 'NOT-FOUND']),
+            $inventory,
+        );
+        $this->assertTrue($emptyResponse->getData()['inventoryRows']->isEmpty());
     }
 
     private function card(string $code, array $attributes = []): MembershipCard
