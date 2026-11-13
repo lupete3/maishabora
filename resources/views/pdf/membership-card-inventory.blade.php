@@ -18,11 +18,28 @@
 </head>
 <body>
     @include('partials.pdf-header', [
-        'reportTitle' => 'Inventaire physique des carnets d’épargne',
+        'reportTitle' => $inventory->status === 'draft'
+            ? 'Situation provisoire de l’inventaire physique des carnets'
+            : 'Inventaire physique des carnets d’épargne',
         'date' => $inventory->inventory_date->format('d/m/Y'),
         'agent_name' => $inventory->agent_name,
-        'metadata' => '<strong>Référence :</strong> INV-' . $inventory->id . '<br><strong>Date :</strong> ' . $inventory->inventory_date->format('d/m/Y') . '<br><strong>Agent :</strong> ' . e($inventory->agent_name),
+        'metadata' => '<strong>Référence :</strong> INV-' . $inventory->id . '<br><strong>Date :</strong> ' . $inventory->inventory_date->format('d/m/Y') . '<br><strong>Agent :</strong> ' . e($inventory->agent_name) . ($inventory->status === 'draft' ? '<br><strong>Statut :</strong> BROUILLON — PROVISOIRE' : ''),
     ])
+
+    @php
+        $inventoryItems = $inventory->items;
+        $inventoriedItems = $inventoryItems->where('status', 'inventoried');
+        $pendingCount = $inventoryItems->where('status', 'pending')->count();
+        $notInventoriedCount = $inventoryItems->where('status', 'not_inventoried')->count();
+    @endphp
+    @if ($inventory->status === 'draft')
+        <p><strong>Situation provisoire :</strong>
+            {{ $inventoriedItems->count() }} montant(s) inventorié(s),
+            {{ $pendingCount }} ligne(s) à traiter,
+            {{ $notInventoriedCount }} carnet(s) non inventorié(s).
+            Les totaux d’écarts ci-dessous ne concernent que les montants déjà inventoriés.
+        </p>
+    @endif
 
     <table class="report-table">
         <thead>
@@ -53,28 +70,56 @@
                     <td class="number">
                         {{ $item->difference !== null ? number_format((float) $item->difference, 2, ',', ' ') . ' ' . $item->currency : '—' }}
                     </td>
-                    <td>{{ $item->status === 'not_inventoried' ? 'Non inventorié' : 'Montant enregistré' }}</td>
+                    <td>
+                        @if ($item->status === 'not_inventoried')
+                            Non inventorié
+                        @elseif ($item->status === 'pending')
+                            À traiter
+                        @else
+                            Montant enregistré
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
     <table class="report-table totals">
-        <thead><tr><th>Devise</th><th class="number">Théorique</th><th class="number">Constaté</th><th class="number">Écart</th></tr></thead>
+        <thead>
+            <tr>
+                <th>Devise</th>
+                <th class="number">Théorique inventorié</th>
+                <th class="number">Total constaté</th>
+                <th class="number">Surplus (+)</th>
+                <th class="number">Manquant (-)</th>
+                <th class="number">Écart net</th>
+            </tr>
+        </thead>
         <tbody>
-            @foreach ($inventory->items->groupBy('currency') as $currency => $items)
+            @foreach ($inventoryItems->groupBy('currency') as $currency => $currencyItems)
+                @php
+                    $currencyInventoried = $currencyItems->where('status', 'inventoried');
+                    $positiveDifference = $currencyInventoried->where('difference', '>', 0)->sum('difference');
+                    $negativeDifference = $currencyInventoried->where('difference', '<', 0)->sum('difference');
+                @endphp
                 <tr>
                     <td>{{ $currency }}</td>
-                    <td class="number">{{ number_format($items->sum('theoretical_total'), 2, ',', ' ') }}</td>
-                    <td class="number">{{ number_format($items->sum('physical_total'), 2, ',', ' ') }}</td>
-                    <td class="number">{{ number_format($items->sum('difference'), 2, ',', ' ') }}</td>
+                    <td class="number">{{ number_format($currencyInventoried->sum('theoretical_total'), 2, ',', ' ') }}</td>
+                    <td class="number">{{ number_format($currencyInventoried->sum('physical_total'), 2, ',', ' ') }}</td>
+                    <td class="number">{{ number_format($positiveDifference, 2, ',', ' ') }}</td>
+                    <td class="number">{{ number_format($negativeDifference, 2, ',', ' ') }}</td>
+                    <td class="number">{{ number_format($currencyInventoried->sum('difference'), 2, ',', ' ') }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
     <div class="signature">
-        <div class="signature-line">Signature de l’agent : {{ $inventory->agent_name }}</div>
+        @if ($inventory->status === 'draft')
+            <div class="signature-line">Situation provisoire — inventaire non finalisé</div>
+        @else
+            <div class="signature-line">Signature de l’agent : {{ $inventory->agent_name }}</div>
+        @endif
     </div>
 </body>
 </html>

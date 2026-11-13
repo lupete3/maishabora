@@ -219,6 +219,7 @@ class MembershipCardInventoryTest extends TestCase
         );
         $this->service->saveLine($inventory, $inventory->items()->value('id'), '0.00');
         $this->service->finalize($inventory);
+        $inventory->refresh();
         $inventory->load('items');
         $company = new CompanyInformation(['name' => 'Maisha Bora']);
 
@@ -229,6 +230,47 @@ class MembershipCardInventoryTest extends TestCase
         $this->assertStringContainsString('Code membre', $html);
         $this->assertStringContainsString('Mise du carnet', $html);
         $this->assertStringContainsString('Arial, sans-serif', $html);
+    }
+
+    public function test_draft_pdf_shows_partial_status_and_only_inventoried_difference_totals(): void
+    {
+        $surplusCard = $this->card('EP-401');
+        $shortageCard = $this->card('EP-402');
+        $missingCard = $this->card('EP-403');
+        $pendingCard = $this->card('EP-404');
+
+        foreach ([$surplusCard, $shortageCard, $missingCard, $pendingCard] as $card) {
+            $card->contributions()->create([
+                'contribution_date' => today()->toDateString(),
+                'amount' => 10000,
+                'is_paid' => true,
+            ]);
+        }
+
+        $inventory = $this->service->createDraft(
+            $this->agent->id,
+            today()->toDateString(),
+            [$surplusCard->id, $shortageCard->id, $missingCard->id, $pendingCard->id],
+        );
+        $items = $inventory->items()->get()->keyBy('card_code');
+        $this->service->saveLine($inventory, $items['EP-401']->id, '12000.00');
+        $this->service->saveLine($inventory, $items['EP-402']->id, '7000.00');
+        $this->service->saveLine($inventory, $items['EP-403']->id, null);
+        $inventory->load('items');
+        $company = new CompanyInformation(['name' => 'Maisha Bora']);
+
+        $html = view('pdf.membership-card-inventory', compact('inventory', 'company'))->render();
+
+        $this->assertStringContainsString('Situation provisoire', $html);
+        $this->assertStringContainsString('1 ligne(s) à traiter', $html);
+        $this->assertStringContainsString('1 carnet(s) non inventorié(s)', $html);
+        $this->assertStringContainsString('À traiter', $html);
+        $this->assertStringContainsString('Non inventorié', $html);
+        $this->assertStringContainsString('Surplus (+)', $html);
+        $this->assertStringContainsString('Manquant (-)', $html);
+        $this->assertStringContainsString('2 000,00', $html);
+        $this->assertStringContainsString('-3 000,00', $html);
+        $this->assertStringContainsString('-1 000,00', $html);
     }
 
     public function test_inventory_detail_search_matches_card_code_member_code_and_member_name(): void

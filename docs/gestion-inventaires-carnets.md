@@ -20,9 +20,10 @@ Les montants sont comparés en centimes et les devises ne sont jamais additionn�
 4. Utiliser **Effacer** pour retirer la recherche et réafficher tous les carnets de l’agent.
 5. Choisir **Créer le brouillon**. Les lignes du contrôle sont alors conservées dans la base et peuvent être reprises depuis la liste des inventaires, même après avoir quitté la page ou fermé l’onglet.
 6. Dans le brouillon, saisir le total physique et cliquer **Enregistrer la ligne** pour chaque carnet. La ligne affiche alors **Montant enregistré**. Si le carnet n’est pas présent, laisser le champ vide et enregistrer la ligne : elle sera explicitement marquée **Non inventorié**, sans écart calculé.
-7. Finaliser l’inventaire une fois que toutes les lignes ont un statut. Le brouillon ne peut pas être finalisé tant qu’une ligne est encore « À traiter ». Après finalisation, le rapport PDF est disponible ; il reprend l’en-tête et la police utilisés par les autres rapports, les totaux par devise et une ligne de signature pour l’agent.
-8. Retrouver un contrôle antérieur grâce aux filtres de date et d’agent ; ouvrir **Continuer** pour reprendre un brouillon.
-9. Dans le détail d’un inventaire, rechercher un carnet par son code, le code membre ou les noms du membre. Les résultats sont filtrés dans l’inventaire courant, et la recherche reste affichée pendant la pagination ou l’enregistrement d’une ligne.
+7. Télécharger à tout moment le **PDF — situation actuelle** d’un brouillon. Il est marqué provisoire et présente les carnets inventoriés, en attente ou absents, ainsi que les surplus, manques et écarts nets calculés uniquement sur les montants déjà saisis.
+8. Finaliser l’inventaire une fois que toutes les lignes ont un statut. Le brouillon ne peut pas être finalisé tant qu’une ligne est encore « À traiter ». Après finalisation, le PDF devient le rapport définitif et comporte une ligne de signature pour l’agent.
+9. Retrouver un contrôle antérieur grâce aux filtres de date et d’agent ; ouvrir **Continuer** pour reprendre un brouillon.
+10. Dans le détail d’un inventaire, rechercher un carnet par son code, le code membre ou les noms du membre. Les résultats sont filtrés dans l’inventaire courant, et la recherche reste affichée pendant la pagination ou l’enregistrement d’une ligne.
 
 Le système inscrit uniquement les carnets **actifs**, de type **épargne**, affectés à l’agent sélectionné. Les mises non payées ne sont pas incluses. Les montants, code membre et mise quotidienne sont conservés dans l’inventaire comme instantané. Un carnet absent est conservé avec le statut `not_inventoried`, et non avec un montant zéro.
 
