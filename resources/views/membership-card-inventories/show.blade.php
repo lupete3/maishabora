@@ -13,9 +13,9 @@
                 </span>
             </div>
             <div class="d-flex gap-2">
-                @if ($inventory->status === 'recorded')
-                    <a href="{{ route('card-inventories.export', $inventory) }}" class="btn btn-primary">Exporter le PDF</a>
-                @endif
+                <a href="{{ route('card-inventories.export', $inventory) }}" class="btn btn-primary">
+                    {{ $inventory->status === 'recorded' ? 'Exporter le PDF' : 'PDF — situation actuelle' }}
+                </a>
                 <a href="{{ route('card-inventories.index') }}" class="btn btn-outline-secondary">Retour à la liste</a>
             </div>
         </div>

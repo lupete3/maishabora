@@ -165,7 +165,6 @@ class MembershipCardInventoryController extends Controller
     public function export(MembershipCardInventory $inventory)
     {
         Gate::authorize('gerer-inventaire-carnets');
-        abort_unless($inventory->status === 'recorded', 422, 'Finalisez le brouillon avant d’exporter le rapport.');
 
         $inventory->load(['items' => fn ($query) => $query->orderBy('card_code')]);
         $company = CompanyInformation::getActive();

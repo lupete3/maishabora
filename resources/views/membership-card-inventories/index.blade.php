@@ -70,9 +70,9 @@
                                     <a href="{{ route('card-inventories.show', $inventory) }}" class="btn btn-sm btn-outline-primary">
                                         {{ $inventory->status === 'recorded' ? 'Détail' : 'Continuer' }}
                                     </a>
-                                    @if ($inventory->status === 'recorded')
-                                        <a href="{{ route('card-inventories.export', $inventory) }}" class="btn btn-sm btn-outline-secondary">PDF</a>
-                                    @endif
+                                    <a href="{{ route('card-inventories.export', $inventory) }}" class="btn btn-sm btn-outline-secondary">
+                                        {{ $inventory->status === 'recorded' ? 'PDF' : 'PDF provisoire' }}
+                                    </a>
                                 </td>
                             </tr>
                         @empty
