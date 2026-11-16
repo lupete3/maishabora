@@ -159,6 +159,11 @@
                         </div>
                     </div>
                 </div>
+                @can('gerer-acces-mobile')
+                    @if ($member->role === 'membre')
+                        <livewire:members.mobile-access :member-id="$member->id" :key="'mobile-access-' . $member->id" />
+                    @endif
+                @endcan
                 <div class="rounded-lg border bg-card text-card-foreground shadow-sm max-w-full overflow-hidden">
                     <!-- En-tête plus compact sur mobile -->
                     <div class="p-3 border-b">

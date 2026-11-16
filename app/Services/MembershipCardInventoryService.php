@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\DailyContribution;
 use App\Models\MembershipCard;
 use App\Models\MembershipCardInventory;
 use App\Models\User;
@@ -17,6 +18,9 @@ class MembershipCardInventoryService
             ->with(['member:id,name,postnom,prenom,code'])
             ->withSum(['contributions as theoretical_total' => fn ($query) => $query->where('is_paid', true)], 'amount')
             ->withCount(['contributions as paid_contributions_count' => fn ($query) => $query->where('is_paid', true)])
+            // Dernière mise encaissée : updated_at de la mise payée = moment de l'encaissement
+            // (contribution_date est le jour couvert, qui peut être payé en avance ou en retard)
+            ->withMax(['contributions as last_contribution_at' => fn ($query) => $query->where('is_paid', true)], 'updated_at')
             ->where('user_id', $agentId)
             ->where('card_type', 'epargne')
             ->active()
@@ -157,6 +161,35 @@ class MembershipCardInventoryService
                 'finalized_at' => now(),
             ]);
         });
+    }
+
+    /**
+     * Ajoute à chaque ligne d'inventaire la date ACTUELLE de la dernière mise encaissée
+     * sur son carnet (calculée en direct, donc aussi pour les inventaires déjà créés).
+     *
+     * On prend updated_at de la mise payée = moment de l'encaissement
+     * (contribution_date est le jour couvert, qui peut être payé en avance ou en retard).
+     * La valeur est seulement ajoutée en mémoire pour l'affichage : rien n'est enregistré.
+     */
+    public function attachLastContributionDates(iterable $items): void
+    {
+        $items = collect($items)->filter(fn ($item) => $item->membership_card_id);
+
+        if ($items->isEmpty()) {
+            return;
+        }
+
+        // Une seule requête pour toutes les lignes affichées
+        $dates = DailyContribution::query()
+            ->whereIn('membership_card_id', $items->pluck('membership_card_id')->unique())
+            ->where('is_paid', true)
+            ->groupBy('membership_card_id')
+            ->selectRaw('membership_card_id, MAX(updated_at) AS last_at')
+            ->pluck('last_at', 'membership_card_id');
+
+        foreach ($items as $item) {
+            $item->setAttribute('last_contribution_at', $dates[$item->membership_card_id] ?? null);
+        }
     }
 
     private function personName(User $user): string

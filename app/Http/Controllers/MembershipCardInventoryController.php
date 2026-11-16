@@ -131,8 +131,9 @@ class MembershipCardInventoryController extends Controller
         ]));
     }
 
-    public function show(Request $request, MembershipCardInventory $inventory)
+    public function show(Request $request, MembershipCardInventory $inventory, ?MembershipCardInventoryService $service = null)
     {
+        $service ??= app(MembershipCardInventoryService::class);
         Gate::authorize('gerer-inventaire-carnets');
 
         $validated = $request->validate([
@@ -157,16 +158,20 @@ class MembershipCardInventoryController extends Controller
         }
 
         $inventoryRows = $itemsQuery->paginate(50)->withQueryString();
+        // Date actuelle de la dernière mise de chaque carnet affiché
+        $service->attachLastContributionDates($inventoryRows->getCollection());
         $pendingCount = $inventory->items()->where('status', 'pending')->count();
 
         return view('membership-card-inventories.show', compact('inventory', 'allItems', 'inventoryRows', 'pendingCount', 'search'));
     }
 
-    public function export(MembershipCardInventory $inventory)
+    public function export(MembershipCardInventory $inventory, ?MembershipCardInventoryService $service = null)
     {
+        $service ??= app(MembershipCardInventoryService::class);
         Gate::authorize('gerer-inventaire-carnets');
 
         $inventory->load(['items' => fn ($query) => $query->orderBy('card_code')]);
+        $service->attachLastContributionDates($inventory->items);
         $company = CompanyInformation::getActive();
         $pdf = Pdf::loadView('pdf.membership-card-inventory', compact('inventory', 'company'))
             ->setPaper('a4', 'landscape');

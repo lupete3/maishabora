@@ -65,7 +65,7 @@
                                         {{ $inventory->status === 'recorded' ? 'Enregistré' : 'Brouillon' }}
                                     </span>
                                 </td>
-                                <td>{{ $inventory->creator?->name ?? '—' }}</td>
+                                <td>{{ $inventory->creator?->name ?? '—' }}{{ $inventory->creator?->postnom ?? '—' }}</td>
                                 <td class="text-end">
                                     <a href="{{ route('card-inventories.show', $inventory) }}" class="btn btn-sm btn-outline-primary">
                                         {{ $inventory->status === 'recorded' ? 'Détail' : 'Continuer' }}

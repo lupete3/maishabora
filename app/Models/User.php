@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
@@ -13,6 +14,7 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
     use HasRoles;
+    use HasApiTokens; // jetons Sanctum pour l'application mobile
 
     /**
      * The attributes that are mass assignable.
@@ -86,7 +88,21 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'last_transaction_at' => 'datetime',
+            'mobile_activated_at' => 'datetime',
+            'must_change_password' => 'boolean',
+            'temporary_password_expires_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Vrai si le membre doit changer un code provisoire dont la date
+     * limite est dépassée (il doit alors repasser en agence).
+     */
+    public function temporaryPasswordExpired(): bool
+    {
+        return $this->must_change_password
+            && $this->temporary_password_expires_at !== null
+            && $this->temporary_password_expires_at->isPast();
     }
 
     public function membershipCards()

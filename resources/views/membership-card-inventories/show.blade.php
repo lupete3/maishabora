@@ -79,6 +79,7 @@
                             <th>Membre</th>
                             <th>Mise du carnet</th>
                             <th>Mises payées</th>
+                            <th>Dernière mise</th>
                             <th>Total théorique</th>
                             <th>Total constaté</th>
                             <th>Écart</th>
@@ -97,6 +98,12 @@
                                 <td>{{ $item->member_name }}</td>
                                 <td>{{ number_format((float) $item->subscription_amount, 2, ',', ' ') }} {{ $item->currency }}</td>
                                 <td>{{ $item->paid_contributions_count }}</td>
+                                <td>
+                                    @include('membership-card-inventories.partials.last-contribution', [
+                                        'date' => $item->last_contribution_at,
+                                        'reference' => now(),
+                                    ])
+                                </td>
                                 <td>{{ number_format((float) $item->theoretical_total, 2, ',', ' ') }} {{ $item->currency }}</td>
                                 <td>
                                     @if ($item->physical_total !== null)
@@ -149,7 +156,7 @@
                         @endforeach
                         @if ($inventoryRows->isEmpty())
                             <tr>
-                                <td colspan="9" class="text-center text-muted py-4">
+                                <td colspan="10" class="text-center text-muted py-4">
                                     Aucun carnet ne correspond à « {{ $search }} ».
                                 </td>
                             </tr>

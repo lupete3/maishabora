@@ -27,6 +27,27 @@ Les montants sont comparés en centimes et les devises ne sont jamais additionn�
 
 Le système inscrit uniquement les carnets **actifs**, de type **épargne**, affectés à l’agent sélectionné. Les mises non payées ne sont pas incluses. Les montants, code membre et mise quotidienne sont conservés dans l’inventaire comme instantané. Un carnet absent est conservé avec le statut `not_inventoried`, et non avec un montant zéro.
 
+## Dernière mise (date de la dernière opération sur le carnet)
+
+But : savoir depuis quand un carnet n'a plus reçu de mise, pour demander facilement à l'agent de justifier cette date.
+
+- La colonne **Dernière mise** apparaît sur l'écran de création (choix des carnets), dans le détail de l'inventaire et dans le PDF (brouillon et définitif).
+- La date affichée est le **moment réel de l'encaissement** de la dernière mise payée du carnet, c'est-à-dire le `updated_at` de la mise passée à « payée ». Ce n'est pas `contribution_date`, qui est le jour couvert par la mise et peut être payé en avance ou en retard. Exemple réel : la mise du 28/05 du carnet 1551 a été encaissée le 11/06.
+- La date est **calculée en direct**, depuis les mises du carnet, à chaque affichage. Elle apparaît donc aussi pour les inventaires créés avant cette fonctionnalité, et elle suit les encaissements faits après l'inventaire. Elle n'est pas enregistrée dans l'inventaire : aucune colonne, aucune migration.
+- L'ancienneté (« il y a N j ») est comptée **jusqu'à aujourd'hui**. À l'écran, un badge l'accompagne :
+  - **vert** : 7 jours ou moins ;
+  - **orange** : plus de 7 jours ;
+  - **rouge** : plus de 30 jours, ou aucune mise payée.
+
+  Les seuils se règlent dans `MembershipCardInventoryItem::DAYS_WARNING` et `DAYS_DANGER`.
+- Dans le PDF, la colonne affiche la date, l'heure et le nombre de jours, par exemple « 18/04/2026 16:15 (212 j) ». Une note rappelle la date d'édition du PDF.
+
+Fichiers concernés :
+- `MembershipCardInventoryService::eligibleCards()` (création) et `attachLastContributionDates()` (détail et PDF, une seule requête pour toutes les lignes) ;
+- `MembershipCardInventoryItem::daysBetween()` et `levelForDays()` ;
+- la vue partielle `membership-card-inventories/partials/last-contribution.blade.php` ;
+- les vues `create`, `show` et `pdf/membership-card-inventory`.
+
 ## Données conservées
 
 - `membership_card_inventories` : date de contrôle, agent responsable (identifiant et nom conservé), créateur, statut `draft`/`recorded` et date de finalisation.
