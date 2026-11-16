@@ -12,6 +12,14 @@ class Account extends Model
 
     protected $fillable = ['user_id', 'currency', 'balance', 'type', 'can_withdraw_all', 'status', 'subscribed'];
 
+    /**
+     * Comptes ouverts (statut « Actif »). Usage : $user->accounts()->active()
+     */
+    public function scopeActive($query)
+    {
+        return $query->where('status', 'Actif');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
