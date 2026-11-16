@@ -83,6 +83,7 @@
                                         <th>Nom du membre</th>
                                         <th>Mise du carnet</th>
                                         <th>Mises payées</th>
+                                        <th>Dernière mise</th>
                                         <th>Total théorique</th>
                                         <th>Étape suivante</th>
                                     </tr>
@@ -98,6 +99,13 @@
                                             <td>{{ $card->member ? trim($card->member->name . ' ' . $card->member->postnom . ' ' . $card->member->prenom) : 'Membre supprimé' }}</td>
                                             <td>{{ number_format((float) $card->subscription_amount, 2, ',', ' ') }} {{ $card->currency }}</td>
                                             <td>{{ $card->paid_contributions_count }}</td>
+                                            <td>
+                                                {{-- Ancienneté comptée jusqu'à aujourd'hui --}}
+                                                @include('membership-card-inventories.partials.last-contribution', [
+                                                    'date' => $card->last_contribution_at,
+                                                    'reference' => now(),
+                                                ])
+                                            </td>
                                             <td>{{ number_format((float) ($card->theoretical_total ?? 0), 2, ',', ' ') }} {{ $card->currency }}</td>
                                             <td><span class="badge bg-label-secondary">À compléter dans le brouillon</span></td>
                                         </tr>

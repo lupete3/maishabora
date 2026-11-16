@@ -316,6 +316,73 @@ class MembershipCardInventoryTest extends TestCase
         $this->assertTrue($emptyResponse->getData()['inventoryRows']->isEmpty());
     }
 
+    public function test_last_contribution_date_is_the_current_payment_time_of_paid_mises(): void
+    {
+        $this->travelTo('2026-11-16 09:00:00');
+
+        $card = $this->card('EP-010');
+        $neverPaid = $this->card('EP-011');
+
+        // Mise du 20/10 encaissée le 01/11 10:00, mise du 21/10 encaissée le 05/11 14:30
+        $this->paidMise($card, '2026-10-20', '2026-11-01 10:00:00');
+        $this->paidMise($card, '2026-10-21', '2026-11-05 14:30:00');
+        // Une mise NON payée modifiée plus tard ne doit pas compter
+        $unpaid = $card->contributions()->create(['contribution_date' => '2026-10-22', 'amount' => 10000, 'is_paid' => false]);
+        DB::table('daily_contributions')->where('id', $unpaid->id)->update(['updated_at' => '2026-11-10 08:00:00']);
+
+        // Écran de création : la date vient du carnet
+        $cards = $this->service->eligibleCards($this->agent->id)->keyBy('code');
+        $this->assertSame('2026-11-05 14:30:00', (string) $cards['EP-010']->last_contribution_at);
+        $this->assertNull($cards['EP-011']->last_contribution_at);
+
+        // Inventaire (y compris un inventaire créé avant cette fonctionnalité) : date calculée en direct
+        $inventory = $this->service->createDraft($this->agent->id, '2026-11-16', [$card->id, $neverPaid->id]);
+        $items = $inventory->items()->get();
+        $this->service->attachLastContributionDates($items);
+        $items = $items->keyBy('card_code');
+
+        $this->assertSame('05/11/2026 14:30', $items['EP-010']->last_contribution_at->format('d/m/Y H:i'));
+        $this->assertNull($items['EP-011']->last_contribution_at);
+        $this->assertSame(11, $items['EP-010']->daysSinceLastContribution(now()));
+        $this->assertSame('warning', $items['EP-010']->lastContributionLevel(now()));
+        $this->assertSame('danger', $items['EP-011']->lastContributionLevel(now()));
+
+        // Rien n'est enregistré en base : ce n'est pas une colonne
+        $this->assertFalse(Schema::hasColumn('membership_card_inventory_items', 'last_contribution_at'));
+
+        // Un encaissement fait après l'inventaire est pris en compte (date actuelle)
+        $this->paidMise($card, '2026-10-23', '2026-11-15 17:45:00');
+        $fresh = $inventory->items()->get();
+        $this->service->attachLastContributionDates($fresh);
+        $this->assertSame('15/11/2026 17:45', $fresh->firstWhere('card_code', 'EP-010')->last_contribution_at->format('d/m/Y H:i'));
+        $this->assertSame(1, $fresh->firstWhere('card_code', 'EP-010')->daysSinceLastContribution(now()));
+    }
+
+    public function test_pdf_shows_the_last_contribution_column(): void
+    {
+        $this->travelTo('2026-11-16 09:00:00');
+
+        $card = $this->card('EP-020');
+        $this->paidMise($card, '2026-10-01', '2026-10-10 11:15:00');
+        $inventory = $this->service->createDraft($this->agent->id, '2026-11-16', [$card->id]);
+        $inventory->load('items');
+        $this->service->attachLastContributionDates($inventory->items);
+        $company = new CompanyInformation(['name' => 'Maisha Bora']);
+
+        $html = view('pdf.membership-card-inventory', compact('inventory', 'company'))->render();
+
+        $this->assertStringContainsString('Dernière mise', $html);
+        $this->assertStringContainsString('10/10/2026 11:15', $html);
+        $this->assertStringContainsString('(37 j)', $html);
+    }
+
+    /** Crée une mise payée dont l'encaissement (updated_at) a eu lieu au moment donné. */
+    private function paidMise(MembershipCard $card, string $coveredDay, string $paidAt): void
+    {
+        $mise = $card->contributions()->create(['contribution_date' => $coveredDay, 'amount' => 10000, 'is_paid' => true]);
+        DB::table('daily_contributions')->where('id', $mise->id)->update(['updated_at' => $paidAt]);
+    }
+
     private function card(string $code, array $attributes = []): MembershipCard
     {
         return MembershipCard::create(array_merge([

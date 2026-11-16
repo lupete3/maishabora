@@ -32,6 +32,8 @@
         $pendingCount = $inventoryItems->where('status', 'pending')->count();
         $notInventoriedCount = $inventoryItems->where('status', 'not_inventoried')->count();
     @endphp
+    <p style="margin: 0 0 4px 0;"><em>Dernière mise : date et heure du dernier encaissement enregistré sur le carnet, à la date d'édition de ce PDF ({{ now()->format('d/m/Y H:i') }}).</em></p>
+
     @if ($inventory->status === 'draft')
         <p><strong>Situation provisoire :</strong>
             {{ $inventoriedItems->count() }} montant(s) inventorié(s),
@@ -49,6 +51,7 @@
                 <th>Nom du membre</th>
                 <th class="number">Mise du carnet</th>
                 <th class="number">Mises payées</th>
+                <th>Dernière mise</th>
                 <th class="number">Total théorique</th>
                 <th class="number">Total constaté</th>
                 <th class="number">Écart</th>
@@ -63,6 +66,16 @@
                     <td>{{ $item->member_name }}</td>
                     <td class="number">{{ number_format((float) $item->subscription_amount, 2, ',', ' ') }} {{ $item->currency }}</td>
                     <td class="number">{{ $item->paid_contributions_count }}</td>
+                    <td style="white-space: nowrap;">
+                        {{-- Date actuelle du dernier encaissement sur le carnet, ancienneté au jour de l'édition --}}
+                        @if ($item->last_contribution_at)
+                            @php $days = $item->daysSinceLastContribution(now()); @endphp
+                            {{ $item->last_contribution_at->format('d/m/Y H:i') }}
+                            ({{ $days === 0 ? 'auj.' : $days . ' j' }})
+                        @else
+                            Aucune mise
+                        @endif
+                    </td>
                     <td class="number">{{ number_format((float) $item->theoretical_total, 2, ',', ' ') }} {{ $item->currency }}</td>
                     <td class="number">
                         {{ $item->physical_total !== null ? number_format((float) $item->physical_total, 2, ',', ' ') . ' ' . $item->currency : '—' }}
