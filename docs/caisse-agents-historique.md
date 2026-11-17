@@ -28,6 +28,8 @@ Reproduit dans le navigateur le 17/11/2026. Le composant « Performance agents �
 
 Vérifié dans le navigateur, sans aucune erreur JavaScript : ouverture et fermeture de la fenêtre de rectification, historique de l'année (4 831 transactions, 50 par page, page 2), ouverture puis validation de la modification d'une transaction, et ouverture du bouton « Performance agents ». Chaque action répond en moins d'une seconde.
 
+**Accueil des agents** : les agents (rôle Recouvreur) n'ont pas accès à `/tableau-de-bord-agent`. Ils voient leur caisse sur leur **tableau de bord d'accueil** (`resources/views/dashboard.blade.php`), qui intègre directement le composant de la caisse. La situation des crédits (`credit.credit-overview`, permission `afficher-tableaudebord-recouvreur`) y est donc aussi placée à côté de la caisse, avec le titre « Caisse des agents ». Vérifié pour deux agents : la caisse et les crédits s'affichent, et le composant des crédits se rend sans erreur.
+
 **Règle pour la suite** : ne pas imbriquer un composant Livewire dans un composant dont des blocs conditionnels (`@if`) changent la structure au-dessus de lui. Le placer plutôt dans la page, à côté.
 
 ## Tests
