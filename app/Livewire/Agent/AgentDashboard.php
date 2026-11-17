@@ -4,6 +4,7 @@ namespace App\Livewire\Agent;
 
 use App\Exports\AgentTransactionsExport;
 use Livewire\Component;
+use Livewire\WithPagination;
 use App\Models\AgentAccount;
 use App\Models\Transaction;
 use App\Models\User;
@@ -17,13 +18,22 @@ use Throwable;
 
 class AgentDashboard extends Component
 {
+    use WithPagination;
+
+    protected $paginationTheme = 'bootstrap';
+
+    /** Nombre de transactions affichées par page dans l'historique */
+    public const TRANSACTIONS_PER_PAGE = 50;
+
+    /** Nom du paramètre de page, propre à cet historique */
+    private const PAGE_NAME = 'txPage';
+
     public $today;
     public $user_id;
     public $isShowTransaction = false;
-    /** @var \Illuminate\Support\Collection|array */
-    public $transactions;
-    public $transactionCount;
-    public $totalByCurrency;
+    // La liste des transactions n'est plus une propriété publique : Livewire la renvoyait
+    // et la rechargeait en entier à chaque clic (des milliers de lignes), au point que
+    // l'enregistrement d'une rectification n'aboutissait plus. Elle est calculée dans render().
     public $selectedAgent;
     public $showConfirmModal = false;
     public $filter = 'day';
@@ -114,17 +124,36 @@ class AgentDashboard extends Component
         $this->endDate = $end;
         $this->isShowTransaction = true;
 
-        $query = Transaction::where('user_id', $this->user_id);
+        // Nouvel agent ou nouveau filtre : retour à la première page.
+        // Les transactions elles-mêmes sont chargées dans render(), page par page.
+        $this->resetPage(self::PAGE_NAME);
+    }
 
-        // APPLIQUER FILTRE
-        $query = $this->applyDateFilter($query);
+    /**
+     * Historique de l'agent sélectionné pour la période : une seule page de transactions,
+     * plus le nombre total et les totaux par devise calculés en base sur toute la période.
+     *
+     * @return array{0: \Illuminate\Contracts\Pagination\LengthAwarePaginator|null, 1: int, 2: \Illuminate\Support\Collection}
+     */
+    protected function transactionHistory(): array
+    {
+        if (!$this->isShowTransaction || !$this->user_id) {
+            return [null, 0, collect()];
+        }
 
-        $this->transactions = $query->orderByDesc('created_at')->get();
-        $this->transactionCount = $this->transactions->count();
+        $query = $this->applyDateFilter(Transaction::where('user_id', $this->user_id));
 
-        $this->totalByCurrency = $this->transactions
+        $totalByCurrency = (clone $query)
+            ->selectRaw('currency, SUM(amount) AS total')
             ->groupBy('currency')
-            ->map(fn($group) => $group->sum('amount'));
+            ->pluck('total', 'currency');
+
+        $transactions = (clone $query)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->paginate(self::TRANSACTIONS_PER_PAGE, ['*'], self::PAGE_NAME);
+
+        return [$transactions, $transactions->total(), $totalByCurrency];
     }
 
     public function placeholder()
@@ -160,8 +189,13 @@ class AgentDashboard extends Component
                 ->get();
         }
 
+        [$transactions, $transactionCount, $totalByCurrency] = $this->transactionHistory();
+
         return view('livewire.agent.agent-dashboard', [
-            'agentAccounts' => $agentAccounts
+            'agentAccounts' => $agentAccounts,
+            'transactions' => $transactions,
+            'transactionCount' => $transactionCount,
+            'totalByCurrency' => $totalByCurrency,
         ]);
     }
 
@@ -262,11 +296,7 @@ class AgentDashboard extends Component
             DB::commit();
             $this->openModifyBalance = false;
             $this->dispatch('notyf', type: 'success', message: 'Solde agent mis à jour avec succès !');
-
-            // Recharger les transactions si visibles
-            if ($this->isShowTransaction && $this->user_id == $account->user_id) {
-                $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
-            }
+            // L'historique affiché est recalculé par render() (page en cours uniquement)
         } catch (Throwable $th) {
             DB::rollBack();
             report($th);
@@ -309,8 +339,7 @@ class AgentDashboard extends Component
             DB::commit();
             $this->openDeleteTransaction = false;
             $this->dispatch('notyf', type: 'success', message: 'Transaction supprimée avec succès (sans rectification du solde) !');
-
-            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+            // L'historique affiché est recalculé par render() (page en cours uniquement)
 
         } catch (Throwable $th) {
             DB::rollBack();
@@ -368,9 +397,7 @@ class AgentDashboard extends Component
             DB::commit();
             $this->openEditTransaction = false;
             $this->dispatch('notyf', type: 'success', message: 'Transaction mise à jour avec succès (sans rectification du solde) !');
-
-            // Refresh transactions
-            $this->showTransactions($this->user_id, $this->filter, $this->startDate, $this->endDate);
+            // L'historique affiché est recalculé par render() (page en cours uniquement)
 
         } catch (Throwable $th) {
             DB::rollBack();

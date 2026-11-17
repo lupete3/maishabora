@@ -1,13 +1,9 @@
 <!-- resources/views/livewire/agent/agent-dashboard.blade.php -->
-<div class="mt-4">
+<div class="mt-2">
     @include('livewire.agent.partials.modals-management')
 
-    <div class="d-flex align-items-center justify-content-between">
-        <h3 class="m-0">Caisse des agents</h3>
-        @can('afficher-caisse-agent')
-            <livewire:agent.agent-performance wire:key="agent-performance" />
-        @endcan
-    </div>
+    {{-- Titre et bouton « Performance agents » : dans la page agent-dashboard.blade.php,
+         hors de ce composant (voir le commentaire là-bas) --}}
     <div class="row g-4 mt-2">
         <!-- Soldes -->
         @foreach ($agentAccounts as $agent)
@@ -98,7 +94,7 @@
             </div>
         @endif
         <div class="row mt-4">
-            @if ($transactions)
+            @if ($isShowTransaction && $transactions)
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
@@ -184,6 +180,14 @@
                                     <div class="alert alert-info">Aucune opération trouvée.</div>
                                 @endforelse
                             </div>
+
+                            {{-- 50 transactions par page : chaque clic ne transporte plus que la page affichée --}}
+                            @if ($transactions->hasPages())
+                                <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <small class="text-muted">Transactions {{ $transactions->firstItem() }} à {{ $transactions->lastItem() }} sur {{ $transactionCount }}</small>
+                                    {{ $transactions->links() }}
+                                </div>
+                            @endif
                         </div>
 
                     </div>
@@ -192,9 +196,5 @@
         </div>
     @endif
 
-    @can('afficher-tableaudebord-recouvreur')
-        <div class="mb-4 mt-4" wire:ignore>
-            <livewire:credit.credit-overview wire:key="credit-overview" />
-        </div>
-    @endcan
+    {{-- Le tableau de bord crédit est affiché par la page, hors de ce composant --}}
 </div>
