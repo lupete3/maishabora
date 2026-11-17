@@ -17,6 +17,19 @@ Pour un agent actif (par exemple plus de 24 000 transactions au total pour la ca
 - Après une rectification de solde, une modification ou une suppression, la fenêtre se ferme et seule la page affichée est recalculée. Le rechargement complet a été supprimé.
 - Inchangé : les boutons, les fenêtres, les permissions (`modifier-solde-compte`), les messages et l'export PDF/Excel (qui lit toujours toute la période, à part).
 
+## Deuxième cause : composants imbriqués détruits (vraie cause du sablier bloqué)
+
+Reproduit dans le navigateur le 17/11/2026. Le composant « Performance agents » (`agent.agent-performance`, ajouté le 06/11/2026) et le tableau de bord crédit (`credit.credit-overview`) étaient **imbriqués dans** `agent-dashboard`.
+
+- Au premier clic (ouverture d'une fenêtre), Livewire rafraîchit la caisse, et la fenêtre s'insère au-dessus du composant imbriqué. Livewire **détruit** alors ce composant enfant.
+- Au clic suivant (« Mettre à jour », « Annuler », la croix), Livewire cherche ce composant disparu. La console affiche `Uncaught Component not found: …`, la réponse n'est jamais appliquée, et le sablier `wire:loading` reste affiché indéfiniment.
+
+**Correction** : ces deux composants sont maintenant placés **dans la page** `resources/views/agent-dashboard.blade.php`, à côté de `<livewire:agent.agent-dashboard lazy />`, et non plus à l'intérieur. Le titre « Caisse des agents » et le bouton « Performance agents » y ont été déplacés : l'affichage reste identique. Les rafraîchissements de la caisse ne touchent plus ces composants.
+
+Vérifié dans le navigateur, sans aucune erreur JavaScript : ouverture et fermeture de la fenêtre de rectification, historique de l'année (4 831 transactions, 50 par page, page 2), ouverture puis validation de la modification d'une transaction, et ouverture du bouton « Performance agents ». Chaque action répond en moins d'une seconde.
+
+**Règle pour la suite** : ne pas imbriquer un composant Livewire dans un composant dont des blocs conditionnels (`@if`) changent la structure au-dessus de lui. Le placer plutôt dans la page, à côté.
+
 ## Tests
 `tests/Feature/AgentDashboardTest.php`, sur une base SQLite en mémoire, sans données réelles :
 - l'historique est paginé (50 lignes chargées sur 120), les totaux couvrent toute la période, et la liste n'est plus dans l'état Livewire ;

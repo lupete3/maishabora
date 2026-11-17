@@ -1,13 +1,9 @@
 <!-- resources/views/livewire/agent/agent-dashboard.blade.php -->
-<div class="mt-4">
+<div class="mt-2">
     @include('livewire.agent.partials.modals-management')
 
-    <div class="d-flex align-items-center justify-content-between">
-        <h3 class="m-0">Caisse des agents</h3>
-        @can('afficher-caisse-agent')
-            <livewire:agent.agent-performance wire:key="agent-performance" />
-        @endcan
-    </div>
+    {{-- Titre et bouton « Performance agents » : dans la page agent-dashboard.blade.php,
+         hors de ce composant (voir le commentaire là-bas) --}}
     <div class="row g-4 mt-2">
         <!-- Soldes -->
         @foreach ($agentAccounts as $agent)
@@ -200,9 +196,5 @@
         </div>
     @endif
 
-    @can('afficher-tableaudebord-recouvreur')
-        <div class="mb-4 mt-4" wire:ignore>
-            <livewire:credit.credit-overview wire:key="credit-overview" />
-        </div>
-    @endcan
+    {{-- Le tableau de bord crédit est affiché par la page, hors de ce composant --}}
 </div>
