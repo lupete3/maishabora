@@ -98,7 +98,7 @@
             </div>
         @endif
         <div class="row mt-4">
-            @if ($transactions)
+            @if ($isShowTransaction && $transactions)
                 <div class="col-md-12">
                     <div class="card">
                         <div class="card-header">
@@ -184,6 +184,14 @@
                                     <div class="alert alert-info">Aucune opération trouvée.</div>
                                 @endforelse
                             </div>
+
+                            {{-- 50 transactions par page : chaque clic ne transporte plus que la page affichée --}}
+                            @if ($transactions->hasPages())
+                                <div class="mt-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <small class="text-muted">Transactions {{ $transactions->firstItem() }} à {{ $transactions->lastItem() }} sur {{ $transactionCount }}</small>
+                                    {{ $transactions->links() }}
+                                </div>
+                            @endif
                         </div>
 
                     </div>
