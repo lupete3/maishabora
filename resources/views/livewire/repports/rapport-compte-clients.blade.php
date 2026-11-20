@@ -22,7 +22,7 @@
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                             <div>
                                 <div class="text-muted small">Dû aux clients ({{ $currency }})</div>
-                                <div class="fs-4 fw-bold text-primary">{{ number_format($l['du'], 2, ',', ' ') }} {{ $currency }}</div>
+                                <div class="fs-4 fw-bold text-primary">{{ \App\Support\ClientBalanceRanking::fr($l['du']) }} {{ $currency }}</div>
                                 <small class="text-muted">{{ $l['nb_du'] }} compte(s) à solde positif</small>
                             </div>
                             <div class="text-end">
@@ -45,41 +45,42 @@
         </div>
     </div>
 
-    <h6 class="text-muted mb-2">Totaux de la sélection (selon les filtres ci-dessous)</h6>
-    <div class="row mb-4">
-        <!-- Comptes Courants -->
-        <div class="col-md-3 mb-3">
-            <div class="card text-center bg-light shadow-sm h-100">
-                <div class="card-body">
-                    <h6 class="card-title text-muted mb-1">Total Courant USD</h6>
-                    <h4 class="text-success mb-0">{{ number_format($globalCurrentUsd, 2) }} $</h4>
-                </div>
-            </div>
+    @php $fr = fn ($n, $dash = false) => \App\Support\ClientBalanceRanking::fr($n, $dash); @endphp
+
+    {{-- Récapitulatif de la sélection : dû = total net − soldes négatifs --}}
+    <div class="card mb-4">
+        <div class="card-header py-2">
+            <span class="fw-bold">Récapitulatif de la sélection</span>
+            <small class="text-muted ms-2">selon les filtres ci-dessous</small>
         </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center bg-light shadow-sm h-100">
-                <div class="card-body">
-                    <h6 class="card-title text-muted mb-1">Total Courant CDF</h6>
-                    <h4 class="text-primary mb-0">{{ number_format($globalCurrentCdf, 2) }} <small>FC</small></h4>
-                </div>
-            </div>
+        <div class="table-responsive">
+            <table class="table table-sm mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Devise</th>
+                        <th class="text-end">Comptes courants</th>
+                        <th class="text-end">Comptes d'épargne</th>
+                        <th class="text-end">Total net</th>
+                        <th class="text-end">Soldes négatifs</th>
+                        <th class="text-end">Dû aux clients</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach ($recap as $currency => $r)
+                        <tr>
+                            <td class="fw-bold">{{ $currency }}</td>
+                            <td class="text-end">{{ $fr($r['courant']) }}</td>
+                            <td class="text-end">{{ $fr($r['epargne']) }}</td>
+                            <td class="text-end">{{ $fr($r['net']) }}</td>
+                            <td class="text-end text-danger">{{ $fr($r['negatifs']) }} <small class="text-muted">({{ $r['nb_negatifs'] }})</small></td>
+                            <td class="text-end fw-bold text-primary">{{ $fr($r['du']) }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
-        <!-- Comptes Épargnes -->
-        <div class="col-md-3 mb-3">
-            <div class="card text-center bg-light shadow-sm h-100">
-                <div class="card-body">
-                    <h6 class="card-title text-muted mb-1">Total Épargne USD</h6>
-                    <h4 class="text-success mb-0">{{ number_format($globalSavingsUsd, 2) }} $</h4>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3 mb-3">
-            <div class="card text-center bg-light shadow-sm h-100">
-                <div class="card-body">
-                    <h6 class="card-title text-muted mb-1">Total Épargne CDF</h6>
-                    <h4 class="text-primary mb-0">{{ number_format($globalSavingsCdf, 2) }} <small>FC</small></h4>
-                </div>
-            </div>
+        <div class="card-body py-2">
+            <small class="text-muted">Dû aux clients = somme des soldes positifs = total net − soldes négatifs.</small>
         </div>
     </div>
 
@@ -104,6 +105,14 @@
                             <option value="{{ $key }}">{{ $label }}</option>
                         @endforeach
                     </select>
+                </div>
+                <div class="col-md-5 d-flex align-items-end">
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input" type="checkbox" id="masquerSansSolde" wire:model.live="masquerSansSolde">
+                        <label class="form-check-label" for="masquerSansSolde">
+                            Masquer les membres sans solde (tous leurs comptes à zéro)
+                        </label>
+                    </div>
                 </div>
                 <div class="w-100 d-none d-md-block"></div>
                 <div class="col-md-3">
@@ -217,10 +226,10 @@
                             <th rowspan="2" class="align-middle">Code</th>
                             <th rowspan="2" class="align-middle">Membre</th>
                             @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                                <th colspan="2" class="text-center">Solde USD</th>
+                                <th colspan="3" class="text-center">Solde USD</th>
                             @endif
                             @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                                <th colspan="2" class="text-center">Solde CDF</th>
+                                <th colspan="3" class="text-center">Solde CDF</th>
                             @endif
                             @if ($sortBy === 'total')
                                 <th rowspan="2" class="align-middle text-center">Total équiv. USD</th>
@@ -233,10 +242,12 @@
                             @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
                                 <th class="text-center small">Courant</th>
                                 <th class="text-center small">Épargne</th>
+                                <th class="text-center small">Total</th>
                             @endif
                             @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
                                 <th class="text-center small">Courant</th>
                                 <th class="text-center small">Épargne</th>
+                                <th class="text-center small">Total</th>
                             @endif
                         </tr>
                     </thead>
@@ -257,20 +268,22 @@
                                 </td>
 
                                 @if ($currencyFilter === 'all' || $currencyFilter === 'USD')
-                                    <td class="text-end">{{ number_format($balance['current_usd'], 2) }}</td>
-                                    <td class="text-end">{{ number_format($balance['savings_usd'], 2) }}</td>
+                                    <td class="text-end">{{ $fr($balance['current_usd'], true) }}</td>
+                                    <td class="text-end">{{ $fr($balance['savings_usd'], true) }}</td>
+                                    <td class="text-end fw-semibold">{{ $fr($balance['current_usd'] + $balance['savings_usd'], true) }}</td>
                                 @endif
 
                                 @if ($currencyFilter === 'all' || $currencyFilter === 'CDF')
-                                    <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
-                                    <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
+                                    <td class="text-end">{{ $fr($balance['current_cdf'], true) }}</td>
+                                    <td class="text-end">{{ $fr($balance['savings_cdf'], true) }}</td>
+                                    <td class="text-end fw-semibold">{{ $fr($balance['current_cdf'] + $balance['savings_cdf'], true) }}</td>
                                 @endif
 
                                 @if ($sortBy === 'total')
-                                    <td class="text-end fw-semibold">{{ number_format($balance['total_usd_equiv'], 2) }}</td>
+                                    <td class="text-end fw-semibold">{{ $fr($balance['total_usd_equiv'], true) }}</td>
                                 @endif
                                 @if ($isBalanceSort)
-                                    <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2) . ' %' : '—' }}</td>
+                                    <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2, ',', ' ') . ' %' : '—' }}</td>
                                 @endif
                             </tr>
                         @endforeach

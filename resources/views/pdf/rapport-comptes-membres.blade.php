@@ -86,49 +86,68 @@
         </div>
     @endif
     
+    @php
+        // Montants au format français « 1 234,56 » ; « — » pour zéro dans le tableau des membres
+        $fr = fn ($n, $dash = false) => \App\Support\ClientBalanceRanking::fr($n, $dash);
+        $withTotal = ($sortBy ?? 'name') === 'total';
+        $colsAvantMontants = (!empty($isBalanceSort) ? 1 : 0) + 2;
+    @endphp
+
     @isset($categoryLabel)
         <p class="text-center" style="margin: 0;">Catégorie : {{ $categoryLabel }} — Titulaires : {{ $natureLabel }}</p>
-    @endisset
-    @isset($liabilities)
-        {{-- Ce que nous devons aux clients : toute l'institution, indépendamment des filtres --}}
-        <p class="text-center" style="margin: 2px 0;">
-            <strong>Dû aux clients (toute l'institution) :</strong>
-            @foreach ($liabilities as $currency => $l)
-                {{ number_format($l['du'], 2, ',', ' ') }} {{ $currency }}@if (!$loop->last) | @endif
-            @endforeach
-            — <strong>Soldes négatifs à régulariser :</strong>
-            @foreach ($liabilities as $currency => $l)
-                {{ number_format($l['negatifs'], 2, ',', ' ') }} {{ $currency }} ({{ $l['nb_negatifs'] }})@if (!$loop->last) | @endif
-            @endforeach
-        </p>
     @endisset
     @if(isset($alphabetRange) && $alphabetRange !== 'all')
         <p class="text-center" style="margin: 0;">Tranche : {{ $alphabetRange }}</p>
     @endif
     @if(isset($minBalance) && $minBalance > 0)
-        <p class="text-center" style="margin: 0;">Solde Minimum : {{ number_format($minBalance, 2) }}</p>
+        <p class="text-center" style="margin: 0;">Solde minimum : {{ $fr($minBalance) }}</p>
     @endif
 
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
-        <tr>
-            <td style="width: 50%; vertical-align: top;">
-                <h4 style="margin-bottom: 5px; border-bottom: 1px solid #ccc;">Comptes Courants</h4>
-                <p style="margin: 2px 0;">Total USD : <strong>{{ number_format($globalCurrentUsd, 2) }} $</strong></p>
-                <p style="margin: 2px 0;">Total CDF : <strong>{{ number_format($globalCurrentCdf, 2) }} FC</strong></p>
-            </td>
-            <td style="width: 50%; vertical-align: top;">
-                <h4 style="margin-bottom: 5px; border-bottom: 1px solid #ccc;">Comptes Épargnes</h4>
-                <p style="margin: 2px 0;">Total USD : <strong>{{ number_format($globalSavingsUsd, 2) }} $</strong></p>
-                <p style="margin: 2px 0;">Total CDF : <strong>{{ number_format($globalSavingsCdf, 2) }} FC</strong></p>
-            </td>
-        </tr>
-    </table>
+    {{-- 1. Récapitulatif de la sélection : le lien entre net, négatifs et dû est visible --}}
+    @isset($recap)
+        <table class="table" border="1" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th>Devise</th>
+                    <th>Comptes courants</th>
+                    <th>Comptes d'épargne</th>
+                    <th>Total net</th>
+                    <th>Soldes négatifs</th>
+                    <th>Dû aux clients</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($recap as $currency => $r)
+                    <tr>
+                        <td class="text-center"><strong>{{ $currency }}</strong></td>
+                        <td class="text-end">{{ $fr($r['courant']) }}</td>
+                        <td class="text-end">{{ $fr($r['epargne']) }}</td>
+                        <td class="text-end">{{ $fr($r['net']) }}</td>
+                        <td class="text-end">{{ $fr($r['negatifs']) }} ({{ $r['nb_negatifs'] }})</td>
+                        <td class="text-end"><strong>{{ $fr($r['du']) }}</strong></td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+        <p style="margin: 0 0 2px 0; font-size: 8px;">
+            Dû aux clients = somme des soldes positifs = total net − soldes négatifs. Les soldes négatifs ne sont pas
+            une dette envers le client : ils sont à régulariser (voir l'annexe à la fin du dernier lot).
+        </p>
+        @isset($liabilities)
+            <p style="margin: 0 0 8px 0; font-size: 8px;">
+                <strong>Toute l'institution (vrais clients, hors comptes internes et de test) :</strong>
+                @foreach ($liabilities as $currency => $l)
+                    dû {{ $fr($l['du']) }} {{ $currency }}@if (!$loop->last) ; @endif
+                @endforeach
+            </p>
+        @endisset
+    @endisset
+
     @if (isset($lot))
         <h4 style="margin: 0 0 4px 0;">
             Lot {{ $lot['number'] }} / {{ $lot['count'] }} : membres {{ $lot['from'] }} à {{ $lot['to'] }}
             sur {{ $lot['total'] }}
         </h4>
-        <p style="margin: 0 0 10px 0; font-size: 8px;">Les totaux ci-dessus portent sur l'ensemble des {{ $lot['total'] }} membres filtrés.</p>
     @else
         <h4 style="margin: 0 0 10px 0;">Total Membres listés : {{ $balances->count() }}</h4>
     @endif
@@ -141,17 +160,18 @@
         </p>
     @endif
 
+    {{-- 2. Membres du lot --}}
     <table class="table" border="1" cellspacing="0" cellpadding="0">
         <thead>
             <tr>
                 @if (!empty($isBalanceSort))
-                    <th rowspan="2" style="width: 5%;">Rang</th>
+                    <th rowspan="2" style="width: 4%;">Rang</th>
                 @endif
-                <th rowspan="2" style="width: 10%;">Code</th>
-                <th rowspan="2" style="width: 30%;">Membre</th>
-                <th colspan="2" style="width: 30%;">Solde USD</th>
-                <th colspan="2" style="width: 30%;">Solde CDF</th>
-                @if (($sortBy ?? 'name') === 'total')
+                <th rowspan="2" style="width: 11%;">Code</th>
+                <th rowspan="2" style="width: 25%;">Membre</th>
+                <th colspan="3">Solde USD</th>
+                <th colspan="3">Solde CDF</th>
+                @if ($withTotal)
                     <th rowspan="2">Total équiv. USD</th>
                 @endif
                 @if (!empty($isBalanceSort))
@@ -161,8 +181,10 @@
             <tr>
                 <th style="font-size: 7px;">Courant</th>
                 <th style="font-size: 7px;">Épargne</th>
+                <th style="font-size: 7px;">Total</th>
                 <th style="font-size: 7px;">Courant</th>
                 <th style="font-size: 7px;">Épargne</th>
+                <th style="font-size: 7px;">Total</th>
             </tr>
         </thead>
         <tbody>
@@ -172,24 +194,79 @@
                         <td class="text-center">{{ $balance['rank'] }}</td>
                     @endif
                     <td class="text-center">{{ $balance['member']->code }}</td>
-                    <td>{{ $balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom }}
-                    </td>
+                    <td>{{ trim($balance['member']->name . ' ' . $balance['member']->postnom . ' ' . $balance['member']->prenom) }}</td>
 
-                    <td class="text-end">{{ number_format($balance['current_usd'], 2) }}</td>
-                    <td class="text-end">{{ number_format($balance['savings_usd'], 2) }}</td>
+                    <td class="text-end">{{ $fr($balance['current_usd'], true) }}</td>
+                    <td class="text-end">{{ $fr($balance['savings_usd'], true) }}</td>
+                    <td class="text-end"><strong>{{ $fr($balance['current_usd'] + $balance['savings_usd'], true) }}</strong></td>
 
-                    <td class="text-end">{{ number_format($balance['current_cdf'], 2) }}</td>
-                    <td class="text-end">{{ number_format($balance['savings_cdf'], 2) }}</td>
-                    @if (($sortBy ?? 'name') === 'total')
-                        <td class="text-end">{{ number_format($balance['total_usd_equiv'], 2) }}</td>
+                    <td class="text-end">{{ $fr($balance['current_cdf'], true) }}</td>
+                    <td class="text-end">{{ $fr($balance['savings_cdf'], true) }}</td>
+                    <td class="text-end"><strong>{{ $fr($balance['current_cdf'] + $balance['savings_cdf'], true) }}</strong></td>
+                    @if ($withTotal)
+                        <td class="text-end">{{ $fr($balance['total_usd_equiv'], true) }}</td>
                     @endif
                     @if (!empty($isBalanceSort))
-                        <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2) . ' %' : '-' }}</td>
+                        <td class="text-end">{{ $balance['share'] !== null ? number_format($balance['share'], 2, ',', ' ') . ' %' : '—' }}</td>
                     @endif
                 </tr>
             @endforeach
         </tbody>
+        {{-- 3. Sous-total du lot : la somme des lots redonne le total général --}}
+        <tfoot>
+            <tr style="background: #f5f5f5; font-weight: bold;">
+                <td colspan="{{ $colsAvantMontants }}" class="text-end">Sous-total du lot</td>
+                <td class="text-end">{{ $fr($balances->sum('current_usd')) }}</td>
+                <td class="text-end">{{ $fr($balances->sum('savings_usd')) }}</td>
+                <td class="text-end">{{ $fr($balances->sum('current_usd') + $balances->sum('savings_usd')) }}</td>
+                <td class="text-end">{{ $fr($balances->sum('current_cdf')) }}</td>
+                <td class="text-end">{{ $fr($balances->sum('savings_cdf')) }}</td>
+                <td class="text-end">{{ $fr($balances->sum('current_cdf') + $balances->sum('savings_cdf')) }}</td>
+                @if ($withTotal)
+                    <td class="text-end">{{ $fr($balances->sum('total_usd_equiv')) }}</td>
+                @endif
+                @if (!empty($isBalanceSort))
+                    <td></td>
+                @endif
+            </tr>
+        </tfoot>
     </table>
+
+    {{-- 4. Annexe : comptes à solde négatif (dernier lot seulement) --}}
+    @if (!empty($negativeAccounts) && count($negativeAccounts))
+        @php $nbNegatifs = collect($recap ?? [])->sum('nb_negatifs'); @endphp
+        <h4 style="margin: 14px 0 4px 0;">Annexe — Soldes négatifs à régulariser ({{ $nbNegatifs ?: count($negativeAccounts) }} compte(s))</h4>
+        @if ($nbNegatifs > count($negativeAccounts))
+            <p style="margin: 0 0 4px 0; font-size: 8px;">
+                Les {{ count($negativeAccounts) }} soldes les plus négatifs sont listés. La liste complète est disponible à l'écran
+                avec la catégorie « Soldes négatifs à régulariser ».
+            </p>
+        @endif
+        <table class="table" border="1" cellspacing="0" cellpadding="0">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Membre</th>
+                    <th>Compte</th>
+                    <th>Devise</th>
+                    <th>Solde</th>
+                    <th>Statut</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($negativeAccounts as $acc)
+                    <tr>
+                        <td class="text-center">{{ $acc->code }}</td>
+                        <td>{{ trim($acc->name . ' ' . $acc->postnom . ' ' . $acc->prenom) }}</td>
+                        <td class="text-center">{{ ['current' => 'Courant', 'savings' => 'Épargne'][$acc->type] ?? ucfirst($acc->type) }}</td>
+                        <td class="text-center">{{ $acc->currency }}</td>
+                        <td class="text-end">{{ $fr($acc->balance) }}</td>
+                        <td class="text-center">{{ $acc->status }}</td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
 
     <div class="footer">
         Rapport généré le {{ now()->format('d/m/Y H:i') }} - {{ $company->name ?? config('app.name') }}

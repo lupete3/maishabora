@@ -99,6 +99,8 @@ class ComptesMembresTest extends TestCase
         // Comptes internes et de test : exclus de ce que nous devons
         $this->membre('COMPTE RETENU', 'interne', [['CDF', 900000]], recent: true);
         $this->membre('CLIENT TEST', 'test', [['USD', 1000]], recent: true);
+        // Client sans aucun solde : masqué par défaut
+        $this->membre('Zoe', 'client', [['CDF', 0], ['USD', 0]], recent: true);
 
         $this->actingAs($this->admin);
     }
@@ -171,6 +173,59 @@ class ComptesMembresTest extends TestCase
         // Valeur inconnue refusée
         $component->call('changerNature', $suspect->id, 'nimporte')->assertHasErrors('nature');
         $this->assertSame('interne', $suspect->fresh()->client_category);
+    }
+
+    public function test_recap_reconciles_net_negatives_and_amount_due(): void
+    {
+        $recap = Livewire::test(RapportCompteClients::class)->viewData('recap');
+
+        // CDF : 100 000 + 20 000 - 10 + 3 000 + 0 (Zoé) = 122 990 net ; négatifs -10 ; dû 123 000
+        $this->assertEquals(122990, $recap['CDF']['net']);
+        $this->assertEquals(-10, $recap['CDF']['negatifs']);
+        $this->assertEquals(123000, $recap['CDF']['du']);
+        $this->assertEquals($recap['CDF']['net'] - $recap['CDF']['negatifs'], $recap['CDF']['du']);
+        $this->assertEquals($recap['USD']['net'] - $recap['USD']['negatifs'], $recap['USD']['du']);
+    }
+
+    public function test_members_without_balance_are_hidden_by_default(): void
+    {
+        $noms = fn ($c) => $c->viewData('members')->getCollection()->pluck('name')->all();
+
+        $component = Livewire::test(RapportCompteClients::class);
+        $this->assertNotContains('Zoe', $noms($component));
+
+        $component->set('masquerSansSolde', false);
+        $this->assertContains('Zoe', $noms($component));
+    }
+
+    public function test_french_number_format_and_dash_for_zero(): void
+    {
+        $this->assertSame('1 234 567,50', ClientBalanceRanking::fr(1234567.5));
+        $this->assertSame('—', ClientBalanceRanking::fr(0, true));
+        $this->assertSame('0,00', ClientBalanceRanking::fr(0));
+        $this->assertSame('-25,00', ClientBalanceRanking::fr(-25, true));
+    }
+
+    public function test_pdf_has_recap_lot_subtotal_and_negative_annex(): void
+    {
+        \Barryvdh\DomPDF\Facade\Pdf::shouldReceive('loadView')->once()->andReturnUsing(function ($view, $data) {
+            $html = view($view, $data + ['company' => null])->render();
+
+            $this->assertStringContainsString('Dû aux clients', $html);
+            $this->assertStringContainsString('123 000,00', $html);        // dû CDF, format français
+            $this->assertStringContainsString('Sous-total du lot', $html);
+            $this->assertStringContainsString('Annexe — Soldes négatifs à régulariser', $html);
+            $this->assertStringContainsString('Carine', $html);           // compte négatif listé en annexe
+            $this->assertStringNotContainsString('<td>Zoe</td>', $html);  // membre sans solde masqué
+
+            return \Mockery::mock(\Barryvdh\DomPDF\PDF::class)
+                ->shouldReceive('setPaper')->andReturnSelf()
+                ->shouldReceive('stream')->andReturn(response('ok'))
+                ->getMock();
+        });
+
+        app(\App\Http\Controllers\ClientStatReportController::class)
+            ->compteClientsPdf(\Illuminate\Http\Request::create('/x', 'GET', ['lotSize' => 100, 'lot' => 1]));
     }
 
     public function test_classification_screen_requires_the_permission(): void

@@ -101,6 +101,23 @@ class ClientBalanceRanking
     }
 
     /**
+     * Filtre servant à choisir les MEMBRES affichés : avec l'option « masquer les membres
+     * sans solde », un membre n'apparaît que s'il a au moins un compte filtré au solde non nul.
+     * (Les membres masqués ont des soldes nuls : les totaux ne changent pas.)
+     */
+    public static function accountFilterWithBalance(Closure $accountFilter, bool $nonZeroOnly): Closure
+    {
+        if (! $nonZeroOnly) {
+            return $accountFilter;
+        }
+
+        return function ($q) use ($accountFilter) {
+            $accountFilter($q);
+            $q->where('accounts.balance', '<>', 0);
+        };
+    }
+
+    /**
      * « Ce que nous devons aux clients », par devise, sur TOUTE l'institution (indépendant des filtres) :
      *  - du       : somme des soldes POSITIFS des comptes de vrais clients (actifs, inactifs, dormants confondus)
      *  - negatifs : soldes négatifs des clients, affichés à part (ce n'est pas une dette envers eux)
@@ -231,7 +248,78 @@ class ClientBalanceRanking
             'total' => $rate ? (float) $positive->total : (float) $positive->usd,
         ];
 
+        $totals['recap'] = self::recap($accounts);
+
         return $totals;
+    }
+
+    /**
+     * Récapitulatif par devise de la sélection, compte par compte :
+     *   net = courant + épargne (+ autres types) ; du = somme des soldes positifs ;
+     *   negatifs = somme des soldes négatifs.  Rapprochement : net - negatifs = du.
+     *
+     * @return array<string, array{courant: float, epargne: float, net: float, negatifs: float, nb_negatifs: int, du: float}>
+     */
+    private static function recap($accounts): array
+    {
+        $rows = (clone $accounts)
+            ->groupBy('currency')
+            ->selectRaw("currency,
+                SUM(CASE WHEN type = 'current' THEN balance ELSE 0 END) AS courant,
+                SUM(CASE WHEN type = 'savings' THEN balance ELSE 0 END) AS epargne,
+                COALESCE(SUM(balance), 0) AS net,
+                SUM(CASE WHEN balance < 0 THEN balance ELSE 0 END) AS negatifs,
+                SUM(CASE WHEN balance < 0 THEN 1 ELSE 0 END) AS nb_negatifs,
+                SUM(CASE WHEN balance > 0 THEN balance ELSE 0 END) AS du")
+            ->get();
+
+        $recap = [];
+        foreach (['USD', 'CDF'] as $currency) {
+            $row = $rows->firstWhere('currency', $currency);
+            $recap[$currency] = [
+                'courant'     => (float) ($row->courant ?? 0),
+                'epargne'     => (float) ($row->epargne ?? 0),
+                'net'         => (float) ($row->net ?? 0),
+                'negatifs'    => (float) ($row->negatifs ?? 0),
+                'nb_negatifs' => (int) ($row->nb_negatifs ?? 0),
+                'du'          => (float) ($row->du ?? 0),
+            ];
+        }
+
+        return $recap;
+    }
+
+    /**
+     * Montant au format français « 1 234,56 », ou « — » pour zéro (lisibilité des tableaux).
+     */
+    public static function fr($amount, bool $dashForZero = false): string
+    {
+        $value = (float) $amount;
+
+        if ($dashForZero && abs($value) < 0.005) {
+            return '—';
+        }
+
+        return number_format($value, 2, ',', ' ');
+    }
+
+    /**
+     * Comptes à solde négatif des membres filtrés, pour l'annexe « à régulariser » du PDF.
+     */
+    public static function negativeAccounts(Builder $members, Closure $accountFilter, int $limit = 200)
+    {
+        $memberIds = (clone $members)->toBase()->select('users.id');
+
+        $query = DB::table('accounts')
+            ->join('users', 'users.id', '=', 'accounts.user_id')
+            ->whereIn('accounts.user_id', $memberIds)
+            ->where('accounts.balance', '<', 0);
+        $accountFilter($query);
+
+        return $query->orderBy('accounts.balance')
+            ->limit($limit)
+            ->get(['users.code', 'users.name', 'users.postnom', 'users.prenom',
+                'accounts.type', 'accounts.currency', 'accounts.balance', 'accounts.status']);
     }
 
     /**
