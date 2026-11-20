@@ -56,7 +56,8 @@
                     <div class="list-group list-group-flush">
                         @foreach ($overdueCredits as $r)
                             @php
-                                $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
+                                // Jours entiers : échéance d'aujourd'hui = 0 jour
+                                $daysLate = \App\Livewire\Credit\CreditOverview::daysLate($r->due_date);
                             @endphp
                             <div class="list-group-item list-group-item-action border-0 border-bottom p-3"
                                 @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
@@ -182,7 +183,8 @@
                     <div class="list-group list-group-flush">
                         @foreach ($upcomingCredits as $r)
                             @php
-                                $daysRemaining = now()->diffInDays(\Carbon\Carbon::parse($r->due_date), false);
+                                // Jours entiers restants : demain = 1 jour
+                                $daysRemaining = \App\Livewire\Credit\CreditOverview::daysRemaining($r->due_date);
                             @endphp
                             <div class="list-group-item list-group-item-action border-0 border-bottom p-3"
                                 @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))

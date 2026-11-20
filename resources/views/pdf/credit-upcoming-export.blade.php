@@ -141,7 +141,8 @@
         <tbody>
             @forelse($upcomingCredits as $r)
                 @php
-                    $daysRemaining = now()->diffInDays(\Carbon\Carbon::parse($r->due_date), false);
+                    // Jours entiers restants : demain = 1 jour
+                    $daysRemaining = \App\Livewire\Credit\CreditOverview::daysRemaining($r->due_date);
                 @endphp
                 <tr>
                     <td class="fw-bold text-primary">{{ $r->credit->user->code }}</td>

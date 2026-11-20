@@ -109,7 +109,7 @@ class CreditOverview extends Component
         ])
             ->where('due_date', '<', now())
             ->where('is_paid', false)
-            ->latest()
+            ->tap(fn ($query) => $this->orderByLeastLate($query))
             ->get();
 
         // Calcul des totaux détaillés
@@ -164,8 +164,30 @@ class CreditOverview extends Component
         return Repayment::with(['credit.user.accounts'])
             ->where('due_date', '<', now())
             ->where('is_paid', false)
-            ->latest()
+            ->tap(fn ($query) => $this->orderByLeastLate($query))
             ->paginate($this->perPage, pageName: 'pageOverdue');
+    }
+
+    /**
+     * Retards les plus récents en premier : échéance du jour (0 jour), puis 1 jour,
+     * 20 jours, 100 jours… pour savoir qui recouvrer en priorité avant que le retard
+     * ne s'installe. L'id départage les échéances du même jour (ordre stable entre pages).
+     */
+    private function orderByLeastLate($query)
+    {
+        return $query->orderByDesc('due_date')->orderByDesc('id');
+    }
+
+    /** Jours entiers de retard : échéance aujourd'hui = 0, hier = 1. */
+    public static function daysLate($dueDate): int
+    {
+        return max(0, (int) \Carbon\Carbon::parse($dueDate)->startOfDay()->diffInDays(today(), false));
+    }
+
+    /** Jours entiers restants avant l'échéance : demain = 1. */
+    public static function daysRemaining($dueDate): int
+    {
+        return max(0, (int) today()->diffInDays(\Carbon\Carbon::parse($dueDate)->startOfDay(), false));
     }
 
     public function getUpcomingCreditsProperty()
