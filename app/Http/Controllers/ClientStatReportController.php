@@ -35,6 +35,8 @@ class ClientStatReportController extends Controller
             'sortBy'         => ClientBalanceRanking::normalize($request->query('sortBy', 'name')),
             'category'       => ClientBalanceRanking::normalizeCategory($request->query('category', 'tous')),
             'nature'         => ClientBalanceRanking::normalizeNature($request->query('nature', 'client')),
+            // Par défaut, les membres sans solde sont masqués (comme à l'écran)
+            'masquerSansSolde' => $request->boolean('masquerSansSolde', true),
             'rate'           => ClientBalanceRanking::usdToCdfRate(),
         ];
 
@@ -43,7 +45,7 @@ class ClientStatReportController extends Controller
         $query = User::where('role', 'membre')
             // Nature du titulaire : par défaut seulement les vrais clients (comme à l'écran)
             ->when($params['nature'] !== 'tous', fn ($q) => $q->where('client_category', $params['nature']))
-            ->whereHas('accounts', $accountFilter);
+            ->whereHas('accounts', ClientBalanceRanking::accountFilterWithBalance($accountFilter, $params['masquerSansSolde']));
 
         if ($params['search']) {
             $search = $params['search'];
@@ -62,6 +64,10 @@ class ClientStatReportController extends Controller
 
         $totals = ClientBalanceRanking::totals($query, $accountFilter, $params['rate']);
         $params['count'] = (clone $query)->count();
+        // Membres filtrés, copiés MAINTENANT (avant tri et pagination du lot) : sert à
+        // l'annexe des soldes négatifs du PDF. MySQL refuse un LIMIT dans la sous-requête IN.
+        $membresFiltres = clone $query;
+        $totals['negative_accounts'] = fn () => ClientBalanceRanking::negativeAccounts($membresFiltres, $accountFilter);
 
         $query->with(['accounts' => $accountFilter]);
         ClientBalanceRanking::apply($query, $params['sortBy'], $accountFilter, $params['rate']);
@@ -143,6 +149,9 @@ class ClientStatReportController extends Controller
             'categoryLabel' => ClientBalanceRanking::CATEGORIES[$params['category']],
             'natureLabel' => ClientBalanceRanking::natures()[$params['nature']],
             'liabilities' => ClientBalanceRanking::liabilities(),
+            'recap' => $totals['recap'],
+            // Annexe des soldes négatifs : à la fin du dernier lot seulement
+            'negativeAccounts' => $lot === $lotCount ? ($totals['negative_accounts'])() : null,
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream("rapport_comptes_membres_lot{$lot}_sur_{$lotCount}.pdf");
@@ -179,6 +188,8 @@ class ClientStatReportController extends Controller
                     'Solde Courant CDF',
                     'Solde Epargne USD',
                     'Solde Epargne CDF',
+                    'Total USD',
+                    'Total CDF',
                 ],
                 $withTotal ? ['Total equiv. USD'] : [],
                 $isBalanceSort ? ["Part de l'encours (%)"] : []
@@ -210,6 +221,8 @@ class ClientStatReportController extends Controller
                             number_format($balances['current_cdf'], 2, ',', ''),
                             number_format($balances['savings_usd'], 2, ',', ''),
                             number_format($balances['savings_cdf'], 2, ',', ''),
+                            number_format($balances['current_usd'] + $balances['savings_usd'], 2, ',', ''),
+                            number_format($balances['current_cdf'] + $balances['savings_cdf'], 2, ',', ''),
                         ],
                         $withTotal
                             ? [number_format((float) ClientBalanceRanking::value('total', $amounts, $params['rate']), 2, ',', '')]

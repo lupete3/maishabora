@@ -37,6 +37,19 @@ Page : **`/comptes-membres`**. Écran de classement : **`/comptes-membres/classe
   - chaque changement est **fait par un utilisateur** et **journalisé** (`Classement_titulaire` dans les journaux d'activité).
 - Le statut opérationnel `accounts.status` (« Actif » / « Inactif ») **n'est pas modifié**. Il continue de bloquer les opérations comme avant.
 
+## Présentation des chiffres (20/11/2026, suite à la lecture du PDF de production)
+Sur le PDF de production, les chiffres étaient justes. Deux sortes de totaux s'y côtoyaient toutefois sans explication : les **soldes nets** (courant, épargne) et le **dû** (soldes positifs). Exemple : USD net 19 089,60 + soldes négatifs 25,00 = dû 19 114,60.
+
+1. **Tableau récapitulatif de la sélection** (page et PDF), qui remplace les 4 cartes. Par devise : comptes courants, comptes d'épargne, **total net**, **soldes négatifs** (nombre), **dû aux clients**. Rapprochement affiché : *dû = total net − soldes négatifs*. Le calcul se fait en une requête : `ClientBalanceRanking::recap()`.
+2. **Format français partout** (« 1 234,56 ») avec `ClientBalanceRanking::fr()`. Dans les tableaux de membres, un **« — »** remplace les zéros.
+3. **« Masquer les membres sans solde »**, coché par défaut, à l'écran comme dans les exports. Le paramètre d'URL est `masquerSansSolde`. Un membre n'apparaît que s'il a au moins un compte filtré au solde non nul. Les totaux ne changent pas, puisque les membres masqués sont à zéro, et le nombre de lots PDF diminue.
+4. **Colonnes « Total USD » et « Total CDF »** par membre (page, PDF et Excel), et ligne **« Sous-total du lot »** en bas de chaque PDF. La somme des lots redonne le total général.
+5. **Annexe « Soldes négatifs à régulariser »** à la fin du **dernier lot** du PDF : code, membre, type de compte, devise, solde et statut. Elle est limitée aux 200 soldes les plus négatifs ; la liste complète se consulte à l'écran avec la catégorie « Soldes négatifs ».
+
+Correction trouvée en générant un vrai PDF : la liste des membres servant à l'annexe doit être copiée **avant** la pagination du lot, car MySQL refuse un `LIMIT` dans une sous-requête `IN`.
+
+Vérifié en local : rapprochement exact (CDF : net 28 017 761,15 + négatifs 102 475,00 = dû 28 120 236,15) ; lot 1 en 3,8 s ; dernier lot avec annexe en 6,2 s. Ce sont 8 tests automatiques.
+
 ## Fichiers
 | Rôle | Fichier |
 |---|---|

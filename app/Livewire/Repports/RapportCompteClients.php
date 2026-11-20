@@ -25,6 +25,7 @@ class RapportCompteClients extends Component
     public $lotSize = ClientBalanceRanking::DEFAULT_LOT_SIZE; // taille d'un lot PDF
     public $category = 'tous';      // tous, actifs, inactifs, dormants, negatifs (ClientBalanceRanking::CATEGORIES)
     public $nature = 'client';      // client (par défaut), interne, test, tous
+    public $masquerSansSolde = true; // masquer les membres dont tous les comptes filtrés sont à zéro
 
     public function updatingSearch()
     {
@@ -34,7 +35,7 @@ class RapportCompteClients extends Component
     public function updated($property)
     {
         // Tout changement de filtre ou de tri repart de la page 1 (le rang reste cohérent)
-        if (in_array($property, ['currencyFilter', 'accountType', 'minBalance', 'alphabetRange', 'sortBy', 'perPage', 'category', 'nature'], true)) {
+        if (in_array($property, ['currencyFilter', 'accountType', 'minBalance', 'alphabetRange', 'sortBy', 'perPage', 'category', 'nature', 'masquerSansSolde'], true)) {
             $this->resetPage();
         }
     }
@@ -57,7 +58,7 @@ class RapportCompteClients extends Component
         $query = User::where('role', 'membre')
             // Nature du titulaire : par défaut seulement les vrais clients
             ->when($this->nature !== 'tous', fn ($q) => $q->where('client_category', $this->nature))
-            ->whereHas('accounts', $accountFilter)
+            ->whereHas('accounts', ClientBalanceRanking::accountFilterWithBalance($accountFilter, (bool) $this->masquerSansSolde))
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
                     ->orWhere('postnom', 'like', "%{$this->search}%")
@@ -156,7 +157,9 @@ class RapportCompteClients extends Component
                 'sortBy' => $this->sortBy,
                 'category' => $this->category,
                 'nature' => $this->nature,
+                'masquerSansSolde' => $this->masquerSansSolde ? 1 : 0,
             ],
+            'recap' => $totals['recap'],
         ]);
     }
 
