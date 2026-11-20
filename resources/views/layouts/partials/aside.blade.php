@@ -491,6 +491,15 @@
                 </a>
             </li>
 
+            @can('exporter-base-donnees')
+                <li class="menu-item @if (request()->routeIs('sauvegarde.*')) active @endif">
+                    <a href="{{ route('sauvegarde.index') }}" class="menu-link">
+                        <i class="menu-icon tf-icons bx bx-data"></i>
+                        <div data-i18n="Analytics">Sauvegarde de la base</div>
+                    </a>
+                </li>
+            @endcan
+
             <li class="menu-item @if (request()->routeIs('admin.user-sessions')) active @endif">
                 <a href="{{ route('admin.user-sessions') }}" class="menu-link">
                     <i class="menu-icon tf-icons bx bx-shield-quarter"></i>
