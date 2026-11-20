@@ -86,6 +86,22 @@
         </div>
     @endif
     
+    @isset($categoryLabel)
+        <p class="text-center" style="margin: 0;">Catégorie : {{ $categoryLabel }} — Titulaires : {{ $natureLabel }}</p>
+    @endisset
+    @isset($liabilities)
+        {{-- Ce que nous devons aux clients : toute l'institution, indépendamment des filtres --}}
+        <p class="text-center" style="margin: 2px 0;">
+            <strong>Dû aux clients (toute l'institution) :</strong>
+            @foreach ($liabilities as $currency => $l)
+                {{ number_format($l['du'], 2, ',', ' ') }} {{ $currency }}@if (!$loop->last) | @endif
+            @endforeach
+            — <strong>Soldes négatifs à régulariser :</strong>
+            @foreach ($liabilities as $currency => $l)
+                {{ number_format($l['negatifs'], 2, ',', ' ') }} {{ $currency }} ({{ $l['nb_negatifs'] }})@if (!$loop->last) | @endif
+            @endforeach
+        </p>
+    @endisset
     @if(isset($alphabetRange) && $alphabetRange !== 'all')
         <p class="text-center" style="margin: 0;">Tranche : {{ $alphabetRange }}</p>
     @endif

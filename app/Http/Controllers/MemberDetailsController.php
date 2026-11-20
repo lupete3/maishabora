@@ -16,4 +16,10 @@ class MemberDetailsController extends Controller
     {
         return view("rapports.comptes-clients");
     }
+
+    /** Classement des titulaires de comptes (client, interne, test). */
+    public function classementTitulaires()
+    {
+        return view('rapports.classement-titulaires');
+    }
 }

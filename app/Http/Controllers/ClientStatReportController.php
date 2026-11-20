@@ -33,12 +33,16 @@ class ClientStatReportController extends Controller
             'minBalance'     => $request->query('minBalance', 0),
             'alphabetRange'  => $request->query('alphabetRange', 'all'),
             'sortBy'         => ClientBalanceRanking::normalize($request->query('sortBy', 'name')),
+            'category'       => ClientBalanceRanking::normalizeCategory($request->query('category', 'tous')),
+            'nature'         => ClientBalanceRanking::normalizeNature($request->query('nature', 'client')),
             'rate'           => ClientBalanceRanking::usdToCdfRate(),
         ];
 
-        $accountFilter = ClientBalanceRanking::accountFilter($params['accountType'], $params['currencyFilter'], $params['minBalance']);
+        $accountFilter = ClientBalanceRanking::accountFilter($params['accountType'], $params['currencyFilter'], $params['minBalance'], $params['category']);
 
         $query = User::where('role', 'membre')
+            // Nature du titulaire : par défaut seulement les vrais clients (comme à l'écran)
+            ->when($params['nature'] !== 'tous', fn ($q) => $q->where('client_category', $params['nature']))
             ->whereHas('accounts', $accountFilter);
 
         if ($params['search']) {
@@ -136,6 +140,9 @@ class ClientStatReportController extends Controller
             'sortLabel' => ClientBalanceRanking::SORTS[$params['sortBy']],
             'isBalanceSort' => ClientBalanceRanking::isBalanceSort($params['sortBy']),
             'rate' => $params['rate'],
+            'categoryLabel' => ClientBalanceRanking::CATEGORIES[$params['category']],
+            'natureLabel' => ClientBalanceRanking::natures()[$params['nature']],
+            'liabilities' => ClientBalanceRanking::liabilities(),
         ])->setPaper('a4', 'portrait');
 
         return $pdf->stream("rapport_comptes_membres_lot{$lot}_sur_{$lotCount}.pdf");

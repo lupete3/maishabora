@@ -1,5 +1,51 @@
 <div>
-    <h4 class="card-title">Soldes des Membres</h4>
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+        <h4 class="card-title mb-0">Soldes des Membres</h4>
+        @can('classer-titulaires-comptes')
+            <a href="{{ route('member.accounts.classement') }}" class="btn btn-sm btn-outline-primary">
+                <i class="bx bx-purchase-tag-alt me-1"></i> Classer les titulaires (client / interne / test)
+            </a>
+        @endcan
+    </div>
+    <div class="mb-3"></div>
+
+    {{-- Ce que nous devons aux clients : toute l'institution, indépendamment des filtres --}}
+    <div class="card mb-4 border border-primary">
+        <div class="card-header py-2 bg-label-primary">
+            <span class="fw-bold"><i class="bx bx-shield-quarter me-1"></i> Ce que nous devons aux clients</span>
+            <small class="text-muted ms-2">toute l'institution, comptes des vrais clients (actifs, inactifs et dormants)</small>
+        </div>
+        <div class="card-body py-3">
+            <div class="row g-3">
+                @foreach ($liabilities as $currency => $l)
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <div class="text-muted small">Dû aux clients ({{ $currency }})</div>
+                                <div class="fs-4 fw-bold text-primary">{{ number_format($l['du'], 2, ',', ' ') }} {{ $currency }}</div>
+                                <small class="text-muted">{{ $l['nb_du'] }} compte(s) à solde positif</small>
+                            </div>
+                            <div class="text-end">
+                                <div class="text-muted small">Soldes négatifs à régulariser</div>
+                                <div class="fw-semibold text-danger">{{ number_format($l['negatifs'], 2, ',', ' ') }} {{ $currency }}</div>
+                                <small class="text-muted">{{ $l['nb_negatifs'] }} compte(s)</small>
+                            </div>
+                        </div>
+                        @if ($l['exclus'] > 0)
+                            <small class="text-muted d-block mt-1">
+                                Non comptés : {{ number_format($l['exclus'], 2, ',', ' ') }} {{ $currency }} sur des comptes internes ou de test.
+                            </small>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            <small class="text-muted d-block mt-2">
+                Les soldes négatifs ne sont pas une dette envers le client : ils ne sont pas soustraits et doivent être régularisés.
+            </small>
+        </div>
+    </div>
+
+    <h6 class="text-muted mb-2">Totaux de la sélection (selon les filtres ci-dessous)</h6>
     <div class="row mb-4">
         <!-- Comptes Courants -->
         <div class="col-md-3 mb-3">
@@ -40,6 +86,26 @@
     <div class="card">
         <div class="card-header border-bottom">
             <div class="row g-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold">Catégorie de comptes</label>
+                    <select wire:model.live="category" class="form-control">
+                        @foreach ($categories as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @if ($category === 'dormants')
+                        <small class="text-muted">Aucune opération depuis {{ $dormantMonths }} mois</small>
+                    @endif
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Nature du titulaire</label>
+                    <select wire:model.live="nature" class="form-control">
+                        @foreach ($natures as $key => $label)
+                            <option value="{{ $key }}">{{ $label }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="w-100 d-none d-md-block"></div>
                 <div class="col-md-3">
                     <label class="form-label small fw-bold">Recherche</label>
                     <input type="text" wire:model.live.debounce.300ms="search" id="search" class="form-control"
