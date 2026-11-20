@@ -178,6 +178,14 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 
 });
 
+// Sauvegarde de la base (SUPER IT) : le téléchargement redemande le mot de passe (password.confirm)
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:exporter-base-donnees'])->group(function () {
+    Route::get('/sauvegarde-base', [\App\Http\Controllers\DatabaseBackupController::class, 'index'])->name('sauvegarde.index');
+    Route::get('/sauvegarde-base/telecharger', [\App\Http\Controllers\DatabaseBackupController::class, 'download'])
+        ->middleware('password.confirm')
+        ->name('sauvegarde.download');
+});
+
 // Classement des titulaires : client réel, compte interne ou de test (rapport /comptes-membres)
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:classer-titulaires-comptes'])->group(function () {
     Route::get('/comptes-membres/classement', [MemberDetailsController::class, 'classementTitulaires'])->name('member.accounts.classement');
