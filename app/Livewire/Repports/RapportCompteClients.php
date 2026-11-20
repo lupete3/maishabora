@@ -23,6 +23,8 @@ class RapportCompteClients extends Component
     public $alphabetRange = 'all';  // all, A-D, E-H, etc.
     public $sortBy = 'name';        // name, total, usd, cdf (voir ClientBalanceRanking::SORTS)
     public $lotSize = ClientBalanceRanking::DEFAULT_LOT_SIZE; // taille d'un lot PDF
+    public $category = 'tous';      // tous, actifs, inactifs, dormants, negatifs (ClientBalanceRanking::CATEGORIES)
+    public $nature = 'client';      // client (par défaut), interne, test, tous
 
     public function updatingSearch()
     {
@@ -32,7 +34,7 @@ class RapportCompteClients extends Component
     public function updated($property)
     {
         // Tout changement de filtre ou de tri repart de la page 1 (le rang reste cohérent)
-        if (in_array($property, ['currencyFilter', 'accountType', 'minBalance', 'alphabetRange', 'sortBy', 'perPage'], true)) {
+        if (in_array($property, ['currencyFilter', 'accountType', 'minBalance', 'alphabetRange', 'sortBy', 'perPage', 'category', 'nature'], true)) {
             $this->resetPage();
         }
     }
@@ -53,6 +55,8 @@ class RapportCompteClients extends Component
     protected function baseQuery($accountFilter)
     {
         $query = User::where('role', 'membre')
+            // Nature du titulaire : par défaut seulement les vrais clients
+            ->when($this->nature !== 'tous', fn ($q) => $q->where('client_category', $this->nature))
             ->whereHas('accounts', $accountFilter)
             ->where(function ($q) {
                 $q->where('name', 'like', "%{$this->search}%")
@@ -74,8 +78,10 @@ class RapportCompteClients extends Component
         $this->sortBy = ClientBalanceRanking::normalize($this->sortBy);
         $this->perPage = in_array((int) $this->perPage, self::PER_PAGE_OPTIONS, true) ? (int) $this->perPage : 10;
         $this->lotSize = ClientBalanceRanking::normalizeLotSize($this->lotSize);
+        $this->category = ClientBalanceRanking::normalizeCategory($this->category);
+        $this->nature = ClientBalanceRanking::normalizeNature($this->nature);
 
-        $accountFilter = ClientBalanceRanking::accountFilter($this->accountType, $this->currencyFilter, $this->minBalance);
+        $accountFilter = ClientBalanceRanking::accountFilter($this->accountType, $this->currencyFilter, $this->minBalance, $this->category);
         $rate = ClientBalanceRanking::usdToCdfRate();
 
         // Totaux de tous les membres filtrés, en une passe SQL
@@ -136,6 +142,11 @@ class RapportCompteClients extends Component
             'perPageOptions' => self::PER_PAGE_OPTIONS,
             'lotSizes' => ClientBalanceRanking::LOT_SIZES,
             'lots' => $lots,
+            'categories' => ClientBalanceRanking::CATEGORIES,
+            'natures' => ClientBalanceRanking::natures(),
+            'dormantMonths' => ClientBalanceRanking::dormantMonths(),
+            // Toute l'institution, indépendamment des filtres
+            'liabilities' => ClientBalanceRanking::liabilities(),
             'exportParams' => [
                 'search' => $this->search,
                 'accountType' => $this->accountType,
@@ -143,6 +154,8 @@ class RapportCompteClients extends Component
                 'minBalance' => $this->minBalance,
                 'alphabetRange' => $this->alphabetRange,
                 'sortBy' => $this->sortBy,
+                'category' => $this->category,
+                'nature' => $this->nature,
             ],
         ]);
     }

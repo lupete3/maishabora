@@ -178,6 +178,11 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 
 });
 
+// Classement des titulaires : client réel, compte interne ou de test (rapport /comptes-membres)
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:classer-titulaires-comptes'])->group(function () {
+    Route::get('/comptes-membres/classement', [MemberDetailsController::class, 'classementTitulaires'])->name('member.accounts.classement');
+});
+
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-simulation-credit'])->group(function () {
     Route::get('/smulation-credit', [RepaymentScheduleController::class, 'simulation'])->name('repayments.simulation');
 });

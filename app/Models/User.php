@@ -65,7 +65,24 @@ class User extends Authenticatable
         'is_suspended',
         'google_id',
         'provider',
+        'client_category',
     ];
+
+    /**
+     * Nature du titulaire des comptes (colonne users.client_category).
+     * Seuls les comptes « client » comptent dans « ce que nous devons aux clients ».
+     */
+    public const CLIENT_CATEGORIES = [
+        'client'  => 'Client',
+        'interne' => 'Compte interne',
+        'test'    => 'Compte de test',
+    ];
+
+    /** Membres dont les comptes appartiennent à de vrais clients. */
+    public function scopeRealClients($query)
+    {
+        return $query->where('client_category', 'client');
+    }
 
     /**
      * The attributes that should be hidden for serialization.

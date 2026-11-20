@@ -3,6 +3,7 @@
 namespace App\Support;
 
 use App\Models\ExchangeRate;
+use App\Models\User;
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -33,20 +34,107 @@ class ClientBalanceRanking
         return $sortBy !== 'name';
     }
 
-    /** Filtre commun des comptes pris en compte (type, devise, solde minimum). */
-    public static function accountFilter(string $accountType, string $currencyFilter, $minBalance): Closure
+    /**
+     * Catégories de comptes (filtre « Catégorie »).
+     * « Dormant » est calculé : aucune opération sur le compte depuis N mois (config comptes.dormant_after_months).
+     */
+    public const CATEGORIES = [
+        'tous'     => 'Tous les comptes',
+        'actifs'   => 'Comptes actifs',
+        'inactifs' => 'Comptes inactifs (statut « Inactif »)',
+        'dormants' => 'Comptes dormants (sans opération récente)',
+        'negatifs' => 'Soldes négatifs à régulariser',
+    ];
+
+    public static function normalizeCategory(?string $category): string
     {
-        return function ($q) use ($accountType, $currencyFilter, $minBalance) {
+        return array_key_exists((string) $category, self::CATEGORIES) ? $category : 'tous';
+    }
+
+    /** Nature du titulaire : client (par défaut), interne, test, ou tous. */
+    public static function natures(): array
+    {
+        return User::CLIENT_CATEGORIES + ['tous' => 'Toutes natures'];
+    }
+
+    public static function normalizeNature(?string $nature): string
+    {
+        return array_key_exists((string) $nature, self::natures()) ? $nature : 'client';
+    }
+
+    /** Nombre de mois sans opération à partir duquel un compte est dormant. */
+    public static function dormantMonths(): int
+    {
+        return max(1, (int) config('comptes.dormant_after_months', 12));
+    }
+
+    /** Filtre commun des comptes pris en compte (type, devise, solde minimum, catégorie). */
+    public static function accountFilter(string $accountType, string $currencyFilter, $minBalance, string $category = 'tous'): Closure
+    {
+        $dormantSince = now()->subMonths(self::dormantMonths());
+
+        return function ($q) use ($accountType, $currencyFilter, $minBalance, $category, $dormantSince) {
             if ($accountType !== 'all') {
-                $q->where('type', $accountType);
+                $q->where('accounts.type', $accountType);
             }
             if ($currencyFilter !== 'all') {
-                $q->where('currency', $currencyFilter);
+                $q->where('accounts.currency', $currencyFilter);
             }
             if ((float) $minBalance > 0) {
-                $q->where('balance', '>=', $minBalance);
+                $q->where('accounts.balance', '>=', $minBalance);
             }
+
+            match ($category) {
+                'actifs'   => $q->where('accounts.status', 'Actif'),
+                'inactifs' => $q->where('accounts.status', 'Inactif'),
+                // Aucune opération sur le compte depuis la date limite (index transactions account_id + created_at)
+                'dormants' => $q->whereNotExists(function ($sub) use ($dormantSince) {
+                    $sub->selectRaw('1')
+                        ->from('transactions')
+                        ->whereColumn('transactions.account_id', 'accounts.id')
+                        ->where('transactions.created_at', '>=', $dormantSince);
+                }),
+                'negatifs' => $q->where('accounts.balance', '<', 0),
+                default    => null,
+            };
         };
+    }
+
+    /**
+     * « Ce que nous devons aux clients », par devise, sur TOUTE l'institution (indépendant des filtres) :
+     *  - du       : somme des soldes POSITIFS des comptes de vrais clients (actifs, inactifs, dormants confondus)
+     *  - negatifs : soldes négatifs des clients, affichés à part (ce n'est pas une dette envers eux)
+     *  - exclus   : soldes positifs des comptes internes et de test, non comptés
+     *
+     * @return array<string, array{du: float, nb_du: int, negatifs: float, nb_negatifs: int, exclus: float}>
+     */
+    public static function liabilities(): array
+    {
+        $rows = DB::table('accounts')
+            ->join('users', 'users.id', '=', 'accounts.user_id')
+            ->where('users.role', 'membre')
+            ->groupBy('accounts.currency')
+            ->selectRaw("accounts.currency AS currency,
+                SUM(CASE WHEN users.client_category = 'client' AND accounts.balance > 0 THEN accounts.balance ELSE 0 END) AS du,
+                SUM(CASE WHEN users.client_category = 'client' AND accounts.balance > 0 THEN 1 ELSE 0 END) AS nb_du,
+                SUM(CASE WHEN users.client_category = 'client' AND accounts.balance < 0 THEN accounts.balance ELSE 0 END) AS negatifs,
+                SUM(CASE WHEN users.client_category = 'client' AND accounts.balance < 0 THEN 1 ELSE 0 END) AS nb_negatifs,
+                SUM(CASE WHEN users.client_category <> 'client' AND accounts.balance > 0 THEN accounts.balance ELSE 0 END) AS exclus")
+            ->get();
+
+        $result = [];
+        foreach (['USD', 'CDF'] as $currency) {
+            $row = $rows->firstWhere('currency', $currency);
+            $result[$currency] = [
+                'du'          => (float) ($row->du ?? 0),
+                'nb_du'       => (int) ($row->nb_du ?? 0),
+                'negatifs'    => (float) ($row->negatifs ?? 0),
+                'nb_negatifs' => (int) ($row->nb_negatifs ?? 0),
+                'exclus'      => (float) ($row->exclus ?? 0),
+            ];
+        }
+
+        return $result;
     }
 
     /** Dernier taux USD → CDF enregistré, ou null s'il n'y en a pas. */
