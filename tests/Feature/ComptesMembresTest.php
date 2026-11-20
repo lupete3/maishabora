@@ -101,6 +101,8 @@ class ComptesMembresTest extends TestCase
         $this->membre('CLIENT TEST', 'test', [['USD', 1000]], recent: true);
         // Client sans aucun solde : masqué par défaut
         $this->membre('Zoe', 'client', [['CDF', 0], ['USD', 0]], recent: true);
+        // Compte vide sans opération depuis longtemps : PAS dormant (rien n'est dû)
+        $this->membre('Eric', 'client', [['USD', 0]], recent: false);
 
         $this->actingAs($this->admin);
     }
@@ -146,7 +148,11 @@ class ComptesMembresTest extends TestCase
         $this->assertSame(['Alice', 'Bob', 'Carine', 'Denis'], $noms($component));
         $component->assertSee('Ce que nous devons aux clients');
 
+        // Bob (20 000 sans opération) est dormant ; Eric (compte vide ancien) ne l'est pas,
+        // même sans masquer les membres sans solde
         $this->assertSame(['Bob'], $noms($component->set('category', 'dormants')));
+        $this->assertSame(['Bob'], $noms($component->set('masquerSansSolde', false)));
+        $component->set('masquerSansSolde', true);
         $this->assertSame(['Carine'], $noms($component->set('category', 'negatifs')));
         $this->assertSame(['Denis'], $noms($component->set('category', 'inactifs')));
 
