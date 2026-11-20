@@ -142,7 +142,8 @@
         <tbody>
             @forelse($overdueCredits as $r)
                 @php
-                    $daysLate = \Carbon\Carbon::parse($r->due_date)->diffInDays(now());
+                    // Jours entiers : échéance d'aujourd'hui = 0 jour
+                    $daysLate = \App\Livewire\Credit\CreditOverview::daysLate($r->due_date);
                 @endphp
                 <tr>
                     <td class="fw-bold text-primary">{{ $r->credit->user->code }}</td>
