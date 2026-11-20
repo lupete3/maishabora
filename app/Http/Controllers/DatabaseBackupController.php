@@ -21,6 +21,9 @@ class DatabaseBackupController extends Controller
 
     private const ACTION_JOURNAL = 'Export_base_donnees';
 
+    /** Durée de validité de la confirmation du mot de passe pour télécharger (secondes). */
+    private const CONFIRMATION_VALIDE = 900;
+
     public function index()
     {
         Gate::authorize('exporter-base-donnees');
@@ -41,6 +44,13 @@ class DatabaseBackupController extends Controller
     public function download(DatabaseBackupService $service)
     {
         Gate::authorize('exporter-base-donnees');
+
+        // Mot de passe confirmé il y a moins de 15 minutes, sinon retour à la page qui le redemande
+        if (time() - (int) session('auth.password_confirmed_at', 0) > self::CONFIRMATION_VALIDE) {
+            session()->forget('auth.password_confirmed_at');
+
+            return redirect()->route('sauvegarde.index');
+        }
 
         if (RateLimiter::tooManyAttempts($this->cle(), 1)) {
             $minutes = (int) ceil(RateLimiter::availableIn($this->cle()) / 60);
