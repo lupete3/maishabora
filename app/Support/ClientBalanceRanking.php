@@ -42,7 +42,7 @@ class ClientBalanceRanking
         'tous'     => 'Tous les comptes',
         'actifs'   => 'Comptes actifs',
         'inactifs' => 'Comptes inactifs (statut « Inactif »)',
-        'dormants' => 'Comptes dormants (sans opération récente)',
+        'dormants' => 'Comptes dormants (avec de l\'argent, sans opération récente)',
         'negatifs' => 'Soldes négatifs à régulariser',
     ];
 
@@ -87,13 +87,17 @@ class ClientBalanceRanking
             match ($category) {
                 'actifs'   => $q->where('accounts.status', 'Actif'),
                 'inactifs' => $q->where('accounts.status', 'Inactif'),
-                // Aucune opération sur le compte depuis la date limite (index transactions account_id + created_at)
-                'dormants' => $q->whereNotExists(function ($sub) use ($dormantSince) {
-                    $sub->selectRaw('1')
-                        ->from('transactions')
-                        ->whereColumn('transactions.account_id', 'accounts.id')
-                        ->where('transactions.created_at', '>=', $dormantSince);
-                }),
+                // Compte qui contient de l'argent (solde POSITIF, donc dû au client) mais sans aucune
+                // opération depuis la date limite. Un compte vide n'est pas « dormant », et un solde
+                // négatif relève de la catégorie « Soldes négatifs ».
+                // (index transactions account_id + created_at)
+                'dormants' => $q->where('accounts.balance', '>', 0)
+                    ->whereNotExists(function ($sub) use ($dormantSince) {
+                        $sub->selectRaw('1')
+                            ->from('transactions')
+                            ->whereColumn('transactions.account_id', 'accounts.id')
+                            ->where('transactions.created_at', '>=', $dormantSince);
+                    }),
                 'negatifs' => $q->where('accounts.balance', '<', 0),
                 default    => null,
             };

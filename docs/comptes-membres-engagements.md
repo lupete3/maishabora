@@ -9,7 +9,10 @@ Page : **`/comptes-membres`**. Écran de classement : **`/comptes-membres/classe
 - **Deux notions séparées** :
   - le cycle de vie du compte : actif, inactif, dormant ;
   - la nature du titulaire : client, interne, test.
-- **Dormant = calculé** : aucune opération sur le compte depuis 12 mois. Le seuil se règle dans `config/comptes.php` (`COMPTES_DORMANT_APRES_MOIS`), et rien n'est enregistré.
+- **Dormant = calculé** : un compte **avec un solde positif** (de l'argent dû au client) et **sans aucune opération depuis 12 mois**. Le seuil se règle dans `config/comptes.php` (`COMPTES_DORMANT_APRES_MOIS`), et rien n'est enregistré.
+  - Un compte vide, même jamais utilisé, n'est pas dormant.
+  - Un solde négatif relève de la catégorie « Soldes négatifs ».
+  - Avant cet ajustement, 694 membres sur 696 apparaissaient en local, à cause de comptes vides ou à -10. Après : **24 membres**, avec 594 770 CDF et 10 USD qui dorment.
 
 ## Phase 1 : rapport (lecture seule)
 - Bloc **« Ce que nous devons aux clients »** en haut de la page. Il porte sur **toute l'institution**, sans tenir compte des filtres. On y trouve, par devise :

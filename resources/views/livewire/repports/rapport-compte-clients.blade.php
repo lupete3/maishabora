@@ -95,7 +95,7 @@
                         @endforeach
                     </select>
                     @if ($category === 'dormants')
-                        <small class="text-muted">Aucune opération depuis {{ $dormantMonths }} mois</small>
+                        <small class="text-muted">Solde positif et aucune opération depuis {{ $dormantMonths }} mois</small>
                     @endif
                 </div>
                 <div class="col-md-3">
