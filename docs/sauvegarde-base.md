@@ -92,6 +92,11 @@ Réglages facultatifs du `.env` :
 - `SAUVEGARDE_ALERTE_HEURES` (26) ;
 - `SAUVEGARDE_ESPACE_MINIMAL_MO` (200).
 
+### Heure affichée
+La colonne « Date » de la liste affiche l'heure dans le **fuseau de l'application** (`APP_TIMEZONE`, celui de la RDC en production), comme l'heure du nom de fichier.
+
+*Correction du 21/11/2026* : l'heure du fichier était convertie en UTC par défaut. Le fichier `…_03-03` s'affichait donc « 01:03 », soit 2 h de moins.
+
 ### Jeton de l'adresse des retards
 L'adresse existante `/cron/executer-retards/<jeton>` avait son jeton **écrit en clair dans le code**, donc visible par toute personne ayant accès au dépôt. Il est désormais lu dans `.env` (`CRON_RETARDS_TOKEN`) et comparé de façon sûre (`hash_equals`). Sans cette variable, l'**ancien jeton reste valable**, et la tâche cron-job.org actuelle continue de fonctionner.
 

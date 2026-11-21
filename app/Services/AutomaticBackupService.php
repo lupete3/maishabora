@@ -53,7 +53,9 @@ class AutomaticBackupService
                 'nom'    => basename($chemin),
                 'chemin' => $chemin,
                 'taille' => filesize($chemin),
-                'date'   => Carbon::createFromTimestamp(filemtime($chemin)),
+                // Fuseau de l'application (RDC en production), comme l'heure du nom de fichier.
+                // Sans fuseau, Carbon affiche l'heure UTC (2 h de moins).
+                'date'   => Carbon::createFromTimestamp(filemtime($chemin), config('app.timezone')),
             ];
         }
 
