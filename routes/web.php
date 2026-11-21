@@ -188,6 +188,12 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:exporter-
         ->name('sauvegarde.index');
     Route::get('/sauvegarde-base/telecharger', [\App\Http\Controllers\DatabaseBackupController::class, 'download'])
         ->name('sauvegarde.download');
+    // Sauvegardes automatiques conservées sur le serveur
+    Route::get('/sauvegarde-base/fichier/{nom}', [\App\Http\Controllers\DatabaseBackupController::class, 'downloadFile'])
+        ->where('nom', '[A-Za-z0-9_.\-]+')
+        ->name('sauvegarde.fichier');
+    Route::post('/sauvegarde-base/creer', [\App\Http\Controllers\DatabaseBackupController::class, 'createNow'])
+        ->name('sauvegarde.creer');
 });
 
 // Classement des titulaires : client réel, compte interne ou de test (rapport /comptes-membres)
@@ -348,13 +354,34 @@ Route::post('/logout', function () {
 
 
 // Web Cron Route for scheduled tasks (bypasses hosting cron limits)
+// Jeton lu dans .env (CRON_RETARDS_TOKEN) ; par défaut l'ancien jeton, pour ne pas casser cron-job.org.
 Route::get('/cron/executer-retards/{token}', function ($token) {
-    $secretToken = 'maishabora_cron_secret_7x9A2mP5vK3';
-    if ($token !== $secretToken) {
+    if (! hash_equals((string) config('sauvegarde.jeton_retards'), (string) $token)) {
         abort(403, 'Accès refusé');
     }
     \Illuminate\Support\Facades\Artisan::call('check:overdue-repayments');
     return 'Vérification des retards exécutée avec succès à ' . now();
+});
+
+// Sauvegarde automatique de la base, appelée par cron-job.org (toutes les heures conseillé).
+// Une seule sauvegarde par tranche de 20 h ; la réponse part tout de suite et la sauvegarde
+// se fait juste après (pas de coupure par la limite de temps de cron-job.org).
+Route::get('/cron/sauvegarde/{token}', function ($token) {
+    $jeton = (string) config('sauvegarde.jeton_cron');
+    if ($jeton === '' || ! hash_equals($jeton, (string) $token)) {
+        abort(403, 'Accès refusé');
+    }
+
+    $service = app(\App\Services\AutomaticBackupService::class);
+    if (! $service->estNecessaire()) {
+        return sprintf('Sauvegarde récente déjà présente (il y a %.1f h) : rien à faire. %s', $service->ageDerniereHeures(), now());
+    }
+
+    dispatch(function () {
+        \Illuminate\Support\Facades\Artisan::call('backup:database', ['--si-necessaire' => true, '--origine' => 'cron']);
+    })->afterResponse();
+
+    return 'Sauvegarde lancée à ' . now();
 });
 
 // Google OAuth Routes

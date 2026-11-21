@@ -14,6 +14,83 @@
     @if (session('error'))
         <div class="alert alert-warning">{{ session('error') }}</div>
     @endif
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    {{-- Sauvegardes automatiques (cron-job.org → /cron/sauvegarde/<jeton>) --}}
+    <div class="card mb-4 {{ $alerte ? 'border border-danger' : '' }}">
+        <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <span class="fw-bold"><i class="bx bx-time-five me-1"></i> Sauvegardes automatiques (sur le serveur)</span>
+            <form method="POST" action="{{ route('sauvegarde.creer') }}"
+                onsubmit="this.querySelector('button').disabled = true; this.querySelector('button').innerHTML = '<span class=\'spinner-border spinner-border-sm me-1\'></span> Sauvegarde en cours…';">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-outline-primary" @disabled($creationBloquee)>
+                    <i class="bx bx-save me-1"></i> Créer une sauvegarde sur le serveur maintenant
+                </button>
+            </form>
+        </div>
+        <div class="card-body">
+            @if (! $cronActif)
+                <div class="alert alert-warning mb-3">
+                    L'adresse cron de sauvegarde n'est pas activée : ajoutez <code>CRON_SAUVEGARDE_TOKEN</code> dans le fichier
+                    <code>.env</code> du serveur, puis programmez son appel sur cron-job.org (voir la documentation).
+                </div>
+            @endif
+
+            @if ($alerte)
+                <div class="alert alert-danger mb-3">
+                    <i class="bx bx-error me-1"></i>
+                    @if ($ageDerniere === null)
+                        Aucune sauvegarde automatique n'existe encore sur le serveur.
+                    @else
+                        La dernière sauvegarde automatique date de {{ number_format($ageDerniere, 0) }} heures :
+                        l'appel cron-job.org ne fonctionne peut-être plus.
+                    @endif
+                </div>
+            @else
+                <p class="text-success mb-3">
+                    <i class="bx bx-check-circle me-1"></i>
+                    Dernière sauvegarde il y a {{ $ageDerniere < 1 ? 'moins d\'une heure' : number_format($ageDerniere, 0) . ' h' }}.
+                </p>
+            @endif
+
+            <p class="small text-muted mb-2">Une sauvegarde par jour au maximum, conservée {{ $retention }} jours (les plus anciennes sont supprimées automatiquement).</p>
+
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Fichier</th>
+                            <th>Date</th>
+                            <th class="text-end">Taille</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($automatiques as $fichier)
+                            <tr>
+                                <td class="small">{{ $fichier['nom'] }}</td>
+                                <td class="text-nowrap">{{ $fichier['date']->format('d/m/Y H:i') }}</td>
+                                <td class="text-end text-nowrap">{{ number_format($fichier['taille'] / 1024, 0, ',', ' ') }} Ko</td>
+                                <td class="text-end">
+                                    <a href="{{ route('sauvegarde.fichier', $fichier['nom']) }}" class="btn btn-sm btn-outline-secondary" download>
+                                        <i class="bx bx-download"></i> Télécharger
+                                    </a>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="4" class="text-center text-muted py-3">Aucune sauvegarde automatique pour l'instant.</td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <h5 class="mt-2">Télécharger une sauvegarde instantanée</h5>
 
     <div class="card mb-4">
         <div class="card-body">

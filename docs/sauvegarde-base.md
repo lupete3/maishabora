@@ -52,5 +52,77 @@ php artisan migrate
 php artisan optimize:clear
 ```
 
+## Sauvegarde automatique (21/11/2026)
+
+### Principe
+Le cron de l'application passe par un **service externe (cron-job.org)** qui appelle des adresses web, et non par le planificateur de Laravel. La sauvegarde automatique suit donc le même modèle :
+
+- **Adresse** : `https://client.maishaboraasbl.com/cron/sauvegarde/<JETON>`, appelée par cron-job.org.
+- **Au plus une sauvegarde par tranche de 20 h** : si une sauvegarde récente existe, l'appel ne fait rien. On peut donc programmer l'appel **toutes les heures**, sans doublon et sans rater une journée si un appel échoue.
+- **La réponse part tout de suite** (« Sauvegarde lancée ») et la sauvegarde se fait **juste après**. Elle ne peut donc pas être coupée par la limite de temps de cron-job.org.
+- **Stockage** : fichiers `.sql.gz` dans `storage/app/private/backups`, un dossier non accessible par le web.
+- **Vérification** : écriture dans un fichier `.part`, relecture complète (gzip lisible et ligne « Fin de la sauvegarde » présente), puis renommage. Une sauvegarde incomplète est supprimée, jamais conservée.
+- **Conservation de 7 jours** : les plus anciennes sont supprimées, la plus récente est toujours gardée.
+- **Sécurité** : la sauvegarde refuse de démarrer si l'espace disque libre est inférieur à 200 Mo, et un verrou empêche deux sauvegardes simultanées.
+- **En cas d'échec** : ligne `error` dans les **Logs du système**, et **notification** aux comptes SUPER IT.
+- **Page « Sauvegarde de la base »** :
+  - la liste des sauvegardes conservées, chacune téléchargeable avec la même confirmation du mot de passe ;
+  - **une alerte rouge** si la dernière a plus de 26 h (l'appel cron ne fonctionne plus) ;
+  - le bouton **« Créer une sauvegarde sur le serveur maintenant »**.
+- **En ligne de commande** : `php artisan backup:database` (immédiate) ou `php artisan backup:database --si-necessaire`.
+
+### Mise en place en production (à faire une fois)
+1. **Générer un jeton secret**, une longue suite aléatoire, par exemple :
+   ```bash
+   php -r "echo bin2hex(random_bytes(24)), PHP_EOL;"
+   ```
+2. **L'ajouter au fichier `.env` du serveur** :
+   ```
+   CRON_SAUVEGARDE_TOKEN=le_jeton_genere
+   ```
+   puis lancer `php artisan optimize:clear`.
+3. **Sur cron-job.org**, créer une tâche :
+   - URL : `https://client.maishaboraasbl.com/cron/sauvegarde/le_jeton_genere` ;
+   - fréquence : **toutes les heures** (ou au minimum une fois par nuit, vers 02:00).
+4. Le lendemain, vérifier sur la page **Sauvegarde de la base** qu'une sauvegarde automatique apparaît, sans alerte rouge.
+
+Réglages facultatifs du `.env` :
+- `SAUVEGARDE_RETENTION_JOURS` (7 par défaut) ;
+- `SAUVEGARDE_INTERVALLE_HEURES` (20) ;
+- `SAUVEGARDE_ALERTE_HEURES` (26) ;
+- `SAUVEGARDE_ESPACE_MINIMAL_MO` (200).
+
+### Jeton de l'adresse des retards
+L'adresse existante `/cron/executer-retards/<jeton>` avait son jeton **écrit en clair dans le code**, donc visible par toute personne ayant accès au dépôt. Il est désormais lu dans `.env` (`CRON_RETARDS_TOKEN`) et comparé de façon sûre (`hash_equals`). Sans cette variable, l'**ancien jeton reste valable**, et la tâche cron-job.org actuelle continue de fonctionner.
+
+**Conseillé** : définir un nouveau `CRON_RETARDS_TOKEN` dans le `.env`, puis mettre à jour l'adresse sur cron-job.org.
+
+### Vérifié (local)
+- Sauvegarde créée et vérifiée : 2,2 Mo, 71 tables, en 2,6 à 4,8 s.
+- Un second appel avec `--si-necessaire` ne fait rien.
+- Conservation : les 2 faux fichiers de 9 et 10 jours sont supprimés, celui de 3 jours est gardé.
+- Un nom de fichier malveillant (`../../.env`) est refusé.
+- Adresse cron :
+  - un mauvais jeton est rejeté (403) ;
+  - un bon jeton sans besoin ne fait rien ;
+  - un bon jeton avec besoin répond tout de suite, puis la sauvegarde se fait et est journalisée.
+- Échec simulé (espace disque) : journal `error`, notification SUPER IT, aucun fichier `.part` restant.
+
+### Fichiers
+| Rôle | Fichier |
+|---|---|
+| Réglages et jetons | `config/sauvegarde.php` |
+| Sauvegardes sur le serveur | `app/Services/AutomaticBackupService.php` |
+| Commande | `app/Console/Commands/BackupDatabase.php` (`backup:database`) |
+| Adresses cron | `routes/web.php` : `/cron/sauvegarde/{token}`, `/cron/executer-retards/{token}` |
+| Page | `DatabaseBackupController` (`downloadFile`, `createNow`), `resources/views/admin/sauvegarde-base.blade.php` |
+
+### À vérifier (constaté pendant l'analyse)
+Les tâches programmées dans Laravel (`routes/console.php`, `bootstrap/app.php`) **ne tournent que si le planificateur est lancé**, ce que ne fait pas cron-job.org aujourd'hui. Sont concernés :
+- **le calcul quotidien des intérêts des dépôts à terme** (`term-deposits:accrue-monthly-interest`) ;
+- **le rapport mensuel des cotisations** (`reports:monthly-contribution`).
+
+À contrôler en production, et à brancher sur cron-job.org de la même façon si besoin.
+
 ## Conseillé ensuite
-Une **sauvegarde automatique quotidienne**, programmée la nuit et conservée 7 jours dans un dossier privé du serveur, avec une copie hors du serveur. Le bouton reste utile pour une sauvegarde instantanée, avant une opération sensible.
+Une **copie hors du serveur** des sauvegardes automatiques (Google Drive par exemple). Si le serveur était perdu, les sauvegardes stockées dessus le seraient aussi.

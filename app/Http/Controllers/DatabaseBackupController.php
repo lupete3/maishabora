@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Helpers\UserLogHelper;
 use App\Models\UserLog;
+use App\Services\AutomaticBackupService;
 use App\Services\DatabaseBackupService;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
@@ -34,11 +35,75 @@ class DatabaseBackupController extends Controller
             ->limit(10)
             ->get();
 
+        $auto = app(AutomaticBackupService::class);
+        $age = $auto->ageDerniereHeures();
+
         return view('admin.sauvegarde-base', [
             'derniers' => $derniers,
             'attente' => RateLimiter::availableIn($this->cle()),
             'bloque' => RateLimiter::tooManyAttempts($this->cle(), 1),
+            // Sauvegardes automatiques conservées sur le serveur
+            'automatiques' => $auto->liste(),
+            'ageDerniere' => $age,
+            'alerte' => $age === null || $age > config('sauvegarde.alerte_apres_heures', 26),
+            'retention' => config('sauvegarde.retention_jours', 7),
+            'cronActif' => (string) config('sauvegarde.jeton_cron') !== '',
+            'creationBloquee' => RateLimiter::tooManyAttempts('sauvegarde-serveur', 1),
         ]);
+    }
+
+    /** Télécharge une sauvegarde automatique conservée sur le serveur. */
+    public function downloadFile(string $nom, AutomaticBackupService $auto)
+    {
+        Gate::authorize('exporter-base-donnees');
+
+        if (! $this->confirmationRecente()) {
+            return redirect()->route('sauvegarde.index');
+        }
+
+        $chemin = $auto->chemin($nom);
+        abort_if($chemin === null, 404);
+
+        UserLogHelper::log_user_activity(self::ACTION_JOURNAL, "Téléchargement de la sauvegarde automatique {$nom}");
+
+        return response()->download($chemin, $nom, ['Content-Type' => 'application/gzip']);
+    }
+
+    /** Crée tout de suite une sauvegarde sur le serveur (même mécanisme que le cron). */
+    public function createNow(AutomaticBackupService $auto)
+    {
+        Gate::authorize('exporter-base-donnees');
+
+        if (RateLimiter::tooManyAttempts('sauvegarde-serveur', 1)) {
+            return redirect()->route('sauvegarde.index')
+                ->with('error', 'Une sauvegarde sur le serveur vient d\'être créée. Réessayez dans quelques minutes.');
+        }
+        RateLimiter::hit('sauvegarde-serveur', self::DELAI_ENTRE_EXPORTS);
+
+        try {
+            $resultat = $auto->creer('manuelle par ' . auth()->user()->name);
+        } catch (Throwable $e) {
+            return redirect()->route('sauvegarde.index')->with('error', 'Échec de la sauvegarde : ' . $e->getMessage());
+        }
+
+        UserLogHelper::log_user_activity(self::ACTION_JOURNAL, "Sauvegarde créée sur le serveur : {$resultat['nom']}");
+
+        return redirect()->route('sauvegarde.index')->with('success', sprintf(
+            'Sauvegarde créée sur le serveur : %s (%s Ko, %.1f s).',
+            $resultat['nom'], number_format($resultat['taille'] / 1024, 0, ',', ' '), $resultat['duree']
+        ));
+    }
+
+    /** Mot de passe confirmé il y a moins de 15 minutes ; sinon la confirmation est effacée. */
+    private function confirmationRecente(): bool
+    {
+        if (time() - (int) session('auth.password_confirmed_at', 0) > self::CONFIRMATION_VALIDE) {
+            session()->forget('auth.password_confirmed_at');
+
+            return false;
+        }
+
+        return true;
     }
 
     public function download(DatabaseBackupService $service)
@@ -46,9 +111,7 @@ class DatabaseBackupController extends Controller
         Gate::authorize('exporter-base-donnees');
 
         // Mot de passe confirmé il y a moins de 15 minutes, sinon retour à la page qui le redemande
-        if (time() - (int) session('auth.password_confirmed_at', 0) > self::CONFIRMATION_VALIDE) {
-            session()->forget('auth.password_confirmed_at');
-
+        if (! $this->confirmationRecente()) {
             return redirect()->route('sauvegarde.index');
         }
 
