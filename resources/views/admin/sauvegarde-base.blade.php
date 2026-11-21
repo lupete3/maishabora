@@ -24,7 +24,7 @@
             </div>
 
             <ul class="small text-muted mb-3">
-                <li>Votre <strong>mot de passe vous sera redemandé</strong> avant le téléchargement.</li>
+                <li>Votre <strong>mot de passe a été redemandé</strong> à l'ouverture de cette page ; le téléchargement reste possible pendant 15 minutes, ensuite il sera redemandé.</li>
                 <li>La sauvegarde est une photo de la base <strong>au moment du clic</strong> ; les opérations en cours ne sont pas bloquées.</li>
                 <li>Le fichier n'est pas conservé sur le serveur. Chaque export est enregistré dans le journal ci-dessous.</li>
                 <li>Une sauvegarde au maximum toutes les 10 minutes, pour ménager le serveur.</li>
@@ -35,10 +35,25 @@
                     <i class="bx bx-time me-1"></i> Prochaine sauvegarde possible dans {{ (int) ceil($attente / 60) }} minute(s)
                 </button>
             @else
-                <a href="{{ route('sauvegarde.download') }}" class="btn btn-primary"
-                    onclick="this.classList.add('disabled'); this.innerHTML='<span class=\'spinner-border spinner-border-sm me-1\'></span> Préparation de la sauvegarde…';">
+                {{-- Lien classique (pas de navigation Livewire) : le navigateur télécharge le fichier --}}
+                <a href="{{ route('sauvegarde.download') }}" class="btn btn-primary" id="btn-sauvegarde" download>
                     <i class="bx bx-download me-1"></i> Télécharger la sauvegarde (.sql.gz)
                 </a>
+                <div id="info-sauvegarde" class="small text-muted mt-2 d-none">
+                    <span class="spinner-border spinner-border-sm me-1"></span>
+                    Le téléchargement démarre dans quelques secondes (préparation du fichier)… Ne fermez pas la page.
+                </div>
+                <script>
+                    document.getElementById('btn-sauvegarde').addEventListener('click', function () {
+                        const bouton = this, info = document.getElementById('info-sauvegarde');
+                        bouton.classList.add('disabled');
+                        info.classList.remove('d-none');
+                        // Le navigateur reste sur la page pendant un téléchargement : on rétablit l'affichage
+                        setTimeout(function () {
+                            info.innerHTML = 'Téléchargement lancé. Vérifiez le dossier « Téléchargements » de votre navigateur.';
+                        }, 15000);
+                    });
+                </script>
             @endif
         </div>
     </div>

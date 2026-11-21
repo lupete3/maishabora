@@ -178,11 +178,15 @@ Route::middleware(['auth', 'check.status', 'auth.session', 'permission:afficher-
 
 });
 
-// Sauvegarde de la base (SUPER IT) : le téléchargement redemande le mot de passe (password.confirm)
+// Sauvegarde de la base (SUPER IT).
+// Le mot de passe est redemandé à l'ouverture de la PAGE (password.confirm) et non sur le lien de
+// téléchargement : la page de confirmation redirige en navigation Livewire, qui ne sait pas recevoir
+// un fichier (le navigateur se figeait). Le téléchargement vérifie une confirmation de moins de 15 min.
 Route::middleware(['auth', 'check.status', 'auth.session', 'permission:exporter-base-donnees'])->group(function () {
-    Route::get('/sauvegarde-base', [\App\Http\Controllers\DatabaseBackupController::class, 'index'])->name('sauvegarde.index');
-    Route::get('/sauvegarde-base/telecharger', [\App\Http\Controllers\DatabaseBackupController::class, 'download'])
+    Route::get('/sauvegarde-base', [\App\Http\Controllers\DatabaseBackupController::class, 'index'])
         ->middleware('password.confirm')
+        ->name('sauvegarde.index');
+    Route::get('/sauvegarde-base/telecharger', [\App\Http\Controllers\DatabaseBackupController::class, 'download'])
         ->name('sauvegarde.download');
 });
 

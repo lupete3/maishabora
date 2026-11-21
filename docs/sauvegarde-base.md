@@ -13,7 +13,8 @@ Sous Windows, on peut d'abord décompresser le fichier avec 7-Zip, puis l'import
 
 ## Sécurité
 - **Accès** : permission dédiée `exporter-base-donnees`, attribuée au **seul rôle SUPER IT** par la migration `2026_11_20_120000_add_database_export_permission.php`.
-- **Mot de passe redemandé** avant chaque téléchargement (middleware `password.confirm`). Une session restée ouverte ne suffit donc pas.
+- **Mot de passe redemandé** à l'**ouverture de la page** (middleware `password.confirm` sur `sauvegarde.index`). Le téléchargement n'est accepté que si cette confirmation date de **moins de 15 minutes** ; sinon il renvoie vers la page, qui redemande le mot de passe. Une session restée ouverte ne suffit donc pas.
+  - *Correction du 21/11/2026* : au départ, la confirmation était placée sur le lien de téléchargement lui-même. La page de confirmation de Laravel redirige en **navigation Livewire** (`navigate: true`), qui charge la destination en arrière-plan comme une page HTML. Recevant un fichier compressé, le navigateur se figeait (« Page ne répondant pas ») et rien ne se téléchargeait. La confirmation se fait désormais sur la page, et le bouton est un lien classique, que le navigateur télécharge normalement.
 - **Journal** : chaque export est enregistré dans les journaux d'activité (`Export_base_donnees`), avec l'auteur, la date, le nombre de tables et de lignes, la taille et la durée. Les échecs sont aussi enregistrés. Les 10 derniers exports s'affichent sur la page.
 - **Aucune copie sur le serveur** : le fichier est compressé et envoyé au fil de l'eau au navigateur, sans être écrit sur le disque.
 - **Limite** : une sauvegarde au maximum toutes les 10 minutes, pour ménager le serveur.
