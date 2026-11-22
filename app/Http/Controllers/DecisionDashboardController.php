@@ -2,96 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Account;
-use App\Models\AgentAccount;
 use App\Models\Credit;
 use App\Models\MainCashRegister;
 use App\Models\Repayment;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\DecisionDashboardService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class DecisionDashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, DecisionDashboardService $cockpit)
     {
         if (! Auth::user()->isActive()) {
             return view('not-found');
         }
 
-        $today = now()->startOfDay();
-        $monthStart = now()->startOfMonth();
-        $depositTypes = ['dépôt', 'mise_quotidienne'];
-        $withdrawalTypes = ['retrait', 'retrait_carte_adhesion'];
-        $selectedCurrency = in_array($request->query('currency'), ['USD', 'CDF'], true) ? $request->query('currency') : null;
-        $selectedAgentId = $request->integer('agent_id') ?: null;
-        $selectedAgentId = User::whereKey($selectedAgentId)->exists() ? $selectedAgentId : null;
+        // Filtres (dans l'adresse, pour pouvoir partager ou recharger la même vue)
+        $filtres = [
+            'periode' => array_key_exists((string) $request->query('periode'), DecisionDashboardService::PERIODES) ? $request->query('periode') : 'month',
+            'ref' => $request->query('ref'),
+            'du' => $request->query('du'),
+            'au' => $request->query('au'),
+            'devise' => in_array($request->query('devise'), DecisionDashboardService::DEVISES, true) ? $request->query('devise') : 'CDF',
+            'agent_id' => $request->integer('agent_id') ?: null,
+        ];
+        if ($filtres['agent_id'] && ! User::whereKey($filtres['agent_id'])->where('role', '!=', 'membre')->exists()) {
+            $filtres['agent_id'] = null;
+        }
+
+        $periode = $cockpit->periode($filtres['periode'], $filtres['ref'], $filtres['du'], $filtres['au']);
+        $synthese = $cockpit->synthese($periode, $filtres['devise'], $filtres['agent_id']);
+        $navigation = [
+            'precedente' => $cockpit->referenceVoisine($periode, -1),
+            // Pas de période suivante au-delà d'aujourd'hui
+            'suivante' => $periode['end']->lt(now()) ? $cockpit->referenceVoisine($periode, 1) : null,
+        ];
+
         $agentOptions = User::where('role', '!=', 'membre')
             ->where('status', true)
             ->orderBy('name')
             ->get(['id', 'name', 'postnom', 'prenom', 'role']);
 
-        $members = User::where('role', 'membre');
-        $activeMembers = (clone $members)->where('status', true)->count();
-        $inactiveMembers = (clone $members)->where('status', false)->count();
-
-        $summary = [
-            ['label' => 'Total membres', 'value' => (clone $members)->count(), 'icon' => 'bx-group', 'url' => route('rapports.clients'), 'source' => 'Nombre d’utilisateurs dont le rôle est membre.'],
-            ['label' => 'Membres actifs', 'value' => $activeMembers, 'icon' => 'bx-user-check', 'url' => route('rapports.clients'), 'source' => 'Membres avec le statut actif.'],
-            ['label' => 'Membres inactifs', 'value' => $inactiveMembers, 'icon' => 'bx-user-x', 'url' => route('rapports.clients'), 'source' => 'Membres avec le statut inactif.'],
-            ['label' => 'Nouveaux membres du mois', 'value' => (clone $members)->where('created_at', '>=', $monthStart)->count(), 'icon' => 'bx-user-plus', 'url' => route('rapports.clients'), 'source' => 'Membres créés depuis le premier jour du mois en cours.'],
-            ['label' => 'Total épargne', 'value' => $this->moneyByCurrency(Account::where('type', 'savings'), 'balance'), 'icon' => 'bx-piggy-bank', 'url' => route('member.accounts'), 'is_money' => true, 'source' => 'Somme des soldes des comptes de type épargne, regroupée par devise.'],
-            ['label' => 'Solde caisse', 'value' => $this->moneyByCurrency(MainCashRegister::query(), 'balance'), 'icon' => 'bx-wallet', 'url' => route('cash.register'), 'is_money' => true, 'source' => 'Somme des soldes enregistrés dans la caisse centrale, regroupée par devise.'],
-            ['label' => 'Solde agents', 'value' => $this->moneyByCurrency(AgentAccount::query(), 'balance'), 'icon' => 'bx-briefcase-alt-2', 'url' => route('agent.dashboard'), 'is_money' => true, 'source' => 'Somme des soldes disponibles dans les caisses agents, regroupée par devise.'],
-            ['label' => 'Encours crédits', 'value' => $this->moneyByCurrency(Credit::where('is_paid', false)), 'icon' => 'bx-credit-card', 'url' => route('report.credit.overview'), 'is_money' => true, 'source' => 'Somme des montants des crédits non soldés, regroupée par devise.'],
-            ['label' => 'Crédits actifs', 'value' => Credit::where('is_paid', false)->count(), 'icon' => 'bx-list-check', 'url' => route('report.credit.overview'), 'source' => 'Nombre de crédits dont le champ soldé est encore non.'],
-            ['label' => 'Collecté aujourd’hui', 'value' => $this->moneyByCurrency(Transaction::whereIn('type', $depositTypes)->whereOnDate('created_at', $today)), 'icon' => 'bx-trending-up', 'url' => route('rapports.transactions'), 'is_money' => true, 'source' => 'Somme des transactions de dépôt et mise quotidienne créées aujourd’hui.'],
-            ['label' => 'Remboursé aujourd’hui', 'value' => $this->repaymentMoneyByCurrency(Repayment::whereDate('paid_date', $today)), 'icon' => 'bx-refresh', 'url' => route('report.repayments'), 'is_money' => true, 'source' => 'Somme des échéances marquées payées aujourd’hui, regroupée par devise du crédit.'],
-            ['label' => 'Agents actifs', 'value' => User::where('role', 'recouvreur')->where('status', true)->count(), 'icon' => 'bx-user-voice', 'url' => route('reports.agent-performance'), 'source' => 'Nombre d’utilisateurs recouvreurs avec le statut actif.'],
-        ];
-
-        $depositQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', $depositTypes)->whereOnDate('created_at', $today),
-            $selectedCurrency,
-            $selectedAgentId
-        );
-        $withdrawalQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', $withdrawalTypes)->whereOnDate('created_at', $today),
-            $selectedCurrency,
-            $selectedAgentId
-        );
-        $transferQuery = $this->applyTransactionFilters(
-            Transaction::whereIn('type', ['transfert', 'virement_caisse'])->whereOnDate('created_at', $today),
-            $selectedCurrency,
-            $selectedAgentId
-        );
-        $repaymentQuery = $this->applyRepaymentFilters(
-            Repayment::whereDate('paid_date', $today),
-            $selectedCurrency,
-            $selectedAgentId
-        );
-        $creditGrantedQuery = $this->applyCreditFilters(
-            Credit::whereOnDate('created_at', $today),
-            $selectedCurrency,
-            $selectedAgentId
-        );
-        $newMembersQuery = (clone $members)->whereOnDate('created_at', $today);
-
-        if ($selectedAgentId) {
-            $newMembersQuery->where('agent_id', $selectedAgentId);
-        }
-
-        $activity = [
-            ['label' => 'Dépôts', 'count' => (clone $depositQuery)->count(), 'amount' => $this->moneyByCurrency($depositQuery)],
-            ['label' => 'Retraits', 'count' => (clone $withdrawalQuery)->count(), 'amount' => $this->moneyByCurrency($withdrawalQuery)],
-            ['label' => 'Transferts', 'count' => (clone $transferQuery)->count(), 'amount' => $this->moneyByCurrency($transferQuery)],
-            ['label' => 'Remboursements', 'count' => (clone $repaymentQuery)->count(), 'amount' => $this->repaymentMoneyByCurrency($repaymentQuery)],
-            ['label' => 'Crédits accordés', 'count' => (clone $creditGrantedQuery)->count(), 'amount' => $this->moneyByCurrency($creditGrantedQuery)],
-            ['label' => 'Nouveaux membres', 'count' => $newMembersQuery->count(), 'amount' => null],
-        ];
-
+        // Blocs conservés en l'état (repris aux étapes suivantes : graphiques, alertes et décisions)
+        $depositTypes = ['dépôt', 'mise_quotidienne'];
+        $withdrawalTypes = ['retrait', 'retrait_carte_adhesion'];
         $inactiveBuckets = $this->inactiveMemberBuckets();
         $creditAlerts = $this->creditAlerts();
         $agents = $this->agentPerformance($depositTypes);
@@ -101,85 +58,19 @@ class DecisionDashboardController extends Controller
         $priorities = $this->priorities($inactiveBuckets, $creditAlerts, $financialAlerts);
 
         return view('decision-dashboard', compact(
-            'summary',
-            'activity',
+            'filtres',
+            'periode',
+            'synthese',
+            'navigation',
+            'agentOptions',
             'inactiveBuckets',
             'creditAlerts',
             'agents',
             'trends',
             'financialAlerts',
             'analysis',
-            'priorities',
-            'selectedCurrency',
-            'selectedAgentId',
-            'agentOptions'
+            'priorities'
         ));
-    }
-
-    private function moneyByCurrency($query, string $column = 'amount'): array
-    {
-        return (clone $query)
-            ->select('currency', DB::raw("SUM({$column}) as total"))
-            ->groupBy('currency')
-            ->pluck('total', 'currency')
-            ->map(fn ($amount) => (float) $amount)
-            ->toArray();
-    }
-
-    private function repaymentMoneyByCurrency($query, string $column = 'total_due'): array
-    {
-        return (clone $query)
-            ->join('credits', 'repayments.credit_id', '=', 'credits.id')
-            ->select('credits.currency', DB::raw("SUM(repayments.{$column}) as total"))
-            ->groupBy('credits.currency')
-            ->pluck('total', 'currency')
-            ->map(fn ($amount) => (float) $amount)
-            ->toArray();
-    }
-
-    private function applyTransactionFilters($query, ?string $currency, ?int $agentId)
-    {
-        $query->whereNotNull('account_id');
-
-        if ($currency) {
-            $query->where('currency', $currency);
-        }
-
-        if ($agentId) {
-            $query->whereHas('account.user', fn ($user) => $user->where('agent_id', $agentId));
-        }
-
-        return $query;
-    }
-
-    private function applyCreditFilters($query, ?string $currency, ?int $agentId)
-    {
-        if ($currency) {
-            $query->where('currency', $currency);
-        }
-
-        if ($agentId) {
-            $query->where('agent_id', $agentId);
-        }
-
-        return $query;
-    }
-
-    private function applyRepaymentFilters($query, ?string $currency, ?int $agentId)
-    {
-        if ($currency || $agentId) {
-            $query->whereHas('credit', function ($credit) use ($currency, $agentId) {
-                if ($currency) {
-                    $credit->where('currency', $currency);
-                }
-
-                if ($agentId) {
-                    $credit->where('agent_id', $agentId);
-                }
-            });
-        }
-
-        return $query;
     }
 
     private function inactiveMemberBuckets(): array
