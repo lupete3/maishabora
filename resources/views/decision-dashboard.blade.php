@@ -4,16 +4,6 @@
 
 @section('content')
 @php
-    $money = function ($values) {
-        if (! is_array($values) || count($values) === 0) {
-            return '0';
-        }
-
-        return collect($values)->map(function ($amount, $currency) {
-            return number_format((float) $amount, 2, ',', ' ') . ' ' . $currency;
-        })->implode(' <br> ');
-    };
-
     $fullName = fn ($user) => trim(($user?->name ?? '') . ' ' . ($user?->postnom ?? '') . ' ' . ($user?->prenom ?? '')) ?: 'Non renseigné';
 @endphp
 
@@ -24,7 +14,7 @@
     .decision-kpi:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(35, 38, 47, .08); color: inherit; }
     .decision-icon { width: 42px; height: 42px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; background: #eef4ff; color: #315bb8; flex: 0 0 auto; }
     .decision-label { color: #697386; font-size: .78rem; text-transform: uppercase; letter-spacing: 0; font-weight: 700; }
-    .decision-value { color: #1f2937; font-size: 0.8rem; line-height: 1.3; font-weight: 800; word-break: break-word; }
+    .decision-value { color: #1f2937; font-size: 1rem; line-height: 1.3; font-weight: 800; word-break: break-word; }
     .decision-band { border-left: 4px solid #315bb8; }
     .decision-alert { border-left: 4px solid #d93025; }
     .decision-good { border-left: 4px solid #188038; }
@@ -35,6 +25,9 @@
     .decision-help { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 50%; color: #697386; background: #f1f3f8; cursor: help; flex: 0 0 auto; }
     .decision-help:hover { color: #315bb8; background: #e4ebff; }
     .decision-heading { display: flex; align-items: center; gap: .45rem; }
+    .decision-section { color: #697386; font-size: .8rem; text-transform: uppercase; font-weight: 800; margin-bottom: .6rem; }
+    .decision-big { color: #1f2937; font-size: 1.15rem; font-weight: 800; line-height: 1.3; }
+    .decision-var { font-size: .78rem; font-weight: 700; white-space: nowrap; }
     @media (max-width: 767.98px) {
         .decision-value { font-size: 0.8rem; }
         .decision-kpi { min-height: auto; }
@@ -42,10 +35,38 @@
 </style>
 
 <div class="container-xxl flex-grow-1 container-p-y decision-shell">
-    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+    @php
+        $devise = $synthese['devise'];
+        $act = $synthese['activite'];
+        $pf = $synthese['portefeuille'];
+        $liq = $synthese['liquidite'];
+        $ep = $synthese['epargne'];
+        $portee = $synthese['portee'];
+        $montant = fn ($v) => number_format((float) $v, 0, ',', ' ') . ' ' . $devise;
+        $nombre = fn ($v) => number_format((float) $v, 0, ',', ' ');
+        $pct = fn ($v) => $v === null ? '—' : number_format((float) $v, 1, ',', ' ') . ' %';
+        // Variation par rapport à la période précédente ; $inverse : une hausse est mauvaise (retraits…)
+        $variation = function (array $ligne, bool $inverse = false) use ($periode) {
+            $v = \App\Services\DecisionDashboardService::variation((float) $ligne['valeur'], (float) $ligne['precedent']);
+            if ($v === null) {
+                return '<span class="decision-var text-muted" title="Pas de base de comparaison">— vs ' . e($periode['prev_label']) . '</span>';
+            }
+            $bon = $inverse ? $v <= 0 : $v >= 0;
+            $fleche = $v > 0 ? '▲' : ($v < 0 ? '▼' : '■');
+
+            return '<span class="decision-var ' . ($bon ? 'text-success' : 'text-danger') . '">' . $fleche . ' '
+                . number_format(abs($v), 1, ',', ' ') . ' %</span> <span class="text-muted small">vs ' . e($periode['prev_label']) . '</span>';
+        };
+        // Seuils usuels en microfinance : PAR 30 < 5 % sain, < 10 % à surveiller, au-delà critique
+        $niveauPar = fn ($v) => $v < 5 ? 'success' : ($v < 10 ? 'warning' : 'danger');
+        $niveauCouverture = fn ($v) => $v === null ? 'secondary' : ($v >= 20 ? 'success' : ($v >= 10 ? 'warning' : 'danger'));
+        $lienFiltre = fn (array $changes) => route('decision.dashboard', array_filter(array_merge($filtres, $changes), fn ($v) => $v !== null && $v !== ''));
+    @endphp
+
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-3">
         <div>
             <h4 class="fw-bold mb-1">Cockpit décisionnel</h4>
-            <p class="text-muted mb-0">Vue isolée d’aide à la décision, calculée avec les données déjà disponibles.</p>
+            <p class="text-muted mb-0">Pilotage de l'institution : activité, portefeuille de crédit, épargne et liquidité.</p>
         </div>
         <div class="d-flex flex-wrap gap-2 align-items-start">
             <a href="{{ route('rapports.transactions') }}" class="btn btn-sm btn-outline-primary">
@@ -54,31 +75,183 @@
             <a href="{{ route('report.credit.overview') }}" class="btn btn-sm btn-outline-primary">
                 <i class="bx bx-credit-card me-1"></i> Crédits
             </a>
-            <a href="{{ route('member.register') }}" class="btn btn-sm btn-primary">
-                <i class="bx bx-user-plus me-1"></i> Nouveau membre
-            </a>
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        @foreach ($summary as $item)
-            <div class="col-12 col-sm-6 col-xl-3">
-                <a href="{{ $item['url'] }}" class="decision-card decision-kpi p-3 text-decoration-none">
-                    <span class="decision-icon"><i class="bx {{ $item['icon'] }} fs-4"></i></span>
-                    <span>
-                        <span class="decision-label d-flex align-items-center gap-1">
-                            {{ $item['label'] }}
-                            <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ $item['source'] ?? 'Donnée calculée automatiquement à partir des informations disponibles.' }}">
-                                <i class="bx bx-info-circle"></i>
-                            </span>
-                        </span>
-                        <span class="decision-value d-block mt-1">
-                            {!! !empty($item['is_money']) ? $money($item['value']) : number_format((float) $item['value'], 0, ',', ' ') !!}
-                        </span>
-                    </span>
+    {{-- Filtres --}}
+    <form method="GET" action="{{ route('decision.dashboard') }}" class="decision-card p-3 mb-3" id="cockpit-filtres">
+        <div class="row g-2 align-items-end">
+            <div class="col-6 col-md-2">
+                <label class="form-label mb-1" for="f-periode">Période</label>
+                <select id="f-periode" name="periode" class="form-select form-select-sm">
+                    @foreach (\App\Services\DecisionDashboardService::PERIODES as $cle => $libelle)
+                        <option value="{{ $cle }}" @selected($periode['type'] === $cle)>{{ $libelle }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-2 js-ref">
+                <label class="form-label mb-1" for="f-ref">Date de référence</label>
+                <input type="date" id="f-ref" name="ref" class="form-control form-control-sm"
+                    value="{{ $periode['type'] === 'custom' ? now()->toDateString() : $periode['start']->toDateString() }}" max="{{ now()->toDateString() }}">
+            </div>
+            <div class="col-6 col-md-2 js-intervalle">
+                <label class="form-label mb-1" for="f-du">Du</label>
+                <input type="date" id="f-du" name="du" class="form-control form-control-sm" value="{{ $periode['start']->toDateString() }}">
+            </div>
+            <div class="col-6 col-md-2 js-intervalle">
+                <label class="form-label mb-1" for="f-au">Au</label>
+                <input type="date" id="f-au" name="au" class="form-control form-control-sm" value="{{ $periode['end']->toDateString() }}">
+            </div>
+            <div class="col-6 col-md-1">
+                <label class="form-label mb-1" for="f-devise">Devise</label>
+                <select id="f-devise" name="devise" class="form-select form-select-sm">
+                    @foreach (\App\Services\DecisionDashboardService::DEVISES as $d)
+                        <option value="{{ $d }}" @selected($devise === $d)>{{ $d }}</option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-6 col-md-3">
+                <label class="form-label mb-1" for="f-agent">Agent</label>
+                <select id="f-agent" name="agent_id" class="form-select form-select-sm">
+                    <option value="">Toute l'institution</option>
+                    @foreach ($agentOptions as $agent)
+                        <option value="{{ $agent->id }}" @selected((int) $filtres['agent_id'] === (int) $agent->id)>
+                            {{ trim($agent->name . ' ' . $agent->postnom . ' ' . $agent->prenom) }} ({{ $agent->role }})
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+            <div class="col-12 col-md-auto d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary"><i class="bx bx-filter-alt me-1"></i> Appliquer</button>
+                <a href="{{ route('decision.dashboard') }}" class="btn btn-sm btn-outline-secondary" title="Réinitialiser"><i class="bx bx-reset"></i></a>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+            <a href="{{ $lienFiltre(['ref' => $navigation['precedente'], 'du' => null, 'au' => null]) }}"
+                class="btn btn-sm btn-icon btn-outline-secondary @if ($periode['type'] === 'custom') disabled @endif" title="Période précédente">
+                <i class="bx bx-chevron-left"></i>
+            </a>
+            <span class="fw-bold">{{ $periode['label'] }}</span>
+            @if ($navigation['suivante'] && $periode['type'] !== 'custom')
+                <a href="{{ $lienFiltre(['ref' => $navigation['suivante'], 'du' => null, 'au' => null]) }}"
+                    class="btn btn-sm btn-icon btn-outline-secondary" title="Période suivante">
+                    <i class="bx bx-chevron-right"></i>
                 </a>
+            @endif
+            <span class="text-muted small">comparée à {{ $periode['prev_label'] }} · montants en {{ $devise }}
+                @if ($filtres['agent_id']) · agent filtré @endif
+            </span>
+        </div>
+    </form>
+
+    {{-- 1. Activité de la période --}}
+    <h6 class="decision-section">Activité de la période</h6>
+    <div class="row g-3 mb-4">
+        @foreach ([
+            ['Collecte (dépôts et mises)', $montant($act['collecte']['valeur']), $variation($act['collecte']), 'bx-trending-up', 'Dépôts et mises enregistrés sur les comptes des membres pendant la période (chaque opération comptée une seule fois).'],
+            ['Retraits', $montant($act['retraits']['valeur']), $variation($act['retraits'], true), 'bx-trending-down', 'Retraits effectués par les membres pendant la période.'],
+            ['Épargne nette', $montant($act['epargne_nette']['valeur']), $variation($act['epargne_nette']), 'bx-line-chart', 'Collecte moins retraits : positive, l\'épargne confiée à l\'institution augmente.'],
+            ['Crédits octroyés', $nombre($act['credits_nombre']['valeur']) . ' · ' . $montant($act['credits_montant']['valeur']), $variation($act['credits_montant']), 'bx-credit-card', 'Nombre et montant des crédits accordés pendant la période.'],
+            ['Capital remboursé', $montant($act['remboursements']['valeur']), $variation($act['remboursements']), 'bx-refresh', 'Part du capital des crédits remboursée pendant la période.'],
+            ['Produits encaissés', $montant($act['produits']['valeur']), $variation($act['produits']), 'bx-coin-stack', 'Intérêts, pénalités, frais de crédit et ventes de carnets encaissés pendant la période.'],
+            ['Taux de remboursement', $pct($act['taux_remboursement']['valeur']), $variation($act['taux_remboursement']), 'bx-check-shield', 'Montant payé ÷ montant attendu sur les échéances tombées pendant la période.'],
+            ['Nouveaux membres', $nombre($act['nouveaux_membres']['valeur']), $variation($act['nouveaux_membres']), 'bx-user-plus', 'Membres inscrits pendant la période (toutes devises).'],
+            ['Membres actifs', $nombre($act['membres_actifs']['valeur']), $variation($act['membres_actifs']), 'bx-user-check', 'Membres ayant fait au moins une opération pendant la période (toutes devises).'],
+        ] as [$label, $valeur, $var, $icone, $aide])
+            <div class="col-12 col-sm-6 col-xl-4">
+                <div class="decision-card decision-kpi p-3 h-100">
+                    <span class="decision-icon"><i class="bx {{ $icone }} fs-4"></i></span>
+                    <span class="flex-grow-1">
+                        <span class="decision-label d-flex align-items-center gap-1">
+                            {{ $label }}
+                            <span class="decision-help" data-bs-toggle="tooltip" title="{{ $aide }}"><i class="bx bx-info-circle"></i></span>
+                        </span>
+                        <span class="decision-value d-block mt-1">{{ $valeur }}</span>
+                        <span class="d-block mt-1">{!! $var !!}</span>
+                    </span>
+                </div>
             </div>
         @endforeach
+    </div>
+
+    <div class="row g-3 mb-4">
+        {{-- 2. Portefeuille de crédit --}}
+        <div class="col-xl-6">
+            <h6 class="decision-section">Portefeuille de crédit <span class="text-muted fw-normal">(situation à ce jour)</span></h6>
+            <div class="decision-card p-3 h-100">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="decision-label">Encours (capital restant dû)</div>
+                        <div class="decision-big">{{ $montant($pf['encours']) }}</div>
+                        <div class="small text-muted">{{ $nombre($pf['emprunteurs']) }} emprunteur(s) actif(s) · crédit moyen {{ $montant($pf['credit_moyen']) }}</div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="decision-label">Crédits en retard</div>
+                        <div class="decision-big text-{{ $pf['en_retard'] > 0 ? 'danger' : 'success' }}">{{ $nombre($pf['en_retard']) }}</div>
+                        <div class="small text-muted">au moins une échéance impayée dépassée</div>
+                    </div>
+                </div>
+                <hr>
+                <div class="decision-label d-flex align-items-center gap-1 mb-2">
+                    Portefeuille à risque (PAR)
+                    <span class="decision-help" data-bs-toggle="tooltip" title="Part de l'encours dont une échéance est impayée depuis plus de N jours. Repères : PAR 30 inférieur à 5 % = sain ; 5 à 10 % = à surveiller ; au-delà = critique."><i class="bx bx-info-circle"></i></span>
+                </div>
+                @foreach (['PAR 1 jour' => $pf['par1'], 'PAR 30 jours' => $pf['par30'], 'PAR 90 jours' => $pf['par90']] as $label => $valeur)
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span>{{ $label }}</span>
+                        <span class="fw-bold text-{{ $niveauPar($valeur) }}">{{ $pct($valeur) }}</span>
+                    </div>
+                    <div class="decision-progress mb-2"><span class="bg-{{ $niveauPar($valeur) }}" style="width: {{ min(100, $valeur) }}%"></span></div>
+                @endforeach
+            </div>
+        </div>
+
+        {{-- 3. Épargne, liquidité, portée --}}
+        <div class="col-xl-6">
+            <h6 class="decision-section">Épargne et liquidité <span class="text-muted fw-normal">(situation à ce jour)</span></h6>
+            <div class="decision-card p-3 h-100">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <div class="decision-label d-flex align-items-center gap-1">
+                            Dépôts de la clientèle
+                            <span class="decision-help" data-bs-toggle="tooltip" title="Ce que l'institution doit à ses clients : somme des soldes positifs de leurs comptes."><i class="bx bx-info-circle"></i></span>
+                        </div>
+                        <div class="decision-big">{{ $montant($ep['depots']) }}</div>
+                        @if ($ep['epargnants'] !== null)
+                            <div class="small text-muted">{{ $nombre($ep['epargnants']) }} compte(s) créditeur(s)
+                                @if ($ep['soldes_negatifs'] < 0) · soldes négatifs {{ $montant($ep['soldes_negatifs']) }} @endif
+                            </div>
+                        @endif
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="decision-label d-flex align-items-center gap-1">
+                            Liquidité disponible
+                            <span class="decision-help" data-bs-toggle="tooltip" title="Caisse centrale + caisses des agents{{ $filtres['agent_id'] ? ' (ici : caisse de l\'agent filtré)' : '' }}."><i class="bx bx-info-circle"></i></span>
+                        </div>
+                        <div class="decision-big">{{ $montant($liq['total']) }}</div>
+                        <div class="small text-muted">centrale {{ $montant($liq['caisse_centrale']) }} · agents {{ $montant($liq['caisses_agents']) }}</div>
+                    </div>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <span class="decision-label d-flex align-items-center gap-1">
+                        Couverture des dépôts par la liquidité
+                        <span class="decision-help" data-bs-toggle="tooltip" title="Liquidité ÷ dépôts de la clientèle. Indique la capacité à servir des retraits massifs. Repère interne : 20 % ou plus = confortable ; 10 à 20 % = à surveiller ; moins de 10 % = tension."><i class="bx bx-info-circle"></i></span>
+                    </span>
+                    <span class="fw-bold text-{{ $niveauCouverture($liq['couverture']) }}">{{ $pct($liq['couverture']) }}</span>
+                </div>
+                <div class="decision-progress mb-3"><span class="bg-{{ $niveauCouverture($liq['couverture']) }}" style="width: {{ min(100, (float) $liq['couverture']) }}%"></span></div>
+
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="decision-label d-flex align-items-center gap-1">
+                        Portée : membres clients
+                        <span class="decision-help" data-bs-toggle="tooltip" title="Membres de catégorie « client » (hors comptes internes) et part des femmes, indicateur suivi par les bailleurs."><i class="bx bx-info-circle"></i></span>
+                    </span>
+                    <span class="fw-bold">{{ $nombre($portee['membres']) }} · {{ $pct($portee['part_femmes']) }} de femmes</span>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -177,74 +350,7 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-xl-5">
-            <div class="decision-card p-3 h-100">
-                <div class="d-flex flex-column gap-3 mb-3">
-                    <div class="d-flex justify-content-between align-items-start gap-2">
-                        <h5 class="mb-0 decision-heading">
-                            Activités du jour
-                            <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Compte uniquement les opérations client liées à un compte membre. Le filtre agent utilise le client propriétaire du compte, puis son agent responsable.">
-                                <i class="bx bx-info-circle"></i>
-                            </span>
-                        </h5>
-                        @if ($selectedCurrency || $selectedAgentId)
-                            <a href="{{ route('decision.dashboard') }}" class="btn btn-sm btn-outline-secondary">
-                                <i class="bx bx-reset me-1"></i> Réinitialiser
-                            </a>
-                        @endif
-                    </div>
-
-                    <form method="GET" action="{{ route('decision.dashboard') }}" class="row g-2 align-items-end">
-                        <div class="col-12 col-sm-4">
-                            <label for="activity-currency" class="form-label mb-1">Devise</label>
-                            <select id="activity-currency" name="currency" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">Toutes</option>
-                                <option value="USD" @selected($selectedCurrency === 'USD')>USD</option>
-                                <option value="CDF" @selected($selectedCurrency === 'CDF')>CDF</option>
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-6">
-                            <label for="activity-agent" class="form-label mb-1">Agent</label>
-                            <select id="activity-agent" name="agent_id" class="form-select form-select-sm" onchange="this.form.submit()">
-                                <option value="">Tous les agents</option>
-                                @foreach ($agentOptions as $agent)
-                                    <option value="{{ $agent->id }}" @selected((int) $selectedAgentId === (int) $agent->id)>
-                                        {{ trim($agent->name . ' ' . $agent->postnom . ' ' . $agent->prenom) }} - {{ $agent->role }}
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-12 col-sm-2">
-                            <button type="submit" class="btn btn-sm btn-primary w-100">
-                                <i class="bx bx-filter-alt"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
-                <div class="table-responsive">
-                    <table class="table table-sm decision-table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Activité</th>
-                                <th>Nombre</th>
-                                <th>Montant</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($activity as $line)
-                                <tr>
-                                    <td>{{ $line['label'] }}</td>
-                                    <td>{{ number_format($line['count'], 0, ',', ' ') }}</td>
-                                    <td>{!! $line['amount'] ? $money($line['amount']) : '-' !!}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-7">
+        <div class="col-12">
             <div class="decision-card p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 decision-heading">
@@ -450,7 +556,17 @@
         });
 
         chart.render();
-        window.setTimeout(() => window.location.reload(), 60000);
+        // Champs de date selon le type de période
+        const typePeriode = document.getElementById('f-periode');
+        const afficherChamps = () => {
+            const intervalle = typePeriode.value === 'custom';
+            document.querySelectorAll('.js-intervalle').forEach(el => el.classList.toggle('d-none', !intervalle));
+            document.querySelectorAll('.js-ref').forEach(el => el.classList.toggle('d-none', intervalle));
+            document.querySelectorAll('.js-intervalle input').forEach(el => el.disabled = !intervalle);
+            document.getElementById('f-ref').disabled = intervalle;
+        };
+        typePeriode.addEventListener('change', afficherChamps);
+        afficherChamps();
     });
 </script>
 @endsection
