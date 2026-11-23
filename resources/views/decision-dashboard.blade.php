@@ -3,10 +3,6 @@
 @section('title', 'Cockpit décisionnel')
 
 @section('content')
-@php
-    $fullName = fn ($user) => trim(($user?->name ?? '') . ' ' . ($user?->postnom ?? '') . ' ' . ($user?->prenom ?? '')) ?: 'Non renseigné';
-@endphp
-
 <style>
     .decision-shell { background: #f6f7fb; }
     .decision-card { border: 1px solid #e6e8ef; border-radius: 8px; background: #fff; box-shadow: 0 1px 2px rgba(35, 38, 47, .04); }
@@ -27,6 +23,10 @@
     .decision-heading { display: flex; align-items: center; gap: .45rem; }
     .decision-section { color: #697386; font-size: .8rem; text-transform: uppercase; font-weight: 800; margin-bottom: .6rem; }
     .decision-big { color: #1f2937; font-size: 1.15rem; font-weight: 800; line-height: 1.3; }
+    .decision-decision { border-radius: 8px; border-left: 4px solid; background: #fafbfd; }
+    .decision-decision-danger { border-left-color: #d93025; background: #fdf3f2; }
+    .decision-decision-warning { border-left-color: #f29900; background: #fff8ec; }
+    .decision-decision-info { border-left-color: #315bb8; background: #f2f6ff; }
     .decision-var { font-size: .78rem; font-weight: 700; white-space: nowrap; }
     @media (max-width: 767.98px) {
         .decision-value { font-size: 0.8rem; }
@@ -144,6 +144,60 @@
             </span>
         </div>
     </form>
+
+    {{-- Alertes et décisions (étape 3) --}}
+    @php
+        $styles = [
+            'danger' => ['bx-error-circle', 'Critique'],
+            'warning' => ['bx-error', 'À surveiller'],
+            'info' => ['bx-info-circle', 'À traiter'],
+        ];
+        $compte = collect($alertes)->countBy('niveau');
+    @endphp
+    <div class="decision-card p-3 mb-4">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+            <h5 class="mb-0 decision-heading">
+                Alertes et décisions
+                <span class="decision-help" data-bs-toggle="tooltip" title="Règles appliquées aux chiffres de cette page (période, devise et agent choisis). Chaque alerte donne le constat chiffré et une décision proposée."><i class="bx bx-info-circle"></i></span>
+            </h5>
+            <div class="d-flex gap-1">
+                @foreach (['danger' => 'critique(s)', 'warning' => 'à surveiller', 'info' => 'à traiter'] as $niveau => $libelle)
+                    @if ($compte->get($niveau))
+                        <span class="badge bg-label-{{ $niveau }}">{{ $compte->get($niveau) }} {{ $libelle }}</span>
+                    @endif
+                @endforeach
+            </div>
+        </div>
+
+        @forelse ($alertes as $alerte)
+            <div class="decision-decision decision-decision-{{ $alerte['niveau'] }} p-3 mb-2">
+                <div class="d-flex flex-column flex-md-row gap-2 justify-content-between">
+                    <div class="d-flex gap-2">
+                        <i class="bx {{ $styles[$alerte['niveau']][0] }} fs-4 text-{{ $alerte['niveau'] }}"></i>
+                        <div>
+                            <div class="fw-bold">
+                                {{ $alerte['titre'] }}
+                                <span class="badge bg-label-{{ $alerte['niveau'] }} ms-1">{{ $styles[$alerte['niveau']][1] }}</span>
+                            </div>
+                            <div class="small text-muted">{{ $alerte['constat'] }}</div>
+                            <div class="small mt-1"><span class="fw-bold">Décision proposée :</span> {{ $alerte['decision'] }}</div>
+                        </div>
+                    </div>
+                    @if ($alerte['lien'])
+                        <div class="flex-shrink-0">
+                            <a href="{{ $alerte['lien'] }}" class="btn btn-sm btn-outline-{{ $alerte['niveau'] === 'info' ? 'primary' : $alerte['niveau'] }}">
+                                {{ $alerte['lien_libelle'] }} <i class="bx bx-right-arrow-alt"></i>
+                            </a>
+                        </div>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="alert alert-success mb-0">
+                <i class="bx bx-check-circle me-1"></i> Aucune alerte sur cette période : les indicateurs sont dans les repères.
+            </div>
+        @endforelse
+    </div>
 
     {{-- 1. Activité de la période --}}
     <h6 class="decision-section">Activité de la période</h6>
@@ -305,166 +359,104 @@
         @endif
     </div>
 
+    @php
+        $peutVoirClient = auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']);
+    @endphp
+
+    {{-- 5. Listes de travail --}}
+    <h6 class="decision-section">Listes de travail <span class="text-muted fw-normal">(situation à ce jour · {{ $devise }})</span></h6>
     <div class="row g-3 mb-4">
         <div class="col-xl-7">
             <div class="decision-card decision-alert p-3 h-100">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 decision-heading">
-                        Centre d’alertes
-                        <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Regroupe les membres sans opération récente, les échéances dues aujourd’hui et les crédits en retard.">
-                            <i class="bx bx-info-circle"></i>
-                        </span>
-                    </h5>
-                    <span class="decision-pill">{{ collect($creditAlerts['overdue'])->sum('count') }} retards</span>
-                </div>
-
-                <div class="row g-3">
-                    @foreach ($inactiveBuckets as $bucket)
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="p-3 bg-light rounded">
-                                <div class="decision-label d-flex align-items-center gap-1">
-                                    {{ $bucket['label'] }}
-                                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Clients actifs administrativement sans dernière opération dans cette tranche de jours.">
-                                        <i class="bx bx-info-circle"></i>
-                                    </span>
-                                </div>
-                                <div class="decision-value">{{ $bucket['count'] }}</div>
-                                <a href="{{ route('rapports.clients') }}" class="small">Voir la liste</a>
-                            </div>
-                        </div>
-                    @endforeach
-                </div>
-
-                <div class="table-responsive mt-3">
-                    <table class="table table-sm decision-table mb-0">
-                        <thead>
-                            <tr>
-                                <th>Client inactif</th>
-                                <th>Agent</th>
-                                <th>Dernière opération</th>
-                                <th>Jours</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse (collect($inactiveBuckets)->flatMap(fn ($bucket) => $bucket['members'])->take(10) as $member)
-                                @php
-                                    $lastActivity = $member->last_transaction_at ?? $member->created_at;
-                                @endphp
-                                <tr @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
-                                    onclick="window.location.href='{{ route('member.details', $member->id) }}'"
-                                    style="cursor: pointer;"
-                                @endif >
-                                    <td>{{ $fullName($member) }} <br> {{ $member->code }}</td>
-                                    <td>{{ $fullName($member->agent) }}</td>
-                                    <td>{{ $lastActivity?->format('d/m/Y') ?? 'Non renseigné' }}</td>
-                                    <td>{{ $lastActivity ? (int) abs(now()->startOfDay()->diffInDays($lastActivity->copy()->startOfDay(), false)) : '-' }}</td>
-                                </tr>
-                            @empty
-                                <tr><td colspan="4" class="text-muted">Aucun client inactif détecté dans les seuils suivis.</td></tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-5">
-            <div class="decision-card p-3 h-100">
-                <h5 class="mb-3 decision-heading">
-                    Actions prioritaires
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Tâches générées depuis les inactivités longues, les échéances du jour, les retards et les alertes financières.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h5>
-                <div class="d-grid gap-2">
-                    @foreach ($priorities as $priority)
-                        <div class="d-flex gap-2 align-items-start p-2 bg-light rounded">
-                            <i class="bx bx-target-lock text-primary fs-5"></i>
-                            <span>{{ $priority }}</span>
-                        </div>
-                    @endforeach
-                </div>
-
-                <h6 class="fw-bold mt-4 mb-2 decision-heading">
-                    Alertes financières
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Détecte une caisse négative, une baisse de collecte ou une hausse de retraits par comparaison avec les derniers jours.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h6>
-                @forelse ($financialAlerts as $alert)
-                    <div class="alert alert-warning py-2 mb-2">{{ $alert }}</div>
-                @empty
-                    <div class="alert alert-success py-2 mb-0">Aucune alerte financière automatique détectée.</div>
-                @endforelse
-            </div>
-        </div>
-    </div>
-
-    <div class="row g-3 mb-4">
-        <div class="col-12">
-            <div class="decision-card p-3 h-100">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 decision-heading">
                         Crédits à surveiller
-                        <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Utilise les remboursements non payés : échéance aujourd’hui ou échéance passée pour les retards.">
-                            <i class="bx bx-info-circle"></i>
-                        </span>
+                        <span class="decision-help" data-bs-toggle="tooltip" title="Crédits non soldés ayant au moins une échéance impayée dépassée, classés selon l'ancienneté de la plus vieille échéance impayée (balance âgée). Montant = capital restant dû."><i class="bx bx-info-circle"></i></span>
                     </h5>
-                    <a href="{{ route('report.credit.overview') }}" class="btn btn-sm btn-outline-primary">
-                        <i class="bx bx-show me-1"></i> Voir rapport
-                    </a>
+                    <a href="{{ route('report.credit.overview') }}" class="btn btn-sm btn-outline-primary"><i class="bx bx-show me-1"></i> Rapport</a>
                 </div>
-
                 <div class="row g-2 mb-3">
-                    <div class="col-sm-6">
-                        <div class="p-3 bg-light rounded">
-                            <div class="decision-label d-flex align-items-center gap-1">
-                                Échéances aujourd’hui
-                                <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Remboursements non payés dont la date d’échéance est aujourd’hui.">
-                                    <i class="bx bx-info-circle"></i>
-                                </span>
-                            </div>
-                            <div class="decision-value">{{ $creditAlerts['todayDue']->count() }}</div>
-                        </div>
-                    </div>
-                    @foreach ($creditAlerts['overdue'] as $bucket)
-                        <div class="col-sm-6 col-lg-3">
-                            <div class="p-3 bg-light rounded">
-                                <div class="decision-label d-flex align-items-center gap-1">
-                                    {{ $bucket['label'] }}
-                                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Remboursements non payés classés selon le nombre de jours depuis l’échéance.">
-                                        <i class="bx bx-info-circle"></i>
-                                    </span>
-                                </div>
-                                <div class="decision-value">{{ $bucket['count'] }}</div>
+                    @foreach ($credits['tranches'] as $tranche)
+                        <div class="col-6 col-lg-3">
+                            <div class="p-2 bg-light rounded h-100">
+                                <div class="decision-label">{{ $tranche['label'] }}</div>
+                                <div class="decision-value">{{ $nombre($tranche['nombre']) }}</div>
+                                <div class="small text-muted">{{ $montant($tranche['montant']) }}</div>
                             </div>
                         </div>
                     @endforeach
                 </div>
-
                 <div class="table-responsive">
                     <table class="table table-sm decision-table mb-0">
                         <thead>
                             <tr>
                                 <th>Client</th>
                                 <th>Agent</th>
-                                <th>Reste</th>
-                                <th>Retard</th>
+                                <th class="text-end">Restant dû</th>
+                                <th class="text-end">Retard</th>
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse (collect($creditAlerts['overdue'])->flatMap(fn ($bucket) => $bucket['items'])->take(8) as $repayment)
-                                <tr @if(auth()->user()->canAny(['afficher-compte-membre', 'depot-compte-membre', 'retrait-compte-membre']))
-                                    onclick="window.location.href='{{ route('member.details', $repayment->credit?->user->id) }}'"
-                                    style="cursor: pointer;"
-                                @endif>
-                                    <td>{{ $fullName($repayment->credit?->user) }} <br>{{ $repayment->credit?->user->code }}</td>
-                                    <td>{{ $fullName($repayment->credit?->agent) }}</td>
-                                    <td>{{ number_format(max(0, (float) $repayment->total_due - (float) $repayment->paid_amount), 2, ',', ' ') }} {{ $repayment->credit?->currency }}</td>
-                                    <td>{{ (int) abs(now()->startOfDay()->diffInDays($repayment->due_date->copy()->startOfDay(), false)) }} jours</td>
+                            @forelse ($credits['liste'] as $credit)
+                                <tr @if ($peutVoirClient) onclick="window.location.href='{{ route('member.details', $credit['client_id']) }}'" style="cursor: pointer;" @endif>
+                                    <td>{{ $credit['client'] }}<br><span class="small text-muted">{{ $credit['code'] }}</span></td>
+                                    <td>{{ $credit['agent'] }}</td>
+                                    <td class="text-end text-nowrap">{{ $montant($credit['restant']) }}</td>
+                                    <td class="text-end text-nowrap">
+                                        <span class="fw-bold text-{{ $credit['jours'] > 90 ? 'danger' : ($credit['jours'] > 30 ? 'warning' : 'body') }}">{{ $credit['jours'] }} j</span><br>
+                                        <span class="small text-muted">{{ $credit['impayees'] }} échéance(s)</span>
+                                    </td>
                                 </tr>
                             @empty
-                                <tr><td colspan="4" class="text-muted">Aucun remboursement en retard détecté.</td></tr>
+                                <tr><td colspan="4" class="text-muted">Aucun crédit en retard dans cette devise.</td></tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
+                @if ($credits['nombre'] > count($credits['liste']))
+                    <p class="small text-muted mt-2 mb-0">Les 10 plus gros restants dus sur {{ $credits['nombre'] }} crédits en retard ({{ $montant($credits['total']) }}).</p>
+                @endif
+            </div>
+        </div>
+
+        <div class="col-xl-5">
+            <div class="decision-card p-3 h-100">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 decision-heading">
+                        Clients inactifs avec épargne
+                        <span class="decision-help" data-bs-toggle="tooltip" title="Clients actifs sans opération depuis au moins 30 jours qui ont encore un solde positif dans la devise : risque de départ et épargne qui dort."><i class="bx bx-info-circle"></i></span>
+                    </h5>
+                    <a href="{{ route('agent.clients-non-collectes') }}" class="btn btn-sm btn-outline-primary"><i class="bx bx-walk me-1"></i> À visiter</a>
+                </div>
+                <div class="row g-2 mb-3">
+                    @foreach ($inactifs['tranches'] as $tranche)
+                        <div class="col-6">
+                            <div class="p-2 bg-light rounded h-100">
+                                <div class="decision-label">{{ $tranche['label'] }}</div>
+                                <div class="decision-value">{{ $nombre($tranche['nombre']) }}</div>
+                                <div class="small text-muted">{{ $montant($tranche['epargne']) }}</div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-sm decision-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Client</th>
+                                <th class="text-end">Épargne</th>
+                                <th class="text-end">Inactif</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($inactifs['liste'] as $client)
+                                <tr @if ($peutVoirClient) onclick="window.location.href='{{ route('member.details', $client['id']) }}'" style="cursor: pointer;" @endif>
+                                    <td>{{ $client['client'] }}<br><span class="small text-muted">{{ $client['agent'] }}</span></td>
+                                    <td class="text-end text-nowrap">{{ $montant($client['epargne']) }}</td>
+                                    <td class="text-end text-nowrap">{{ $client['jours'] }} j<br><span class="small text-muted">{{ $client['derniere']->format('d/m/Y') }}</span></td>
+                                </tr>
+                            @empty
+                                <tr><td colspan="3" class="text-muted">Aucun client inactif avec épargne dans cette devise.</td></tr>
                             @endforelse
                         </tbody>
                     </table>
@@ -473,79 +465,47 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-4">
-        <div class="col-12">
-            <div class="decision-card decision-band p-3 h-100">
-                <h5 class="mb-3 decision-heading">
-                    Analyse intelligente
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Commentaires générés par règles simples à partir des tendances, retards, inactivités et alertes financières disponibles.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h5>
-                <div class="d-grid gap-2">
-                    @foreach ($analysis as $message)
-                        <div class="p-2 bg-light rounded">{{ $message }}</div>
-                    @endforeach
-                </div>
-
-                <h6 class="fw-bold mt-4 mb-2 decision-heading">
-                    Recommandations
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Actions proposées à partir des mêmes priorités automatiques affichées en haut de page.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h6>
-                <div class="d-grid gap-2">
-                    @foreach ($priorities as $priority)
-                        <div class="d-flex gap-2 align-items-start">
-                            <i class="bx bx-check-circle text-success fs-5"></i>
-                            <span>{{ $priority }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-    </div>
-
+    {{-- 6. Performance des agents --}}
     <div class="decision-card p-3 mb-4">
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h5 class="mb-0 decision-heading">
-                Performance des agents
-                <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Compare les agents recouvreurs avec leurs clients, collectes, crédits suivis et crédits en retard.">
-                    <i class="bx bx-info-circle"></i>
-                </span>
+                Performance des agents · {{ $periode['label'] }}
+                <span class="decision-help" data-bs-toggle="tooltip" title="Clients rattachés à l'agent, clients ayant fait une opération sur la période, collecte de la période (écritures de l'agent), encours et PAR 30 actuels des crédits qu'il suit, crédits en retard. Comptes internes exclus."><i class="bx bx-info-circle"></i></span>
             </h5>
-            <a href="{{ route('reports.agent-performance') }}" class="btn btn-sm btn-outline-primary">
-                <i class="bx bx-bar-chart-alt-2 me-1"></i> Rapport agents
-            </a>
+            <a href="{{ route('reports.agent-performance') }}" class="btn btn-sm btn-outline-primary"><i class="bx bx-bar-chart-alt-2 me-1"></i> Rapport agents</a>
         </div>
         <div class="table-responsive">
             <table class="table table-sm decision-table mb-0">
                 <thead>
                     <tr>
                         <th>Agent</th>
-                        <th>Clients</th>
-                        <th>Actifs</th>
-                        <th>Inactifs</th>
-                        <th>Collecte jour</th>
-                        <th>Collecte mois</th>
-                        <th>Crédits suivis</th>
-                        <th>Crédits retard</th>
+                        <th class="text-end">Clients</th>
+                        <th class="text-end">Actifs</th>
+                        <th class="text-end">Collecte</th>
+                        <th class="text-end">Encours</th>
+                        <th class="text-end">PAR 30</th>
+                        <th class="text-end">En retard</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($agents as $agent)
                         <tr>
-                            <td>{{ $fullName($agent) }}</td>
-                            <td>{{ $agent->clients_count }}</td>
-                            <td>{{ $agent->active_clients_count }}</td>
-                            <td>{{ $agent->inactive_clients_count }}</td>
-                            <td>{{ number_format((float) $agent->collection_today, 2, ',', ' ') }}</td>
-                            <td>{{ number_format((float) $agent->collection_month, 2, ',', ' ') }}</td>
-                            <td>{{ $agent->credits_followed_count }}</td>
-                            <td>{{ $agent->overdue_credits_count }}</td>
+                            <td>{{ $agent['nom'] }}<br><span class="small text-muted">{{ $agent['role'] }}</span></td>
+                            <td class="text-end">{{ $nombre($agent['clients']) }}</td>
+                            <td class="text-end">{{ $nombre($agent['actifs']) }}@if ($agent['taux_activite'] !== null)<br><span class="small text-muted">{{ $pct($agent['taux_activite']) }}</span>@endif</td>
+                            <td class="text-end text-nowrap">{{ $montant($agent['collecte']) }}</td>
+                            <td class="text-end text-nowrap">{{ $montant($agent['encours']) }}</td>
+                            <td class="text-end">
+                                @if ($agent['encours'] > 0)
+                                    <span class="fw-bold text-{{ $niveauPar($agent['par30']) }}">{{ $pct($agent['par30']) }}</span>
+                                @else
+                                    —
+                                @endif
+                            </td>
+                            <td class="text-end">{{ $nombre($agent['retards']) }}</td>
                         </tr>
                     @empty
-                        <tr><td colspan="8" class="text-muted">Aucun agent recouvreur actif dans les données actuelles.</td></tr>
+                        <tr><td colspan="7" class="text-muted">Aucun agent avec des clients, une collecte ou des crédits dans cette devise.</td></tr>
                     @endforelse
                 </tbody>
             </table>
