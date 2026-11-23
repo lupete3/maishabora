@@ -329,6 +329,222 @@ class DecisionDashboardService
         ];
     }
 
+    // ------------------------------------------------------------------
+    // Graphiques (étape 2)
+    // ------------------------------------------------------------------
+
+    /**
+     * Données des graphiques de la période (mises en cache 5 minutes par combinaison de filtres).
+     */
+    public function graphiques(array $periode, string $devise, ?int $agentId = null): array
+    {
+        $devise = in_array($devise, self::DEVISES, true) ? $devise : 'CDF';
+        $cle = 'cockpit-graphiques:' . md5(json_encode([
+            $periode['start']->toDateTimeString(), $periode['end']->toDateTimeString(), $devise, $agentId,
+            now()->format('Y-m-d H') . floor(now()->minute / 5),
+        ]));
+
+        return Cache::remember($cle, 300, function () use ($periode, $devise, $agentId) {
+            $tranches = $this->tranches($periode);
+
+            return [
+                'labels' => array_column($tranches, 'label'),
+                'flux' => $this->fluxParTranche($tranches, $periode, $devise, $agentId),
+                'portefeuille' => $this->portefeuilleParTranche($tranches, $devise, $agentId),
+                'agents' => $agentId ? [] : $this->comparaisonAgents($periode, $devise),
+            ];
+        });
+    }
+
+    /**
+     * Découpe la période en tranches (heures, jours, semaines ou mois selon sa longueur).
+     *
+     * @return array<int, array{start: Carbon, end: Carbon, label: string}>
+     */
+    public function tranches(array $p): array
+    {
+        $tranches = [];
+        $curseur = $p['start']->copy();
+
+        while ($curseur->lte($p['end'])) {
+            [$debut, $fin, $label] = match ($p['granularite']) {
+                'hour' => [$curseur->copy(), $curseur->copy()->endOfHour(), $curseur->format('H') . 'h'],
+                'day' => [$curseur->copy()->startOfDay(), $curseur->copy()->endOfDay(), $curseur->format('d/m')],
+                'week' => [$curseur->copy(), $curseur->copy()->endOfWeek(), 'Sem. ' . $curseur->format('d/m')],
+                default => [$curseur->copy(), $curseur->copy()->endOfMonth(), ucfirst($curseur->locale('fr')->isoFormat('MMM YY'))],
+            };
+            $fin = $fin->min($p['end']);
+            $tranches[] = ['start' => $debut, 'end' => $fin, 'label' => $label];
+            $curseur = $fin->copy()->addSecond();
+        }
+
+        return $tranches;
+    }
+
+    /** Collecte, retraits, crédits octroyés et capital remboursé, par tranche. */
+    private function fluxParTranche(array $tranches, array $p, string $devise, ?int $agentId): array
+    {
+        $parHeure = $p['granularite'] === 'hour';
+        // Même règle que la synthèse : global = côté compte membre ; agent = ses écritures (user_id)
+        $operations = fn (array $types) => DB::table('transactions')
+            ->whereIn('type', $types)
+            ->where('currency', $devise)
+            ->whereBetween('created_at', [$p['start'], $p['end']])
+            ->when($agentId, fn ($q) => $q->where('user_id', $agentId), fn ($q) => $q->whereNotNull('account_id'));
+
+        $series = [
+            'collecte' => $this->sommeParTranche(
+                $operations(array_merge(ObjectifProgressService::MISE_TYPES, ObjectifProgressService::DEPOT_TYPES)),
+                'created_at', 'amount', $tranches, $parHeure
+            ),
+            'retraits' => $this->sommeParTranche($operations(ObjectifProgressService::RETRAIT_TYPES), 'created_at', 'amount', $tranches, $parHeure),
+            'credits' => $this->sommeParTranche(
+                DB::table('credits')->where('currency', $devise)->whereBetween('created_at', [$p['start'], $p['end']])
+                    ->when($agentId, fn ($q) => $q->where('agent_id', $agentId)),
+                'created_at', 'amount', $tranches, $parHeure
+            ),
+            // Date de paiement sans heure : en vue « Jour », tout tombe sur 00h
+            'remboursements' => $this->sommeParTranche(
+                DB::table('repayments')->join('credits', 'credits.id', '=', 'repayments.credit_id')
+                    ->where('credits.currency', $devise)
+                    ->whereBetween('repayments.paid_date', [$p['start']->toDateString(), $p['end']->toDateString()])
+                    ->when($agentId, fn ($q) => $q->where('credits.agent_id', $agentId)),
+                'repayments.paid_date', 'repayments.paid_principal', $tranches, $parHeure
+            ),
+        ];
+
+        return array_map(fn ($serie) => array_map(fn ($v) => round($v, 2), $serie), $series);
+    }
+
+    /**
+     * Somme d'une colonne répartie dans les tranches : regroupement SQL par jour
+     * (ou lecture des lignes pour un découpage horaire), puis cumul par tranche en PHP.
+     */
+    private function sommeParTranche($query, string $colonneDate, string $colonneMontant, array $tranches, bool $parHeure): array
+    {
+        if ($parHeure) {
+            $lignes = $query->get([$colonneDate . ' as d', $colonneMontant . ' as v'])
+                ->map(fn ($l) => ['d' => Carbon::parse($l->d), 'v' => (float) $l->v]);
+        } else {
+            $lignes = $query->selectRaw("DATE({$colonneDate}) AS d, COALESCE(SUM({$colonneMontant}), 0) AS v")
+                ->groupByRaw("DATE({$colonneDate})")
+                ->get()
+                ->map(fn ($l) => ['d' => Carbon::parse($l->d), 'v' => (float) $l->v]);
+        }
+
+        $serie = array_fill(0, count($tranches), 0.0);
+        foreach ($lignes as $ligne) {
+            foreach ($tranches as $i => $t) {
+                if ($ligne['d']->between($t['start'], $t['end'])) {
+                    $serie[$i] += $ligne['v'];
+                    break;
+                }
+            }
+        }
+
+        return $serie;
+    }
+
+    /**
+     * Encours et PAR 30 à la fin de chaque tranche (sans dépasser aujourd'hui), reconstitués
+     * à partir des échéances : un paiement compte à sa date (à défaut, date de mise à jour) ;
+     * un crédit soldé ne pèse plus rien après la date où il a été marqué soldé.
+     * Le dernier point retombe sur l'encours et le PAR 30 actuels.
+     */
+    private function portefeuilleParTranche(array $tranches, string $devise, ?int $agentId): array
+    {
+        $encours = [];
+        $par30 = [];
+
+        foreach ($tranches as $t) {
+            if ($t['start']->gt(now())) {
+                $encours[] = null;
+                $par30[] = null;
+                continue;
+            }
+            $date = $t['end']->copy()->min(now());
+            $total = $this->encoursAu($date, $devise, $agentId);
+            $encours[] = round($total, 2);
+            $par30[] = $total > 0 ? round($this->encoursAu($date, $devise, $agentId, 30) / $total * 100, 2) : 0;
+        }
+
+        return ['encours' => $encours, 'par30' => $par30];
+    }
+
+    /** Capital restant dû à une date (ou part en retard de plus de $retard jours). */
+    public function encoursAu(Carbon $date, string $devise, ?int $agentId = null, ?int $retard = null): float
+    {
+        $jour = $date->toDateString();
+        $paye = 'COALESCE(repayments.paid_date, DATE(repayments.updated_at))';
+        $restant = "CASE WHEN credits.is_paid = 1 AND DATE(credits.updated_at) <= ? THEN 0
+            ELSE GREATEST(COALESCE(repayments.principal_amount, repayments.expected_amount, 0)
+                - CASE WHEN {$paye} <= ? THEN COALESCE(repayments.paid_principal, 0) ELSE 0 END, 0) END";
+
+        $query = DB::table('repayments')
+            ->join('credits', 'credits.id', '=', 'repayments.credit_id')
+            ->where('credits.currency', $devise)
+            ->where('credits.created_at', '<=', $date)
+            ->when($agentId, fn ($q) => $q->where('credits.agent_id', $agentId));
+
+        if ($retard !== null) {
+            $limite = $date->copy()->subDays($retard)->toDateString();
+            // Une échéance dépassée de plus de N jours et pas encore payée à cette date
+            $query->whereExists(function ($sub) use ($limite, $jour) {
+                $sub->selectRaw('1')
+                    ->from('repayments as echeance')
+                    ->whereColumn('echeance.credit_id', 'credits.id')
+                    ->where('echeance.due_date', '<', $limite)
+                    ->where(fn ($w) => $w->where('echeance.is_paid', false)
+                        ->orWhereRaw('COALESCE(echeance.paid_date, DATE(echeance.updated_at)) > ?', [$jour]));
+            });
+        }
+
+        return (float) $query->selectRaw("COALESCE(SUM({$restant}), 0) AS v", [$jour, $jour])->value('v');
+    }
+
+    /**
+     * Comparaison des agents sur la période : collecte (leurs écritures), encours et PAR 30 actuels
+     * de leurs crédits. Les 10 premiers par collecte puis encours.
+     */
+    private function comparaisonAgents(array $p, string $devise): array
+    {
+        $collecteTypes = array_merge(ObjectifProgressService::MISE_TYPES, ObjectifProgressService::DEPOT_TYPES);
+
+        $ids = DB::table('transactions')
+            ->whereIn('type', $collecteTypes)
+            ->where('currency', $devise)
+            ->whereNull('account_id')
+            ->whereBetween('created_at', [$p['start'], $p['end']])
+            ->distinct()->pluck('user_id')
+            ->merge(DB::table('credits')->where('currency', $devise)->where('is_paid', false)->whereNotNull('agent_id')->distinct()->pluck('agent_id'))
+            ->filter()->unique()->values()->all();
+
+        // Sans les membres ni les comptes internes (rôles admin et comptable : « COMPTE CHARGES », « RETENU MISE », « COMPTE ADHESION »…)
+        $agents = DB::table('users')->whereIn('id', $ids)->whereNotIn('role', ['membre', 'admin', 'comptable'])
+            ->get(['id', 'name', 'postnom', 'prenom']);
+        if ($agents->isEmpty()) {
+            return [];
+        }
+        $ids = $agents->pluck('id')->all();
+
+        $collecte = $this->mesures->mesurer('collecte_totale', $p['start'], $p['end'], $devise, $ids);
+        $encours = $this->mesures->mesurer('encours_credit', $p['start'], $p['end'], $devise, $ids);
+        $par30 = $this->mesures->mesurer('par_30', $p['start'], $p['end'], $devise, $ids);
+
+        return $agents
+            ->map(fn ($a) => [
+                'nom' => trim($a->name . ' ' . $a->postnom),
+                'collecte' => round((float) ($collecte[$a->id] ?? 0), 2),
+                'encours' => round((float) ($encours[$a->id] ?? 0), 2),
+                'par30' => (float) ($par30[$a->id] ?? 0),
+            ])
+            ->filter(fn ($a) => $a['collecte'] > 0 || $a['encours'] > 0)
+            ->sortByDesc(fn ($a) => [$a['collecte'], $a['encours']])
+            ->take(10)
+            ->values()
+            ->all();
+    }
+
     /** Variation en % par rapport à la période précédente (null si la base est nulle). */
     public static function variation(float $valeur, float $precedent): ?float
     {

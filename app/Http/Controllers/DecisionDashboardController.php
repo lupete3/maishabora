@@ -35,6 +35,7 @@ class DecisionDashboardController extends Controller
 
         $periode = $cockpit->periode($filtres['periode'], $filtres['ref'], $filtres['du'], $filtres['au']);
         $synthese = $cockpit->synthese($periode, $filtres['devise'], $filtres['agent_id']);
+        $graphiques = $cockpit->graphiques($periode, $filtres['devise'], $filtres['agent_id']);
         $navigation = [
             'precedente' => $cockpit->referenceVoisine($periode, -1),
             // Pas de période suivante au-delà d'aujourd'hui
@@ -61,6 +62,7 @@ class DecisionDashboardController extends Controller
             'filtres',
             'periode',
             'synthese',
+            'graphiques',
             'navigation',
             'agentOptions',
             'inactiveBuckets',
