@@ -32,6 +32,8 @@ class DecisionDashboardServiceTest extends TestCase
         Schema::create('users', function (Blueprint $t) {
             $t->id();
             $t->string('name');
+            $t->string('postnom')->nullable();
+            $t->string('prenom')->nullable();
             $t->string('role')->default('membre');
             $t->boolean('status')->default(true);
             $t->unsignedBigInteger('agent_id')->nullable();
@@ -126,14 +128,14 @@ class DecisionDashboardServiceTest extends TestCase
             ['id' => 12, 'user_id' => 3, 'currency' => 'USD', 'balance' => 10],
         ]);
         DB::table('transactions')->insert([
-            // Une mise de 10 000 : ligne côté compte membre + ligne côté caisse de l'agent
-            ['account_id' => 10, 'user_id' => 1, 'type' => 'mise_quotidienne', 'currency' => 'CDF', 'amount' => 10000, 'created_at' => $avril],
+            // Une mise de 10 000 : ligne côté compte membre (user_id = membre) + ligne côté caisse de l'agent
+            ['account_id' => 10, 'user_id' => 2, 'type' => 'mise_quotidienne', 'currency' => 'CDF', 'amount' => 10000, 'created_at' => $avril],
             ['account_id' => null, 'user_id' => 1, 'type' => 'encaissement_mise', 'currency' => 'CDF', 'amount' => 10000, 'created_at' => $avril],
-            ['account_id' => 11, 'user_id' => 1, 'type' => 'dépôt', 'currency' => 'CDF', 'amount' => 5000, 'created_at' => $avril],
-            ['account_id' => 11, 'user_id' => 1, 'type' => 'retrait', 'currency' => 'CDF', 'amount' => 3000, 'created_at' => $avril],
-            ['account_id' => 12, 'user_id' => 1, 'type' => 'dépôt', 'currency' => 'USD', 'amount' => 999, 'created_at' => $avril],
+            ['account_id' => 11, 'user_id' => 3, 'type' => 'dépôt', 'currency' => 'CDF', 'amount' => 5000, 'created_at' => $avril],
+            ['account_id' => 11, 'user_id' => 3, 'type' => 'retrait', 'currency' => 'CDF', 'amount' => 3000, 'created_at' => $avril],
+            ['account_id' => 12, 'user_id' => 3, 'type' => 'dépôt', 'currency' => 'USD', 'amount' => 999, 'created_at' => $avril],
             // Mars : base de comparaison
-            ['account_id' => 11, 'user_id' => 1, 'type' => 'dépôt', 'currency' => 'CDF', 'amount' => 4000, 'created_at' => '2026-03-12 09:00:00'],
+            ['account_id' => 11, 'user_id' => 3, 'type' => 'dépôt', 'currency' => 'CDF', 'amount' => 4000, 'created_at' => '2026-03-12 09:00:00'],
         ]);
         DB::table('credits')->insert([
             ['id' => 1, 'user_id' => 2, 'agent_id' => 1, 'currency' => 'CDF', 'amount' => 100000, 'frais_credit' => null, 'is_paid' => false, 'created_at' => '2026-03-01'],
@@ -214,5 +216,55 @@ class DecisionDashboardServiceTest extends TestCase
         $this->assertEquals(0, $s['liquidite']['caisse_centrale']);
         $this->assertEquals(8000, $s['liquidite']['caisses_agents']);
         $this->assertEquals(140000, $s['portefeuille']['encours']);
+    }
+
+    public function test_tranches_selon_la_periode(): void
+    {
+        $mois = $this->service->tranches($this->service->periode('month', '2026-04-15'));
+        $this->assertCount(30, $mois);
+        $this->assertSame('01/04', $mois[0]['label']);
+
+        $this->assertCount(12, $this->service->tranches($this->service->periode('year', '2026-04-15')));
+        $this->assertCount(24, $this->service->tranches($this->service->periode('day', '2026-04-15')));
+
+        // Trimestre découpé en semaines, la première commence au 1er avril (mercredi)
+        $trimestre = $this->service->tranches($this->service->periode('quarter', '2026-04-15'));
+        $this->assertSame('2026-04-01', $trimestre[0]['start']->toDateString());
+        $this->assertSame('2026-04-05', $trimestre[0]['end']->toDateString());
+        $this->assertSame('2026-06-30', end($trimestre)['end']->toDateString());
+    }
+
+    public function test_graphiques_flux_portefeuille_et_agents(): void
+    {
+        $g = $this->service->graphiques($this->service->periode('month', '2026-04-15'), 'CDF');
+
+        $this->assertCount(30, $g['labels']);
+        $this->assertEquals(15000, array_sum($g['flux']['collecte']));   // même total que la synthèse
+        $this->assertEquals(10000 + 5000, $g['flux']['collecte'][14]);    // le 15/04
+        $this->assertEquals(3000, array_sum($g['flux']['retraits']));
+        $this->assertEquals(40000, $g['flux']['credits'][9]);            // le 10/04
+
+        // Le 01/04 : seul le crédit 1 existe, son échéance du 20/03 n'a pas encore 30 jours de retard
+        $this->assertEquals(100000, $g['portefeuille']['encours'][0]);
+        $this->assertEquals(0, $g['portefeuille']['par30'][0]);
+        // Dernier point = situation actuelle
+        $this->assertEquals(140000, end($g['portefeuille']['encours']));
+        $this->assertEquals(71.43, end($g['portefeuille']['par30']));
+
+        // Agent : ses écritures côté caisse (la mise), encours et PAR de ses crédits
+        $this->assertSame([['nom' => 'Agent', 'collecte' => 10000.0, 'encours' => 140000.0, 'par30' => 71.43]], $g['agents']);
+    }
+
+    public function test_encours_reconstitue_tient_compte_des_paiements_et_des_credits_soldes(): void
+    {
+        // Paiement de 20 000 sur l'échéance du crédit 2, le 20/04
+        DB::table('repayments')->where('credit_id', 2)->update(['paid_principal' => 20000, 'paid_date' => '2026-04-20']);
+        $this->assertEquals(140000, $this->service->encoursAu(Carbon::parse('2026-04-19'), 'CDF'));
+        $this->assertEquals(120000, $this->service->encoursAu(Carbon::parse('2026-04-25'), 'CDF'));
+
+        // Crédit 1 marqué soldé le 28/04 : il ne pèse plus rien ensuite
+        DB::table('credits')->where('id', 1)->update(['is_paid' => true, 'updated_at' => '2026-04-28 10:00:00']);
+        $this->assertEquals(120000, $this->service->encoursAu(Carbon::parse('2026-04-25'), 'CDF'));
+        $this->assertEquals(20000, $this->service->encoursAu(Carbon::parse('2026-04-29'), 'CDF'));
     }
 }

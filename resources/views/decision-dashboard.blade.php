@@ -254,6 +254,57 @@
         </div>
     </div>
 
+    {{-- 4. Graphiques de la période --}}
+    <h6 class="decision-section">Graphiques · {{ $periode['label'] }} · {{ $devise }}</h6>
+    <div class="row g-3 mb-4">
+        <div class="col-xl-8">
+            <div class="decision-card p-3 h-100">
+                <h5 class="mb-1 decision-heading">
+                    Évolution de l'activité
+                    <span class="decision-help" data-bs-toggle="tooltip" title="Collecte et retraits (barres), crédits octroyés et capital remboursé (lignes), découpés par {{ ['hour' => 'heure', 'day' => 'jour', 'week' => 'semaine', 'month' => 'mois'][$periode['granularite']] }}. Mêmes règles que les indicateurs ci-dessus."><i class="bx bx-info-circle"></i></span>
+                </h5>
+                <p class="small text-muted mb-2">Des barres vertes au-dessus des rouges : l'épargne progresse.</p>
+                <div id="chartActivite" style="min-height: 320px;"></div>
+            </div>
+        </div>
+        <div class="col-xl-4">
+            <div class="decision-card p-3 h-100">
+                <h5 class="mb-1 decision-heading">
+                    Composition des produits
+                    <span class="decision-help" data-bs-toggle="tooltip" title="Revenus encaissés pendant la période, par source."><i class="bx bx-info-circle"></i></span>
+                </h5>
+                <p class="small text-muted mb-2">Total : {{ $montant($act['produits']['valeur']) }}</p>
+                @if ($act['produits']['valeur'] > 0)
+                    <div id="chartProduits" style="min-height: 300px;"></div>
+                @else
+                    <div class="text-muted py-5 text-center">Aucun produit encaissé sur la période.</div>
+                @endif
+            </div>
+        </div>
+        <div class="col-xl-{{ empty($graphiques['agents']) ? '12' : '6' }}">
+            <div class="decision-card p-3 h-100">
+                <h5 class="mb-1 decision-heading">
+                    Encours et portefeuille à risque
+                    <span class="decision-help" data-bs-toggle="tooltip" title="Capital restant dû (aire) et PAR 30 (ligne, échelle de droite) à la fin de chaque tranche. Valeurs passées reconstituées à partir des dates de paiement des échéances ; le dernier point correspond à la situation actuelle."><i class="bx bx-info-circle"></i></span>
+                </h5>
+                <p class="small text-muted mb-2">Un encours qui monte avec un PAR stable ou en baisse : croissance saine.</p>
+                <div id="chartPortefeuille" style="min-height: 300px;"></div>
+            </div>
+        </div>
+        @if (! empty($graphiques['agents']))
+            <div class="col-xl-6">
+                <div class="decision-card p-3 h-100">
+                    <h5 class="mb-1 decision-heading">
+                        Comparaison des agents
+                        <span class="decision-help" data-bs-toggle="tooltip" title="Collecte de la période (écritures de l'agent) et encours actuel des crédits qu'il suit ; le PAR 30 de chaque agent apparaît au survol. Les 10 premiers."><i class="bx bx-info-circle"></i></span>
+                    </h5>
+                    <p class="small text-muted mb-2">Survolez une barre pour voir le PAR 30 de l'agent.</p>
+                    <div id="chartAgents" style="min-height: 300px;"></div>
+                </div>
+            </div>
+        @endif
+    </div>
+
     <div class="row g-3 mb-4">
         <div class="col-xl-7">
             <div class="decision-card decision-alert p-3 h-100">
@@ -423,19 +474,7 @@
     </div>
 
     <div class="row g-3 mb-4">
-        <div class="col-xl-7">
-            <div class="decision-card p-3 h-100">
-                <h5 class="mb-3 decision-heading">
-                    Tendances sur 30 jours
-                    <span class="decision-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Graphique construit à partir des montants quotidiens des collectes, retraits, remboursements et octrois de crédit sur 30 jours.">
-                        <i class="bx bx-info-circle"></i>
-                    </span>
-                </h5>
-                <div id="decisionTrendChart" style="min-height: 330px;"></div>
-            </div>
-        </div>
-
-        <div class="col-xl-5">
+        <div class="col-12">
             <div class="decision-card decision-band p-3 h-100">
                 <h5 class="mb-3 decision-heading">
                     Analyse intelligente
@@ -538,24 +577,93 @@
             new bootstrap.Tooltip(element);
         });
 
-        const chart = new ApexCharts(document.querySelector('#decisionTrendChart'), {
-            chart: { type: 'area', height: 330, toolbar: { show: false } },
-            stroke: { curve: 'smooth', width: 2 },
-            dataLabels: { enabled: false },
-            colors: ['#315bb8', '#d93025', '#188038', '#f29900'],
-            series: [
-                { name: 'Collectes', data: @json($trends['collectes']) },
-                { name: 'Retraits', data: @json($trends['retraits']) },
-                { name: 'Remboursements', data: @json($trends['remboursements']) },
-                { name: 'Crédits', data: @json($trends['credits']) },
-            ],
-            xaxis: { categories: @json($trends['labels']) },
-            yaxis: { labels: { formatter: value => Number(value).toLocaleString('fr-FR') } },
-            tooltip: { y: { formatter: value => Number(value).toLocaleString('fr-FR') } },
-            legend: { position: 'top' },
-        });
+        // ---- Graphiques (une seule devise à la fois) ----
+        const devise = @json($devise);
+        const g = @json($graphiques);
+        const entier = v => v === null || v === undefined ? '—' : Math.round(Number(v)).toLocaleString('fr-FR');
+        const montant = v => v === null || v === undefined ? '—' : entier(v) + ' ' + devise;
+        // Axe compact : 1,2 M ; 350 k
+        const compact = v => {
+            const n = Math.abs(Number(v));
+            if (n >= 1e6) return (Number(v) / 1e6).toLocaleString('fr-FR', { maximumFractionDigits: 1 }) + ' M';
+            if (n >= 1e3) return (Number(v) / 1e3).toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' k';
+            return entier(v);
+        };
+        const commun = { toolbar: { show: false }, fontFamily: 'inherit', zoom: { enabled: false } };
 
-        chart.render();
+        new ApexCharts(document.querySelector('#chartActivite'), {
+            chart: { ...commun, type: 'line', height: 320, stacked: false },
+            series: [
+                { name: 'Collecte', type: 'column', data: g.flux.collecte },
+                { name: 'Retraits', type: 'column', data: g.flux.retraits },
+                { name: 'Crédits octroyés', type: 'line', data: g.flux.credits },
+                { name: 'Capital remboursé', type: 'line', data: g.flux.remboursements },
+            ],
+            colors: ['#188038', '#d93025', '#315bb8', '#f29900'],
+            stroke: { width: [0, 0, 3, 3], curve: 'smooth' },
+            plotOptions: { bar: { columnWidth: '60%', borderRadius: 2 } },
+            dataLabels: { enabled: false },
+            xaxis: { categories: g.labels, tickAmount: Math.min(g.labels.length, 12), labels: { rotate: -45, hideOverlappingLabels: true } },
+            yaxis: { labels: { formatter: compact } },
+            tooltip: { shared: true, intersect: false, y: { formatter: montant } },
+            legend: { position: 'top' },
+        }).render();
+
+        if (document.querySelector('#chartProduits')) {
+            const produits = @json($act['produits_detail']);
+            new ApexCharts(document.querySelector('#chartProduits'), {
+                chart: { ...commun, type: 'donut', height: 300 },
+                series: Object.values(produits).map(Number),
+                labels: Object.keys(produits),
+                colors: ['#315bb8', '#d93025', '#f29900', '#188038'],
+                dataLabels: { formatter: v => v.toLocaleString('fr-FR', { maximumFractionDigits: 0 }) + ' %' },
+                tooltip: { y: { formatter: montant } },
+                legend: { position: 'bottom' },
+                plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: w => compact(w.globals.seriesTotals.reduce((a, b) => a + b, 0)) } } } } },
+            }).render();
+        }
+
+        new ApexCharts(document.querySelector('#chartPortefeuille'), {
+            chart: { ...commun, type: 'line', height: 300 },
+            series: [
+                { name: 'Encours', type: 'area', data: g.portefeuille.encours },
+                { name: 'PAR 30 (%)', type: 'line', data: g.portefeuille.par30 },
+            ],
+            colors: ['#315bb8', '#d93025'],
+            stroke: { width: [2, 3], curve: 'straight' },
+            fill: { type: ['gradient', 'solid'], gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+            dataLabels: { enabled: false },
+            xaxis: { categories: g.labels, tickAmount: Math.min(g.labels.length, 12), labels: { rotate: -45, hideOverlappingLabels: true } },
+            yaxis: [
+                { title: { text: 'Encours (' + devise + ')' }, labels: { formatter: compact } },
+                { opposite: true, min: 0, max: 100, title: { text: 'PAR 30' }, labels: { formatter: v => entier(v) + ' %' } },
+            ],
+            // Repère des 5 % sur l'échelle du PAR
+            annotations: { yaxis: [{ y: 5, yAxisIndex: 1, borderColor: '#f29900', strokeDashArray: 4, label: { text: 'PAR 30 = 5 %', style: { color: '#fff', background: '#f29900' } } }] },
+            tooltip: { shared: true, intersect: false, y: [{ formatter: montant }, { formatter: v => v === null ? '—' : Number(v).toLocaleString('fr-FR') + ' %' }] },
+            legend: { position: 'top' },
+        }).render();
+
+        if (document.querySelector('#chartAgents')) {
+            new ApexCharts(document.querySelector('#chartAgents'), {
+                chart: { ...commun, type: 'bar', height: Math.max(300, g.agents.length * 42) },
+                series: [
+                    { name: 'Collecte de la période', data: g.agents.map(a => a.collecte) },
+                    { name: 'Encours actuel', data: g.agents.map(a => a.encours) },
+                ],
+                colors: ['#188038', '#315bb8'],
+                plotOptions: { bar: { horizontal: true, barHeight: '70%', borderRadius: 2 } },
+                dataLabels: { enabled: false },
+                xaxis: { categories: g.agents.map(a => a.nom), labels: { formatter: compact } },
+                tooltip: {
+                    shared: true, intersect: false,
+                    y: { formatter: montant },
+                    x: { formatter: (nom, { dataPointIndex }) => nom + ' · PAR 30 : ' + Number(g.agents[dataPointIndex].par30).toLocaleString('fr-FR') + ' %' },
+                },
+                legend: { position: 'top' },
+            }).render();
+        }
+
         // Champs de date selon le type de période
         const typePeriode = document.getElementById('f-periode');
         const afficherChamps = () => {
