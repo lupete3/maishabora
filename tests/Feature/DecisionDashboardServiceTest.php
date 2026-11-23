@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Services\DecisionAlertsService;
 use App\Services\DecisionDashboardService;
 use Carbon\Carbon;
 use Illuminate\Database\Schema\Blueprint;
@@ -39,6 +40,8 @@ class DecisionDashboardServiceTest extends TestCase
             $t->unsignedBigInteger('agent_id')->nullable();
             $t->string('sexe')->nullable();
             $t->string('client_category')->default('client');
+            $t->string('code')->nullable();
+            $t->timestamp('last_transaction_at')->nullable();
             $t->timestamps();
         });
         Schema::create('accounts', function (Blueprint $t) {
@@ -118,9 +121,10 @@ class DecisionDashboardServiceTest extends TestCase
     {
         $avril = '2026-04-15 10:00:00';
         DB::table('users')->insert([
-            ['id' => 1, 'name' => 'Agent', 'role' => 'recouvreur', 'agent_id' => null, 'sexe' => null, 'client_category' => 'client', 'created_at' => '2025-01-01'],
-            ['id' => 2, 'name' => 'Amina', 'role' => 'membre', 'agent_id' => 1, 'sexe' => 'Féminin', 'client_category' => 'client', 'created_at' => $avril],
-            ['id' => 3, 'name' => 'Paul', 'role' => 'membre', 'agent_id' => 1, 'sexe' => 'Masculin', 'client_category' => 'client', 'created_at' => '2026-03-10'],
+            ['id' => 1, 'name' => 'Agent', 'role' => 'recouvreur', 'agent_id' => null, 'sexe' => null, 'client_category' => 'client', 'created_at' => '2025-01-01', 'last_transaction_at' => null],
+            ['id' => 2, 'name' => 'Amina', 'role' => 'membre', 'agent_id' => 1, 'sexe' => 'Féminin', 'client_category' => 'client', 'created_at' => $avril, 'last_transaction_at' => $avril],
+            // Paul : aucune opération enregistrée depuis son inscription le 10/03 (51 jours)
+            ['id' => 3, 'name' => 'Paul', 'role' => 'membre', 'agent_id' => 1, 'sexe' => 'Masculin', 'client_category' => 'client', 'created_at' => '2026-03-10', 'last_transaction_at' => null],
         ]);
         DB::table('accounts')->insert([
             ['id' => 10, 'user_id' => 2, 'currency' => 'CDF', 'balance' => 50000],
@@ -266,5 +270,77 @@ class DecisionDashboardServiceTest extends TestCase
         DB::table('credits')->where('id', 1)->update(['is_paid' => true, 'updated_at' => '2026-04-28 10:00:00']);
         $this->assertEquals(120000, $this->service->encoursAu(Carbon::parse('2026-04-25'), 'CDF'));
         $this->assertEquals(20000, $this->service->encoursAu(Carbon::parse('2026-04-29'), 'CDF'));
+    }
+
+    public function test_credits_a_surveiller_par_anciennete_et_devise(): void
+    {
+        $c = app(DecisionAlertsService::class)->creditsASurveiller('CDF');
+
+        $this->assertSame(1, $c['nombre']);              // le crédit 2 est à jour, le crédit USD est exclu
+        $this->assertEquals(100000, $c['total']);         // capital restant dû du crédit 1
+        $this->assertSame(1, $c['tranches'][1]['nombre']); // 41 jours : tranche « 31 à 90 jours »
+        $this->assertSame(41, $c['liste'][0]['jours']);
+        $this->assertSame(1, $c['liste'][0]['impayees']);
+        $this->assertSame('Amina', $c['liste'][0]['client']);
+        $this->assertSame(0, $c['a_terme']);
+
+        $this->assertSame(1, app(DecisionAlertsService::class)->creditsASurveiller('USD')['nombre']);
+    }
+
+    public function test_clients_inactifs_avec_epargne(): void
+    {
+        $i = app(DecisionAlertsService::class)->clientsInactifs('CDF');
+
+        // Paul : 51 jours sans opération, 30 000 CDF ; Amina a opéré il y a 15 jours
+        $this->assertSame(1, $i['nombre']);
+        $this->assertEquals(30000, $i['epargne']);
+        $this->assertSame(1, $i['tranches'][0]['nombre']);
+        $this->assertSame('Paul', $i['liste'][0]['client']);
+        $this->assertSame(51, $i['liste'][0]['jours']);
+    }
+
+    public function test_performance_des_agents(): void
+    {
+        $p = $this->service->periode('month', '2026-04-15');
+        $agents = app(DecisionAlertsService::class)->performanceAgents($p, 'CDF');
+
+        $this->assertCount(1, $agents);
+        $this->assertSame(2, $agents[0]['clients']);
+        $this->assertSame(2, $agents[0]['actifs']);       // mise d'Amina, dépôt de Paul
+        $this->assertEquals(10000, $agents[0]['collecte']); // écriture côté caisse de l'agent
+        $this->assertEquals(140000, $agents[0]['encours']);
+        $this->assertEquals(71.43, $agents[0]['par30']);
+        $this->assertSame(1, $agents[0]['retards']);
+    }
+
+    public function test_alertes_et_decisions(): void
+    {
+        $decisions = app(DecisionAlertsService::class);
+        $p = $this->service->periode('month', '2026-04-15');
+        $calculer = function () use ($decisions, $p) {
+            Cache::flush();
+            $s = $this->service->synthese($p, 'CDF');
+
+            return $decisions->alertes($s, $p, $decisions->creditsASurveiller('CDF'), $decisions->clientsInactifs('CDF'), $decisions->performanceAgents($p, 'CDF'));
+        };
+
+        $alertes = $calculer();
+        $titres = array_column($alertes, 'titre');
+        $this->assertContains('Portefeuille à risque critique', $titres);       // PAR 30 = 71 %
+        $this->assertContains('Encours concentré sur un seul agent', $titres);  // 100 % chez l'agent
+        $this->assertContains("Clients inactifs qui ont de l'épargne", $titres);
+        $this->assertNotContains('Caisse négative', $titres);
+        $this->assertNotContains('Liquidité à surveiller', $titres);           // couverture 35 %
+        $this->assertNotContains('Clients sans agent attribué', $titres);
+        $this->assertSame('danger', $alertes[0]['niveau']);                    // les plus graves d'abord
+        $this->assertNotEmpty($alertes[0]['decision']);
+
+        // Caisse centrale négative : alerte critique et liquidité en tension
+        DB::table('main_cash_registers')->where('currency', 'CDF')->update(['balance' => -50000]);
+        DB::table('users')->where('id', 3)->update(['agent_id' => null]);
+        $titres = array_column($calculer(), 'titre');
+        $this->assertContains('Caisse négative', $titres);
+        $this->assertContains('Liquidité en tension', $titres);
+        $this->assertContains('Clients sans agent attribué', $titres);
     }
 }

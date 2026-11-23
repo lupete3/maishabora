@@ -3,7 +3,7 @@
 Refonte en 3 étapes, pour les décideurs (direction, conseil, administrateurs) :
 1. **Filtres et synthèse fiable** (22/11/2026) : fait ;
 2. **Graphiques** (23/11/2026) : fait ;
-3. Alertes et décisions : à faire.
+3. **Alertes et décisions** (23/11/2026) : fait.
 
 Plus tard, dans une interface séparée : **états financiers et ratios comptables** destinés aux partenaires, aux bailleurs et à la BCC (bilan, compte de résultat, autosuffisance…). Ils attendent que la comptabilité soit à jour.
 
@@ -50,8 +50,8 @@ Les chiffres réutilisent les règles déjà validées dans l'application : **`O
 ### Constat sur les données locales
 Les 93 crédits non soldés ont tous dépassé leur **dernière échéance** : la plus récente tombait le 28/09/2026. Le PAR affiche donc **100 %**. Si la production montre la même chose, il s'agit soit de crédits réellement en souffrance, soit de crédits remboursés mais jamais marqués « soldés ». C'est à vérifier, car cela fausse l'encours.
 
-### Blocs conservés en l'état (repris à l'étape 3)
-Le centre d'alertes, les actions prioritaires, les crédits à surveiller, l'analyse et la performance des agents restent inchangés. L'ancienne « Tendance sur 30 jours », qui additionnait les devises, a été remplacée à l'étape 2.
+### Anciens blocs
+Tous les anciens blocs ont été remplacés : la tendance sur 30 jours à l'étape 2, les alertes, l'analyse, les crédits à surveiller et la performance des agents à l'étape 3.
 
 L'ancien bloc « Activités du jour » est **supprimé** : la période « Jour » le remplace. Le rechargement automatique toutes les 60 s est aussi retiré.
 
@@ -116,3 +116,70 @@ L'activité s'arrête presque après avril. Le PAR 30 passe d'environ 3 % fin av
   - encours reconstitué après un paiement et après un crédit soldé.
 - **Rendu serveur** sans erreur pour mois, jour en USD, exercice filtré sur un agent, et un intervalle sans produits (message « Aucun produit »).
 - **Navigateur** : mois et exercice sur ordinateur, mois sur téléphone (sans défilement horizontal).
+
+## Étape 3 : alertes et décisions (23/11/2026)
+
+### Alertes et décisions (en haut de la page)
+Des règles s'appliquent aux chiffres de la page, avec la même période, la même devise et le même agent. Chaque alerte donne :
+- **le constat chiffré** ;
+- **une décision proposée** ;
+- **un lien** vers l'écran où agir.
+
+Les alertes sont classées : critique (rouge), puis à surveiller (orange), puis à traiter (bleu).
+
+| Alerte | Déclenchement | Décision proposée |
+|---|---|---|
+| Portefeuille à risque | PAR 30 ≥ 5 % (critique à partir de 10 %) | Freiner les nouveaux crédits chez les agents exposés, recouvrer les plus gros retards |
+| Crédits arrivés à terme non soldés | Dernière échéance dépassée depuis plus de 90 jours | Marquer soldé si remboursé, sinon contentieux ou passage en perte |
+| Encours concentré | Un agent suit au moins 50 % de l'encours | Répartir le suivi |
+| Échéances mal remboursées | Taux de remboursement de la période < 95 % (critique sous 80 %) | Visites ciblées |
+| Caisse négative | Caisse centrale ou caisses des agents < 0 | Contrôler et régulariser |
+| Liquidité | Couverture des dépôts < 20 % (critique sous 10 %) | Limiter les décaissements et les grosses sorties |
+| Retraits supérieurs à la collecte | Épargne nette de la période < 0 | Comprendre les gros retraits, relancer la collecte |
+| Collecte en forte baisse | −20 % ou plus par rapport à la période précédente | Vérifier chaque agent, fixer des objectifs |
+| Clients inactifs avec épargne | Au moins 30 jours sans opération et solde > 0 | Visites par l'agent |
+| Soldes négatifs | Comptes clients négatifs | Analyser et régulariser |
+| Clients sans agent | Clients actifs sans `agent_id` | Attribuer un agent |
+
+Les alertes liées à toute l'institution (concentration, soldes négatifs, clients sans agent) ne s'affichent pas quand un agent est filtré.
+
+### Listes de travail (situation à ce jour, dans la devise choisie)
+- **Crédits à surveiller** (« balance âgée ») :
+  - les crédits en retard sont classés par ancienneté de la plus vieille échéance impayée : 1 à 30, 31 à 90, 91 à 180, plus de 180 jours ;
+  - pour chaque tranche : nombre de crédits et capital restant dû ;
+  - ensuite, les 10 plus gros restants dus, avec le client, l'agent, les jours de retard et le nombre d'échéances impayées ;
+  - la ligne ouvre la fiche du client, selon les droits de l'utilisateur.
+- **Clients inactifs avec épargne** :
+  - tranches de 30, 60, 90 et 180 jours sans opération, avec le nombre de clients et l'épargne qui dort ;
+  - ensuite, les 10 plus gros soldes.
+
+  Cela remplace l'ancien bloc, qui comptait tous les membres sans regarder leur solde.
+- **Performance des agents** sur la période : clients rattachés, clients actifs et taux d'activité, collecte, encours, PAR 30, crédits en retard. Les comptes internes (rôles `admin` et `comptable`) sont exclus.
+
+### Corrections par rapport à l'ancien cockpit
+- L'ancienne « Analyse intelligente » et les « Actions prioritaires » utilisaient la collecte comptée deux fois et mélangeaient les devises. Elles sont remplacées par les alertes.
+- Les anciens « Crédits à surveiller » comptaient des **échéances** et non des crédits, sans montant ni devise.
+- L'ancienne performance des agents ne retenait que les recouvreurs. Elle additionnait les devises, et elle classait un crédit « en retard » selon un champ qui n'est pas mis à jour.
+
+### Fichiers
+| Rôle | Fichier |
+|---|---|
+| Alertes, décisions, listes de travail | `app/Services/DecisionAlertsService.php` (nouveau) |
+| Contrôleur réduit à l'assemblage des filtres et des services | `app/Http/Controllers/DecisionDashboardController.php` |
+| Vue | `resources/views/decision-dashboard.blade.php` |
+
+### Constat sur les données locales (avril 2026, CDF)
+- 8 alertes : 2 critiques, 3 à surveiller, 3 à traiter.
+- **86,8 % de l'encours** est suivi par un seul utilisateur (« AGENT ASSOCIERS », réceptionniste).
+- **27 crédits** sont arrivés à terme sans être soldés.
+- **281 clients inactifs** détiennent 27,3 M CDF.
+- La plupart des clients n'ont **aucun agent attribué**.
+
+### Vérifié
+- **Tests** (10 tests, 84 vérifications) :
+  - balance âgée et devise séparée ;
+  - clients inactifs avec épargne ;
+  - performance d'un agent ;
+  - déclenchement et ordre des alertes, y compris caisse négative, liquidité en tension et clients sans agent.
+- **Rendu serveur** sans erreur : mois, jour en USD, exercice filtré sur un agent, intervalle.
+- **Navigateur** : alertes, listes de travail et tableau des agents sur ordinateur.
