@@ -399,6 +399,12 @@ Route::fallback(function () {
 
 require __DIR__ . '/auth.php';
 
+// Carnets retirés et non renouvelés : clients à relancer (+ export Excel)
+Route::middleware(['auth', 'check.status', 'auth.session', 'permission:voir-carnets-non-renouveles'])->group(function () {
+    Route::get('/carnets-non-renouveles', [\App\Http\Controllers\CardRenewalController::class, 'index'])->name('carnets.non-renouveles');
+    Route::get('/carnets-non-renouveles/export', [\App\Http\Controllers\CardRenewalController::class, 'export'])->name('carnets.non-renouveles.export');
+});
+
 // Stock des carnets : chaque écriture possède également un contrôle d'autorisation métier.
 Route::middleware(['auth', 'check.status', 'auth.session'])->prefix('carnets-stock')->name('card-stock.')->group(function () {
     Route::get('/', [\App\Http\Controllers\CardStockController::class, 'index'])->name('index')->middleware('permission:afficher-stock-carnets');
