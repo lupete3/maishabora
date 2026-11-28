@@ -31,7 +31,7 @@ La commande liste les carnets d'épargne non annulés qui ont des mises payées 
 
 **Elle ne modifie rien.** Option : `--depuis=AAAA-MM-JJ`. Avant le 28/11/2025, les carnets sont antérieurs à la règle du retenu et apparaissent normalement dans la liste.
 
-Une éventuelle régularisation des carnets touchés est à décider à part : par exemple une écriture de retenu par carnet, avec une trace dans le journal.
+Voir la section « Régularisation » plus bas.
 
 ## Vérifié (local)
 - **Vrai versement** (composant `MemberDetails`, dans une transaction annulée ensuite, sans aucune donnée laissée), pour une mise journalière de 1 000 CDF :
@@ -51,6 +51,58 @@ Une éventuelle régularisation des carnets touchés est à décider à part : p
 | Règle | `app/Models/MembershipCard.php` (`doitRetenirPremiereMise`) |
 | Versement des mises | `app/Livewire/Members/MemberDetails.php` (`contribute`) |
 | Contrôle | `app/Console/Commands/CheckFirstMiseRetention.php` (`carnets:controle-retenus`) |
-| Tests | `tests/Feature/FirstMiseRetentionTest.php` |
+| Classement des carnets | `app/Services/FirstMiseRetentionAudit.php` |
+| Régularisation | `app/Console/Commands/RegularizeFirstMiseRetention.php` (`carnets:regulariser-retenus`) |
+| Tests | `tests/Feature/FirstMiseRetentionTest.php`, `tests/Feature/FirstMiseRetentionAuditTest.php` |
 
 Aucune migration, aucune donnée modifiée.
+
+## Résultat en production (28/11/2026)
+`carnets:controle-retenus` a trouvé **48 carnets** sans retenu, soit **186 000 CDF et 20 USD**.
+- **Premier cas : le 12/10 à 18h53**, quelques heures après le déploiement du commit `b02b00d` (12/10 à 12h54).
+- **Dernier cas : le 06/11.** Depuis l'index du 07/11 sur les mises, la base renvoie les mises dans un ordre fixe, et le retenu se faisait de nouveau, par chance.
+
+Cette chronologie confirme la cause décrite plus haut.
+
+## Ce que deviennent ces carnets
+`submitRetraitCarte()` **prélève le retenu au retrait** quand il n'a pas été fait. Le client reçoit le total versé moins une mise, comme dans le cas normal. **Aucun argent n'est donc perdu** pour un carnet retiré par l'écran normal.
+
+En revanche, le marqueur `first_mise_retained` reste à 0. Le rapport des agents (`AgentReportController`), qui compte les retenus grâce à ce marqueur, **sous-compte** donc ces carnets.
+
+## Régularisation
+### 1. Contrôle détaillé (lecture seule)
+```bash
+php artisan carnets:controle-retenus
+```
+La commande répartit les carnets en quatre groupes, avec un total par devise :
+| Groupe | Signification | Action |
+|---|---|---|
+| Actif | Le retenu sera prélevé automatiquement au retrait | **Rien.** Surtout ne pas mettre le marqueur à 1 : le retrait ne prélèverait plus le retenu |
+| Retiré, retenu pris au retrait | Écriture « Entree Retenu de la carte #id » trouvée sur le compte des retenus | Mettre le marqueur à 1 (étape 2) |
+| Retiré, retenu NON pris | Retrait enregistré, mais aucune écriture de retenu | Examiner au cas par cas |
+| Inactif sans opération de retrait | Carnet désactivé sans l'opération « Retrait carnet #id » (anciens carnets en local) | Examiner au cas par cas |
+
+### 2. Correction des rapports
+```bash
+php artisan carnets:regulariser-retenus              # simulation : affiche les carnets, n'écrit rien
+php artisan carnets:regulariser-retenus --appliquer  # écrit
+```
+- La commande ne traite **que les carnets retirés dont le retenu a été pris au retrait**. Elle met seulement `first_mise_retained = 1`.
+- **Aucun mouvement d'argent.** `updated_at` n'est pas modifié : c'est la date du retrait utilisée par la page « Carnets non renouvelés ».
+- Chaque exécution avec `--appliquer` est inscrite dans les **Logs du système**, avec la liste des carnets.
+- Les carnets actifs ne sont jamais modifiés. Une deuxième exécution ne trouve plus rien à faire.
+
+### Vérifié (local)
+- **Contrôle détaillé**, en élargissant la période aux anciens carnets (`--depuis=2025-11-01`) :
+  - 14 actifs ;
+  - 83 retirés avec retenu pris au retrait ;
+  - 0 retiré sans retenu ;
+  - 15 anciens carnets inactifs sans opération de retrait.
+
+  Tous les carnets vraiment retirés ont donc eu leur retenu prélevé au retrait.
+- **Régularisation avec `--appliquer`**, dans une transaction annulée ensuite :
+  - 83 carnets marqués, 0 actif touché ;
+  - dates de mise à jour inchangées ;
+  - journal écrit ;
+  - deuxième passage sans effet.
+- **Tests** : `FirstMiseRetentionAuditTest` (4 tests). Classement des 4 groupes, le retenu du carnet #30 n'est pas confondu avec celui du #3, simulation sans écriture, application ciblée sans toucher `updated_at`.
