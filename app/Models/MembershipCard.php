@@ -61,6 +61,21 @@ class MembershipCard extends Model
         return $this->hasMany(DailyContribution::class);
     }
 
+    /**
+     * Vrai si le prochain versement est le tout premier du carnet : sa première mise doit
+     * alors être retenue (commission). À appeler AVANT de marquer les mises comme payées.
+     *
+     * Ne dépend ni des dates des mises ni de l'ordre renvoyé par la base : depuis le 12/10/2026,
+     * toutes les mises d'un même versement reçoivent la date du jour, et l'ancienne règle
+     * (« la plus ancienne mise payée est la première du lot ») pouvait oublier le retenu
+     * quand plusieurs mises étaient versées d'un coup.
+     */
+    public function doitRetenirPremiereMise(): bool
+    {
+        return ! $this->first_mise_retained
+            && ! $this->contributions()->where('is_paid', true)->exists();
+    }
+
     public function getRemainingDaysAttribute()
     {
         return max(0, now()->diffInDays($this->end_date));

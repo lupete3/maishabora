@@ -411,11 +411,16 @@ class MemberDetails extends Component
 
         DB::beginTransaction();
         try {
-            $card = MembershipCard::findOrFail($this->card_id);
+            // Verrou sur le carnet : deux versements simultanés ne peuvent pas être tous les deux « le premier »
+            $card = MembershipCard::whereKey($this->card_id)->lockForUpdate()->firstOrFail();
             $dailyAmount = $card->subscription_amount;
             $numberOfDaysToPay = floor($this->amount / $dailyAmount);
 
+            // Décidé AVANT de marquer les mises payées (voir MembershipCard::doitRetenirPremiereMise)
+            $retenirPremiereMise = $card->doitRetenirPremiereMise();
+
             if ($numberOfDaysToPay <= 0) {
+                DB::rollBack();
                 notyf()->error("Le montant doit être au moins égal à {$dailyAmount}.");
                 return;
             }
@@ -427,6 +432,7 @@ class MemberDetails extends Component
                 ->get();
 
             if ($contributionsToPay->isEmpty()) {
+                DB::rollBack();
                 notyf()->error("Toutes les mises ont déjà été effectuées pour cette carte.");
                 return;
             }
@@ -501,13 +507,8 @@ class MemberDetails extends Component
             // --------------------------------------------------------
             // COMMISSION AGENT : première mise dans ce carnet
             // --------------------------------------------------------
-            $firstEverContribution = $card->contributions()
-                ->where('is_paid', true)
-                ->orderBy('contribution_date', 'asc')
-                ->first();
-
-            // Si c'est la toute première mise payée
-            if ($firstEverContribution && $firstEverContribution->id == $contributionsToPay->first()->id) {
+            // Premier versement du carnet, quel que soit le nombre de mises versées
+            if ($retenirPremiereMise) {
 
                 $commissionAmount = $dailyAmount; // La première mise vaut commission
 
